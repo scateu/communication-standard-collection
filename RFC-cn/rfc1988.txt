@@ -1,0 +1,107 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：牛韬（NT   niutao@sohu.com）
+译文发布时间：2001-11-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                        G. McAnally
+Request for Comments: 1988                                    D. Gilbert
+Category: Informational                                         J. Flick
+                                                 Hewlett Packard Company
+                                                             August 1996
+
+
+
+在与Internet 工程任务小组的Internet标准网络
+管理框架联合上，对特定HP专利的有条件的授权
+RFC1988――Conditional Grant of Rights to Specific Hewlett-Packard Patents
+In Conjunction With the Internet Engineering Task Force's
+Internet-Standard Network Management Framework
+
+本备忘录的状态
+
+   本备忘录提供了有Interent社团相关的信息。此备忘录并未指定任何类型的Internet
+标准。其发布不受任何限制。
+
+注意：
+
+   本文档不是一个标准，它是对想使用自动拓扑网络管理技术，并愿有条件的接受HP公司
+相关专利授权的团体的声明。该专利是有关与Internet工程任务小组（IETF）的Internet
+标准网络管理框架。
+
+目的
+
+   该授权是用于帮助推动经过特定的专利授权的有关在IETF标准跟踪管理信息基础（MIB）
+模块中映像的网络搜索地址技术的。HP向IETF提供了这一用于映像网络设备的地址搜索技
+术。应当注意确定的许可证书提及了可选择的，因为这一授权是自动的。
+
+
+目录
+对HP美国专利5,293,635 和5,421,024的授权	2
+安全考虑：	2
+作者地址：	2
+
+
+对HP美国专利5,293,635 和5,421,024的授权
+
+   HP 据此建立一个约定，将不会对美国专利5,293,635和 5,421,024进行任何断言,任何
+延续、分割、或部分延续，对前面叙述的任何非美国的副本反对任何团体将其通过制作、使
+用、销售引入或提供用于商业用途。包含HP贡献的地址搜索技术的IETF标准跟踪MIB模块，
+或其任何派生的贡献，提供了MIB模块被用于实现Internet标准风格管理框架，如果没有将
+这一HP地址搜索技术合并到私有MIB模块中，这一授权是受限的。
+
+  这一授权尊重任一拥有或控制专利的团体（任何辅助团体），不管其是直接还是直接的，都
+不会改变。 反对HP或任何对其实现的补充、或任何系统应用的运行及地址搜索技术。到HP
+宣告的专利之日起该权利将会被终止。
+
+  该授权的书面许可、和（或）HP当前条款下的其它HP专利、条件和特许权费用，都可以
+通过向以下地址发送请求获得：
+           Patent Counsel
+           Hewlett-Packard Company
+           3000 Hanover Street
+           Palo Alto, CA 94304
+           USA
+
+安全考虑：
+   本备忘录未讨论安全问题。
+
+作者地址：
+
+   Gary McAnally
+   Hewlett-Packard Company
+   8000 Foothills Blvd.
+   Roseville, CA 95747
+   USA
+
+
+   Douglas Gilbert
+   Hewlett-Packard Company
+   3000 Hanover Street
+   Palo Alto, CA 94304
+   USA
+
+
+   John Flick
+   Hewlett-Packard Company
+   8000 Foothills Blvd. M.S. 5556
+   Roseville, CA 95747-5556
+   USA
+
+   Phone: (916) 785-4018
+   EMail: johnf@hprnd.rose.hp.com
+
+
+在与Internet 工程任务小组的Internet标准网络
+管理框架联合上，对特定HP专利的有条件的授权
+RFC1988――Conditional Grant of Rights to Specific Hewlett-Packard Patents
+In Conjunction With the Internet Engineering Task Force's
+Internet-Standard Network Management Framework
+
+
+2
+RFC文档中文翻译计划

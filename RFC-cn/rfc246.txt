@@ -1,0 +1,35 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                       A. Vezza
+Request For Comments #246
+NIC 7687                                    October 5, 1971
+
+
+网络图形会议  
+（RFC246 ――Network Graphics meeting） 
+
+     下一次网络图形会议已定于在11月21日（星期天）晚上开始，到11月23日（星期
+二）结束。会议将由Stanford 人工智能工程主办。
+     其它消息可以从Stanford AI.的Andy Moorer得到。
+
+
+         [ This RFC was put into machine readable form for entry ]
+         [ into the online RFC archives by BBN Corp. under the   ]
+         [ direction of Alex McKenzie.                   12/96   ]
+
+
+
+RFC246 ――Network Graphics meeting                   网络图形会议 
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,37 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                       J. Bouknight
+Request for Comments: 81                           University of Illinois
+Category: Informational                  Center for Advanced Computation
+                                                           December 1970
+               
+
+涉及信息的请求 
+（RFC81――Request for Reference Information） 
+
+请询问您的技术联络人， 看他是否会尽可能多地给我发送关于数据通信和通讯理论学
+科领域内的参考文献。
+通信地址是：
+
+                  Center for Advanced Computation
+                  University of Illinois
+                  168 Engineering Research Laboratory
+                  Urbana, IL  61801
+
+       [ This RFC was put into machine readable form for entry ]
+         [ into the online RFC archives by Randy Dunlap 3/97 ]
+
+RFC81――Request for Reference Information                       涉及信息的请求 
+
+
+1
+RFC文档中文翻译计划

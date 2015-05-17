@@ -1,0 +1,161 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王顺（zhenm2000   wangs97@263.net）
+译文发布时间：2001-4-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                           E. Lewis
+Request for Comments: 3090                                      NAI Labs
+Category: Standards Track                                     March 2001
+
+
+RFC3090域名系统在区域状况下的安全扩展声明
+（RFC3090 DNS Security Extension Clarification on Zone Status）
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要：
+本文提出了安全区域的定义，阐明和更新了RFC2535的部分文档。RFC2535定义了以每个算法为基础的安全区域。如一个区域对RSA（公开密钥算法）密钥是安全的，对DSA(数字签名算法)密钥并不是安全的。本文改变了这个定义，一个区域的安全与否与是否使用密钥算法是无关的。为了更加简化对区域状态的限定，本文反对实验性安全状态。
+
+
+1．介绍
+一个DNS区域是否安全是一个至少在四种情况下都会被问到的问题：一个区域管理员在用DNSSEC配置一个区域时，会问到这个问题；当一个可能需要DESSEC过程的新请求到达时，动态更新服务器会问这个问题；当父区域加入数据说明子区域的状态时，一个授权的区域会考虑子区域的安全问题；一个解释器在接受属于这个区域的数据时会问该问题。
+1．1当区域的状态重要时
+一个域管理员要能够决定通过哪些步骤使区域尽可能的安全。认识到由于DNS和它的管理的自然分布，任何单独的区域都在其他区域的掌管之中，当它显得安全时。本文将定义如何使一个区域真正的安全。
+一个动态更新的名字服务器应该知道一个正在被更新的区域是否在更新数据上添加签名、是否应用NXT记录和其他需要的处理。在这种情况下，可以想象：名字服务器以知识配置，但“能够通过检测日期决定区域的状态”对配置参数来说是一个可取的选择。
+一个授权的区域需要说明子区域是否安全，有这种要求的原因在于，通过这种方法一个解释器可对一个区域做出自己的决定（见下一段）。缩短这个长的理由即，父区域需要知道子区域是否有安全性考虑。这儿有两部分问题：在哪些状况下，父区域会考虑子区域的安全性？如果一个子区域是安全的，父区域如何知道？
+一个解释器在处理一个区域的数据时，要知道这个区域是否安全。根本地，一个解释器需要知道是否会预期到一个覆盖于数据的可用的签名。如何去实施这个决定则超出了本文档的范围。除了在有些情况下，解释器需要连接到父区域以了解父区域是否声明子区域状态是安全的。
+1．2 安全岛
+DNSSEC的目标是保证包括从根区域和最顶层的域到叶子区域各层内的每个区域的安全。我们知道，从一个不安全的域名系统到一个完全安全的或者说是尽可能安全的树域需要花费一段时间。在这段时间内，DNSSEC将会被应用到树中的各种位置，并不一定要自上而下。
+例如，在某个特殊的时刻，根区域和“test.”TLD(顶层的域)是安全的，但region1.test.可能不安全。（作为参考，我们不妨设region2.test.是安全的。）然而，subarea1.region1.test.可能已经和它的授权一起通过了安全处理过程。这儿就出现了两难的状况：子域subarea1不能适当的得到他的父域region1（不安全的）所设的区域密钥。
+通常描述位于“subarea1.region1.test.”或“subarea1.region1.test.”以下的连续安全的区域集的短语是“安全岛（island of security）”。使一个DNSSEC解释器能够信任这个安全岛的唯一途径是解释器已经预配置了安全岛的根部“subarea1.region1.test.”的区域密钥。其他解释器（未做过这种配置的）将认为该岛是不安全的。
+一个安全岛开始于一个公开密钥已经在解释器中预配置的区域。在这个岛内的子区域都是安全的。安全岛的下面被授权定义为不安全的区域。一个安全岛也可以位于另一个之上，就意味着至少有一个不安全的区域介于上面一个岛的底部和下面的安全岛的根部之间。
+尽管subarea1.region1.test.和region2.test.都被适当的配置为安全状态，只有后者才是真正“全部地”安全――在这种情况下，所有的DNSSEC解释器都可以确定他的数据。前者suarea1只会被那些解释器的一个子集，即做过适当的配置的解释器，认为是安全的。本文将这种区域看作是局部安全的。
+在RFC2535，又一个对“授予权力”实体的规定，它会为subarea1这样的区域分配公共密钥。另一个文档RFC3008废止了这种规定。不受其它文档的影响，解释器仍将需要适当的配置以能够利用“授予权力”去确定subarea1岛的数据。
+1．2．1决定最接近的安全根部
+给定一个域，为了决定它是否安全，第一步要决定最接近的安全根部。最接近的安全根部就是名字与给定域标签最匹配（按照从根部朝下的顺序）的安全岛的顶部。
+例如，给定一个名为“sub.domain.testing.signed.exp.test.”的域，再给出下列安全根部“exp.test.”、“testing.signed.exp.test.”和“not-the-same.xy.”，中间的一个是最接近的。因为第一个安全根部共享2个标签，中间的是4个，最后的是0个。
+最接近的为所要求的原因在于可除去由于NULL密钥形成的不安全的错误观念。继续上面的例子，“testing...”和“exp.test.”都被列为安全根部也许是因为“signed.exp.test.”是不安全的（有NULL密钥），如果我们从“exp.test.”出发到我们给定的域（sub...），我们会由于遇到一个NULL密钥而断定sub...是未签名的。然而，如果我们从“testing...”出发就会因发现“domain...”密钥而得出“sub...”是安全的结论。
+注意到这个例子假定为一个标签深的区域，也没有配置重复的安全岛。需要澄清，给出的定义应该从与“short.xy.”最接近的安全根部中排除“short.xy.test.”，尽管有两个标签匹配。
+安全岛的重复给出了非概念性的有趣的想法，在任何情况下对本协议均无影响。然而，建议协议的履行者们要确认他们的代码没有因重复而陷入环路。重复必然是在安全岛增大至包含更大范围的名字空间时产生的配置问题。
+1．3父区域对子区域安全的声明
+在本文的1.1节中出现这样的一句话“父区域声明子区域是安全的”，这已经产生了些许的疑惑。
+父区域声明子区域的状态的需求可由下面的观察得来：如果你想知道一个回答是不是安全的，该回答来自一个安全岛并经过适当的签名，那么你必须从该安全岛的根部开始察看。
+要察看你正在检查的回答，你可能需要自上而下的通过安全岛的区域。从可信任的岛的根部出发，下降至下一个区域。只要你信任上一个区域，你需要从那里得到有关下一个区域的数据，否则该区域就有不安全的脆弱点。当（如果）你从一个安全区域到达一个不安全的脆弱点，你就已经离开了安全岛并将得出该回答是不安全的结论。
+然而在RFC 2535 2.3.4节中，这些说法看上去和父区域声明子区域的状态的需要有矛盾：
+对于超区域是安全的每个子区域来说，必须（MUST）是一个被超区域以KEY RR签名的子区域。这个一般会在子区域出现，也会包含在超区域中。但是，在一个不安全子区域不能或不会被修改以增加任何安全资源纪录（RRs）时，一个声明该子区域为不安全的KEY必须（MUST）在超区域的签名中出现，当然前提为：超区域是安全的。
+令人迷惑的是，在RFC 2535中，一个安全的父区域通过SAYING NOTHING(“may also be（可能是）”对比于“MUST also be（一定是）”)声明一个子区域是安全的。数据的缺乏意味着某些事物的安全只是个直觉的回答。这个观点在理论环境被接受的同时，在操作中却遇到了一些不适。然而，在这种情况下，用“沉默”来声明某些事情是确实存在的。所以，没有为了改变定义被证明的足够的必要性。
+1．4对RFC 2535的影响
+本文更新了RFC 2535的部分内容。安全区域的定义是对该RFC 3.4节的一个更新。更新后的3.4节取消了实验性密钥的定义，并说明了一个方法，该方法能够实现那些它们原本被设计用来提供的功能。3.1.3节通过具体指定区域密钥中的协议字节的值而被更新。
+1．5“MUST”和其他关键字
+本文中出现的关键字“MUST”、“REQUIRED”、“SHOULD”、“RECOMMENDED”和“MAY”的说明在RFC 2119中有描述。目前为止，本文中仅出现“MUST”关键字。
+2．区域状态
+在本节将描述管理一个区域DNSSEC状态的规则。共有以下三层安全定义：全域、局部和不安全。当一个区域遵从最严格的DNSSEC处理规则集时，该区域是全域安全的。经过某种程度的配置后，只能被经过适当配置的解释器认为是安全的，这种区域是局部安全的。除此以外的区域都是不安全的。
+注意：当前并没有完整地定义DNSSEC的确定规则的文档。为了这篇文档的目的，假设最严格的规则集声明：区域密钥的确定链平行于授权树升到根区域（参阅下面的2.b）。这并不意味着不允许选择确定的路径，只是为了正好建立底线定义。
+在下面的规则中，为了避免重复，定义下列术语：
+2.a KEY RR签名区域――密钥资源记录的标记域中，名字类型（标识一个区域的密钥）具有值01。密钥类型（说明一个允许鉴定数据的密钥）值为00或01（参阅RFC 2535,3.1.2节）。KEY RR也有一个协议字节值DNSSEC(3)或ALL(255)。
+这个定义更新了RFC 2535中对区域密钥的定义，要求协议字段必须为DNSSEC或ALL是新增的（对3.1.3节做了更改）。
+2.b On-tree确认――只能通过父区域提供DNSSEC-meaningful签名的授权模式，解释器用它来设立一个从子区域的密钥到一个公认的安全根部的信任链。术语“On-tree”指随着域名系统域的等级（向上地）到达一个可信赖的密钥。如果没有其它有效的密钥，可能就是根密钥。术语“确认（validation）”指通过父区域提供的数字签名来验证子区域密钥的完整性、确定性和公认性，以标记子区域的数据。
+2.c Off-tree确认――任何允许和父区域不同的域名提供对子区域密钥签名的授权模式，它能够使解释器信任这些密钥。
+2．1全域安全
+一个全域安全区域，在一个“坚果外壳”中，是一个通过强制性执行算法（RFC 2535,3.2节）和依赖于一个平行于授权树（On-tree validation）的密钥确认链的区域。全域安全区域通过下列规则定义：
+2.1.a 区域的末端必须具有一个KEY RR集，必须至少有一个区域为强制性的KEY RR（2.a）签名实现这个集中的算法。
+2.1.b区域的末端必须为属于父区域的私钥签名。私钥的公共伙伴必须是一个强制性实现算法并属于父区域末端的KEY RR签名的区域。
+如果一个区域不能从父区域得到一个一致的签名，子区域不能被看成全域安全的，唯一的例外就是根区域，因为根区域没有父区域。
+2.1.c NXT记录必须要散开以遍历整个区域（阐明RFC 2535,2.3.2节）。注：对当前的NXT记录有一些操作上的不适合，这要求修改为开放的，此时会发生两种情况。第一，对NXT的选择机制被定义；第二，作为区域声明它用可选择机制的手段。
+2.1.d 每个具备区域成员资格的RR集，必须用KEY RR集的末端中的密钥签名，并且使用强制性执行算法的KEY RR签名的区域。
+回顾前面，根区域为一个特殊情况。规定如果适合局部安全的规则集，除规则2.1.a也被执行（强制性执行要求）外，根区域将被考虑为全域安全的。
+2．2局部安全
+术语“局部（locally）”起源于漂亮的头巾，被配置用于特殊区域的解释器将会是局限于一个组织的的解释器。
+一个局部安全区域就是具有类似于全域安全区域的规则集的区域，除了以下例外。签名密钥可以是非强制性执行的一个算法，使用中的区域密钥的确定可以依赖于一个没有与授权树平行的确定链（Off-tree validation）。
+2.2.a 区域的末端必须有一个KEY RR集，其中必须至少有一个区域为KEY RR签名。
+2.2.b 区域末端的KEY RR集必须被一个私钥签名，而且下面的两个子句必须保证正确。
+2.2.b.1 私钥的公共伙伴必须在所有感兴趣的解释器中预配置。
+2.2.b.2 私钥的公共伙伴必须是一个签名授权提供区域末端密钥资源记录集确认KEY RR的区域，可以被感兴趣的解释器承认。
+上面的句子试图表达对提供密钥确认的第三方的信任的观点。如果拥有确认密钥的域名不是父区域，那么域名必须使解释器信任以提供确认。
+2.2.c NXT记录必须散开以遍历整个区域。注：参阅2.1.C的讨论。
+2.2.d 具有区域成员资格的每个RR集，必须被末端KEY RR集中的一个密钥签名，并且是一个可签名KEY RR的区域（更新RFC 2535 2.3.1节）。
+2．3不安全
+所有其它区域都不是安全的。这儿包括那些设计为实验性安全的区域，它会在后面相关主体的小节中定义。
+2．4综述
+对全域安全、局部安全和不安全的指定只不过是适用于以其内容为基础的区域的标签。当决定一个签名是否为预期时，解释器只会看区域是不是安全的。
+遵从最多约束DNSSEC确定规则的解释器只会将全域安全的区域视为安全的。包括局部安全在内的所有其它区域均被视为不安全的。诸如对实现算法（除强制性的实现算法以外）没有约束的解释器将会认为局部安全的区域为安全的。
+标签“全域”和“局部”的目的是标识一个区域具体的属性。选择这些单词来帮助书写推荐区域管理员接受利用域名系统安全扩展的行为的文档。这些单词没有明确地打算表达服从域名系统安全标准的状态。
+3．实验性状态
+引入一个实验性安全区域的目的是促进从非安全区域到安全区域的迁移，这个特征已被删去。
+没有对实验性安全状态的特殊设计同样可以实现促进迁移的目标。实验性安全只是局部性安全的一种特殊情况。一个区域主管可以通过发布一个签名区域和配置一套带有相应的公开密钥的测试解释器来实现它。虽然公开密钥以KEY RR公开，只要不存在父区域签名，解释器仍需要做一些配置，以了解如何处理这些签名。这种使一个区域在实验环绕下达到安全的方法被证明在正式的Internet下是不安全的。
+4．IANA考虑
+本文件不需要任何来自于已分配的数字权力的影响，也不推荐任何行为。
+5．安全性考虑
+这并不意味着极力主张顺从特定的协议或推荐的行为，声称一个DNS区域是“完全” 安全的仍是不可能的。虽然如此，假设一个万能的DNS，可以声称一个区域经过对安全性的严格设置，所有的区域也都达到根部。一个错误的解析能够欺骗你去相信坏的数据。如果一个区域和解释器遵从它，一个未应允的或被破坏的父区域会中断操作。可以期望的最好情况就是所有的参与者都做好判断安全的准备，安全事件能被追溯到短序的原因。
+6．致谢
+在由NIC-SE和CAIRN主办的两个DNSSEC专题讨论会、及其它专题讨论会的参与者的共同努力下，精确给出安全区域的定义的要求已经变得很明显了。包括Olafur Gudmundsson，Russ Mundy，Robert Watson(罗伯特?沃森)和Brian Wellington（布赖恩?韦林顿）参与的进一步讨论，导致了本文档的产生。Roy Arends，Ted Lindgreen和其他人也通过namedroppers邮件列表贡献了重大的输入。
+7．参考文献
+   [RFC1034] Mockapetris, P., "Domain Names - Concepts and Facilities",
+             STD 13, RFC 1034, November 1987.
+
+   [RFC1035] Mockapetris, P., "Domain Names - Implementation and
+             Specification", STD 13, RFC 1035, November 1987.
+
+   [RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+             Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RFC2136] Vixie, P., (Ed.), Thomson, S., Rekhter, Y. and J. Bound,
+             "Dynamic Updates in the Domain Name System", RFC 2136,
+             April 1997.
+
+   [RFC2535] Eastlake, D., "Domain Name System Security Extensions", RFC
+             2535, March 1999.
+
+   [RFC3007] Wellington, B., "Simple Secure Domain Name System (DNS)
+             Dynamic Update", RFC 3007, November 2000.
+
+   [RFC3008] Wellington, B., "Domain Name System Security (DNSSEC)
+             Signing Authority", RFC 3008, November 2000.
+作者地址
+Edward Lewis
+  NAI Labs
+  3060 Washington Road Glenwood
+  MD 21738
+
+  Phone: +1 443 259 2352
+  EMail: lewis@tislabs.com
+完整版权声明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+致谢
+Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+RFC3090 DNS Security Extension Clarification on Zone Status  
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+

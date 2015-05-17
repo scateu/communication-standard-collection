@@ -1,0 +1,109 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：stan001（stan001   ）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                          D. Borman
+Request for Comments: 2147                Berkeley Software Design, Inc.
+Updates: 1883                                                   May 1997
+Category: Standards Track
+
+
+TCP和UDP通过IPv6 Jumbograms
+(RFC2147――TCP and UDP over IPv6 Jumbograms)
+
+
+本备忘录状态
+	本文详细说明了一个为网络间交流的网络路径协议标准，并且为改进而进行了讨论
+和提了建议。请参考最新版本的"Internet Official Protocol Standards"这本书，此书标准化
+了协议的状态和地位。本备忘录的贡献是有限的。
+
+目录
+1.概况	1
+2. UDP Jumbograms	1
+3. TCP Jumbograms	2
+3.1 TCP MSS	2
+3.2 TCP Urgent Pointer	2
+4.安全方面的考虑	3
+5.参考书	3
+
+1.概况
+	IPv6支持比65536字节还大的数据，经常作为jumbograms的参考，通过Jumbo 
+Payload的Hop-by-Hop option的用法。UDP协议有16位长度这就能避开使用jumbograms，
+但是TCP没有16位长，MSS选项和Urgent的长度被限制在16位长。本文描述了一些简
+单的能够允许TCP和UDP使用IPv6 jumbograms的变化。
+2. UDP Jumbograms
+	允许UDP使用jumbograms，也是得UDP的长度需要扩长，或它需要被忽视。由
+于域的长度不能被改变，长度为零是用来表明它是可以被忽视的，；并且在"pseudo-header"
+里的长度是被用来决定UDP头加数据的真正长度的。这样做是因为UDP域包含在UDP头
+里，因此域的最小有效值是8。
+	当发送一个UDP数据包时，如果并且仅仅是如果当UDP头加数据的长度超过
+65535时把UDP头里的域长度设为零。
+	注意1：为处理UDP校验而在"pseudo-header"里使用的长度往往不是UDP头加
+数据的真正长度，也不是零。
+	注意2：用来传输一个UDP包的一个IPv6包的长度大于65535将需要在一个
+Hop-by-Hop选择的头里执行一个Jumbo Payload选择。在JumboPayload选择里的域的
+长度包含了包含IPv6头的IP报的长度，也就是说，它包含了所有的扩长的头加上UDP头
+加上数据的长度。在IPv6头里的域长度包含了用来表明Jumbo Payload选择存在的零。
+	如果一个UDP包以零作为标准长度，那UDP包的长度计算应该是在Jumbo 
+Payload Option减去所有在IPv6头和UDP头两者间扩展的头的长度。
+3. TCP Jumbograms
+
+   Because there is no length field in the TCP header, there is nothing
+   limiting the length of an individual TCP packet.  However, the MSS
+   value that is negotiated at the beginning of the connection limits
+   the largest TCP packet that can be sent, and the Urgent Pointer
+   cannot reference data beyond 65535 bytes.
+3.1 TCP MSS
+当决定发送MSS的何值时，如果直接附在接口上的MTU比65535大，那就发送MSS
+的值为65535。
+	当一个值为65535的MSS被接收时，那它将被作为无穷大处理。MTU的编码以
+外部的接口开始，此接口将被用来决定实际的MSS。
+3.2 TCP Urgent Pointer
+	Urgent Pointer的问题可以通过增加一个TCP Urgent Pointer Option来解决。然
+而，由于它与利用jumbograms的应用不同的是也将使用Urgent Pointers，一点很少的插
+入带来的改变就和MSS的改变一样都将是有效的。
+	当一个TCP的包用一个Urgent Pointer来发送时，首先考虑从Sequence Number
+到Urgent Pointer的偏移量。如果偏移量小于65535，那就将偏移量填到Urgent域里并且
+继续正常的TCP处理。如果偏移量比65535大，并且偏移量大于或等于TCP数据的长度，
+那就在Urgent Pointer里填上65535并且继续TCP的正常处理。否则，TCP包必须分成两
+份。第一部分包含数据，但不包含指向Urgent Pointer的数据，并且设置Urgent域为65535
+用此来表明Urgent Pointer超出了这个包。第二部分包含了Urgent Pointer域的正常设置因
+此能被发送。
+	注意：第一部分并不是一定要包含所有的到Urgent Pointer的数据。它可以缩短到
+和在65534字节里的Urgent Pointer一样的长度，因此在第二部分里的Urgent Pointer的
+偏移量将可以被缩短到比65535字节小。
+	至于TCP输入的处理，当一个用URG位设置并且Urgent域的大小是65535的
+TCP包被接收时，Urgent Pointer使用一个和TCP长度相等的偏移量来计算而不是根据再
+Urgent域里的偏移量来计算。
+	还应该注意TCP窗口只有16位，因此比16位大的窗口能被通过使用TCP Window 
+Scale option来用。
+4.安全方面的考虑
+	在这些变换中没有显著的安全问题。
+5.参考书
+   [Jacobson92] Jacobson, V., R. Braden and D. Borman, "TCP Extensions
+   for High Performance", RFC 1323, LBL, ISI and Cray Research, May
+   1992.
+
+   [Deering95] Deering, S. and R. Hinden, "Internet Protocol, Version 6
+   (IPv6) Specification", RFC 1883, Xerox PARC and Ipsilon Networks,
+   December 1995.
+6.作者地址
+   David A. Borman
+   Berkeley Software Design, Inc.
+   4719 Weston Hills Drive
+   Eagan, MN 55123	
+   Phone: (612) 405-8194
+   Mailing List: ipng@sunroof.Eng.Sun.COM
+   Email: dab@bsdi.com
+
+RFC2147――TCP and UDP over IPv6 Jumbograms                 TCP和UDP通过IPv6 Jumbograms
+
+
+1
+RFC文档中文翻译计划

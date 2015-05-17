@@ -1,0 +1,106 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：boniter（boniter  boniter@etang.com）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                                  G. Marcy
+Request for Comments: 1096                           Carnegie Mellon University
+                                                                     March 1989
+Telnet X显示定位选项
+(RFC1096――Telnet X Display Location Option)
+本备忘录的状态
+    这篇RFC为Internet社会定义了一个标准。在Internet上通过Telnet协议传输X
+显示定位的主机被期望采用和执行这个标准。此备忘录的发布是无限的。
+    这个标准是模仿RFC 1079 [1]，Telnet终端速度选项 。这篇文档中的许多内容都是从
+中拷贝的。
+动机
+当使用者在X windows系统下运行的Telnet客户端，对于远程的Telnet来说，分辨
+客户端得X显示定位就非常有用。例如，用户可能希望从远程的服务器开启另一个X应用程
+序，而这个服务器使用的是与Telnet客户端相同的显示定位。这个选项的目的是通过telnet
+连接使得这个信息可利用。
+目录
+命令名和代码	1
+命令含义	2
+默认值	2
+选项的描述	2
+执行建议	3
+参考书目	3
+作者地址	3
+
+命令名和代码
+X-DISPLAY-LOCATION (XDISPLOC)
+  Code = 35
+命令含义
+      IAC WILL X-DISPLAY-LOCATION
+     发送者希望在并发的谈判中发送X显示定位。
+
+      IAC WON'T X-DISPLAY-LOCATION
+     发送者拒绝发送X显示定位。
+
+      IAC DO X-DISPLAY-LOCATION
+     发送者希望在并发的谈判中接受X显示定位。
+
+      IAC DON'T X-DISPLAY-LOCATION
+     发送者拒绝接受X显示定位。
+
+      IAC SB X-DISPLAY-LOCATION SEND IAC SE
+     发送者需要接受者传输他的（接受者的）X显示定位。SEND的代码是1。（见下）
+
+      IAC SB X-DISPLAY-LOCATION IS ... IAC SE
+     发送者正在开启他的X显示定位。IS的代码是0。（见下）
+默认值
+ WON'T X-DISPLAY-LOCATION
+      X显示定位不被调换。
+
+       DON'T X-DISPLAY-LOCATION
+      X显示定位不被调换。
+选项的描述
+WILL和DO只用来获得和承认将来讨论的许可。状态信息的真正交换发生在选项的潜在
+命令（IAC SB X-DISPLAY-LOCATION...）。
+一旦两个服务器调换了WILL和DO，DO X-DISPLAY-LOCATION的发送者请求X显示定位就是自由
+的。只有DO的发送者可能发送请求(IAC SB X-DISPLAY-LOCATION SEND IAC SE)，而且只有
+WILL的发送者可能传输真正的X显示定位（通过一条IAC SB X-DISPLAY-LOCATION IS ...IAC SE
+命令）。X显示定位可能本能的被发送，但是只在对请求的响应中。
+    X显示定位是一个NVT ASCII字符串。这个字符串遵从用于DISPLAY环境变量的常规Unix
+协定，等等。
+    
+ <host>:<dispnum>[.<screennum>]
+    
+不包括像空格一样的无关系字符。
+    下面是使用这个选项的一个例子：
+          Host1: IAC DO X-DISPLAY-LOCATION
+         
+Host2: IAC WILL X-DISPLAY-LOCATION
+
+      （Host1现在对于任何时间的状态信息的请求是自由的。）
+
+          Host1: IAC SB X-DISPLAY-LOCATION SEND IAC SE
+
+           Host2: IAC SB X-DISPLAY-LOCATION IS "SRI-NIC.ARPA:0.0" IAC SE
+
+        （这个命令占22个8位字节。）
+执行建议
+因为X显示定位可能在客户端服务器，i.e.,“：0”或者“unix：0.0”上包含一个主机
+名，Telnet客户端在远程Telnet上发送它的之前，必须适当的更改位置。
+参考书目
+[1]  Hedrick, C., "Telnet Terminal Speed Option", RFC 1079,
+        Rutgers University, December, 1988.
+作者地址
+   Glenn A. Marcy
+   Carnegie Mellon University
+   School of Computer Science
+   Pittsburgh, PA 15213-3890
+
+   Phone: (412) 268-7669
+
+   Email: Glenn.Marcy@CS.CMU.EDU
+RFC1096――Telnet X Display Location Option                    Telnet X显示定位选项
+
+
+
+1
+RFC文档中文翻译计划

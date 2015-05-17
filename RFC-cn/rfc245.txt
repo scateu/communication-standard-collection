@@ -1,0 +1,26 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                          Carol Falls - MAC
+Request For Comments #245                      October 5, 1971
+NIC 7675
+
+网络工作组会议的预定
+（Reservations for Network Working Group Meeting）
+为了保证在剑桥的Sonesta酒店为到达的参会者预留房间，麻萨诸塞州已经为通过项目（Project ）MAC预定了的NWGM参会者做了安排。单间房费是每晚$23.00。
+如果由于一些原因必须取消预定，必须在预定当天下午6点以前向酒店通报取消。
+如果在10月9/10/11取消预定，请直接电告酒店。其他时间，请拨打864-6900转1450找Carol Falls来取消预定。
+[这个RFC文档是BBN公司在Alex McKenzie的指导下以计算机可读的文件格式归档到在线RFC文档库的。12/96]
+
+RFC245――Reservations for Network Working Group Meeting                  预定网络工作组会议
+
+
+
+
+1
+RFC文档中文翻译计划
+

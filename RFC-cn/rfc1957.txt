@@ -1,0 +1,62 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：丁文（zlldw   zlldw@163.net）
+译文发布时间：2001-3-30
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                          R. Nelson
+Request for Comments: 1957                               Crynwr Software
+Updates: 1939                                                  June 1996
+Category: Informational
+
+RFC1957在实现POP3协议出现的一些问题
+(RFC1957 Some Observations on Implementations of the Post Office Protocol (POP3))
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+问题描述：
+
+	在互联网络上各种标准的实现中经常出现一些错误，在POP3服务器、客户端的实现上也有同样的情况。由Qualcomm更新、且广泛使用的UCB POP3服务器“popper”在状态指示后总多加一个空格，有两种POP3客户端却依赖该空格，只有在收到此空格的情况下才能正常工作。但RFC标准不要求此空格，因此发布本备忘录。
+
+	存在以上问题的两个POP3客户端分别是UNIX平台下免费使用的软件“popclient”和非共享软件“netApp Systems Internet Series”。我们已经与以上软件的开发者取得联系，新版本的软件将去除对多余空格的依赖。
+
+	另外两个流行的POP3客户端的问题是只在RFC的可选件使用的情况下才能正常工作，它们分别是由Netscape和Eudora公司开发的POP3客户端。其中Netscape公司的POP3客户端要求可选件UIDL，而Eudora公司的POP3客户端要求可选件TOP。
+
+	POP3的可选件APOP认证命令至今没有广泛使用，新版本Qualcomm POP服务器已加入APOP命令，目前为止支持APOP的客户端有“GNU Emacs VM client”、“Eudora Lite”和“Eudora Pro”。
+
+
+安全考虑：
+
+   安全问题不在本忘录中讨论。
+
+参考资料：
+
+   [1]  Myers, J., and M. Rose, "Post Office Protocol - Version 3",
+        STD 53, RFC 1939, May 1996.
+
+作者的地址：
+
+   Russell Nelson
+   Crynwr Software
+   521 Pleasant Valley Rd.
+   Potsdam, NY 13676
+
+   Phone: +1.315.268.1925
+   FAX:   +1.315.268.9201
+   EMail: nelson@crynwr.com
+
+RFC1957  在实现POP3协议出现的一些问题
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

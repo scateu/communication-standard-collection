@@ -1,0 +1,770 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：牧云（qiaoqli   lid@sec-online.com.cn）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                           T. Howes
+Request for Comments: 1823                                        M. Smith
+Category: Informational                                University of  Michigan
+August 1995
+
+
+                     LDAP应用程序接口
+（RFC1823――The LDAP Application Program Interface）
+
+备忘录
+该备忘录为Internet社区提供信息，它未指明是任何类型的网络标准。该备忘录的发布
+不受任何限制。
+目录
+1.  摘要	2
+2.  LDAP模型的观点	2
+3.  LDAP API的使用	2
+4.  调用LDAP操作	3
+4.1.  打开一个联接	3
+4.2.  绑定到目录	4
+4.3.  关闭连接	5
+4.4.  查询	5
+4.5.  读取条目	7
+4.6.  子条目列表	7
+4.7.  修改条目	7
+4.8.  修改条目的RDN	8
+4.9.  增加条目	9
+4.10.  删除条目	10
+5.  取消操作	10
+6.  结果处理	10
+7.  出错处理	11
+8.  对查询结果的处理	13
+8.1.  条目结果的处理	14
+8.2.  对属性结果的处理	14
+8.3.  获得属性值	15
+8.4.  目录项DN分析处理	16
+9.  安全考虑	17
+10.  鸣谢	17
+11.  参考书目	17
+12.  作者地址	18
+13.  附： 一个简单的LDAP API代码	18
+
+1.  摘要
+   该文档为轻量级目录访问协议（LDAP）定义了一个基于C语言的应用程序接口。该LDAP 
+API 功能强大，且易于使用。为了适应应用的大量变化，它采用了兼容的LDAP同步和异
+步接口。该文档给出了LDAP模型的基本观点，以及一个应用程序怎样通过这些接口获得
+LDAP的信息。这些应用程序接口调用在本文里都有很详细的描述，并且，文档末尾附带有
+部分API使用的实例代码。
+2.  LDAP模型的观点
+   LDAP――轻量级目录访问协议。其描述参见[2]和[7]。它能为X500目录[1]，或独立的
+服务（stand-alone service）提供轻量级的访问。在任何模式下，LDAP都是基于客户-服务器
+模型的。在客户-服务器模型中，客户通过TCP联接与LDAP服务器相连，并且在此联接上
+发送请求和接收响应。
+   LDAP信息模型基于包含对象信息（例如，一个人就是一个对象）的条目。条目包含各
+种属性，属性由属性类型和属性值两部分组成。其中，一条属性类型可以包含多个属性值。
+每个属性都有一套语法，语法规定了属性允许值的类型（例如，一幅jpeg照片的类型为：
+ASCII characters）以及在目录操作期间这些值是怎样运作的（例如，在进行值的比较时）。
+   条目以树的结构进行组织，通常按行政、地域，以及组织分界限进行划分。每个条目拥
+有一个区别于其它兄弟条目的名字――相对区别名（RDN），相对区别名包含了一个或多个
+区别属性值，以此区别条目。条目至少有一个属性值属于RDN。例如，Babs Jensen可以被
+命名为"Barbara Jensen"，这一值取自普通名属性值。条目全球唯一的名字被称为区别名或
+DN。DN由树状结构的根结点到条目的所有结点的RDN组成。例如，如果Babs在密切根
+大学（University of Michigan）工作，以他为条目的DN就可能是"cn=Barbara Jensen, 
+o=University of Michigan,c=US"。这种用于LDAP的格式的定义参见[4]。
+   查询和恢复信息，修改信息，增加及删除条目这些操作都以身份鉴定为前提。下面将讨
+论：怎样使用API，以及LDAPL API调用的详细说明。
+3.  LDAP API的使用
+   一个应用调用LDAP API一般有以下四步：
+
+   o    打开一个到LDAP 服务器的联接。 ldap_open()函数调用返回一个联接句柄，允许
+立即建立多联接。
+
+   o    认证LDAP服务器和/或X.500 DSA。函数ldap_bind()友好地支持各种认证方式。
+
+   o   执行其它LDAP操作并获得其值。ldap_search()及其同类函数返回的值能被
+ldap_result2error(), ldap_first_entry(), ldap_next_entry()等函数解析。
+
+   o    关闭联接。ldap_unbind()函数调用关闭此联接。
+
+   操作能同步或异步执行。同步调用的函数以_s结尾。例如，调用ldap_search_s()实现同
+步查询，调用ldap_search()实现异步查询。所有同步操作返回一个操作结果的指示（例如，
+操作成功返回LDAP_SUCCESS，操作失败返回错误代码）。异步操作返回操作初始化信息
+id。id能被用于随后的ldap_result()函数调用，以获得操作的结果。通过调用ldap_abandon()
+可以丢弃异步操作。
+   结果和错误被返回到一个称作LDAPMessage的不透明结构中。
+LDAP操作为这一结构提供语法分析，逐步分析返回的目录项或属性等。此外，LDAP操作
+还解释出现的错误。下面，将详细描述这些LDAP操作。
+4.  调用LDAP操作
+   这一部分详细描述了LDAP API的调用。所有调用依赖一个连接句柄，即指向一个包含
+所有连接信息的LDAP结构的指针。通常结果将返回到一个LDAPMessage结构中。部分结
+构将在下面说明。
+4.1.  打开一个联接
+   ldap_open() 函数打开一个到LDAP服务器的联接。
+
+              typedef struct ldap {
+                      /* ... 隐含参数 ... */
+                      int     ld_deref;
+                      int     ld_timelimit;
+                      int     ld_sizelimit;
+                      int     ld_errno;
+                      char    *ld_matched;
+                      char    *ld_error;
+                      /* ...隐含参数... */
+              } LDAP;
+
+              LDAP *ldap_open( char *hostname, int portno );
+
+      参数:
+
+      host：  需要联接的LDAP服务器的一个分离空间的主机名列表或者是代表服务器IP
+地址的分离的字符串。有序列表中的主机都处于准备被联接状态，直到其中有
+一个被成功联接上为止。
+
+      port： 含用于联接的TCP端口号。缺省的LDAP端口能够从常量LDAP_PORT中获
+得。
+
+   ldap_open() 返回一个联结句柄, 即一个指向LDAP结构的指针。为随后的绑定到目录服
+务器提供参数值。如果打开操作失败，返回NULL。 在其它操作执行之前，必须完成ldap_bind
+操作（即绑定到目录服务器），关于ldap_bind的说明在后面会提到。
+   调用程序将不考虑LDAP结构域的顺序。可能结构中的某些域在国内图书馆会被采用。
+以上的域在下面其它函数调用的描述中会有所提及。
+4.2.  绑定到目录
+   ldap_bind()及同类函数用于绑定到目录。
+
+           int ldap_bind( LDAP *ld, char *dn, char *cred, int method );
+
+           int ldap_bind_s( LDAP *ld, char *dn, char *cred, int method );
+
+           int ldap_simple_bind( LDAP *ld, char *dn, char *passwd );
+
+           int ldap_simple_bind_s( LDAP *ld, char *dn, char *passwd );
+
+           int ldap_kerberos_bind( LDAP *ld, char *dn );
+
+           int ldap_kerberos_bind_s( LDAP *ld, char *dn );
+
+   参数：
+
+   ld     连接句柄；
+
+   dn     进行绑定操作的用户dn；
+
+   cred   认证的证件；
+
+   method  LDAP_AUTH_SIMPLE，LDAP_AUTH_KRBV41，或LDAP_AUTH_ LDAPKRBV42
+中的一种，包含用于认证的方式。
+
+   passwd  为ldap_simple_bind()系列专有，用于与目录项中的userPassword属性值作比较。  
+
+   这里有关于bind调用的三种类型，提供简单的认证，kerberos 认证，以及普通事务。由
+于第四版本的Kerberos认证使用了通用的ldap_bind() ，忽略了证书部分，因此系统假定存
+在有效的认证依据，并且能被用于恢复特定的服务依据。
+   与该事务一致的版本的名字以_s结尾。这些事务返回bind操作的结果。如果操作成功，
+返回LDAP_SUCCESS，否则返回错误代码。下一节将列出可能出现的错误句柄的更多信息
+并且对这些信息加以解释。
+   与以上事务一致的版本将返回初始化bind操作的信息id。随后调用ldap_result(),用于获
+取bind操作的结果。如果出错，返回-1，并在LDAP结构中设置ld_errno域。
+   注意，在bind操作成功之前，其它的所有操作都不能成功，其后的bind调用可用于同
+一联接之上的重复认证。
+4.3.  关闭连接
+   ldap_unbind()  用于解除与目录的绑定并关闭连接。
+
+           int ldap_unbind( LDAP *ld );
+
+   参数：
+
+      ld   连接句柄。
+
+   ldap_unbind()  工作在同步模式，解除与目录的绑定，关掉连接，并在返回前释放ld结
+构。ldap_unbind()返回LDAP_SUCCESS (如果请求未被送往LDAP服务器，则返回一个LDAP
+错误代码)。在调用完ldap_unbind()之后，ld连接句柄失效。
+4.4.  查询
+   ldap_search() 及同类函数用于查询LDAP目录，返回匹配的目录项的请求值。
+这里有三种形式：
+
+           struct timeval {
+                   long    tv_sec;
+                   long    tv_usec;
+           };
+           int ldap_search(
+                   LDAP    *ld,
+                   char    *base,
+                   int     scope,
+                   char    *filter,
+                   char    *attrs[],
+                   int     attrsonly
+           );
+           int ldap_search_s(
+                   LDAP            *ld,
+                   char            *base,
+
+                   int             scope,
+                   char            *filter,
+                   char            *attrs[],
+                   int             attrsonly,
+                   LDAPMessage     **res
+           );
+           int ldap_search_st(
+                   LDAP            *ld,
+                   char            *base,
+                   int             scope,
+                   char            *filter,
+                   char            *attrs[],
+                   int             attrsonly,
+                   struct timeval  *timeout,
+                   LDAPMessage     **res
+           );
+
+   参数：
+
+   ld        连接句柄；
+
+   base      最基本的 dn 条件值；
+
+scope    为LDAP_SCOPE_BASE， LDAP_SCOPE_ONELEVEL，或LDAP_SCOPE_SUBTREE，
+表示查询的范围。
+
+   filter    匹配的字符串，在RFC 1558 [3]中有详细的描述。
+
+   attrs     为NULL时表示返回所有匹配的条目。非空导致所有可用属性将被恢复。
+
+   attrsonly  布尔值。如果为0则返回属性类型以及属性值；非0则只返回属性类型。
+
+   timeout   当调用ldap_search_st()时，它将指出本地查询的时延值。
+
+   res       当同步调用时，该参数将包含函数调用结束时的一个返回值。
+
+   有三个域决定了查询操作的执行。它们分别是：
+
+   ld_sizelimit  限制查询结果的数目。为0时表示没有限制。
+
+   ld_timelimit  限制查询的时间。为0表示没有限制。
+
+   ld_deref     其值为以下任意一个LDAP_DEREF_NEVER, LDAP_DEREF_SEARCHING,
+               LDAP_DEREF_FINDING, 或LDAP_DEREF_ALWAYS，指明查询时别名
+将怎样被绑定。 值为LDAP_DEREF_SEARCHING表示在查询时将不允
+许别名，但对base指定的条目将不受此限制；值为
+LDAP_DEREF_FINDING时情况刚好与LDAP_DEREF_SEARCHING相
+反。
+
+   ldap_search()进行的是异步查询。它返回初始化查询的id值。该值被随后调用的
+ldap_result()函数获得，对其进行语法分析，并进行相应的描述。如果操作失败，返回-1；并
+且，LDAP结构中的ld_errno域将被重设。
+
+   通过调用ldap_search_s()或ldap_search_st()进行同步查询。进程将保持一致，除了
+ldap_search_st()函数的额外参数将指定查询的时延。两个函数都将直接返回查询的结果：
+LDAP_SUCCESS或者错误代码。查询到的条目的返回值将保存在res参数里。该参数对于
+调用者来说是不透明的。条目、属性、值等将通过下面介绍的函数获得。保存在参数res中
+的结果当不再被使用时，将通过调用ldap_msgfree()函数进行释放，这在后面会有详细介绍。
+4.5.  读取条目
+   LDAP 不支持直接的读操作。实际上，查询操作中的操作范围：LDAP_SCOPE_BASE，
+匹配条件："(objectclass=*)"都利用到了读操作。参数attrs包含了返回的属性列表。
+4.6.  子条目列表
+   LDAP 不直接支持列表操作。实际上，查询操作中的操作范围：LDAP_SCOPE_ 
+ONELEVEL，匹配条件："(objectclass=*)"也利用到了列表操作。参数attrs包含了返回的所
+有子条目的属性列表。
+4.7.  修改条目
+   函数ldap_modify() and ldap_modify_s()用于修改存在的LDAP条目。
+
+           typedef struct ldapmod {
+                   int             mod_op;
+                   char            *mod_type;
+                   union {
+                           char            **modv_strvals;
+                           struct berval   **modv_bvals;
+                   } mod_vals;
+           } LDAPMod;
+           #define mod_values      mod_vals.modv_strvals
+           #define mod_bvalues     mod_vals.modv_bvals
+
+           int ldap_modify( LDAP *ld, char *dn, LDAPMod *mods[] );
+
+           int ldap_modify_s( LDAP *ld, char *dn, LDAPMod *mods[] );
+
+   参数：
+
+   ld       联接句柄；
+
+   dn       要修改的条目名；
+
+   mods     属性修改操作模式；
+
+LDAPMod结构域包含以下信息：
+
+  mod_op   操作类型。其值可能为：LDAP_MOD_ADD, LDAP_MOD_DELETE，或 
+LDAP_MOD_REPLACE。该域同时指定了mod_vals单元值的类型。如果
+为LDAP_MOD_BVALUES 则选择了mod_bvalues模式。否则，mod_values
+定义的模式才有效。
+
+ mod_type  修改的属性类型；
+
+mod_vals  值为：add, delete，或replace。mod_values与mod_bvalues不能共用。只有
+在mods_op中指定为LDAP_MOD_BVALUES时才能在这里设为
+mod_bvalues值。 mod_values为包含字符串的非空数组，字符串可为
+NULL。mod_bvalues为包含berval结构的非空数组，用于包含二进制类型
+的值，例如图片。
+
+   LDAP_MOD_ADD模式用于在条目中创建新的属性。LDAP_MOD_DELETE模式用于删
+除条目中不再需要的属性。如果是删除操作，那么mod_vals域的值将设为NULL。   
+LDAP_MOD_REPLACE模式中，属性值将设置为列表中定义的值。所有模式的运行顺序都
+遵循它们排列的先后顺序。
+
+   ldap_modify_s()返回修改操作的LDAP出错代码。该代码能被ldap_perror()及其友元函数
+解析。
+   ldap_modify() 返回初始化信息的id，出错时返回-1。操作结果通过调用ldap_result()获得。
+ 4.8.  修改条目的RDN
+   ldap_modrdn()和ldap_modrdn_s()用于改变条目的名称。
+
+           int ldap_modrdn(
+                   LDAP    *ld,
+                   char    *dn,
+                   char    *newrdn,
+                   int     deleteoldrdn
+           );
+           int ldap_modrdn_s(
+                   LDAP    *ld,
+                   char    *dn,
+                   char    *newrdn,
+                   int     deleteoldrdn
+           );
+
+   参数：
+   ld            连接句柄；
+
+   dn            RDN将改变的条目名称；
+
+   newrdn        给条目的新RDN；
+
+   deleteoldrdn    布尔值，非0表示旧的RDN 值将被删除，为0表示将继续保留旧的RDN
+值。
+
+   ldap_modrdn_s()是同步操作，返回操作结果的LDAP错误代码。
+
+   ldap_modrdn()  为异步函数，返回操作初始化的信息id。如果有误返回-1。通过调用
+dap_result()可以获得操作的结果。
+4.9.  增加条目
+   ldap_add()和ldap_add_s()用于增加LDAP目录中的条目。
+
+           int ldap_add( LDAP *ld, char *dn, LDAPMod *attrs[] );
+
+           int ldap_add_s( LDAP *ld, char *dn, LDAPMod *attrs[] );
+
+   参数：
+
+   ld    连接句柄；
+
+   dn    新添加条目的名称；
+
+   attrs  条目的属性，采用ldap_modify()中定义的LDAPMod结构。要求输入mod_type与
+mod_vals域的值，mod_op域缺省。除非遇到常量LDAP_MOD_BVALUES时, 需要用到相
+应的mod_bvalues替代mod_vals。
+
+   注意，新添加条目的父条目必须已经存在。
+
+   ldap_add_s()是同步操作，返回操作结果的LDAP错误代码。
+   ldap_add()为异步操作，返回操作初始化的信息id。如果有误返回-1。通过调用dap_result()
+可以获得操作的结果。
+4.10.  删除条目
+   ldap_delete()和ldap_delete_s()用于删除LDAP目录中的条目。
+
+           int ldap_delete( LDAP *ld, char *dn );
+
+           int ldap_delete_s( LDAP *ld, char *dn );
+
+   参数：
+
+   ld       连接句柄；
+
+   dn       需要删除的条目名称。
+
+   注意，被删除的条目必须是“叶”条目（即，不含有子条目）。LDAP不支持删除带有子
+条目的结点。
+
+   ldap_delete_s()  是同步操作，返回操作结果的LDAP错误代码。
+   ldap_delete()    是异步操作，返回操作初始化的信息id。如果有误返回-1。通过调用
+dap_result()可以获得操作的结果。
+5.  取消操作
+   ldap_abandon()用于取消进行的操作。
+
+           int ldap_abandon( LDAP *ld, int msgid );
+
+   ldap_abandon()通过信息的id号――msgid取消操作。如果操作成功，返回0；否则，返
+回-1。在成功调用ldap_abandon()之后，给定信息id的操作结果将不会有返回值。
+6.  结果处理
+   ldap_result()用于获得前面调用的异步初始化操作的结果。ldap_msgfree()释放由函数
+ldap_result()获得的结果或同步查询进程。
+
+           int ldap_result(
+                   LDAP            *ld,
+                   int             msgid,
+                   int             all,
+                   struct timeval  *timeout,
+                   LDAPMessage     **res
+           );
+
+           int ldap_msgfree( LDAPMessage *res );
+
+   参数：
+
+   ld       连接句柄；
+
+   msgid    操作结果的信息id。如果希望返回所有的结果，则设为常量LDAP_RES_ANY；
+
+ all       一个布尔型参数，仅对查询结果起作用。如果非0，表明在获取了所有查询结
+果后再一并返回；为0，表明查询到一个结果就返回一个结果。
+
+   timeout   等待结果返回的最短时间。为NULL表明没有时间限制。为0表示轮询操作。
+
+   res       在ldap_result()中，该参数将保存操作的结果；在ldap_msgfree()中，该参数用
+于释放从ldap_result()或ldap_search_s()或ldap_search_st()获得的结果。
+            .
+
+   若上面的操作成功，ldap_result()将通过res参数返回结果的类型。其类型为以下几种：
+             LDAP_RES_BIND
+             LDAP_RES_SEARCH_ENTRY
+             LDAP_RES_SEARCH_RESULT
+             LDAP_RES_MODIFY
+             LDAP_RES_ADD
+             LDAP_RES_DELETE
+             LDAP_RES_MODRDN
+             LDAP_RES_COMPARE
+
+   如果超出了时间限制，ldap_result()将返回0；如果出错，将返回-1，同时将出错信息记
+录到ld_errno 域。
+   ldap_msgfree()释放指向res结构的指针并返回释放信息的类型。 
+7.  出错处理
+   下面的函数调用用于解释由其它LDAP API产生的出错信息。
+
+           int ldap_result2error(
+                   LDAP            *ld,
+                   LDAPMessage     *res,
+                   int             freeit
+           );
+
+           char *ldap_err2string( int err );
+
+           void ldap_perror( LDAP *ld, char *msg );
+
+   参数：
+
+   ld       连接句柄；
+
+   res      其它LDAP操作的返回值，即ldap_result()的返回值或其它同步API操作的结果；
+
+   freeit    布尔型参数，指明参数res是否被释放（非0，释放；0，不释放）；
+
+   err      LDAP出错代码，即ldap_result2error()的返回值或其它同步API操作的结果；
+
+   msg      在LDAP出错信息之前显示的信息。
+
+   ldap_result2error()用于将从ldap_result()中获得的LDAP结果，或同步API操作的结果转
+换为数字类型的LDAP错误代码。并且分析结果信息中的ld_matched and ld_error部分，将
+其放入连接句柄信息中。所有的同步操作进程在返回值之前调用ldap_result2error()，以确保
+各个域的正确设置。联接结构中相关的域有：
+
+   ld_matched  用于LDAP_NO_SUCH_OBJECT错误值返回时，该参数限制了匹配的DN
+的范围；
+
+   ld_error    该参数保存了LDAP服务器发送出的出错信息；
+
+   ld_errno    LDAP出错代码指出了操作的结果。其值为以下的任意一个：
+
+           LDAP_SUCCESS
+           LDAP_OPERATIONS_ERROR
+           LDAP_PROTOCOL_ERROR
+           LDAP_TIMELIMIT_EXCEEDED
+           LDAP_SIZELIMIT_EXCEEDED
+           LDAP_COMPARE_FALSE
+           LDAP_COMPARE_TRUE
+           LDAP_STRONG_AUTH_NOT_SUPPORTED
+           LDAP_STRONG_AUTH_REQUIRED
+           LDAP_NO_SUCH_ATTRIBUTE
+           LDAP_UNDEFINED_TYPE
+           LDAP_INAPPROPRIATE_MATCHING
+           LDAP_CONSTRAINT_VIOLATION
+           LDAP_TYPE_OR_VALUE_EXISTS
+           LDAP_INVALID_SYNTAX
+           LDAP_NO_SUCH_OBJECT
+           LDAP_ALIAS_PROBLEM
+           LDAP_INVALID_DN_SYNTAX
+           LDAP_IS_LEAF
+           LDAP_ALIAS_DEREF_PROBLEM
+           LDAP_INAPPROPRIATE_AUTH
+           LDAP_INVALID_CREDENTIALS
+           LDAP_INSUFFICIENT_ACCESS
+           LDAP_BUSY
+           LDAP_UNAVAILABLE
+           LDAP_UNWILLING_TO_PERFORM
+           LDAP_LOOP_DETECT
+           LDAP_NAMING_VIOLATION
+           LDAP_OBJECT_CLASS_VIOLATION
+           LDAP_NOT_ALLOWED_ON_NONLEAF
+           LDAP_NOT_ALLOWED_ON_RDN
+           LDAP_ALREADY_EXISTS
+           LDAP_NO_OBJECT_CLASS_MODS
+           LDAP_RESULTS_TOO_LARGE
+           LDAP_OTHER
+           LDAP_SERVER_DOWN
+           LDAP_LOCAL_ERROR
+           LDAP_ENCODING_ERROR
+           LDAP_DECODING_ERROR
+           LDAP_TIMEOUT
+           LDAP_AUTH_UNKNOWN
+           LDAP_FILTER_ERROR
+           LDAP_USER_CANCELLED
+           LDAP_PARAM_ERROR
+           LDAP_NO_MEMORY
+
+   ldap_err2string()用于将数字型的LDAP出错代码（例如ldap_result2error()的返回值，或
+任意一同步API操作调用结果）转换为描述该出错信息的字符串。其返回一个指向静态数
+据的指针。
+   ldap_perror() 用于将ld_errno域中参数msg中包含的信息转换为标准的错误信息。
+8.  对查询结果的处理
+   下面的函数调用用于分析由ldap_search()及其友员函数返回的结果。这些返回值存放在
+一个不透明的结构中，只能通过调用下面这些函数来获得。这些函数可用于处理返回的条目、
+条目属性、获得条目名称，以及获得条目中给定属性的属性值。
+8.1.  条目结果的处理
+   函数ldap_first_entry()和ldap_next_entry()用于处理查询到的条目结果。
+   ldap_count_entries() 用于计算返回的条目个数。
+
+           LDAPMesage *ldap_first_entry( LDAP *ld, LDAPMessage *res );
+
+           LDAPMesage *ldap_next_entry( LDAP *ld, LDAPMessage *entry );
+
+           int ldap_count_entries( LDAP *ld, LDAPMessage *res );
+
+   参数：
+   ld     连接句柄；
+
+   res    查询结果，由同步查询进程或函数ldap_result()获得；
+
+   entry  函数调用ldap_first_entry()或ldap_next_entry()的返回值；
+
+      当没有条目存在时ldap_first_entry()和ldap_next_entry()将返回NULL。当函数在运行
+过程中出错时也会返回NULL，但此时ld连接句柄中的ld_errno域将记录该错误信息。
+      ldap_count_entries() 返回在条目链中条目的个数。该函数也可被用于计算在函数调用
+ldap_first_entry()或ldap_next_entry()中符合条件的条目的个数。
+8.2.  对属性结果的处理
+   函数ldap_first_attribute() 和ldap_next_attribute()用于对由某个条目返回的属性结果的处
+理。
+
+           char *ldap_first_attribute(
+                   LDAP            *ld,
+                   LDAPMessage     *entry,
+                   void            **ptr
+           );
+           char *ldap_next_attribute(
+                   LDAP            *ld,
+                   LDAPMessage     *entry,
+                   void            *ptr
+           );
+
+   参数：
+   ld     连接句柄；
+
+   entry  需处理的属性结果所在的条目，即ldap_first_entry()或ldap_next_entry()的返回值；
+
+   ptr    在函数ldap_first_attribute()中,用于保存当前条目所在位置的地址指针。函数
+ldap_next_attribute()所用到的指针为先前调用ldap_first_attribute()获得的返回值。
+
+      当达到最后一个属性时，函数ldap_first_attribute()和ldap_next_attribute()将返回
+NULL，由于这个原因，ld句柄中的ld_errno 域将被设置为error。
+      两个进程都将返回一个指向包含当前属性名的联接缓冲的指针。这将被当作静态数据
+对待。ldap_first_attribute()将定位并返回一个指向BerElement类型的名为ptr的指针，以
+保存当前位置的路径。该指针将被后面的调用ldap_next_attribute() 所引用，以获得下一
+个条目的属性结果。
+      返回的属性名将被ldap_get_values()极其成员函数利用，以获得相关的属性值。
+8.3.  获得属性值
+   ldap_get_values()和ldap_get_values_len()用于获得条目的属性值。ldap_count_values()
+和ldap_count_values_len()用于计算返回值的个数。ldap_value_free()和
+ldap_value_free_len()用于释放返回的属性值。
+
+           typedef struct berval {
+                   unsigned long   bv_len;
+                   char            *bv_val;
+           };
+
+           char **ldap_get_values(
+                   LDAP            *ld,
+                   LDAPMessage     *entry,
+                   char            *attr
+           );
+
+           struct berval **ldap_get_values_len(
+                   LDAP            *ld,
+                   LDAPMessage     *entry,
+                   char            *attr
+           );
+
+           int ldap_count_values( char **vals );
+
+           int ldap_count_values_len( struct berval **vals );
+
+           int ldap_value_free( char **vals );
+
+           int ldap_value_free_len( struct berval **vals );
+
+   参数：
+
+   ld     连接句柄；
+
+   entry  属性所属的条目，即ldap_first_entry()或ldap_next_entry()的返回值；
+
+   attr   返回值的属性，即ldap_first_attribute()或ldap_next_attribute()或一个字符串调用的
+返回值（例如，"mail"）；
+
+   vals   先前调用ldap_get_values()或ldap_get_values_len()的返回值。
+
+   两种不同形式的调用都是有条件的。第一重形式只适用于非二进制的字符串类型数据；
+第二种_len形式适用于任何形式的数据。
+
+   注意，返回的值当不再使用时，应调用函数ldap_value_free()或ldap_value_free_len()进行
+释放。
+8.4.  目录项DN分析处理
+   ldap_get_dn() 用于获得条目的dn 。
+
+   ldap_explode_dn() 用于将 dn 中的各字段切开。
+
+ ldap_dn2ufn()  用于将dn 的名字转换成较易读取的名字。
+
+           char *ldap_get_dn( LDAP *ld, LDAPMessage *entry );
+
+           char **ldap_explode_dn( char *dn, int notypes );
+
+           char *ldap_dn2ufn( char *dn );
+
+   参数：
+
+   ld       连接句柄；
+
+   entry    为ldap_first_entry()或ldap_next_entry()返回的搜寻代号；
+
+   dn      可由ldap_get_dn()的返回值得到；
+
+   notypes  布尔型参数，如果非零表明dn的组成部分将只包含属性值，而不包含属性名。         
+(例如，"cn=Babs"将变为"Babs")。
+
+   ldap_get_dn() 当dn分析错误时返回NULL，为ld连接句柄设置ld_errno以指明错误。
+它返回一个指向预分配空间的指针，当此空间不再被使用时，调用free() 进行空间释放。这
+些DN的返回格式在[4]中有所描述。
+
+   ldap_explode_dn() 返回一个指针数组，该数组包含提供给DN的RDN部分。并通过
+notypes参数标识是否包含类型。当不再使用该数组返回值时，可调用ldap_value_free()进行
+资源释放。
+
+   ldap_dn2ufn() 将DN转换成较易读取的名字(User Friendly Name)，描述参见[5]。UFN将
+返回值到预分配的空间，当此空间不再使用时，可调用free() 函数释放。
+9.  安全考虑
+   LDAP支持联结鉴别时的少量安全。
+10.  鸣谢
+   这篇材料基于国家科学中心授权的No. NCR-9416667的大力支持。
+11.  参考书目
+   [1] The Directory: Selected Attribute Syntaxes.  CCITT,
+       Recommendation X.520.
+
+   [2] Howes, T., Kille, S., Yeong, W., and C. Robbins, "The String
+       Representation of Standard Attribute Syntaxes", University of
+       Michigan, ISODE Consortium, Performance Systems International,
+       NeXor Ltd., RFC 1778, March 1995.
+
+   [3] Howes, T., "A String Representation of LDAP Search Filters", RFC
+       1558, University of Michigan, December 1993.
+
+   [4] Kille, S., "A String Representation of Distinguished Names", RFC
+       1779, ISODE Consortium, March 1995.
+
+   [5] Kille, S., "Using the OSI Directory to Achieve User Friendly
+       Naming",  RFC 1781, ISODE Consortium, March 1995.
+
+   [6] S.P. Miller, B.C. Neuman, J.I. Schiller, J.H. Saltzer, "Kerberos
+       Authentication and Authorization System", MIT Project Athena
+       Documentation Section  E.2.1, December 1987
+
+   [7] Yeong, W., Howes, T., and S. Kille, "Lightweight Directory Access
+       Protocol," RFC 1777, Performance Systems International,
+       University of Michigan, ISODE Consortium, March 1995.
+12.  作者地址
+       Tim Howes
+       University of Michigan
+       ITD Research Systems
+       535 W William St.
+       Ann Arbor, MI 48103-4943
+       USA
+
+       Phone: +1 313 747-4454
+       EMail: tim@umich.edu
+
+       Mark Smith
+       University of Michigan
+       ITD Research Systems
+       535 W William St.
+       Ann Arbor, MI 48103-4943
+       USA
+
+       Phone: +1 313 764-2277
+       EMail: mcs@umich.edu
+13.  附： 一个简单的LDAP API代码
+   #include <ldap.h>
+
+   main()
+   {
+           LDAP            *ld;
+           LDAPMessage     *res, *e;
+           int             i;
+           char            *a, *dn;
+           void            *ptr;
+           char            **vals;
+
+           /* 打开一个连接 */
+           if ( (ld = ldap_open( "dotted.host.name", LDAP_PORT ))
+                   == NULL )
+                   exit( 1 );
+
+           /* 匿名登陆 */
+           if ( ldap_simple_bind_s( ld, NULL, NULL ) != LDAP_SUCCESS ) {
+                   ldap_perror( ld, "ldap_simple_bind_s" );
+                   exit( 1 );
+           }
+
+           /* 查询cn="Babs Jensen"的条目,并返回所有属性 */
+           if ( ldap_search_s( ld, "o=University of Michigan, c=US",
+               LDAP_SCOPE_SUBTREE, "(cn=Babs Jensen)", NULL, 0, &res )
+               != LDAP_SUCCESS ) {
+                   ldap_perror( ld, "ldap_search_s" );
+                   exit( 1 );
+           }
+
+           /* 分析每个返回的条目 */
+           for ( e = ldap_first_entry( ld, res ); e != NULL;
+               e = ldap_next_entry( ld, e ) ) {
+                   /* 打印对象的dn */
+                   dn = ldap_get_dn( ld, e );
+                   printf( "dn: %s0, dn );
+                   free( dn );
+
+                   /* 打印每个属性 */
+                   for ( a = ldap_first_attribute( ld, e, &ptr );
+                           a != NULL;
+                       a = ldap_next_attribute( ld, e, ptr ) ) {
+                           printf( "attribute: %s0, a );
+
+                           /* 打印每个属性值 */
+
+                           vals = ldap_get_values( ld, e, a );
+                           for ( i = 0; vals[i] != NULL; i++ ) {
+                                   printf( "value: %s0, vals[i] );
+                           }
+                           ldap_value_free( vals );
+                   }
+           }
+           /* 释放查询结果 */
+           ldap_msgfree( res );
+
+           /* 关闭资源连接 */
+           ldap_unbind( ld );
+   }
+
+RFC1823――The LDAP Application Program Interface         LDAP应用程序接口
+
+
+19
+RFC文档中文翻译计划

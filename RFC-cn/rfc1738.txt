@@ -1,0 +1,764 @@
+Network Working Group                                     T. Berners-Lee
+Request for Comments: 1738                                          CERN
+Category: Standards Track                                    L. Masinter
+                                                       Xerox Corporation
+                                                             M. McCahill
+                                                 University of Minnesota
+                                                                 Editors
+December 1994
+
+统一资源定位器（URL）
+(RFC1738――Uniform Resource Locators (URL)）
+这份备忘录的情况
+本备忘录详细说明了一种为因特网团体提供的因特网标准追踪协议（track protocol），
+恳请大家讨论并提出宝贵意见。如果你想了解这个协议的情况及标准化状态，请参考《因
+特网正式协议标准（Internet Official Protocol Standards）》（STD 1）的最新版本。
+本备忘录可以自由发布发布，不受任何限制。
+摘要
+该文档详细说明了统一资源定位器、定位的语法和语义以及如何通过因特网来访问资源。
+
+
+目录
+1．绪论	2
+2．常规URL语法	2
+2．1  URL的主要部分	2
+2．2  URL字符编码问题	3
+2．3 分层方案和关系链接	4
+3．特殊方案	4
+3．1通用因特网方案语法	4
+3．2 FTP	5
+3．3 HTTP	7
+3．4 GOPHER	7
+3．5 MAILTO	9
+3．6 NEWS（新闻）	10
+3．7 NNTP（Network News Transfer Protocol,网络新闻传输协议）	10
+3．8 TELNET	10
+3．9 WAIS（Wide Area Information Servers,广域信息服务系统）	11
+3．10 FILES(文件)	11
+3．11 PROSPERO	12
+4． 新方案的注册	13
+5．特定URL方案的BNF（巴柯斯范式）	13
+6．安全事项	16
+7．感谢	16
+附录：上下文URL的推荐标准	17
+参考文献：	17
+编者地址：	19
+
+1．绪论
+
+因特网上的可用资源可以用简单字符串来表示，该文档就是描述了这种字符串的语法和语
+义。而这些字符串则被称为：“统一资源定位器”（URL）。
+
+这篇说明源于万维网全球信息主动组织（World Wide Web global information 
+initiative）介绍的概念。RFC1630《通用资源标志符》描述了一些对象数据，他们自1990
+年起就开始使用这些对象数据。这篇URL说明符合《因特网资源定位符的功能需求
+（Functional Requirements for Internet Resource Locators）》[12]中说明的需求。
+
+这篇文档是由工程任务组织（IETF）的URI工作小组写的。如果你有什么建议和意见的
+话，你可以给编辑或者URI工作小组< uri@bunyip.com>写信.这个小组的讨论档案存放
+在URL:http://www.acl.lanl.gov/URI/archive/uri-archive.index.html。
+
+2．常规URL语法
+正如访问资源的方法有很多种一样，对资源进行定位的方案也有好几种。
+
+URL的一般语法只是为使用协议来建立新方案提供了一个框架，当然除了已经在这篇文档
+中定义过的。
+
+URL通过提供资源位置的一种抽象标志符来对资源进行定位。系统定位了一个资源后，可
+能会对它进行各种各样的操作，这些操作可以抽象为下面的几个词：访问，更新，替换，
+发现属性。一般来说，只有访问方法这一项在任何URL方案中都需要进行描述。
+2．1  URL的主要部分
+第五部分给出了URL语法的完整BNF描述。
+URL通常被写成如下形式：
+<方案>:<方案描述部分>
+一个URL包含了它使用的方案名称（<方案>）, 其后紧跟一个冒号，然后是一个字符串
+（<方案描述部分>），这部分的解释由所使用的方案来决定。
+方案名称由一串字符组成。小写字母“a”――“z”，数字，字符加号（“+”），句点（“.”）
+和连字号（“-”）都可以。为了方便起见，程序在解释URL的时候应该视方案名称中的大
+写字母和小写字母一样。（例如：视“HTTP”和“http”一样）。
+2．2  URL字符编码问题
+URL是由一串字符组成，这些字符可以是字母，数字和特殊符号。一个URL可以用多种方
+法来表现,例如：纸上的字迹，或者是用字符集编码的八位字节序列。URL的解释仅取决
+于所用字符的特性。
+在大多数URL方案中，都是使用URL不同部分的字符序列来代表因特网协议中所使用的
+八位字节序列。例如，在ftp方案中主机名，目录名和文件名就是这样的八位字节序列，
+它们用URL的不同部分代表。在这些部分里，一个八位字节数可以用这样的字符来表示：
+该字符在US―ASCII[20]编码字符集中的编码是这个八位字节数。
+另外，八位字节数可以被编成如下形式的代码：“%”后加两个十六进制数字（来自于
+“0123456789ABCDEF”），这两个十六进制数字代表了这八位字节数的值。(字符“abcdef”
+也可以用于十六进制编码)。
+如果存在下面的情况：八位字节数在US-ASCII字符集中没有相应的可显示字符，或者使
+用相应字符会产生不安全因素，或者相应的字符被保留用于特定的URL方案的解释，那
+么它们必须被编成代码。
+没有相应的可显示字符：
+URL只能用US-ASCII字符编码集中的可显示字符表示。US-ASCII中没有用到十六进制的
+八位字节80-FF，并且00－1F和7F代表了控制字符，这些字符必须进行编码。
+不安全：
+字符不安全的原因很多。空格字符就是不安全的，因为URL在被转录或者被排版或者被
+字处理程序处理后其中重要的空格可能被忽略，而可忽略的空格却有可能被解释了。“<”
+和“>”字符也是不安全的，因为它们被用来作为URL在文本中的分隔符；而在有些系统
+中用引号“"”来界定URL。“#”字符也是不安全的，因为它在万维网和其他一些系统中
+被用来从“片段/锚点”标志符中界定URL，所以它通常都要被编码。字符“%”被用来对
+其他字符进行编码，它也是不安全的。其他一些字符，如："{", "}", "|", "\", "^", 
+"~","[", "]",和"`"，由于网关和其他传输代理有时会对这些字符进行修改，所以它们
+也是不安全的。
+必须对URL中所有不安全的字符进行编码。例如，URL中的字符“#”即使是在通常不处
+理片断或者锚点标志符的系统也需要进行编码，这样如果这个URL被拷贝到使用这些标
+志符的系统中，也不必改变URL编码了。
+保留：
+许多URL方案保留了一些字符并赋予特定的含义：它们出现在URL的特定部位并表示特
+定的含义。如果一个字符对应的八位字节在方案中被保留了，那么这个八位字节必须进行
+编码。字符";","/", "?", ":", "@", "=" 和 "&"可能被某个方案所保留，除此之外没
+有其他的保留字符。
+通常情况下一个八位字节被用一个字符表示后或者被编码之后，URL的解释都是一样的。
+但这对于保留字符来说就不适用了：对某一特定方案的保留字符进行编码可能会改变URL
+的语义。
+这样，在URL中只有字母与数字，以及特殊字符“$-_.+!*'(),”和用作保留目的的保留
+字符可以不进行编码。
+另一方面，不必进行编码的字符（包括字母与数字）如果出现在URL的特定部位，只要
+它们不用作保留目的，则可进行编码。
+2．3 分层方案和关系链接
+URL有时候被用来定位那些包含指示器的资源，而这些指示器又指向其他资源。有时候这
+些指示器用关系链接表示，在关系链接中第二资源的位置表示符原则上“和那些除了带有
+次相关路径的表示符相同”。在这篇文档中没有对关系链接进行描述。但是，关系链接的
+使用依赖于包含分层结构的原始URL，它是关系链接的基础。
+有些URL方案（例如ftp，http，和文件方案）包含的名字可以被认为是分层次的；这些
+层次之间用“/”分隔。
+3．特殊方案
+一些已经存在的标准协议和正处于试验中的协议之间的映射关系的轮廓用BNF语法定义
+进行描述。下面对一些协议进行了注释：
+   ftp                     File Transfer protocol（文件传输协议）
+   http                    Hypertext Transfer Protocol（超文本传输协议）
+   gopher                  The Gopher protocol（Gopher协议）
+   mailto                  Electronic mail address（电子邮件地址）
+   news                    USENET news（USENET新闻）
+   nntp                    USENET news using NNTP access
+                          （使用NNTP访问的USENET新闻）
+   telnet                  Reference to interactive sessions
+  （交互式会话访问）
+   wais                    Wide Area Information Servers（广域信息服务系统）
+   file                    Host-specific file names（特殊主机文件名）
+   prospero                Prospero Directory Service(prospero目录服务)
+在以后的说明书中可能会对其他一些方案加以描述。这篇文档的第四部分介绍了如何注册
+新的方案，并且列出了一些正在研究中的方案名。
+3．1通用因特网方案语法
+虽然URL其他部分的语法因方案的不同而不同，但那些直接使用基于IP的协议来定位因
+特网上的主机的URL方案都使用了如下形式的通用语法来表示特定的方案数据：
+//<用户名>:<密码>@<主机>:<端口>/<url路径>
+可能会省略“<用户名>:<密码>@”，“ :<密码>”，“ :<端口>”，和“/<url路径>”这些部
+分的某些或者全部。这些方案的特定数据以双斜线“//”开头来表明它遵从通用因特网方
+案语法。各个部分分别遵守如下规则：
+用户名
+任意的用户名称。有些方案（例如：ftp）允许使用用户名称的描述。
+密码
+任意的密码。如果存在的话，它紧跟在用户名后面并用一个冒号隔开。
+用户名（和密码）如果存在的话，其后紧跟一个商用符号“@”。在用户名和密码字段中出
+现的任何“:”，“@”或者“/”都要进行编码。
+注意空的用户名或者密码不同于没有用户名和密码；决不能在没有指定用户名的情况下指
+定密码。例如：<URL:ftp://@host.com/>的用户名为空并且没有密码，< 
+URL:ftp://host.com/>没有用户名，而<URL:ftp://foo:@host.com/>的用户名是“foo”
+并且密码为空。
+主机
+网络主机的域名，或者它的以“.”分隔的四组十进制数字集合形式的IP地址。域名的
+形式在RFC1034[13]的3.5节和RFC1123[5]的2.1节中进行了描述，即用“.”分隔的域
+标志串，域标志以字母或者数字开头和结束，也可能包含“-”字符。最右边的域标志不
+能以数字开头，这样就在语法结构上将域名和IP地址区分开来了。
+端口
+指明链接的端口。大部分方案都给协议指定一个默认的端口。也可以随意指定一个十进制
+形式的端口，并用冒号与主机隔开。如果忽略端口，那么这个冒号也要忽略。
+url路径
+定位符的其他部分由方案的特殊数据组成，这些特殊数据被称为“url－路径”。它提供
+了如何对特定资源进行访问的详细信息。注意主机（或端口）与url－路径间的“/”不
+是url－路径的一部分。
+url－路径的语法依赖于所使用的方案。也依赖于它在方案中的解释方法。
+3．2 FTP
+FTP URL方案可以用来指定因特网上使用FTP协议（RFC959）的可达主机上的文件和目录。
+FTP URL遵从3.1节所描述的语法。如果:<端口>被省略的话，则使用缺省端口21。
+3．2．1 FTP 用户名和密码
+在连接上FTP服务器后，可以用“USER”和“PASS”命令来指定用户名和密码。如果没
+有提供用户名或者密码并且FTP服务器只要求一项，那么将使用到“匿名”服务器的转
+换，如下所示：
+用户名“anonymous”被发送。
+访问资源的终端用户的因特网电子邮件地址被作为密码发送。
+如果URL提供用户名但不提供密码，那么远程服务器将要求提供密码，而解释FTP URL
+的程序则要求用户输入密码。
+3．2．2 FTP URL-路径
+FTP URL的URL-路径语法如下：
+<cwd1>/<cwd2>/.../<cwdN>/<name>;type=<typecode>
+这里的<cwd1>到<cwdN>和<name>（可能被编码）都是字符串，<typecode>是字符“a”，
+“i”和“d”之一。“;type=<typecode>”这一部分可以被省略。<cwdx>和<name>部分可
+以为空。整个url－路径，包括它和包含用户名，密码，主机及端口的前缀间的分界符“/”
+都可以被省略。
+url－路径可以被解释成如下的一串FTP命令：
+每个<cwd>元素被作为CWD（改变工作目录）命令的参数发送。
+如果类型编码是“d”，则执行一个以<name>作为参数的NTLS（名字列表）命令，并把结
+果解释为一个文件目录列表。
+否则，执行一个用<typecode>作为参数的TYPE命令，然后访问文件名为<name>的文件（例
+如，使用RETR命令）。
+name或者CWD部分的字符“/”和“;”都是保留字符，必须进行编码。在FTP协议中，
+这些部分在使用前被解码。特别的是，如果访问一个特定文件的适当FTP命令序列需要
+发送一个包含“/”的字符串作为CWD或者RETR命令的参数，那么必须对每个“/”都进
+行编码。
+例如，URL<URL:ftp://myname@host.dom/%2Fetc/motd>被FTP解释为“host.dom”，并以
+用户名“myname”登录（如果需要，则提示输入密码），然后执行“CWD /etc”，再接着
+执行“RETR motd”。这和<URL:ftp://myname@host.dom/etc/motd>的含义不一样，它先
+执行“CWD etc”然后执行“RETR motd”；开始的“CWD”可能被执行，进入用户“myname”
+的缺省目录。另一方面，<URL:ftp://myname@host.dom//etc/motd>将执行一个不带参数
+的“CWD”命令，然后执行“CWD etc”，接着执行“RETR moth”。
+FTP URL也可以用于其他操作；例如，可以更新远程文件服务器上的文件，或者根据它的
+目录列表来推断它的一些信息。完成这些功能的机制在这儿没有仔细介绍。
+3．2．3 FTP 类型编码是可选择的
+FTP URL的整个;type=<typecode>部分都是可选择的。如果这一部分被省略，那么解释
+URL的客户程序必须猜测适当模式来使用。一般来说，文件数据内容的类型只能从文件名
+来猜测，例如根据文件名后缀猜测；用来传输文件的合适的类型编码于是可以从文件的数
+据内容推断出来。
+3．2．4层次
+在有些文件系统中，用来表示URL的层次结构的“/”与用来构建文件系统层次的分隔符
+相同，这样一来，文件名和URL路径看起来就很像。但这并不意味着URL是一个Unix文
+件名。
+3．2．5优化
+客户端通过FTP对资源进行访问时可能会使用一些额外的搜索方法来优化交互过程。例
+如，对一些FTP服务器来说，当访问同一个服务器的多个URL的时候，则保持控制连接
+一直打开是比较合理的。但FTP协议没有通用的层次模式，因此当一个改变目录的命令
+发出后，如果是一个不同的路径，那么一般不可能推断出下一次将要给另一个目录发送什
+么样的序列。唯一可靠的算法是断开然后重新建立控制连接。
+3．3 HTTP
+HTTP URL 方案是用来标志因特网上使用HTTP(HyperText Transfer Protocol，超文本
+传输协议)的可达资源。
+HTTP协议在其他的地方进行了详细说明。本文只介绍了HTTP URL的语法。
+HTTP URL的形式如下：
+http://<host>:<port>/<path>?<searchpart>
+其中<host>和<port>已经在3.1节说明过了。如果:<port>部分省略，那么就使用缺省的
+端口80。不需要用户名和密码。<path>是一个HTTP选择器，<searchpart>是查询字符串。
+<path>,<searchpart>和它前面的“?”都是可选择的。如果<path>和<searchpart>部分
+都没有，则“/”也可以省略。
+<path>和<searchpart>部分中的“/”，“;”和“？”都是保留字符。“/”字符可以在HTTP
+中用来表示层次结构。
+3．4 GOPHER
+Gopher URL方案用来标志因特网上使用Gopher协议的可达资源。
+基本Gopher协议是在RFC1436中介绍的，它支持项和项（目录）集合。Gopher+ 协议则
+在基本Gopher协议的基础上进行了扩展，并且向上兼容。[2]中对它进行了介绍。Gopher+
+支持联合属性的任意集合和使用Gopher项的替换数据表示。Gopher URL提供了Gopher
+与Gopher+的项和项属性。
+3．4．1 Gopher URL 语法
+Gopher URL的形式如下：
+gopher://<host>:<port>/<gopher-path>
+这里的<gopher-path>是
+<gophertype><selector>
+<gophertype><selector>%09<search>
+<gophertype><selector>%09<search>%09<gopher+_string>
+之一。
+如果:<port>被省略，那么使用缺省端口70。<gophertype>是一个单字符域，它表示URL
+引用的资源的Gopher类型。<gopher-path>部分也可以整个为空。在这种情况下，分隔
+符“/”也是可选择的，并且<gophertype>的缺省值是“1”。
+<selector>是Gopher选择器字符串。在Gopher协议中，Gopher 选择器字符串一个八位
+字节串，它包括除了十六进制的09（US-ASCII HT 或tab），0A(US-ASCII 字符 LF)和
+0D(US-ASCII 字符CR)外的所有八位字节。
+Gopher客户通过向Gopher服务器发送Gopher选择器字符串来指定要获得的项。
+<gopher-path>中没有保留字符。
+需要注意的是：有些Gopher<selector>字符串是以<gophertype>字符的一个拷贝来开头，
+在这种情况下，这个字符将会连续出现两次。Gopher选择器可能是空字符串；Gopher客
+户端就是这样来查询Gopher服务器的高层目录的。
+3．4．2为Gopher搜索引擎指定URL
+如果URL被提交到Gopher搜索引擎进行查询，那么选择器后将紧跟一个已编码的tab
+（%09）和一个搜索字符串。Gopher客户为了向Gopher搜索服务器提交一个搜索必须向
+Gopher服务器发送<selector>字符串（编码后），一个tab字符，和一个搜索字符串。
+3．4．3Gopher+项的URL语法
+Gopher+项的URL有一个已编码的tab字符（%09）和一个Gopher+字符串。注意尽管
+<search>元素可以是空字符串，但在这种情况下必须提供%09<search>字符串。
+<gopher+_string>被用来表示取得Gopher+项所需要的信息。Gopher+项可以拥有交替视
+图，任意的属性系，也可以有与它们相关联的电子表格。
+客户为了获得与Gopher+URL相关联的数据，必须连接到服务器并且发送Gopher选择器，
+这个选择器的后面紧跟一个tab字符和搜索字符串（可以为空）然后是一个tab字符和
+Gopher+命令。
+3．4．4 缺省的Gopher+数据表示
+当一个Gopher服务器向客户返回目录列表时，Gopher+项后面跟着一个“+”（表示
+Gopher+项）或者一个“?”（表示具有与它们相关联的+ASK形式的Gopher+项）。Gopher+
+字符串只有一个字符“+”的Gopher URL采用项的缺省的视图（数据表示），而Gopher+
+字符串只有一个字符“?”的Gopher URL则采用具有相关联的Gopher电子表格的项。
+3．4．5 具有电子表格的Gopher+项
+具有与之相关联的+ASK的Gopher+项（也就是跟着一个“?”的Gopher+项）要求客户端
+取得该项的+ASK属性来获得表格定义，然后让用户填写这个表格并将用户应答和获得项
+的选择器字符串一起返回。Gopher+客户端知道如何完成这些工作，但需要依赖于Gopher+
+项描述中的“？”标签来知道什么时候处理这种情况。Gopher+项中的“?”被用来与Gopher+
+协议中这种符号的用法相兼容。
+3．4．6 Gopher+项属性集
+为了表示项的Gopher+属性，Gopher URL的Gopher+字符串由“!”或者“$”组成。“!”
+涉及Gopher+项的所有属性。“$”则涉及Gopher目录中所有项的所有项属性。
+3．4．7涉及特定的Gopher+属性
+为了表示特殊的属性，URL的gopher+_string是“!<attribute_name>”或者
+“$<attribute_name>”。例如，gopher+_string的值为“!+ABSTRACT” 表示属性包含
+一个项的抽象。
+为了表示几个属性，gopher+_string可以由几个属性名组成，并且用已编码的空格分隔
+开。例如，“!+ABSTRACT%20+SMELL”代表一个项的+ABSTRACT和+SMELL属性。
+
+3．4．8 Gopher+交替视图的URL语法
+Gopher+允许项有优化的交替数据表示(交替视图)。Gopher+客户端发送适当的视图和语
+言标志（出现在项的+VIEW属性里）来获得Gopher+的交替视图。为了引用一个特定的
+Gopher+交替视图试图，URL的Gopher+字符串的形式必须如下所示：
++<视图名称>%20<语言名称>
+例如，Gopher+字符串"+application/postscript%20Es_ES"引用了一个Gopher+项的交
+替视图的西班牙语附注。
+3．4．9 Gopher+电子表格的URL语法
+一个引用了填充有特定数据的Gopher+电子表格（一个ASK块）所参考的项的URL的
+Gopher+字符串是通过对客户送给服务器的gopher+字符串进行编码得到的。这个gopher+
+字符串的形式如下所示：
++%091%0D%0A+-1%0D%0A<ask_item1_value>%0D%0A<ask_item2_value>%0D%0A.%0D%0A
+Gopher客户端为了获得这个项，它发送如下信息给Gopher服务器：
+       <a_gopher_selector><tab>+<tab>1<cr><lf>
+       +-1<cr><lf>
+       <ask_item1_value><cr><lf>
+       <ask_item2_value><cr><lf>
+       .<cr><lf>
+3．5 MAILTO
+mailto URL方案是用来指明一个个体或者服务的因特网邮件地址的。它只代表因特网邮
+件地址，而不表示任何其它的附加信息。
+Mailto URL的形式如下所示：
+mailto:<rfc822-addr-spec>
+这里的<rfc822-addr-spec>是地址说明（的编码），这在RFC822[6]中进行了详细的说明。
+在mailto URL中没有保留字。
+
+注意百分符号（"%"）在RFC822中用得比较普遍，它必须被编码。
+
+不像许多URL，mailto方案不代表可直接访问的数据对象；也没有迹象表面它代表一个
+对象。它的使用方法不同于MIME中的报文/外部实体类型。
+3．6 NEWS（新闻）
+新闻URL方案被用来查阅新闻组或者USENET新闻上的独立文章，这一点在RFC1036中详
+细说明了。
+
+新闻URL的形式是下面两个之一：
+news:<newsgroup-name>
+news:<message-id>
+<newsgroup-name>是一个用句点分隔的层次名称，例如：
+“comp.infosystems.www.misc”。<message-id>与RFC1036中的2.1.5节中的
+Message-ID一样，只是后者没有用“<”和“>”括起来；它的形式如下
+<unique>@<full_domain_name>。消息标志符通过代表“在（at）”的“@”字符和新闻组
+名称相区分。除此之外，在新闻URL组件中没有其它的保留字符。
+
+如果<newsgroup-name>是“*”（例如：<URL:news:*>），那么它表示“所有可用的新闻组”。
+
+新闻URL是不同寻常的，因为它们自身不包含足够的信息来定位一个单一资源，但是它
+们的位置是任意的。
+
+3．7 NNTP（Network News Transfer Protocol,网络新闻传
+输协议）
+
+网络新闻传输协议URL方案是引用新闻文章的另一个方法，这个方案在用来从NNTP服务
+器指定新闻文章时是非常有用的（RFC977）。
+
+网络新闻传输协议URL的形式如下：
+nntp://<host>:<port>/<newsgroup-name>/<article-number>
+
+这里的<host>和<port>在3.1节进行了阐述。如果省略:<port>，那么端口缺省为119。
+
+<newsgroup-name>是组名，<article-number>是新闻组中文章的数字编号。
+
+注意nntp:URL指定了文章资源的一个唯一的位置，大多数因特网上的NNTP服务器目前
+进行的配置只允许本地客户端访问，因此nntp URL并不代表全球可访问的资源。这样URL
+的news:形式成为标志新闻文章的首选方法。
+3．8 TELNET
+远程登录URL方案被用来指明交互式服务，这种服务可以通过Telnet协议来进行访问。
+
+telnet URL的形式如下：
+telnet://<user>:<password>@<host>:<port>/
+
+向3.1节所讲的那样，最后面的“/”字符可以被省略。如果:<port>被省略，那么端口
+缺省为23。:<password>也可以被省略，<user>:<password>部分也可以整个被省略。
+
+这个URL并不指定一个数据对象，而是指定一个交互式的服务。远程交互式服务在允许
+远程登录的方法上差别很大。实际上，提供的<user>和<password>仅供参考：正在访问
+一个telnet URL的客户端仅仅建议所暗示的用户名和密码的用户。
+
+3．9 WAIS（Wide Area Information Servers,广域信息服
+务系统）
+WAIS URL 方案用来指示WAIS数据库，搜索或者WAIS数据库中可用的单个文档。WAIS
+在[7]中进行了描述。RFC1625[17]对WAIS协议进行了阐述。虽然WAIS协议是基于
+Z39.50-1988的，但 WAIS URL方案并不是特意用来和任意的Z39.50服务一起使用的。
+
+WAIS URL有如下几个形式：
+
+ wais://<host>:<port>/<database>
+     wais://<host>:<port>/<database>?<search>
+     wais://<host>:<port>/<database>/<wtype>/<wpath>
+
+这里的<host>和<port>在3.1节阐述过了。如果省略了:<port>，那么端口缺省为210。
+第一种形式指定了一个可以用来搜索的WAIS服务器。第二种形式表明了一个特定的搜索。
+<database>是被查询的WAIS数据库名。
+
+第三种形式表明了WAIS数据中的一个要获取的特定文档。在这种形式中<wtype>是对象
+类型的WAIS表示。许多WAIS实现需要一个在取得信息之间就能够认识对象“类型”的
+客户端，这个类型和搜索响应中的内部对象标志符一起返回。<wtype>包含在URL中，这
+是为了让客户端能理解URL的足够信息来取得文档。
+
+WAIS URL的<wpath>由WAIS文档标志组成，这个文档标志使用了2.2节所叙述的方法进
+行编码。WAIS 文档标志在处理时应该是不透明的；它仅可以被发布它的服务器分解。
+
+3．10 FILES(文件)
+文件URL方案被用来指定那些特定主机上的可访问的文件。这个方案和其它大多数方案
+不一样，因为它并不表示一个在因特网上普遍可访问的资源。
+
+文件URL的形式如下：
+file://<host>/<path>
+这里的<host>是系统域名的全称，在这个系统中<path>是可访问的，它是形如
+<directory>/<directory>/.../<name>的层次目录。
+
+例如，一个VMS文件：
+DISK$USER:[MY.NOTES]NOTE123456.TXT
+的形式如下：
+<URL:file://vms.host.edu/disk$user/my/notes/note12345.txt>
+
+有一种特殊情况，就是<host>可以是字符串“localhost”或者空字符串；它被解释为解
+释这个URL的主机。
+
+文件URL方案是与众不同的，因为它不指定一个因特网协议或者访问这些文件的方法；
+这样它在主机间网络协议上的效用是有限的。
+
+3．11 PROSPERO
+
+Prospero URL方案是用来指定那些可以通过Prospero目录服务访问的资源。Prospero
+协议在其它地方介绍了[14]。
+Prospero URL的形式如下：
+prospero://<host>:<port>/<hsoname>;<field>=<value>
+这里<host>和<port>和3.1节介绍的一样。如果省略了:<port>，那么端口缺省为1525。
+这里不需要用户名和密码。
+
+<hsoname>是Prospero协议中特定主机的对象名称，它需要被编码。这个名称是不透明
+的，它是由Prospero服务器解释。分号“;”是保留字符，它不能不经过引用就出现在
+<hsoname>中.
+
+Prospero URL是通过联系特定主机和端口上的Prospero目录服务器来解释的，然后用来
+决定访问资源的合适的方法，这些资源自身可能被表示成不同的URL。外部的Prospero
+链接被表示成采用底层访问方法的URL，而不是表示成Prospero URL。
+
+注意斜线“/”可以不经过引用就出现在<hsoname>中，应用程序假定它不代表任何意义。
+尽管斜线在服务器上可以用来表示层次结构，但是这些结构并不被承认。注意许多
+<hsoname>是由斜线开头，在这种情况下，主机或者端口之后将紧跟一个双斜线：前面是
+URL语法的斜线，后面是<hsoname>的开始斜线。（举例来说：
+<URL:prospero://host.dom//pros/name>表示<hsoname>为“/pros/name”）。
+
+另外，与Prospero链接相关联的任意的字段和值都可以成为URL中<hsoname>之后的一
+个部分。在这种情况下，每个“字段/值”组合对都用一个“;”（分号）相互以及与URL
+的其它部分分隔开。字段名称和它的值用一个“＝”（等号）分隔开。如果出现这种情况，
+这些域将用来标志URL的目标。例如，OBJECT-VERSION域可以被用来标志对象的特定版
+本。
+
+4． 新方案的注册
+可以通过定义一个到相应URL语法的映射和使用一个新的前缀来引入一个新的方案。URL
+试验方案可以通过团体间的共同协议来使用。用字符“x-”开头的方案名称是保留给试验
+方案用的。
+
+国际数字分配权威（IANA，Internet Assigned Numbers Authority）将管理URL方案的
+注册。任何提交的新URL方案都必须包含一个访问该方案中资源的法则的定义还必须包
+含描述这个方案的语法。
+
+URL方案必须具有可论证的实用性和可操作性。提供这样一个示范的方法就是借助一个为
+使用已有协议的客户端提供新方案中的对象的网关。如果新方案不能够定位一个数据对象
+资源，那么这个新领域中的名称的属性必须要进行清晰的定义。
+
+新方案应该在适当的地方努力遵从与已有方案相同的语法规则。对于可以用URL访问的
+协议的地方也是同样的。客户端软件被规定配置成使用特定网关定位符来通过新的命名方
+案间接访问。
+
+下面的方案已经多次被提议，但这个文档没有定义它自己的语法。它建议IANA保留它们
+的方案名以备将来定义：
+afs   Andrew 文件系统全局文件名（Andrew File System global file         names）。
+   mid   		电子邮件报文标志（Message identifiers for electronic mail）.
+   cid    		MIME主体部分的内容标志符（ Content identifiers for MIME body 
+parts）.
+   nfs   	 	网络文件系统（NFS）文件名（Network File System file names）.
+   tn3270	 	交互式3270竞争会话(Interactive 3270 emulation sessions).
+   mailserver   访问邮件服务器上的有效数据（Access to data available from mail 
+servers）.
+   z39.50       访问ANSI Z39.50服务(Access to ANSI Z39.50 services).
+
+5．特定URL方案的BNF（巴柯斯范式）
+这是统一资源定位器语法的类BNF描述，它使用了RFC822中的约定，除了用“|”表示
+选择，用方括号[]将可选或者重复的元素括起来之外。简单地说就是文字用引号""引起
+来，可选元素放在方括号[]内，元素可以用<n>*来开头表明有n个或者更多个此元素；n
+缺省为0。
+
+;URL的一般形式如下：
+genericurl     = scheme ":" schemepart
+
+;特定的预定义方案在这里进行定义；新方案可以在IANA那儿注册
+url            = httpurl | ftpurl | newsurl |
+                 nntpurl | telneturl | gopherurl |
+                 waisurl | mailtourl | fileurl |
+                 prosperourl | otherurl
+;新方案遵从一般语法
+otherurl       = genericurl
+;方案都是小写的；解释程序应该忽略大小写
+scheme         = 1*[ lowalpha | digit | "+" | "-" | "." ]
+schemepart     = *xchar | ip-schemepart
+;基于协议的ip的URL方案部分：
+ip-schemepart  = "//" login [ "/" urlpath ]
+
+login          = [ user [ ":" password ] "@" ] hostport
+hostport       = host [ ":" port ]
+host           = hostname | hostnumber
+hostname       = *[ domainlabel "." ] toplabel
+domainlabel    = alphadigit | alphadigit *[ alphadigit | "-" ] alphadigit
+toplabel       = alpha | alpha *[ alphadigit | "-" ] alphadigit
+alphadigit     = alpha | digit
+hostnumber     = digits "." digits "." digits "." digits
+port           = digits
+user           = *[ uchar | ";" | "?" | "&" | "=" ]
+password       = *[ uchar | ";" | "?" | "&" | "=" ]
+urlpath        = *xchar    ;建立在3.1节的协议基础上
+;预定义方案：
+;FTP(文件传输协议，请参考RFC959)
+ftpurl         = "ftp://" login [ "/" fpath [ ";type=" ftptype ]]
+fpath          = fsegment *[ "/" fsegment ]
+fsegment       = *[ uchar | "?" | ":" | "@" | "&" | "=" ]
+ftptype        = "A" | "I" | "D" | "a" | "i" | "d"
+;FILE(文件)
+fileurl        = "file://" [ host | "localhost" ] "/" fpath
+;HTTP(超文本传输协议)
+httpurl        = "http://" hostport [ "/" hpath [ "?" search ]]
+hpath          = hsegment *[ "/" hsegment ]
+hsegment       = *[ uchar | ";" | ":" | "@" | "&" | "=" ]
+search         = *[ uchar | ";" | ":" | "@" | "&" | "=" ]
+;GOPHER(请参考RFC1436)
+gopherurl      = "gopher://" hostport [ / [ gtype [ selector
+                 [ "%09" search [ "%09" gopher+_string ] ] ] ] ]
+gtype          = xchar
+selector       = *xchar
+gopher+_string = *xchar
+;MAILTO(请参考RFC822)
+mailtourl      = "mailto:" encoded822addr
+encoded822addr = 1*xchar               ;在RFC822中进一步定义了
+;NEWS（新闻,请参考RFC1036）
+newsurl        = "news:" grouppart
+grouppart      = "*" | group | article
+group          = alpha *[ alpha | digit | "-" | "." | "+" | "_" ]
+article        = 1*[ uchar | ";" | "/" | "?" | ":" | "&" | "=" ] "@" host
+;NNTP（网络新闻传输协议,请参考RFC977）
+nntpurl        = "nntp://" hostport "/" group [ "/" digits ]
+;TELNET(远程登录协议)
+telneturl      = "telnet://" login [ "/" ]
+;WAIS(广域信息服务系统，请参考RFC1625)
+waisurl        = waisdatabase | waisindex | waisdoc
+waisdatabase   = "wais://" hostport "/" database
+waisindex      = "wais://" hostport "/" database "?" search
+waisdoc        = "wais://" hostport "/" database "/" wtype "/" wpath
+database       = *uchar
+wtype          = *uchar
+wpath          = *uchar
+;PROSPERO
+prosperourl    = "prospero://" hostport "/" ppath *[ fieldspec ]
+ppath          = psegment *[ "/" psegment ]
+psegment       = *[ uchar | "?" | ":" | "@" | "&" | "=" ]
+fieldspec      = ";" fieldname "=" fieldvalue
+fieldname      = *[ uchar | "?" | ":" | "@" | "&" ]
+fieldvalue     = *[ uchar | "?" | ":" | "@" | "&" ]
+;杂七杂八的定义
+lowalpha       = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" |
+                 "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" |
+                 "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" |
+                 "y" | "z"
+hialpha        = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" |
+                 "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" |
+                 "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+alpha          = lowalpha | hialpha
+digit          = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
+                 "8" | "9"
+safe           = "$" | "-" | "_" | "." | "+"
+extra          = "!" | "*" | "'" | "(" | ")" | ","
+national       = "{" | "}" | "|" | "\" | "^" | "~" | "[" | "]" | "`"
+punctuation    = "<" | ">" | "#" | "%" | <">
+
+
+reserved       = ";" | "/" | "?" | ":" | "@" | "&" | "="
+hex            = digit | "A" | "B" | "C" | "D" | "E" | "F" |
+                 "a" | "b" | "c" | "d" | "e" | "f"
+escape         = "%" hex hex
+
+unreserved     = alpha | digit | safe | extra
+uchar          = unreserved | escape
+xchar          = unreserved | reserved | escape
+digits         = 1*digit
+
+6．安全事项
+URL方案自身并不会造成安全威胁。用户需要小心的是：在一个时刻指向一个给定对象的
+URL并不会保证一直指向这个对象。甚至也不保证因服务器上对象的移动而会在后来指向
+另一个不同的对象。
+一种同URL相关的安全威胁是：构建一个试图执行像取回对象这样无害的等幂操作的URL
+有时可能会导致发生破坏性的远程操作。这个不安全的URL通常是通过指定一个除了那
+些保留给正在讨论的网络协议用的端口数产生的。客户端在无意间同一个服务器打了交
+道，而这个服务器实际上正在运行一个不同的协议，这样就导致URL内容中包含的指令
+被其他的协议解释了，从而产生意外操作。一个例子就是使用gopher URL来生成一个原
+始的消息并通过SMTP服务器来发送。在使用那些指定端口不是缺省端口的URL时应该进
+行警告，尤其是在这个端口数出现在保留空间里面的情况下。
+当URL包含有嵌入式已编码的特定协议中的分隔符（例如，telnet协议的CR和LF字符）
+并且在传输前没有被解码时应该引起注意。这样除了可能被用来模拟一个超出其范围的操
+作或者参数，会干扰这个协议，并再一次引起执行意想不到的而且可能是有害的远程操作。
+使用包含应该作为秘密的密码的URL是非常轻率的。
+7．感谢
+这份文件建立在基本WWW设计（RFC1630）和许多人在网络上对这个观点进行的诸多讨论
+的基础上。这些讨论受到了Clifford Lynch，Brewster Kahle [10] 和 Wengyik Yeong 
+[18]的文章的极大鼓舞。这份文件综合了John Curran, Clifford Neuman, Ed Vielmetti
+和后来的IETF URL BOF与URI工作小组的成果。
+
+Dan Connolly, Ned Freed, Roy Fielding, Guido van Rossum, Michael Dolan, Bert 
+Bos, John Kunze, Olle Jarnefors, Peter Svanberg最近详细审阅了这份文件并提出
+了宝贵的意见。还有许多人为这份RFC的完善提供了很大帮助。
+
+附录：上下文URL的推荐标准
+URI（统一资源标志符），包括URL，趋向于通过这样的协议来传输：这些协议为它们的解
+释提供了上下文。
+在有些情况下，有必要区分URL和语法结构中其他可能的数据结构。在这种情况下，建
+议在URL之前加上一个有字符“URL:”组成的前缀，这个前缀可以用来把URL和其它种
+类的URI区分开。
+
+此外，其它种类的文字中包含URL的情况也很常见。例如包含在电子邮件中，USENET 新
+闻消息中或者印在纸上。在这些情况下，可以很方便的用一个单独的语法分隔符号来分隔
+URL并把它和文字的其它部分相分离。在一些特殊情况下，标点符号标记可能会造成URL
+的其它部分出错。因为这个原因，建议使用尖括号（“<”和“>”）并使用“URL:”前缀
+来界定URL。这些界定符号不会出现在URL中，也不应该出现在指定这个界定符的上下文
+中。
+在一个“片断/锚点”（fragment/anchor）标志符和一个URL（在一个“#”之后）相关联
+的情况下，这个标志符也应该放到括号中。
+在有些情况下，需要加一些额外的空白（空格，回车，制表符等）来打断那些超过一行的
+长URL。在提取URL时这些空白应该被忽略。
+在连字符（“-”）后不应该加入空白。因为有些排字机和打印机在打断一行是可能会（错
+误地）在行末加入一个连字符，解释程序在解释一个在连字符后包含一个行中断的URL
+时应该忽略行中断左右所有未编码的空白,并且应该注意到连字符可能是也可能不是URL
+的一个部分。
+例如：
+是的，Jim，我发现它在<URL:ftp://info.cern.ch/pub/www/doc;type=d>上，但是你可
+能能够从<URL:ftp://ds.internic.net/rfc>那儿获得它。请注意
+<URL:http://ds.internic.net/instructions/overview.html#WARNING>上的警告。
+
+参考文献：
+   [1] Anklesaria, F., McCahill, M., Lindner, P., Johnson, D.,
+       Torrey, D., and B. Alberti, "The Internet Gopher Protocol
+       (a distributed document search and retrieval protocol)",
+       RFC 1436, University of Minnesota, March 1993.
+       <URL:ftp://ds.internic.net/rfc/rfc1436.txt;type=a>
+
+   [2] Anklesaria, F., Lindner, P., McCahill, M., Torrey, D.,
+       Johnson, D., and B. Alberti, "Gopher+: Upward compatible
+       enhancements to the Internet Gopher protocol",
+       University of Minnesota, July 1993.
+       <URL:ftp://boombox.micro.umn.edu/pub/gopher/gopher_protocol
+       /Gopher+/Gopher+.txt>
+
+   [3] Berners-Lee, T., "Universal Resource Identifiers in WWW: A
+       Unifying Syntax for the Expression of Names and Addresses of
+       Objects on the Network as used in the World-Wide Web", RFC
+       1630, CERN, June 1994.
+       <URL:ftp://ds.internic.net/rfc/rfc1630.txt>
+
+   [4] Berners-Lee, T., "Hypertext Transfer Protocol (HTTP)",
+       CERN, November 1993.
+       <URL:ftp://info.cern.ch/pub/www/doc/http-spec.txt.Z>
+
+   [5] Braden, R., Editor, "Requirements for Internet Hosts --
+       Application and Support", STD 3, RFC 1123, IETF, October 1989.
+       <URL:ftp://ds.internic.net/rfc/rfc1123.txt>
+
+   [6] Crocker, D. "Standard for the Format of ARPA Internet Text
+       Messages", STD 11, RFC 822, UDEL, April 1982.
+       <URL:ftp://ds.internic.net/rfc/rfc822.txt>
+
+   [7] Davis, F., Kahle, B., Morris, H., Salem, J., Shen, T., Wang, R.,
+       Sui, J., and M. Grinbaum, "WAIS Interface Protocol Prototype
+       Functional Specification", (v1.5), Thinking Machines
+       Corporation, April 1990.
+       <URL:ftp://quake.think.com/pub/wais/doc/protspec.txt>
+
+   [8] Horton, M. and R. Adams, "Standard For Interchange of USENET
+       Messages", RFC 1036, AT&T Bell Laboratories, Center for Seismic
+       Studies, December 1987.
+       <URL:ftp://ds.internic.net/rfc/rfc1036.txt>
+
+   [9] Huitema, C., "Naming: Strategies and Techniques", Computer
+       Networks and ISDN Systems 23 (1991) 107-110.
+  [10] Kahle, B., "Document Identifiers, or International Standard
+       Book Numbers for the Electronic Age", 1991.
+       <URL:ftp://quake.think.com/pub/wais/doc/doc-ids.txt>
+
+  [11] Kantor, B. and P. Lapsley, "Network News Transfer Protocol:
+       A Proposed Standard for the Stream-Based Transmission of News",
+       RFC 977, UC San Diego & UC Berkeley, February 1986.
+       <URL:ftp://ds.internic.net/rfc/rfc977.txt>
+
+  [12] Kunze, J., "Functional Requirements for Internet Resource
+       Locators", Work in Progress, December 1994.
+       <URL:ftp://ds.internic.net/internet-drafts
+       /draft-ietf-uri-irl-fun-req-02.txt>
+
+  [13] Mockapetris, P., "Domain Names - Concepts and Facilities",
+       STD 13, RFC 1034, USC/Information Sciences Institute,
+       November 1987.
+       <URL:ftp://ds.internic.net/rfc/rfc1034.txt>
+
+  [14] Neuman, B., and S. Augart, "The Prospero Protocol",
+       USC/Information Sciences Institute, June 1993.
+       <URL:ftp://prospero.isi.edu/pub/prospero/doc
+       /prospero-protocol.PS.Z>
+
+  [15] Postel, J. and J. Reynolds, "File Transfer Protocol (FTP)",
+       STD 9, RFC 959, USC/Information Sciences Institute,
+       October 1985.
+       <URL:ftp://ds.internic.net/rfc/rfc959.txt>
+
+  [16] Sollins, K. and L. Masinter, "Functional Requirements for
+       Uniform Resource Names", RFC 1737, MIT/LCS, Xerox Corporation,
+       December 1994.
+       <URL:ftp://ds.internic.net/rfc/rfc1737.txt>
+
+  [17] St. Pierre, M, Fullton, J., Gamiel, K., Goldman, J., Kahle, B.,
+       Kunze, J., Morris, H., and F. Schiettecatte, "WAIS over
+       Z39.50-1988", RFC 1625, WAIS, Inc., CNIDR, Thinking Machines
+       Corp., UC Berkeley, FS Consulting, June 1994.
+       <URL:ftp://ds.internic.net/rfc/rfc1625.txt>
+
+  [18] Yeong, W. "Towards Networked Information Retrieval", Technical
+       report 91-06-25-01, Performance Systems International, Inc.
+       <URL:ftp://uu.psi.com/wp/nir.txt>, June 1991.
+
+  [19] Yeong, W., "Representing Public Archives in the Directory",
+       Work in Progress, November 1991.
+
+  [20] "Coded Character Set -- 7-bit American Standard Code for
+       Information Interchange", ANSI X3.4-1986.
+
+编者地址：
+Tim Berners-Lee
+World-Wide Web project
+CERN,
+1211 Geneva 23,
+Switzerland
+
+电话：+41 (22)767 3755
+传真：+41 (22)767 7155
+Email：timbl@info.cern.ch
+
+Larry Masinter
+Xerox PARC
+3333 Coyote Hill Road
+Palo Alto, CA 94034
+
+电话: (415) 812-4365
+传真: (415) 812-4333
+EMail: masinter@parc.xerox.com
+
+
+Mark McCahill
+Computer and Information Services,
+University of Minnesota
+Room 152 Shepherd Labs
+100 Union Street SE
+Minneapolis, MN 55455
+
+电话: (612) 625 1300
+EMail: mpm@boombox.micro.umn.edu
+
+
+
+RFC1738――Uniform Resource Locators (URL)             统一资源定位器（URL）
+
+
+1
+RFC文档中文翻译计划

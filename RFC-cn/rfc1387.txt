@@ -1,0 +1,122 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王晨光（taucho  taucho@yeah.net）
+译文发布时间：2001-4-20
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+
+RIP（版本2）协议分析
+
+(RFC1387  RIP Version 2 Protocol Analysis)
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+摘要:
+    出与路由协议标准(RFC 1264)的需要，这份文档描述了RIP-2协议的关键特性
+以及现在的实现经验。
+
+致谢：
+    RIP-2协议的诞生要感谢那些亲身进行实验的Internet工程任务组的成员。除
+此之外还要特别感谢Fred Baker在管理系统库方面的帮助以及Jeffrey Honig给予
+的实现经验。
+
+目录
+1.协议文档	2
+2.关键特性	2
+2.1选择域路由	2
+2.2外部路由标记	2
+2.3子网掩码	3
+2.4下一跳地址	3
+2.5验证机制	3
+2.6多点广播	3
+3.RIP-2管理系统库	3
+4.实现	3
+5.参考文献	4
+6.安全注意事项	4
+7.作者的地址	4
+
+1.协议文档
+    RIP-2协议的具体描述在RFC 1388中。这份备忘录只是提出一个针对与路由信
+息协议(RIP)的修改。关于路由信息协议的详细内容可参见RFC 1058。另外，有关
+于RIP-2管理信息库的内容请参考RFC 1389。
+
+2.关键特性
+    虽然RIP-2协议使用与RIP-1同样的路由算法，但它支持几种新的特性。这些特
+性是：选择域路由，外部路由标记，子网掩码，下一跳地址以及验证机制。
+2.1选择域路由
+    选择域路由允许多个RIP自治系统共存在同一个物理网络上。这个特性是应一
+些Internat工程任务组的成员的要求加入的。它允许我们使用很简单的策略来把按
+域共享路由信息的路由器分组。
+2.2外部路由标记
+    外部路由标记域常被用来传播从外部网关获得的信息。关于这个域的精确定义
+已经超出了RIP-2协议的范畴。总之，它是有用的，例如把外部网关信息作为数字
+传播。
+2.3子网掩码
+    包含子网掩码是改进RIP协议最初的意图。子网掩码信息是RIP协议在多种环境
+中变得更有用，并且允许在网络中使用变长掩码。子网掩码信息还允许我们像在CIDR
+中一样，将多个C类地址聚合在一个地址组中。
+2.4下一跳地址
+    支持下一跳地址优化了在使用多种路由协议的网络环境中的路由器。例如，如果
+RIP-2协议在网络中与另一个路由协议共同使用，并且有一个路由器同时运行两种协
+议，那么这个路由器就可以告诉其他使用RIP-2协议的路由器一个对于给定目的的更好
+的下一跳地址，如果存在的话 :)
+2.5验证机制
+    相对与RIP-1而言RIP-2的一个重大改进是加入了验证机制。实质上，它和OSPF
+提供的可扩展机制是一样的。现在还只是为验证机制设计了一个简单的纯文本密码。
+但是，一些更安全的验证方法也可以很容易的组合进来。
+
+2.6多点广播
+    RIP-2包可以用多点广播的办法发布以代替广播发布。使用多点广播地址降低了
+那些不支持路由协议的主机的负载。它也允许运行RIP-2的路由器共享一些运行RIP-1
+的路由器收不到的路由信息。这一点是非常有用的，因为运行RIP-1的路由器可能会
+曲解这些路由信息，其原因是它们不能应用信息中提供的子网掩码信息。
+3.RIP-2管理系统库
+    RIP-2的管理系统库允许监测并控制RIP协议的操作。除了全局的计数器和控制器
+外，还有计数器提供邻居路由器的状态。
+4.实现
+    现在已经有一个几乎完成的RIP-2协议的实现。一个使用RIP-2的“gated”程序
+已经由康乃尔大学的Jeffrey Honig完成。这个程序可以通过匿名登录到
+gate.cornell.edu，下载/pub/gated/gated-alpha.tar.Z得到。这个程序支持多点
+广播，子网掩码信息，有限的确认机制，下一跳地址，有限的选择域路由。一个基于
+RIP-2的RIP查询程序也已经完成。这个程序还不能支持完全的包容规则，不支持完全
+的身份验证机制，不支持完全的选择域路由和管理系统库。它已被用做对自身的测试
+和对不同的RIP-1实现的测试。
+    还有，这个程序的完成是在一家厂商的支持下完成的。厂商的名字现在还不能
+透露。
+5.参考文献
+
+   [1] Malkin, G., "RIP Version 2 - Carrying Additional Information",
+       RFC 1388, Xylogics, Inc., January 1993.
+
+   [2] Malkin, G., and F. Baker, "RIP Version 2 MIB Extension", RFC
+       1389, Xylogics, Inc., Advanced Computer Communications, January
+       1993.
+
+   [3] Hedrick, C., "Routing Information Protocol", RFC 1058, Rutgers
+       University, June 1988.
+
+6.安全注意事项
+    有关安全事项的讨论在2.5节中。
+7.作者的地址
+       Gary Scott Malkin
+       Xylogics, Inc.
+       53 Third Avenue
+       Burlington, MA 01803
+
+       Phone:  (617) 272-8140
+       EMail:  gmalkin@Xylogics.COM
+ RFC1387  RIP Version 2 Protocol Analysis        RFC1387  RIP（版本2）协议分析
+
+1
+
+
+4
+ＲＦＣ文档中文翻译计划
+
+

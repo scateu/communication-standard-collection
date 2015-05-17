@@ -1,0 +1,27 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                           Jon Postel
+Request for Comments : 348                      Computer Science
+                                                UCLA-NMC
+NIC : 10427                                     30 May 72
+Categories : Standard Processes
+
+放弃过程
+（Discard Process）
+我建议出于调试和测试目的在主机上执行“放弃过程（Discard" process）”。
+这种放弃过程会侦听连接请求，并且执行在NIC 7104“Current Network Protocols”中详细说明了的初始连接协议（Initial Connection Protocol，缩写为ICP) 。在完成ICP的基础上，放弃过程将等待来自网络上的数据。一旦收到来自网络的数据，马上就放弃(并且重新分配缓存空间)。放弃过程通过关闭网络连接来终止。
+[这个RFC文档是由BBN公司在Alex McKenzie指导下以计算机可读的文件格式归档到在线RFC文档库的，12/96]
+
+RFC348――Discard Process                                                         放弃过程
+
+
+
+
+1
+RFC文档中文翻译计划
+

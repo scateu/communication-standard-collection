@@ -1,0 +1,189 @@
+组织：中国互动出版网（http：//www.china-pub.com/）
+RFC文档中文翻译计划（http：//www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang    guodagang@tyut.edu.cn）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                D. Borman，Editor  
+Request for Comments： 1408                           Cray Research，Inc.
+January 1993
+
+
+Telnet环境变量
+（RFC1408――Telnet Environment Option）
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+摘要
+这个文档定义了一种在TELNET客户端和服务器端传输环境变量的机制。采用这种机
+制，使得在连接时TELNET用户把配置信息传给远程主机成为可能。
+目录
+1. 命令名和代码	1
+2. 命令含义	2
+3. 缺省规范	3
+4. 动机	3
+5. 周知变量	3
+6. 应用规则	3
+7. 涉及的安全问题	4
+8. 参考文献	5
+		
+1. 命令名和代码
+ENVIRON36
+ IS0
+ SEND 1
+ INFO 2
+
+ VAR  0
+ VALUE1
+ ESC  2
+ USERVAR 3
+2. 命令含义
+IAC WILL ENVIRON
+这个命令的发送者将发送环境变量。
+IAC WONT ENVIRON
+这个命令的发送者拒绝发送环境变量。
+IAC DO ENVIRON
+这个命令的发送者将接收环境变量。
+IAC DONT ENVIRON
+这个命令的发送者拒绝接收环境变量。
+IAC SB ENVIRON SEND [ type ... [ type ... [ ... ] ] ] IAC SE
+这个命令的发送者请求远端发送它的环境变量。“type”既可以是VAR，也可以是 
+USERVAR，既用来指定周知变量名又用于指定用户变量名。只有DO ENVIRON端可以发
+起一个SEND命令。如果指定了一个变量列表，那么只能发送这些变量。如果没有指定列
+表，那么就应该发送对所有的周知变量和用户自定义变量都是缺省的环境变量。如果有一个
+变量没有命名，那么应该发送在缺省环境中的所有类型的变量(周知或者用户自定义的)。
+IAC SB ENVIRON IS type ... [ VALUE ... ] [ type ... [ VALUE ... ] [
+这个命令的发送者正在发送环境变量。发送这个命令来响应某个SEND请求。只有处
+于WILL ENVIRON状态的一端可以发送一个IS命令。“type”/VALUE对必须按照和SEND
+请求指定的顺序相同的次序来返回，而且必须对每一个明确的“type ...”请求都得响应。
+“type”会是VAR或者USERVAR。可能发送多重环境变量。在一个“type”后一直到下
+一个“type”或VALUE的特征指定了变量名称。The characters following a 在一个VALUE
+后一直到下一个“type”的特征指定了变量的数值。如果一个“type”后面没有跟一个
+VALUE(例如，跟着其他的VAR、USERVAR或者IAC SE)，那么对这个变量就没有定义。
+如果 VALUE后面紧跟着一个“type”或者IAC，那么这个变量已经定义了，但是没有数值。
+如果某个IAC包含在IS和IAC SE中，那么它必须当作IAC IA来发送。如果某个变量或者
+数值包含了一个VAR，那么它必须当作ESC VAR来发送。
+如果某个变量或者数值包含了一个USERVAR，那么它必须当作ESC USERVAR来发
+送。如果一个变量或者数值包含了一个VALUE，那么它必须当作ESC VALUE来发送。如
+果某个变量或者数值包含了一个ESC，那么它必须当作ESC ESC来发送。
+IAC SB ENVIRON INFO type ... [ VALUE ... ] [ type ... [ VALUE ... ] [
+这个命令的发送者正在发送有关已经变化了的环境变量的信息。除了在命令中以INFO
+替代了IS以外，和IS命令相同。只有处于WILL ENVIRON状态的一端可以发送一个INFO
+命令。INFO命令不会用于发送初始化信息；SEND/IS序列正是用在这种情况下。INFO命
+令用于广播环境变量的变化，而且可以很自然的就产生了。
+3. 缺省规范
+这个选项的缺省规范是
+WONT ENVIRON
+DONT ENVIRON
+意思是没有任何环境信息的交换。
+4. 动机
+一些操作系统具有包含着当Telnet连接建立时广播给远端机器的信息的启动信息和环
+境变量。提出一些新的需要通过一个Telnet会话来广播的信息比每次创建一个新的Telnet
+选项更可取，但是Telnet会话自身并不真正需要知道，就可以采用这种普通的信息选项了。
+5. 周知变量
+USER  这个变量用于传送客户端想要登录的远程系统上的用户或者帐户名。USER变
+量的数值格式由系统决定，由远程系统确定。
+JOB   这个变量用于传送当登录进入远程系统时客户端想要使用的业务ID号。JOB
+变量的数值格式由系统决定，由远程系统确定。
+ACCT  这个变量用于传送当登录进入远程系统时客户端想要使用的帐户ID号。ACCT 
+变量的数值格式由系统决定，由远程系统确定。
+PRINTER  这个变量用于确定打印机输出的缺省位置。因为现在在网络上没有一种标
+准的命名方法，所以目前这个变量的格式不明确。
+SYSTEMTYPE  这个是用于传输这个变量所用的操作系统的类型。它的数值和FTP[2]
+中的SYSTEM(SYST)的取值相同。这个值的格式应该和在Assigned Numbers文档[3]的当
+前版本中列出的一个系统名称的第一个词一样。
+DISPLAY  这个变量用于传输客户端的X显示位置。DISPLAY变量的数值格式如下：
+<host>：<dispnum>[.<screennum>]
+这个消息和通过利用Telnet X-DISPLAY-LOCATION选项得到的信息是相同。如果
+DISPLAY环境变量收到的X-DISPLAY-LOCATION选项[4]以及它们包含的不一致信息，应
+该使用最近收到的信息。
+因为不可能预计到所有用户想要交换的变量，提供了USERVAR类型来支持用户传输
+任意的变量/数值对。采用附加类型使得应用可以区分由远端主机软件得到的数值和由用户
+提供的数值。偏执些的实现很可能用同级的不信任度对待这两种类型。周知变量和用户变量
+之间命名空间冲突的结果是规范应用。
+6. 应用规则
+WILL和DO仅仅用在连接开始时捕获和承认将来协商的结果。
+一旦两个主机已经交换了一个WILL命令和DO命令，DO ENVIRON的发送者就可以
+自由的请求发送环境变量。一旦DO的发送者可以发送请求(IAC SB ENVIRON SEND IAC 
+SE)，那么WILL的发送者就可以传输现行的环境变量信息(通过IAC SB ENVIRON IS ... IAC 
+SE命令)。虽然有时这个选项在整个TELNET连接的过程中都可以使用，但是环境信息交
+换还是常常出现在连接启动时。这是因为许多操作系统只具有在过程创建时才传输环境信息
+的机制，所以在用户登录前这些信息是必须的。在这一节中，任何引用的事情都是以速记方
+式对ASCII数值字符串的进行记录的。例如，“joe”意思是三个八位十进制序列106 111 101。
+接收主机不需要把它从环境中接收到的所有的变量都上传。例如，如果客户机将要通过
+发送USERVAR “TERM” VALUE “xterm”这个环境变量来发送时，TERMINAL-TYPE 
+[1]选项已经用于确定终端类型，服务器就可以忽略TERM变量。同样，一些启动信息也可
+以用于其他方面；例如，“USER”、“ACCT”和“PROJ”变量的数值可以用来判断哪一个
+帐户已经登录，而且可能从未被上传给用户环境。通常，如果服务器通过一些更精确的方法
+已经检测到某个环境变量的数值，或者如果它不能理解某个变量名称，它将忽略在
+ENVIRON选项中发送的数值。服务器可能也更喜欢仅仅把所有未知信息上传到用户的环境
+中。这是应用中建议的方法，因为它使用户使用起来更加灵活。
+以下是一个这个选项的使用范例：
+ Host1 Host2
+ IAC DO ENVIRON
+ IAC WILL ENVIRON
+ [现在主机1可以自由的请求环境变量了]
+ IAC SB ENVIRON SEND VAR "USER"
+ VAR "ACCT" VAR USERVAR IAC SE
+ [现在，服务器明确请求得到USER和ACCT变量、周知环境变量的缺省设置和用户
+自定义变量的缺省设置。注意：客户端两次引用了USER信息；一次是因为它明确请求的，
+另一次是因为它是缺省环境的一部分。]
+ IAC SB ENVIRON IS VAR "USER"
+ VALUE "joe" VAR "ACCT" VALUE
+ "kernel" VAR "USER" VALUE "joe"
+ VAR "DISPLAY" VALUE "foo：0.0"
+ USERVAR "SHELL" VALUE "/bin/csh"
+ IAC SE
+当现在定义了用户变量或者不明确的变量时，对于响应空环境(在IAC SB和IAC SE中
+都没有数据)的客户端，那是合法的。例如：
+IAC SB ENVIRON IS IAC SE
+对下列任何都是有效响应：
+IAC SB ENVIRON SEND IAC SE
+IAC SB ENVIRON SEND VAR IAC SE
+IAC SB ENVIRON SEND USERVAR IAC SE
+IAC SB ENVIRON SEND VAR USERVAR IAC SE
+(最后的范例和第一个相同...)
+预计，支持Telnet ENVIRON选项的任何应用都将完全支持这个规范。
+7. 涉及的安全问题
+对ENVIRON 选项的实施者重要的是理解设置选项的交互性和逻辑/证明过程。应该非
+常仔细的分析哪个变量在设置客户登录时是“安全的”。一个错误选项的例子将会改一个参
+数，允许入侵者废止或损害登录/证明程序本身。
+8. 参考文献
+[1] VanBokkelen，J.，"Telnet Terminal-Type Option"，RFC 1091，FTP Software，Inc.，
+February 1989.
+[2] Postel，J. and J. Reynolds，"File Transfer Protocol (FTP)"，STD 9，RFC 959，
+USC/Information Sciences Institute，October 1985.
+[3] Reynolds，J. and J. Postel，"Assigned Numbers"，STD 2，RFC 1340，
+USC/Information Sciences Institute，July 1992.
+[4] Marcy，G.，"Telnet X Display Location Option"，RFC 1096，Carnegie Mellon 
+University，March 1989.
+需要考虑的安全问题
+在第七节中已经讨论了有关安全的问题。
+作者的地址
+David A. Borman，Editor
+Cray Research，Inc.
+655F Lone Oak Drive
+Eagan，MN 55123
+Phone： (612) 452-6650
+EMail： dab@CRAY.COM
+Mailing List： telnet-ietf@CRAY.COM
+主席的地址
+通过现在的主席可以联系到这个工作组：
+Steve Alexander
+INTERACTIVE Systems Corporation
+1901 North Naper Boulevard
+Naperville，IL 60563-8895
+Phone： (708) 505-9100 x256
+EMail： stevea@isc.com
+
+RFC1408――Telnet Environment Option                                        Telnet环境变量
+
+
+1
+RFC文档中文翻译计划

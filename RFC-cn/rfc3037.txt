@@ -1,0 +1,167 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：万怡敏（scottwan   greatgod@163.net）
+译文发布时间：2001-4-8
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+
+Network Working Group                                          B. Thomas
+Request for Comments: 3037                           Cisco Systems, Inc.
+Category: Informational                                          E. Gray
+                                                           Zaffire, Inc.
+                                                            January 2001
+
+
+
+
+RFC3037   标记分配协议的适用范围
+（RFC3037   LDP Applicability）
+
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+多协议标记交换（MPLS）是一种转发数据包的方法：用包搭载标记（短的、定长数值）来确定包的下一跳。MPLS的一个基本概念就是两个标记交换路由器（LSR）必须对被用于转发在它们之间及穿过它们的业务流的标记的意义达成协议。这常用的协议是用一组进程叫作标记分配协议(LDP)来实现，通过LDP，一LSR通知另一LSR它已做的标记绑定。这篇文档叙述了沿着普通的路由路径，LSR分配标记以支持MPLS转发而使用的这样一组进程LDP的适用范围。
+
+
+
+目录
+1. LDP适用范围	2
+2. 必要性程度	2
+3. 性能纵览	3
+4. 规模方面的考虑	3
+5. 安全方面的考虑	4
+6. 参考资料	4
+7. 作者的地址	5
+8. 版权说明	5
+致谢	6
+
+1. LDP适用范围
+标记分配协议协议是用这样一组进程，通过它，一LSR通知另一LSR被用于转发在它们之间及穿过它们的业务流的标记的意义。
+MPLS体系结构使得可能有多种分配标记的方法，并且人们正在标准化一些标记分配协议。现存的路由协议已经被扩展，从而能叠加在它们之上分配标记，新的协议则以分配标记为明确的目标来定义。
+这篇文档叙述了LDP作为一种新的标记分配协议，被设计用于沿着普通的由基于目的地的路由协议所确定的路径，分配标记以支持MPLS转发的适用范围。这种转发有时也叫作MPLS逐跳转发。
+与IP路由协议和软件一起，使用LDP来对ATM交换机或帧中继交换机的横向连接表进行编程，就可以无须使用叠加的或ATM特定的或帧中继特定的地址或路由，在一由ATM和／或帧中继交换机组成的网络中实现路由功能。
+LDP可用于需要有效的逐跳路由隧道的情况，例如基于MPLS的VPN体系结构［RFC2574］和BGP边界路由器之间的隧道。
+此外，LDP包含一种机制，允许扩展LDP来支持超越尽力而为逐跳转发的MPLS特性。
+作为一种独立的分配标记的协议，LDP并不依赖一条标记交换路径（LSP）的每一跳上的特定的路由协议来建立一条LSP。于是LDP可用于一条LSP必须穿越的节点不是每个都支持一通常的叠加解决方法来分配标记的情况。
+人们希望业务流工程成为一项重要的MPLS可用性能。MPLS使用无须遵从普通路由（逐跳）路径的显式路由LSP来支持业务流工程。
+显式路由可以由LDP的一组扩展协议CR－LDP［CRLDP-AS］来建立，或由RSVP的一组扩展协议RSVP－TE［RSVP－TE－AS］来建立。目前就哪一个协议在技术上领先并无统一意见。于是，网络管理员可以根据他们的需要和特定情况来作出选择。
+2. 必要性程度
+　　　　对于LDP的“必要性程度”［RFC2026］为：
+　　　　　　对于沿着普通的由基于目的地的路由协议所确定的路径，执行MPLS转发的
+　　　　设备推荐执行LDP。
+3. 性能纵览
+　　　　LDP用一等效转发类（FEC）［RFC3031］与它分配的每个标记联合起来。使用LDP　　
+来交换FEC－标记绑定信息的两个LSR被称为“LDP对等”，并且我们说在它们之间　
+有一个“LDP对话”。
+　　　　LDP用TCP来对话通信。使用TCP可以保证对话信息能被可靠地转发，并且与　　　LSP相关的已分配的标记和状态信息不需要周期性的刷新。
+ 　　LDP包含一种LSR可用来发现潜在的对等方的机制。此发现机制使得网络操作员不必为每个LSR明确的配置它的对等方。
+当一个LSR发现另一对等LSR时，它便开始LDP对话进程以建立LDP对话。通过这种进程的方式，两个LSR建立一个对话的TCP连接，并通过它来协商此对话的参数，例如要用的标记分配方法（见下文）。在LSR都同意这些参数后，这个对话就可以使用了，然后LSR用这个TCP连接来分配标记。
+LDP支持两类不同的分配标记的方法。使用非请求下游分配的LSR在准备以MPLS方式转发某FEC的数据包时，就向它的对等方通告FEC－标记绑定。使用下游按需分配的LSR仅在响应对等方对某FEC的一个标记的特定请求时，才给对等方提供FEC－标记绑定。
+LDP允许LSR对保留获的标记采取灵活的策略。使用自由的标记保留方式的LSR不论当前需不需要标记来转发，全部保留从对等方获得的标记；而使用保守的标记保留方式的LSR仅存储那些要立即使用的标记，并且丢弃不需要的对等方通告的标记。
+此外，LDP允许LSR对什么时候通告FEC－标记绑定采取灵活的策略。使用独立的标记分配控制的LSR可随时向对等方通告FEC－标记绑定；而使用按序的标记分配控制的LSR仅当它从此FEC下一跳收到一个标记或它是此FEC的一个MPLS出口LSR时，才通告FEC－标记绑定。
+在标记是一种相对稀缺的资源需要存储的环境中，采用有序控制的标记分配、保守的标记保留、下游按需分配方式是恰当的；在标记很充足无须小心存储的环境中，采用独立的标记分配、自由的标记保留、非请求下游分配方式是恰当的。但是，LDP允许其他的标记分配控制方式、标记保留方式、标记分配方式的组合，包括同时采用同一方式不同的两个方案。
+LDP为了防范LSP穿越MPLS网络时形成环回，定义了一种环回检测的机制，参见［RFC3031］对可能从此机制获益的一些情况的讨论。此环回检测机制是可选项，即在某种意义上它在配置LSR时可被屏蔽。但是兼容LDP的LSR必须能实现此功能。
+为了支持发展供应商私有的和实验的特性，LDP包含一种扩展机制。这种机制定义了用于引进新的消息和类型－长度－值（TLV）的进程；LSR可用来检测新的消息和TLV的方法；和LSR在收到它不能执行的消息或TLV时可进行的进程。当不可能使得未来的发展都向下兼容时，这些进程有助于在包含某些不能识辨新性能的设备的MPLS网络中引进新性能。
+4. 规模方面的考虑
+　　　　下列因素将影响LDP执行的规模：
+　　　　――　LDP标记分配是递增的，不需要周期性的刷新FEC－标记绑定。
+　　　　――　在标记资源稀缺的环境中（ATM和帧中继连接）使用下游按需分配方法和
+　　　　　　　保守的标记保留方法，可以保证仅那些用于支持普通路由路径的标记被分配
+　　　　　　　和配置。
+　　　　――　对一个LSR可支持的TCP连接数量的限制同时限制了此LSR可支持的LDP
+　　　　　　　对等方的数量。
+　　　　――　同额外的LDP业务流一样，使用基于环回检测机制的可选的路径向量给LSR
+　　　　　　　增加了额外的内存和处理的要求。两者都影响LDP执行的规模。
+5. 安全方面的考虑
+　　　　为了防范LDP对话连接流中引入已伪装的TCP段，LDP定义了可选择的MD5签
+　名选项。在LDP中采用TCP MD5签名选项类似于BGP［RFC1771］使用［RFC2385］
+　中指定的选项。　　
+6. 参考资料
+         [CRLDP-AS]   J. Ash, M. Girish, E. Gray, B. Jamoussi, G. Wright,
+                "Applicability Statement for CR-LDP", Work in Progress,
+                September 1999.
+
+   [RFC1771]    Rekhter, Y. and T. Li, "A Border Gateway Protocol 4
+                (BGP-4)", RFC 1771, March 1995.
+
+   [RFC2026]    Bradner, S., "The Internet Standards Process -- Revision
+                3", BCP 9, RFC 2026, October 1996.
+
+   [RFC2385]    Heffernan, A., "Protection of BGP Sessions via the TCP
+                MD5 Signature Option", RFC 2385, August 1998.
+
+   [RFC2547]    Rosen, E. and Y. Rekhter, "BGP/MPLS VPNs", RFC 2547,
+                March 1999.
+
+   [RFC3036]    Andersson, L., Doolan, P., Feldman, N., Fredette, A. and
+                B. Thomas, "LDP Specification", RFC 3036, January 2001.
+
+   [RFC3031]    Rosen, E., Viswanathan, A. and R. Callon, "Multiprotocol
+                Label Switching Architecture", RFC 3031, January 2001.
+
+   [RSVP-TE-AS] Awduche, D., Hannan, A. and X. Xiao, "Applicability
+                State for Extensions to RSVP for LSP-Tunnels", Work in
+                Progress, April 2000.
+7. 作者的地址
+   Eric Gray
+   Zaffire, Inc
+   2630 Orchard Parkway,
+   San Jose, CA 95134-2020
+
+   Phone:  408-894-7362
+   EMail: ewgray@mindspring.com
+
+   Bob Thomas
+   Cisco Systems, Inc.
+   250 Apollo Dr.
+   Chelmsford, MA 01824
+
+   Phone:  978-244-8078
+   EMail: rhthomas@cisco.com
+8. 版权说明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+RFC3037   LDP Applicabilty                                RFC3037   标记分配协议的适用范围
+
+
+
+
+1
+RFC文档中文翻译计划
+
+

@@ -1,0 +1,81 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划(http://www.china-pub.com/compters/emook/aboutemook.htm)
+E-mail：ouyang@china-pub.com
+译者：安智平（fivestar   anzp@xanet.edu.cn）
+译文发布时间：2001－4－27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          G. Huston
+Request for Comments: 1690                                        AARNet
+Category: Informational                                      August 1994
+
+
+Internet工程与计划组（IEPG）介绍
+(RFC1690  Introducing the Internet Engineering and Planning Group (IEPG))
+
+
+本备忘录的状态
+本文档为Internet社区提供一些信息，它不指定任何类型的Intrnet标准。本备忘录的
+发布不受任何限制。
+摘要
+本文档向Internet社区介绍IEPG。IEPG是一个Internet服务经营者的论坛，它的目的
+是帮助服务经营者在管理Internet服务的各方面互相协调合作。
+
+目录
+摘要	1
+1．	Internet工程与计划组（IEPG）宪章	2
+1．1活动领域	2
+1．2目标	2
+1．3活动	2
+1．4会员资格	2
+1．5报告	2
+2．IEPG成员资格和IEPG邮件列表	3
+3．IEPG材料档案	3
+4．安全问题	3
+5．作者联系方法	3
+
+1．	Internet工程与计划组（IEPG）宪章
+1．1活动领域
+Internet工程与计划组（IEPG）原则上是一个包含Internet服务经营者的小组。
+1．2目标
+这个小组的共同目标是改善全球Internet协作运行的技术环境。
+1．3活动
+IEPG的活动领域如下：
+1：为全球Inernet服务的管理和运行提供方便。
+2：推广介绍全球Inernet新服务。
+3：跟相关Internet运行小组和技术开发小组联系。
+显然IEPG并不进行技术开发。
+1．4会员资格
+IEPG的会员资格是开放的。任何个人都可以订阅邮件列表。所有的会议通知，会
+议日程，会议和会议报告都是开放的。
+1．5报告
+IEPG维护一个可以用WWW访问工具访问的文档资料库。这个WWW文档的位置和
+宪章通过RFC信息向Internet社区散布。
+
+
+2．IEPG成员资格和IEPG邮件列表
+IEPG的成员资格是开放的，任何Internet社区的成员都可以参加IEPG的邮件列表。邮
+件列别是iepg@iepg.org 。任何人可以通过订阅iepg-request@iepg.org来参加邮件列别表。
+3．IEPG材料档案
+所有的IEPG材料都能够在（http://iepg.org/iepg）  得到。
+4．安全问题
+本文档不讨论有关安全问题
+5．作者联系方法
+
+   Geoff Huston
+   Australian Academic and Research Network
+   GPO Box 1142
+   Canberra  ACT  2601
+   Australia
+
+   Phone: +61 6 249 3385
+   Fax: +61 6 249 1369
+   EMail: Geoff.Huston@aarnet.edu.au
+RFC1690: Introducing the Internet Engineering  and Planning Group (IEPG)
+Internet工程与计划组（IEPG）介绍
+
+
+1
+RFC中文翻译计划

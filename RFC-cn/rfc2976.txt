@@ -1,0 +1,326 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：沈建莉（wjxiaoshen  shenjianli@263.net）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                        S. Donovan
+Request for Comments: 2976                                  dynamicsoft
+Category: Standards Track                                  October 2000
+
+
+SIP信息方法
+（RFC2976 The SIP INFO Method）
+
+
+本备忘录的状态
+
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1998).  All Rights Reserved.
+摘要
+    本文提出了会话初始化协议（SIP）的一个扩展的建议。这一扩展为SIP增加了INFO
+方法。
+INFO方法的目的是允许运送会议相关的控制信息，这些控制信息是在会议中生成的。这种
+会议控制信息的一个例子是用于控制电话业务的ISUP和ISDN信令消息。
+其他的关于INFO方法的例子在将来将被标准化。
+
+目录
+
+   1    简介...............................................2
+   1.1   用法举例................................................2
+   2     INFO 方法................................................3
+   2.1   INFO 方法的头域支持. ..... ..... .........................3
+   2.2   INFO 请求方法的响应... ..... ..... .......................4
+   2.3   消息体的内容        ......................................5
+   2.4   SIP 用户代理的行为.................................6
+   2.5   SIP 代理和重定向服务器的的行为...................6
+   2.5.1 代理服务器................................................6
+   2.5.2 分支代理服务器........................................6
+   2.5.3 重定向服务器.........................................6
+   3.    INFO 消息体.........................................6
+   4.    利用 INFO扩展的指导方针................7
+   5.    安全性考虑.....................................7
+   6.    参考资料..................................................8
+
+   7.    致谢.............................................8
+   8.   作者联系方法...........................................8
+         版权说明....................................9
+
+1. 简介
+
+      [1]中描述的SIP协议定义了用在SIP控制的会议的建立和拆除阶段的会议控制信息。
+
+   另外， SIP 重新INVITE（re-INVITE）能够用于在一个会一种改变会议的特性。 这通
+常是与会议相关的媒体流量的属性或者更新SIP会议地计时器。
+然而，没有通用的目标机制来在会话过程中沿着SIP信令通路承载会话控制信息。
+
+    INFO消息的目的是沿着SIP信令通路携带应用层消息。
+    INFO方法 并不是用来改变SIP呼叫的状态，或会议 SIP的初始化状态参数。它仅是用
+于发送通常与会议有关的应用层的可选信息。
+        
+   会议中的信号信息穿过会议后的SIP信令通路建立是必要的。这个通路是SIP 的
+re-INVITEs, BYEs和其它与一个独立会话联系的SIP请求所采用的。他允许SIP代理服务
+器接收并潜在地对会议中的信号信息起作用。
+   
+   此文档通过定义新的INFO方法提供了SIP的一个扩展。INFO方法 将被用于沿着会议信
+号通路传送呼叫中信号信息。
+
+   1.1 用法举例
+
+      以下是一些INFO消息地可能应用:
+
+      - 在PSTN网关之间传送 呼叫中 PSTN 信令消息
+
+      - 传送SIP会议中生成的 DTMF 数字。
+
+      - 传送 无线信号强度信息以支持无线移动应用。
+
+      - 传送 计算平衡信息.
+
+-	在会议的参加者之间传送 影像或其它的非流信息
+
+      这些只是可能的应用；本文档并不指定这些应用，也不一定必须介绍它们。
+      
+      也可以想象还有INFO方法的其它电话和非电话的应用。
+      
+
+2. INFO 方法
+
+   INFO方法 被用于沿着呼叫的信令通路进行会议中信令消息间的通讯。
+
+   INFO方法 并不是用于改变SIP呼叫的状态，也不是用于改变被SIP初始化地会议状态。
+然而，它提供增加的选项信息可以进一步加强用SIP的应用程序功能。
+ 
+
+   INFO方法的信令通路是呼叫建立之后建立的信令通路。这可以是呼叫方和被呼叫方用户
+代理之间的直接信令，也可以包括是牵涉到呼叫建立和自己增加到初始INVITE信息记录路
+由头部的SIP代理服务器的信令通路。
+
+   会议中信息能够在INFO信息头部或作为一个消息体的一部分来进行通讯。消息体和/或
+消息头部的定义被用来传送会议中信息在本文档讨论范围之外。
+
+   没有与INFO相关的特别语法语义。语义是从定义给INFO用的头部或协议体那里继承来
+的。
+
+   2.1 INFO 方法的头域支持
+
+      表1和表2给【1】中的表3和表4增加了一列。请参考【1】中的第6节对表中内容
+的描述。  请注意在附录里定义的规则和【1】中表3和表4 的e－e列同样应用了在INFO
+请求和回应INFO请求中的头部的应用。 
+
+   2.2 INFO 请求方法的响应
+
+      如果服务器收到一个INFO请求，他必须发出一个最后的回应。
+
+      如果INFO请求被现有的呼叫成功的接收到，UAS必须发送一个 200 OK没有消息体的
+回应给一个INFO请求 。在此之外，不需要其他的操作。  
+
+          头部Header                          地方Where      信息 INFO
+          ------                               -----            ----
+          接收Accept                             R               o
+          接收－编码Accept-Encoding              R               o
+          接收－语言Accept-Language              R               o
+          允许Allow                             200               -
+          允许Allow                             405              o
+          认可Authorization                       R              o
+          呼叫号Call-ID                           gc              m
+          连接Contact                             R              o
+          连接Contact                            1xx             -
+          连接Contact                            2xx              -
+          连接Contact                            3xx              -
+          连接Contact                            485              -
+          连接－编码Content-Encoding             e                o
+          内容－长度Content-Length               e                o
+          内容－类型Content-Type                 e                *
+          CSeq                                   gc               m
+          数据Date                               g                o
+          加密Encryption                         g                 o
+          期满Expires                            g                 o
+          From                                   gc                m
+          隐藏Hide                                R              o
+          最大－向前流Max-Forwards                R               o
+          组织Organization                        g               o
+
+          表 1 头域的概括, A-0
+
+      包括消息体的INFO消息是在本文档的讨论范围之内。本文档消息体的定义将同样需
+要SIP中的那些消息体中的定义。  
+
+      如果INFO请求与任何现存的呼叫 leg不匹配，那么一个 481 呼叫 Leg/Transaction 
+不存在消息必须在一个UAS中被发送。
+
+      如果一个服务器收到一个他能理解消息体的INFO请求，但是它又对与INFO过程有关
+的消息体规则没有一点了解，那么这个消息体可能被翻译并显示给用户。这个INFO被一个
+200 OK说回应了。
+
+      如果INFO请求包括一个服务器那时不能理解的消息体， 在INFO相关的消息体的进
+程规则缺乏时，服务器必须回应一个 415 不支持的媒体类型消息。
+
+          头部                       地方    INFO信息
+          ------                    -----    ----
+          优先权                    R       o
+          Proxy验证                407      o
+          Proxy验证                  R       o
+          Proxy-需求                 R       o
+          请求                       R       o
+          重试-之后                  R       -
+          重试-之后              404,480,486  o
+          重试-之后                 503      o
+          重试-之后               600,603    o
+          回应-关键字                R       o
+          记录-路由                R       o
+          记录-路由                 2xx      o
+          路由                      R       o
+          服务器                     r       o
+          主体                     R       o
+          时间戳                   g       o
+          To到                   gc(1)     m
+          不支持的                420      o
+          用户代理                  g       o
+          Via                       gc(2)     m
+          告警                     r       o
+          WWW-验证               401      o
+
+          表 2 头域的概括 P-Z
+
+      那些在SIP呼叫状态中或被SIP初始化后的会议中完成一个改变的消息体不能被放在
+一个INFO消息中发送。
+
+其它请求失败(4xx), 服务器失败(5xx) 和全局失败 (6xx)回应将被送给INFO请求。
+
+   2.3消息体的内容
+
+      INFO请求将包含一个消息体。.
+
+   2.4 SIP 用户代理的行为
+
+      除非被申明，INFO请求的协议规则控制了标记（tags）的用法。 路由和记录－路由
+重传和可靠性， CSeq 自增和消息格式遵从【1】中定义给BYE请求。
+
+一个INFO请求将被取消。如果，一个最终的回应没有被送给INFO并且行为如同该请
+求从未被接收，那么， 一个 UAS接收一个给INFO 请求的取消（CANCEL）将 用一个“487
+请求已取消”回应给INFO。
+然而， INFO消息决不许改变SIP呼叫的状态，或SIP初始化的会议。
+
+   2.5 SIP 代理和重定向服务器的的行
+
+      2.5.1代理服务器
+
+         除非被申明,在一个服务器上的INFO的协议规定与那些在【1】中说明的BYE请求
+的协议规定相一致。
+
+      2.5.2分支代理服务器
+
+         除非被申明,在一个服务器上的INFO的协议规定与那些在【1】中说明的BYE请求
+的协议规定相一致。
+
+      2.5.3重定向服务器
+
+         除非被申明,在一个服务器上的INFO的协议规定与那些在【1】中说明的BYE请求
+的协议规定相一致。
+
+3.INFO消息体
+
+   INFO消息的目的是在SIP用户代理间传送会议中的信息。这一信息尽管能够在INFO信
+息头中传送，它一般地将被放在消息体中传送。
+
+   对于消息体的定义或其它任何为INFO方法产生的新头部在本文档讨论范围之外。期望能
+够产生以定义这些实体为目标的独立文档。
+
+   另外， INFO方法并不定义确保按顺序传送的附加机制。 当 CSeq 头部将在传送新的
+INFO消息 消息时自增，这就不能被用来决定INFO信息的顺序，这是由于一个事实，即在
+用户代理发送有 re-INVITES 或其它SIP消息时在INFO消息 CSeq 的计数中将会引起鸿沟。
+
+4. 利用 INFO扩展的指导方针
+
+   以下是在定义利用INFO方法的SIP扩展时必须考虑的方面。
+
+   -被INFO消息传送的消息体的大小必须要考虑。 由于消息将可能在UDP上传送并且可能
+重组一个大的消息，消息体应该保持较小。
+
+   - 有一种可能是INFO消息能被一个SIP代理服务器创建。完成这一INFO消息中的信息
+的创建过程需要被考虑。
+
+   - 当定义被INFO消息传送的消息体时，多部分消息体的应用将会很有用。
+
+   - 用INFO消息的扩展不允许依靠INFO消息做那些影响SIP	呼叫的状态或相关会
+议的状态的事。
+
+   - 本文档定义的INFO扩展不依赖于请求或代理请求头部的应用。 用INFO消息的扩展名
+可能需要应用这些机制。然而，如果有可能请求或代理请求的应用最好能避免，以便在SIP
+实体间可以互操作。  
+
+5. 安全性考虑
+
+   如果，消息体的内容是私有的，那么端到端的消息体的加密能够阻止未授权的进入去访
+问它的内容。
+
+   没有其它的安全方法说明给INFO方法.在SIP说明中所说明的安全需要同样用于INFO
+方法。
+   
+
+6.参考资料
+
+   [1] Handley, M., Schulzrinne, H., Schooler, E. and J. Rosenberg,
+       "SIP: Session Initiation Protocol", RFC 2543, March 1999.
+
+7. 致谢
+
+   作者需要感谢 Matthew Cannon 对这一文档作出的贡献。另外，作者想感谢
+  MMUSIC 和 SIP 工作组的成员,特别是 Jonathan  Rosenberg,他评论和建议如何提高本
+文档的质量。 
+
+8. 作者联系方法
+
+   Steve Donovan
+   dynamicsoft
+   5100 Tennyson Parkway, Suite 200
+   Plano, Texas 75024
+
+   Email: sdonovan@dynamicsoft.com
+
+9. 版权说明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   本文档和他的译本将被拷贝和附给其他人，This document and translations of it may 
+be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC2976 The SIP INFO Method                               SIP信息方法
+
+
+1
+RFC文档中文翻译计划

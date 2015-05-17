@@ -1,0 +1,208 @@
+
+组织：中国互动出现网 (http://www.china-pub.com/)
+  RFC文档中文翻译计划 (http://www.china-pub.com/computers/emook/aboutemook.htm)
+  E-mail: ouyang@china-pub.com
+译者：hlq (hlq  hlq@mail.ndsc.com.cn)
+译文发布时间：
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                          G. Dommety
+Request for Comments: 2890                                  Cisco Systems
+Category: Standards Track                                  September 2000
+
+
+GRE的Key和Sequence Number扩展
+
+本备忘录的现状
+
+本文档的现状
+
+   本文当描述了一种供Internet协会采用的Internet标准跟踪协议，尚需对之进行讨论并提出建议以待改进。本协议的标准化进程请参考最新版的“Internet正式协议标准”（STD 1）。本文档可以无限制的分发。
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+
+   GRE (通用路由封装)定义了在任意一种网络层协议上封装另一个协议的规范。本文档描述了GRE头部（参考文献[1]）可能携带的两个扩展域即Key和Sequence Number。
+
+1. 简介
+
+   当前的通用路由封装规范（参考文献[1]）定义了在任意一种网络层协议上封装另一个协议的规范。本文档描述了GRE头部（参考文献[1]）可能携带的两个扩展域即Key和Sequence Number。其中Key域主要用来标识隧道内单个的业务流，Sequence Number域用来维持GRE隧道内数据报文的顺序。
+
+1.1. 规范用语
+   关键词“必须”,“不允许”，“必要的”，“应”，“不应”，“应该”，“不应该”，“建议”，“可能”,“可选”，按RFC 2119（参考文献[3]） 的定义进行解释。
+
+
+   另外，下面的词语用来表示规范的要求：
+
+   悄悄的丢弃
+实现不对数据报文作更多处理而只是简单的丢弃报文，同时不向发送方表明出错。实现应该提供记录错误的功能，包括被丢弃数据报文的内容，同时应该在一个统计计数器中记录该事件。
+
+               
+
+2. GRE头部的扩展
+
+   GRE数据报文的头部（参考文献[1]）拥有下面的格式:
+
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |C|       Reserved0       | Ver |         Protocol Type         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |      Checksum (optional)      |       Reserved1 (Optional)    |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   推荐使用的GRE头部将拥有下面的格式:
+
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |C| |K|S| Reserved0       | Ver |         Protocol Type         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      Checksum (optional)      |       Reserved1 (Optional)    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         Key (optional)                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                 Sequence Number (Optional)                    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+     Key Present (bit 2)
+
+     如果Key Present比特位置为1,那么表明GRE头部中出现Key域。否则，GRE头部中不出现Key域。
+
+     Sequence Number Present (bit 3)
+
+    如果Sequence Number Present比特位置为1，那么表明出现Sequence Number域。否则，GRE头部中不出现Sequence Number域。
+
+Key和Sequence Present比特根据与RFC 1701(参考文献[2])兼容来选取。
+
+2.1. Key域(4 octets)
+
+   Key域是由封装者插入的四个字节的数。实际获得Key的方法超出了本文档的范畴。Key域主要用来标识隧道内部单个的业务流。例如,数据报文可能需要根据某些上下文信息来选择路由，而这些上下文信息不出现在所封装的数据中。Key域提供了这样的上下文，并定义了在封装者和拆封者之间的逻辑业务流。属于同一个业务流的数据报使用同一个Key值来封装，隧道的拆封点根据Key域的值识别属于某个业务流的数据报文。
+
+2.2. Sequence Number (4 octets)
+
+   Sequence Number域是当 Sequence Number Present 比特位置为1时由封装方插入的一个四个字节的数值。接收者必须根据Sequence  Number来建立从封装者到拆封者之间传送的数据报文的顺序。使用Sequence域主要是提供不可靠但顺序的传输。如果Key present比特位(bit 2)置为1,sequence number特定于由Key标识的业务流。注意sequence比特位没有置位的数据报文可以和sequence比特位置位的数据报文交替发送。
+
+   序列号的取值范围从0到（2**32）-1。第一个数据报发送时序列号为0。这样序列号就是一个自由运行的由模2**32表示的计数器。接收方保留上一次成功拆封的报文的序列号值。在建立GRE隧道时,这个值应该设为(2**32)-1。
+
+当拆封者接收到一个无效序列号的数据报文时，它应该悄悄的丢弃该数据报文。当收到的数据报文的序列号小于或等于上一次成功拆封的数据报文的序列号时，收到的报文被视为序列号无效。收到消息的序列号的值如果处于上一次成功收到的序列号和该序列号的前2**31-1个值之间时（包括这两个值），它被认为是小于或者等于上一次成功收到的序列号。
+如果接收到的数据报文序列号有效，它被成功拆封。序列号有效的数据报文是序列号比上一个成功拆封数据报文的序列号正好大1 （模2**32）,或者sequence number域不出现 的数据报文(S位没有置位)。
+如果接收到的数据报文既不是有效序列号的数据报，也不是无效序列号的数据报，表明出现了一个序列号缺口（sequence number gap）。接收者可以试图执行较小的缓冲来恢复已发送数据报文的最初的顺序。在这种情况下,数据报文可以放在以序列号排序的缓冲区中。如果收到一个有效序列号的数据报文并被成功拆封。接收者应该查询缓冲区的头部来判断是否下一个有效序列号的数据报文已经到达。如果是,接收者应该同缓冲区中可能出现的其他紧接着的有效序列号报文一样进行拆封。“上一个成功拆封的序列号”应该随后被置为最后一个从缓冲区中拆封的数据报的序列号。
+在任何情况下，缓冲区中的任何一个数据报都不会等待超过OUTOFORDER_TIMER微秒 。如果一个数据报文已经等待了那么长时间,接收者必须立即按所排的顺序遍历缓冲区，拆封报文 (忽略任意序列号缺口)直到缓冲区中没有等待超过OUTOFORDER_TIMER微秒的数据报文。“上一个成功拆封的序列号”应该随后被置为最后一个从缓冲区中拆封的数据报的序列号。
+接收者可以对每一个业务流（拥有同一个Key值的数据报文属于同一个业务流）的缓冲报文的数量加以限制，如果可导致接收者在一个给定缓冲区中放置多于MAX_PERFLOW_BUFFER个数据报文,那么缓冲区头的数据报文立即被拆封，而不管起序列号，“上一个成功拆封的序列号”置为其序列号。然后把新到达的数据报文放到缓冲区中。
+注意序列号用来检测丢失的数据报文与/或恢复在传输中可能已经失序的数据报文的最初顺序（使用缓冲）。应该适当地使用序列号选项；特别地,当隧道协议的高层协议包括有效序列号传输机制或者可忍受失序传输时，避免使用序列号选项将不失为一个好主意。仅在特定情况下GRE隧道携带的协议要求有序交付时,仅相应的封装在GRE中数据报文可以在发送时设置sequence比特位。
+失序数据报文的重新排序可以由拆封者执行，以提高性能以及对网络重新排序的容错性。当高层协议使用了含状态压缩或加密时，提供一个小的重排序缓冲区(MAX_PERFLOW_BUFFER)将有助于提高性能。因为含状态压缩或加密的状态因为报文的丢失而重置，缓冲将有助于提高网络对少数报文的重排序的容忍性。
+
+3. 安全方面的考虑
+
+   本文档描述了GRE头部（参考文献[1]）可能携带的两个扩展域即Key和Sequence Number。当使用Sequence number域时,通过给报文填入一个随意的序列号从而发起一个拒绝服务攻击（Denial of Service）是可能的。为了防止受此类攻击,必须使用IP安全协议（参考文献[4]）来保护GRE头部以及隧道的净载。ESP(封装安全净载，Encapsulating Security Payload，参考文献[5])或者AH (认证头，参考文献[6])必须用来保护GRE头部。如果使用ESP，它保护IP净载包括GRE。如果使用AH,对整个数据报文而不是某些域进行认证。注意在排序或安全方面都不涉及(不管它的名字的意义)。
+
+4. IANA方面的考虑
+
+   本文档不要求任何IANA分配的资源，因此不需要IANA方面作其他考虑。
+
+5. 致谢
+
+   本文档来源于RFC 1701的原作者的最初思想。Kent Leung, Pete McCann, Mark Townsley, David Meyer,Yingchun Xu,Ajoy Singh以及其他人提供了有用的讨论。作者向上述所有人员表示感谢。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6. 参考文献
+
+   [1] Farinacci, D., Li, T., Hanks, S., Meyer, D. and P. Traina,
+       "通用路由封装(GRE)", RFC 2784, March 2000.
+
+   [2] Hanks, S., Li, T, Farinacci, D., and P. Traina, "通用路由封装", RFC 1701, October 1994.
+
+   [3] Bradner S., "RFC中表明要求等级使用的关键词Levels", BCP 14, RFC 2119, March 1997.
+
+   [4] Kent, S. and R. Atkinson, "IP的安全结构", RFC 2401, November 1998.
+
+   [5] Kent, S. and R. Atkinson, "IP封装安全净载(ESP)", RFC 2406, November 1998.
+
+   [6] Kent, S., and R. Atkinson, " IP认证头", RFC 2402,
+       November 1998.
+
+作者地址
+
+   Gopal Dommety
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA 95134
+
+   EMail: gdommety@cisco.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+完整的版权通告
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,264 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：牛韬（NT   niutao@sohu.com）
+译文发布时间：2001-11-14
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                          A. Barbir
+Request for Comments: 1993                                       Gandalf
+Category: Informational                                          D. Carr
+                                                               Newbridge
+                                                              W. Simpson
+                                                              DayDreamer
+August 1996
+
+
+PPP Gandalf FZA压缩协议
+（RFC1993――PPP Gandalf FZA Compression Protocol）
+
+
+本备忘录的状态
+
+   本备忘录提供的信息是用于Internet社团的。其并未规定某种Internet标准。本备忘录
+的发放不受任何限制。
+
+摘要
+
+   点到点协议(PPP) [1] 为基于点对点链接的多协议数据报的传略提供了一个标准方法。
+
+   PPP 压缩控制协议 [2] 为基于PPP封装链接的压缩协议的协商和使用提供了一种方法。
+
+   本文档描述了用于压缩PPP封装的数据包的Gandalf FZA 数据压缩算法 [3]。
+
+
+
+
+
+
+
+
+目录
+1.  介绍	2
+1.1.  许可	2
+2.  FZA 包	2
+2.1.  数据包格式	3
+3.  配置选项格式	3
+安全考虑	4
+鸣谢	5
+参考文献	5
+联系	5
+
+1.  介绍
+
+   FZA 是由高性能的LZ压缩算法派生出来的，它通过牺牲内存和CPU资源，获得了最大的
+压缩比率。其压缩性能可以通过CPU和内存进行调整。
+
+   多个PPP数据包可以组合成一个单一的压缩帧或是一个单一的PPP数据包，或者一个单一
+的PPP数据包可以穿过多个帧进行传送。
+
+1.1.  许可
+
+   源和目标许可证对于特权和固定的价格方案来说都是可用的和没有差别的。专利保证包含
+在许可协议中。
+
+2.  FZA 包
+
+   在FZA数据包进行通信前，PPP必须到达网络层协议状态。
+
+   当压缩控制协议（CCP）进行开放状态和FZA被作为主压缩算法进行商议时，PPP协议域
+显示为类型为16进制数 00FB(链接压缩数据报)、或 00FD（压缩数据报）。
+
+   基于PPP链接进行传略的FZA数据报最大长度与PPP封装数据包中的信息域的最大长度相
+同。
+
+   填充
+
+      The FZA 数据包需要对LCP链接建立的自描述填充选项[5]进行商讨。
+
+   可靠性和先后顺序
+
+      FZA算法预期的是可靠的链接，正如“PPP可靠传输”[6]中所描述的一样。
+
+      FZA 期望数据包能够按先后顺序进行传输。
+
+   数据的压缩比率
+
+      Gandalf FZA的最大压缩比率是 2:1。然而，标准的释放后的数据与压缩前的数据大
+小的比率是1.01:1。因为释放后的数据要对压缩历史记录的完整性进行维护。
+
+      当释放的长度超过了用于链接的同等最大接收单元的长度，释放的数据包将以多个
+PPP帧的形式发送。压缩数据包含了原始数据包的结束指示符。
+
+2.1.  数据包格式
+
+   Gandalf FZA 数据包格式的摘要如下所示。域的传输是从左向右的。
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         PPP Protocol          |     Compressed Data ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   PPP 协议
+      一或两个八位字节。PPP协议域以点到点协议封装 [1] 的形式进行描述。
+
+      在未使用PPP多链接协议，和（或）在多链接包中时，要使用类型 00FD。类型 00FB
+用于在多链接之外，用于压缩个别多链接包中的独立链接。在协商LCP协议域压缩时，这个
+值可能会被压缩。
+
+   压缩数据
+
+      一或二个八位字节。压缩的PPP封装数据包。
+
+在压缩前，未压缩的数据先用原始的PPP协议进行编号。在协商LCP协议域压缩时，
+这个值可能会被压缩。
+原始协议编号在原始的信息域之后。原始信息域的长度在压缩前一定不可以超接收单元的链
+接最大量（MRU）
+
+      PPP 链接控制协议数据包一定不要放在压缩数据中发送。
+
+
+3.  配置选项格式
+
+   描述
+
+      CCP Gandalf-FZA配置选项格式商讨了链接上Gandalf FZA 的使用。由于缺省或最终
+的争议。没有利用压缩。
+
+   Gandalf-FZA 配置选项格式如下所示。该域从左向右进行传送。
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |   History   |    Version ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      19
+
+   Length
+
+      >= 3
+
+   History
+
+      一个八位字节。  域History以2的幂的形式规定了压缩历史记录的最大长度。其有
+效值从12到15
+     同样，其不需要作为历史进行发送，因为其实现提示其可以被接受。
+
+   Version
+
+      0或更多的附加字节配置信息。没有实现这一信息的任何形式的实现必须发送一个不
+带有该域的无应答配置。
+
+      FZA的Version 域不存在
+
+      Version 域的长度为一字节，对于FZA+，其值为1。
+
+
+安全考虑
+
+   本备忘录未考虑安全问题。
+
+
+
+鸣谢
+
+   FZA was developed by David Carr while at Gandalf Data Limited.
+
+   FZA+ was an improvement by Abbie Barbir.
+
+   Editting and formatting by William Simpson.
+
+
+参考文献
+
+   [1]   Simpson, W., Editor, "The Point-to-Point Protocol (PPP)", STD
+         51, RFC 1661, DayDreamer, July 1994.
+
+   [2]   Rand, D., "The PPP Compression Control Protocol (CCP)", RFC
+         1962, Novell, June 1996.
+
+   [3]   Barbir, A., "A New Fast Approximate Arithmetic Coder",
+         Proceedings of IEEE 28th SouthEastern Symposium on Systems
+         Theory (SSST), Baton Rouge, Louisiana, pages 482-486, April
+         1996.
+
+   [4]   Lempel, A. and Ziv, J., "A Universal Algorithm for Sequential
+         Data Compression", IEEE Transactions On Information Theory,
+         Vol. IT-23, No. 3, May 1977.
+
+   [5]   Simpson, W., Editor, "PPP LCP Extensions", RFC 1570,
+         DayDreamer, January 1994.
+
+   [6]   Rand, D., "PPP Reliable Transmission", RFC 1663, Novell, July
+         1994.
+
+
+
+联系
+
+   Licensing queries should be directed to:
+
+   Michael Williams
+   Director of Business Development
+   Gandalf Data Limited
+   130 Colonnade Road South
+   Napean, Ontario, Canada  K2E 7M4
+   (613) 274-6500 ext 6575
+
+
+   Comments should be submitted to the ietf-ppp@merit.edu mailing list.
+
+   This document was reviewed by the Point-to-Point Protocol Working
+   Group of the Internet Engineering Task Force (IETF).
+
+   The working group can be contacted via the current chair:
+
+      Karl Fox
+      Ascend Communications
+      3518 Riverside Drive, Suite 101
+      Columbus, Ohio  43221
+
+          karl@MorningStar.com
+          karl@Ascend.com
+
+
+   Questions about this memo can also be directed to:
+
+      Abdulkader Barbir
+      Gandalf Data Limited
+      130 Colonnade Road South
+      Napean, Ontario, Canada  K2E 7M4
+      (613) 274-6500 ext 8550
+
+          abarbir@gandalf.ca
+
+
+   Questions about this memo should not be directed to:
+
+      Dave Carr
+      Newbridge Networks Corporation
+      600 March Road
+      P.O. Box 13600
+      Kanata, Ontario, Canada, K2K 2E6
+
+          dcarr@newbridge.com
+
+      William Allen Simpson
+      DayDreamer
+      Computer Systems Consulting Services
+      1384 Fontaine
+      Madison Heights, Michigan  48071
+
+          wsimpson@UMich.edu
+          wsimpson@GreenDragon.com (preferred)
+
+
+RFC1993――PPP Gandalf FZA Compression Protocol                    PPP Gandalf FZA压缩协议
+
+
+2
+RFC文档中文翻译计划

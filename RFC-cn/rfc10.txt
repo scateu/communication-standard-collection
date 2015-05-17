@@ -1,0 +1,117 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang   mcsewang@21cn.com）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group						S. Crocker
+RFC-10							               
+UCLA
+								  21 July 1969
+
+文档规范
+（RFC10 ── DOCUMENTATION CONVENTIONS）
+
+此规范是NWG/RFC # 3 的修订版。
+网络工作组（Network Working Group）包括来自尤他洲的Steve Carr，SRI 的 Elmer
+Shapiro 和 Bill English，UCLA的Steve Crocker，RAND 的 John Haefner，林肯实验室的
+Paul Rovner 和 Jim Curry，成员资格没有限制。
+网络工作组（Network Working Group：NWG）关注主机软件、网络使用策略及网络应
+用中的初始经验。
+NWG工作文档通过类似于本文的笔记形式纪录。这种文档可以由任何站点的任何人发
+布并包括在这个系列中。
+
+内容
+NWG文件记录的可以是任何想法、建议等与主机软件或网络的其他特征相关的内容。
+文件不一定要文辞精美，但应尽量保证内容的时效性和及时性。以下几种内容的文档也可以，
+如：纯粹的立场观点的表述，而没有举出实例和其他一些细节；提出特别的建议或执行技巧
+而没有给出相关的背景解释；只是明白的提出一个问题而没有给出任何解答。一份文档要求
+不少于一句话。
+这些标准是基于下面两个原因制定的：第一，人们倾向于将文件记录当成事实上的权
+威，我们希望推动交流和讨论而不是听信权威性的结论。第二，人们通常不愿发表一些未认
+真雕琢过的文章，我们希望消除这种顾虑。
+
+格式
+每篇NWG 文档都应该包括下列信息：
+1． “ Network Working Group ”
+    “ Request for Comnments : X”( X下划线 )
+    其中X是一个序号，它由UCLA的Steve Crocker 给出
+2.	作者及合作人
+3.	日期
+4.	题目
+标题不要求唯一
+
+发布
+笔记的一份拷贝由作者的站点发至下列成员：
+1.  Steve Crocker, UCLA
+	2.  Ron Stoughton, UCSB
+	3.  Elmer Shapiro, SRI
+	4.  Steve Carr, Utah
+	5.  John Haefner, RAND
+	6.  Paul Rovner, LL
+	7.  Bob Kahn, BB&N
+	8.  Larry Roberts, ARPA
+	9.  Jerry Cole, SDC
+
+若有需要，副本可以在本地自行处理。
+
+地址
+以下是最新的地址，必要时请更正：
+	
+	Steve Crocker				UCLA
+	3732 Boelter Hall			(213) 825-4864
+	UCLA					      825-2543 Sec'y
+	Los Angeles, California  90024
+
+	Ron Stoughton				UCSB
+	Computer Research Lab.			(805) 961-3221
+	UCSB
+	Santa Barbara, California  93106
+
+	Elmer Shapiro				SRI
+	Stanford Research Institute		(415)326-6200
+	333 Ravenswood
+	Menlo Park, California  94025
+
+	Steve Carr				Utah
+	Computer Science Dept.			(801) 322-8224
+	University of Utah
+	Salt Lake City, Utah  84ll2
+
+	John Haefner				RAND
+	The Rand Corp.				(213) 393-0411
+	1700 Main Street
+	Santa Monica, California  90406
+
+
+	Paul D. Rovner				LL
+	Mass. Inst. of Tech.			(617) 662-5500
+	Lincoln Laboratory B-115		X7211
+	P.O. Box 73				
+	Lexington, Mass. 02173
+
+	Robert Kahn				BBN
+	Bolt, Beranek and Newman		(617) 491-1850
+	50 Moulton St.				      49l-1868
+	Cambridge, Mass.  02138
+
+	Larry Roberts				ARPA
+	ODS/ARPA				(202) OX 7-8663
+	3D167 Pentagon				      OX 7-8654
+	Washington, D.C.  2030l
+
+
+	Jerry Cole				SDC
+	7842 Croyden				2500 Colorado
+	L.A., California  90045			Santa Monica, California 90406
+						(213) 393-9411
+						      X438
+						      X6019 Sec'y
+
+RFC10  DOCUMENTATION CONVENTIONS                    文档规范  
+
+
+1
+RFC文档中文翻译计划

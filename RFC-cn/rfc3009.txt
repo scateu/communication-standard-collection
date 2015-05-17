@@ -1,0 +1,340 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：洪卫林（hongwl   hongwl@eyou.com）
+译文发布时间：2001-7-14
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                       J. Rosenberg
+Request for Comments: 3009                                   dynamicsoft
+Category: Standards Track                                 H. Schulzrinne
+                                                             Columbia U.
+                                                           November 2000
+
+奇偶向前纠错 MIME类型的注册
+
+（RFC3009 ――Registration of parityfec MIME types）
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+
+版权声明
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+   对于一般向前纠错而言，RTP（实时传输协议）有效载荷格式允许RTP共享者通过传统
+基于奇偶的信道编码来改善丢失弹性。这个有效载荷格式要求四种新的MIME类型：
+audio/parityfec、video/ parityfec、text/ parityfec与application/ parityfec。这篇文档适合那些格
+式的MIME类型注册。
+目录
+1.介绍	2
+2. AUDIO/PARITYFEC注册	2
+3. VIDEO/PARITYFEC注册	3
+4. TEXT/PARITYFEC注册	5
+5. APPLICATION/PARITYFEC注册	6
+6．安全考虑	7
+7．作者地址	7
+8．参考书目	8
+9.版权声明	8
+10．致谢	9
+
+1.介绍
+对于一般向前纠错而言[1]，RTP（实时传输协议）有效载荷格式允许RTP共享者通过
+传统基于奇偶的信道编码来改善丢失弹性。这个有效载荷格式要求四种新的MIME类型：
+audio/parityfec、video/ parityfec、text/ parityfec与application/ parityfec。在IETF（因特网工
+程任务组）目录树中，RFC 2048[2]详细说明了新MIME类型的注册程序。
+更进一步说，Audio/Video传输工作组已经详细说明了附加程序，而且在注册RTP时必
+须遵循这些程序[3]。这篇文档适合基于那些程序的那些格式的MIME类型注册。
+
+2. audio/parityfec注册
+
+           e-mail地址：ietf-types@iana.org
+
+           主题：MIME媒体类型audio/parityfec的注册
+
+           媒体类型名称：音频
+
+           MIME子类型名称：奇偶向前纠错
+
+           要求参数：无
+
+               注意[3]：我们要求没有一个明确速率的RTP有效载荷格式必须定义一个速
+率参数，并且它们MIME注册的一部分。一般向前纠错的有效载荷格式[1]没有
+规范一个速率参数。然而，FEC数据的速率等于其保护的媒体数据的速率。
+
+           可选参数：无
+
+              典型可选参数[3]没有应用于FEC数据，例如信道数目与每个包中音频的持
+续时间。信道数目有效地等同于其所保护的媒体数据；对于每个包中音频的持
+续时间也是如此。
+
+          编码考虑事项：
+              这种传输格式仅在实时传输协议（RTP）中定义[4,5]。RFC2733[1]充分说
+明了它在RTP中的传输。
+
+         安全考虑事项：
+             在这些有效载荷的MIME注册中使用同样安全考虑。关于这些在RFC 2733
+中有更详细的介绍。
+
+         协同性考虑事项：无
+
+         出版说明书：RFC 2733[1]中充分描述了这种MIME类型。
+             在实际应用中使用这种媒体类型即视频与音频的流工具，并且它们通过在体
+流中发送附加数据以求改善丢失弹性。
+
+         附加信息：无
+
+         为了得到进一步信息，个人信息与email联系地址:
+            Jonathan Rosenberg
+            dynamicsoft
+            72 Eagle Rock Avenue
+            First Floor
+            East Hanover, NJ 07936
+            email: jdrosen@dynamicsoft.com
+                   jdrosen@alum.mit.edu
+
+         目的性用法：普通
+
+         著者/更改控制器：
+这个注册信息作为IETF注册目录树的一部分。
+
+         RTP与SDP发行：
+             在RFC 2733 [1]中充分说明了RTP中这种格式的用法以及会话描述协议
+（SDP）。
+
+3. video/parityfec注册
+
+e-mail地址：ietf-types@iana.org
+
+           主题：MIME媒体类型video/parityfec的注册
+
+           媒体类型名称：视频
+
+           MIME子类型名称：奇偶向前纠错
+
+           要求参数：无
+
+               注意[3]：我们要求没有一个明确速率的RTP有效载荷格式必须定义一个速
+率参数，并且它们MIME注册的一部分。一般向前纠错的有效载荷格式[1]没有
+规范一个速率参数。然而，FEC数据的速率等于其保护的媒体数据的速率。
+
+           可选参数：无
+
+              典型可选参数[3]没有应用于FEC数据，例如信道数目与每个包中音频的持
+续时间。信道数目有效地等同于其所保护的媒体数据；对于每个包中视频的持
+续时间也是如此。
+
+编码考虑事项：
+              这种传输格式仅在实时传输协议（RTP）中定义[4,5]。RFC2733[1]充分说
+明了它在RTP中的传输。
+
+          安全考虑事项：
+             在这些有效载荷的MIME注册中使用同样安全考虑。关于这些在RFC 2733
+中有更详细的介绍。
+
+          协同性考虑事项：无
+
+          出版说明书：RFC 2733[1]中充分描述了这种MIME类型。
+             在实际应用中使用这种媒体类型即视频与音频的流工具，并且它们通过在体
+流中发送附加数据以求改善丢失弹性。
+
+          附加信息：无
+
+
+         为了得到进一步信息，个人信息与email联系地址:
+            Jonathan Rosenberg
+            dynamicsoft
+            72 Eagle Rock Avenue
+            First Floor
+            East Hanover, NJ 07936
+            email: jdrosen@dynamicsoft.com
+                   jdrosen@alum.mit.edu
+
+         目的性用法：普通
+
+         著者/更改控制器：
+这个注册信息作为IETF注册目录树的一部分。
+
+         RTP与SDP发行：
+             在RFC 2733 [1]中充分说明了RTP中这种格式的用法以及会话描述协议
+（SDP）。
+
+4. text/parityfec注册
+e-mail地址：ietf-types@iana.org
+
+           主题：MIME媒体类型text/parityfec的注册
+
+           媒体类型名称：文本
+
+           MIME子类型名称：奇偶向前纠错
+
+           要求参数：无
+
+               注意[3]：我们要求没有一个明确速率的RTP有效载荷格式必须定义一个速
+率参数，并且它们MIME注册的一部分。一般向前纠错的有效载荷格式[1]没有
+规范一个速率参数。然而，FEC数据的速率等于其保护的媒体数据的速率。
+
+           可选参数：无
+
+              典型可选参数[3]没有应用于FEC数据，例如信道数目与每个包中音频的持
+续时间。信道数目有效地等同于其所保护的媒体数据；对于每个包中文本的持
+续时间也是如此。
+
+编码考虑事项：
+              这种传输格式仅在实时传输协议（RTP）中定义[4,5]。RFC2733[1]充分说
+明了它在RTP中的传输。
+
+         安全考虑事项：
+             在这些有效载荷的MIME注册中使用同样安全考虑。关于这些在RFC 2733
+中有更详细的介绍。
+
+         协同性考虑事项：无
+
+         出版说明书：RFC 2733[1]中充分描述了这种MIME类型。
+             在实际应用中使用这种媒体类型即视频、音频与文本的流工具，并且它们通
+过在体流中发送附加数据以求改善丢失弹性。
+
+         附加信息：无
+
+         为了得到进一步信息，个人信息与email联系地址:
+            Jonathan Rosenberg
+            dynamicsoft
+            72 Eagle Rock Avenue
+            First Floor
+            East Hanover, NJ 07936
+            email: jdrosen@dynamicsoft.com
+                   jdrosen@alum.mit.edu
+
+         目的性用法：普通
+
+         著者/更改控制器：
+这个注册信息作为IETF注册目录树的一部分。
+
+         RTP与SDP发行：
+             在RFC 2733 [1]中充分说明了RTP中这种格式的用法以及会话描述协议
+（SDP）。
+
+5. application/parityfec注册
+
+e-mail地址：ietf-types@iana.org
+
+           主题：MIME媒体类型text/parityfec的注册
+
+           媒体类型名称：应用程序
+
+           MIME子类型名称：奇偶向前纠错
+
+           要求参数：无
+
+               注意[3]：我们要求没有一个明确速率的RTP有效载荷格式必须定义一个速
+率参数，并且它们MIME注册的一部分。一般向前纠错的有效载荷格式[1]没有
+规范一个速率参数。然而，FEC数据的速率等于其保护的媒体数据的速率。
+
+           可选参数：无
+
+              典型可选参数[3]没有应用于FEC数据，例如信道数目与每个包中音频的持
+续时间。信道数目有效地等同于其所保护的媒体数据；对于每个包中文本的持
+续时间也是如此。
+
+编码考虑事项：
+              这种传输格式仅在实时传输协议（RTP）中定义[4,5]。RFC2733[1]充分说
+明了它在RTP中的传输。
+
+         安全考虑事项：
+             在这些有效载荷的MIME注册中使用同样安全考虑。关于这些在RFC 2733
+中有更详细的介绍。
+
+         协同性考虑事项：无
+
+         出版说明书：RFC 2733[1]中充分描述了这种MIME类型。
+             在实际应用中使用这种媒体类型即视频、音频与应用程序的流工具，并且它
+们通过在体流中发送附加数据以求改善丢失弹性。
+
+         附加信息：无
+
+         为了得到进一步信息，个人信息与email联系地址:
+             Jonathan Rosenberg
+            dynamicsoft
+            72 Eagle Rock Avenue
+            First Floor
+            East Hanover, NJ 07936
+            email: jdrosen@dynamicsoft.com
+                   jdrosen@alum.mit.edu
+
+         目的性用法：普通
+
+         著者/更改控制器：
+这个注册信息作为IETF注册目录树的一部分。
+
+         RTP与SDP发行：
+             在RFC 2733 [1]中充分说明了RTP中这种格式的用法以及会话描述协议
+（SDP）。
+6．安全考虑
+
+    这种MIME注册没有介绍任何附加安全考虑事项。
+7．作者地址
+Jonathan Rosenberg
+   dynamicsoft
+   72 Eagle Rock Avenue
+   First Floor
+   East Hanover, NJ 07936
+
+   EMail: jdrosen@dynamicsoft.com
+
+
+   Henning Schulzrinne
+   Columbia University
+   M/S 0401
+   1214 Amsterdam Ave.
+   New York, NY 10027-7003
+
+   EMail: schulzrinne@cs.columbia.edu
+
+8．参考书目
+[1] Rosenberg, J. and H. Schulzrinne, "An RTP Payload Format for
+       Generic Forward Error Correction", RFC 2733, December 1999.
+
+   [2] Freed, N., Klensin, J. and J. Postel, "Multipurpose Internet Mail
+       Extensions (MIME) Part Four: Registration Procedures", RFC 2048,
+       November 1996.
+
+   [3] Casner, S. and P. Hoschka, "MIME type registration of RTP payload
+       formats", Work in Progress.
+
+   [4] Schulzrinne, H., Casner, S., Frederick, R.  and V. Jacobson,
+       "RTP: a transport protocol for real-time applications", RFC 1889,
+       January 1996.
+
+   [5] Schulzrinne, H., Casner, S., Frederick, R. and V. Jacobson, "RTP:
+       a transport protocol for real-time applications", Work in
+       Progress.
+
+   [6] Handley, M. and V. Jacobson, "SDP: Session Description Protocol",
+       RFC 2327, April 1998.
+
+9.版权声明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+只要在所有复本与推导性工作中包含上面的版权声明和这段文字，就可以全部地或者部
+分地且没有任何限制地复制这篇文档与其译本以及把它提供给其它文档，同样也可以准备、
+复制、出版与发行推导性工作，而且需要评述此推导性工作否则就得解释它，或者辅助此推
+导性工作的实现。然而，此文档本身不可以做任何修改，诸如删除版权声明或者因特网社区
+或其它因特网组织的涉及，除了当需要开发因特网标准的目的时之外且在此种情况下必须遵
+循在因特网标准过程中定义的版权程序，或者除了当要求把它译成其它语言（即不是英文）
+的目的时之外。
+在上面准予的有限的许可是永久性的，而且因特网社区或者它的继承者或指派者都将不
+会废除它。
+在此包含的这篇文档与信息是基于“AS IS”而提供的，并且因特网社区与因特网工程
+任务组织声明了所有的授权、表达或含义，且包含对任何授权的限制，比如这里信息的使用
+不会违反任何授权或者出于特殊目的的商品性或适切性的任何含蓄授权。
+10．致谢
+感谢因特网社区当前为RFC编辑提供了功能基金。
+RFC3009―Registration of parityfec MIME types      奇偶向前纠错 MIME类型的注册
+
+
+1
+RFC文档中文翻译计划

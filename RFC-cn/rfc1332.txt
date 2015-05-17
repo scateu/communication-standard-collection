@@ -1,0 +1,186 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：龙天泳（longty2000）
+译文发布时间：2001-4-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                        G. McGregor
+Request for Comments: 1332                                         Merit
+Obsoletes: RFC 1172                                             May 1992
+
+
+
+
+RFC1332 端对端协议网间协议控制协议（IPCP）
+（RFC1332 The PPP Internet Protocol Control Protocol (IPCP)）
+ 
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+摘要
+  PPP协议（端对端协议）[ 1 ]提供在点对点链路上面压缩网络层协议信息的标准的方法。同样，PPP协议定义可扩展的链路控制协议，和为了建立和配置不同的网络层协议的网络控制协议（NCP）族。
+　　本文档定义了为了在PPP协议上面建立和配置网间协议[ 2 ]的NCP，以及协商和使用PPP协议上Van Jacobson TCP/IP报头压缩[ 3 ]的方法。
+　　本RFC是国际网工作交流协会的串列点协议工作（IETF）小组的成果。
+
+
+
+
+
+
+
+
+
+目录
+1.介绍	2
+2.端对端协议网络控制协议（NCP）为IP	2
+2.1 发送IP数据报	3
+3.IPCP配置可选项	3
+3.1 IP-地址（IP-Addresses）	3
+3.2 IP-压缩协议	4
+3.3 IP-地址（IP-Address）	4
+4.VAN JACOBSON TCP/IP报头压缩	5
+4.1 配置可选项格式	5
+附录A.IPCP推荐的可选项	6
+安全考虑	6
+参考	6
+
+1.介绍
+　　PPP协议有3个主要的部分：
+　　1.串行的链路上压缩数据报的方法。
+　　2.完成链路建立，配置的数据链路控制协议（LCP）。
+　　3.为网络层协议族配置不同的网络层协议的网络控制协议（NCP）。
+　　为了在点到点链路上面建立通信，每个PPP协议链路的端都为了配置和试验必须首先发LCP包。在链路经过LCP选择和建立之后，PPP必须发送NCP包选择和配置一个或一个以上的网络层协议。如果每个被选中的网络层协议都被配置，来自每个网络层协议的数据报就能在链路上面被发送。
+　　链路一直保持通信配置到通信单元LCP或NCP包明确指示关闭链路，或者一些外部事件发生（计时器呼出休止状态，或者网络管理员干涉）为止。
+2.端对端协议网络控制协议（NCP）为IP
+　　IP控制协议（IPCP）负责配置，以及点对点链路的双端上激活和去激活IP协议传输。IPCP使用和链路控制协议（LCP）同样的包交换machanism。IPCP包也可以在PPP协议达到网络层的协议阶段以前不被交换。在本阶段达到之前收到的IPCP包应该静静地抛弃。
+　　IP控制协议确切地说除下列情形外，是和链路控制协议[ 1 ]同样的东西：
+　　数据链路层协议域
+　　确切地说 IPCP包是被压缩在协议域类型为十六进制8021（IP控制协议）的PPP协议数据链路层帧的信息字段中的。
+　　编码域
+　　只有代码1到7（Configure-Request，Configure-Ack，Configure-Nak，Configure-Reject，Terminate-Request，Terminate-Ack和Code-Reject）被使用。其他的编码应该被处理为未经承认并且应该导致结果Code-Rejects。
+　　超时
+　　IPCP包可以在PPP协议达到网络-层的协议阶段之前不被交换。执行应该为等待在等待Configure-Ack或其他响应的定时器超时之前的认证和线路质量监测完成做好准备。被建议执行仅仅在用户干涉或可变的时间量后面放弃。
+　　配置可选项类型
+　　IPCP有在下边定义的的配置可选项的清楚的置值。
+　　2.1 发送IP数据报
+　　在任何IP包可以被传输之前，PPP协议必须达到网络-层的协议阶段，IP控制协议必为Opened状态。
+　　确切地说IP包是被压缩在协议域类型为十六进制0021（网间协议）的PPP协议数据链路层帧的信息字段中的。
+在PPP协议链路上面被传送的IP包的最大的长度是和PPP协议数据链路层结构的信息字段的最大的长度同样的东西。大的IP数据报必须分片传输。
+　　如果系统想避免分片和重组，它应该使用TCP的最大分片尺寸选项[ 4 ]和MTU discovery[ 5 ]。 
+3.IPCP配置可选项
+　　IPCP配置可选项允许合乎需要的网间协议参数的协商。IPCP用和LCP [ 1 ]一样的选项定义格式来分隔各个选项的设置。
+　　IPCP选项类型域的最新的值在最近的"Assigned Numbers"RFC中被指定[ 6 ]。当前的值象下面这样被分配：
+　　1 IP-地址（Addresses）
+　　2 IP-压缩协议
+　　3 IP-地址（Address）
+　　3.1 IP-地址（IP-Addresses）
+　　描述
+　　IP-地址（Addresses）配置选项的使用已经被反对了。它难以在全部使用本选项的例子中保证协商收敛。RFC [ 7 ] 1172为向后兼容执行需要提供信息。IP-地址（Address）配置选项代替本选项，并且它的使用是首选的。
+
+　　本可选项不应该在已经被承认的包含了IP-Address和IP-Addresses的任意一个选项Configure-Request或Configure-Request中被发送。
+　　如果Configure-Reject为IP-地址的可选项被收到，或者Configure-Nak用IP-地址的可选项被认为是附加的选项，本可选项可以被发送。
+　　在IPCP协议状态达到Internet草案标准之后，本可选项也许被废除。
+　　3.2 IP-压缩协议
+　　描述
+　　本配置可选项提供协商特定的压缩协议的使用的方法。在默认情况下，压缩不使用。
+
+IP-压缩协议配置可选项格式的摘要在下边被表示。域从左往右被传送。
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 | IP-压缩协议 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 数据...
++-+-+-+-+
+类型 2
+长度 >= 4
+IP-压缩协议
+IP-压缩协议域是和显示压缩协议要求的2八位字节。给本域的值总是和给那个相同的压缩协议的PPP协议数据链路层协议域值同样的东西。
+IP-压缩协议域的最新的值在最近的"Assigned Numbers"RFC中被指定[ 6 ]。当前的值象下面这样被分配：
+值（十六进制在中） 　　　　　　协议
+002d　　　　　　　　　　　　　 Van Jacobson Compressed TCP/IP(用于网络的一组通讯协议)
+数据
+数据区是零，或者，由特别压缩协议决定的更多的八位字节的附加数据数据。
+缺省
+不使用压缩协议。
+3.3 IP-地址（IP-Address）
+　　描述
+　　本配置选项提供协商在链路本端上被使用的IP地址的方法。它允许Confugure-Requestde的发送方声明要求哪个IP地址，或者请求对端提供信息。对端能通过NAKing选项提供本信息，返回有效的IP地址。
+　　如果必须进行关于远程的的IP地址的协商，而对端不提供其Configure-Request里边可选项，可选项应该被加到Configure-Nak上。被给的IP地址值必须象远程的的IP地址那样可接受，或者显示对端提供信息的要求。
+在默认情况下，IP地址不被分配。
+IP-地址（IP-Address）的配置可选项格式的摘要在下边被表示。域从左往右被传送。
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+| 类型 | 长度 | IP-地址
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+IP地址（cont） |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+类型 3
+长度 6
+IP-地址
+4个八位字节IP地址是发件人在Configure-Request中要求的本端地址。如果全部4个八位字节都是零值，它表示请求对端提供IP-地址信息。 缺省
+
+IP地址不被分配。
+4.Van Jacobson TCP/Ip报头压缩
+　　Van Jacobson TCP/IP报头压缩把TCP/IP报头降低到3字节。这可以显著的改进低速串行线的通信。
+　　IP-压缩协议配置可选项被用来表示收到压缩的包的能力。如果要求双向压缩，链路的每一端都必须独立地请求本可选项。
+　　当传送IP包的时候，PPP协议协议域是对下列值的置值：
+　　值（十六进制在中）
+　　0021 典型IP。IP协议不是TCP，或包被分割，或者不能压缩。
+　　002d 压缩TCP。TCP/IP报头被压缩报都替换。
+　　002f 未压缩TCP。IP协议域被时间片标识符替换。
+　　4.1 配置可选项格式
+　　为了协商Van Jacobson TCP/IP报头压缩IP-压缩协议配置选项的格式的摘要在下边被表示。域从左往右被传送。
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 | IP-压缩协议 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|最大时间片ID | 比较时间片ID |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+类型 2
+长度 6
+IP-压缩协议
+　　002d（十六进制）给Van Jacobson的压缩了TCP/Ip报头。
+最大-时间片身份识别标志（Max-Slot-ID）
+　　Max-Slot-Id域是表示最大的时间片标识符的1八位字节。它比时间片的实际的号码更少；时间片标识符可以取从零到Max-Slot-Id的值。
+　　记录：
+　　用1时间片仅仅（最大-时间片身份识别标志= 0）可以有有问题的执行。在参考中看讨论[ 3 ]。在[ 3 ]例子执行将仅仅和3一起通过254时间片动。
+比较-时间片身份识别标志（Comp-Slot-Id）
+　　Comp-Slot-Id域是表示是否时间片标识符域可以被压缩的1八位字节。
+　　0 时间片标识符不必被压缩。全部压缩的TCP包都必须在每一个变化的mask中设置C比特，而且必须包括时间片标识符在内。
+　　1 时间片标识符可以被压缩。
+　　如果PPP协议链路没有能力在接收中给解压缩模块表示误差，时间片标识符不允许被压缩。在误差后面的同步依靠用时间片标识符接收包。在参考中看讨论[ 3 ]。
+附录A.IPCP推荐的可选项
+　　推荐下列配置可选项：
+　　IP-压缩协议 － 带有至少4个时间片--通常为16个时间片。
+　　IP-地址 　　－ 仅在拨号线路上。
+安全考虑
+　　安全问题不在本记录中被讨论。
+参考
+　　[1]Simpson, W., "The Point-to-Point Protocol", RFC 1331, May 1992.
+　　[2]Postel, J., "Internet Protocol", RFC 791, USC/Information Sciences Institute, September 1981.
+　　[3]Jacobson, V., "Compressing TCP/IP Headers", RFC 1144, January 1990.
+　　[4]Postel, J., "The TCP Maximum Segment Size Option and Related Topics", RFC 879, USC/Information Sciences Institute, November 1983.
+　　[5]Mogul, J., and S. Deering, "Path MTU Discovery", RFC 1191, November 1990.
+　　[6]Reynolds, J., and J. Postel, "Assigned Numbers", RFC 1060, USC/Information Sciences Institute, March 1990.
+　　[7]Perkins, D., and R. Hobby, "Point-to-Point Protocol (PPP) initial configuration options", RFC 1172, August 1990.
+
+
+RFC1332 The PPP Internet Protocol Control Protocol(IPCP) RFC1332端对端协议网间协议控制协议（IPCP）
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

@@ -1,0 +1,315 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者:NETBUS(NETBUS lfong@263.net)
+发布时间：2001-6-21
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network  Working Group                                        R. Thayer
+Request for Comments: 2411                 Sable Technology Corporation
+Category: Informational                                    N. Doraswamy
+                                                           Bay Networks
+                                                               R. Glenn
+                                                                   NIST
+                                                          November 1998
+
+                               IP安全文件指南
+       （IP Security Document Roadmap）
+
+
+备忘录的状态：
+   本备忘录提供因特网组织的信息。它不规定国际互连网标准的的任何种类.本备忘录的分
+发是无限制的.
+
+著作权申明：
+  著作权属于因特网组织（1999）。所有相关权利均被保留。
+
+摘要：
+   IPsec协议族被用于在 IP层提供保密和认证服务.一些文档被用于描述该协议族.描述 
+Ipsec 协议的不同的文档的相护关系和结构在这里将被讨论.本文将描述在哪一个文档中可
+以查找到的内容的说明和包含在新加密算法和认证算法文档的内容。
+目录：
+1. 介绍	2
+2. IPsec文档的相护关系	2
+3. 密匙材料	3
+4. 算法文档的推荐内容	4
+4.1 加密和认证算法	4
+4.2 加密算法	5
+4.3 认证算法	5
+5. 安全性考虑	6
+6. 声明:	6
+7. 参考资料	6
+8. 作者地址	7
+9.  全部版权声明	8
+
+1. 介绍
+这份文件想为发展描述新加密和认证算法在 ESP（封装安全载荷）协议（描述在 [ESP]
+中）和在AH（认证头）协议（描述在 [AH]中）中的使用的规范提供指导方针。ESP和 AH是 
+IP安全体系结构的一部分（描述在 [Arch]中）. 不仅当初始文件集正在开发时而且在基础
+文档 成为RFC后,都存在众所周知的能被用于在ESP和 AH中加入新的加密算法或认证算法
+的过程的要求,。下列指导方针将讨论简化增加新算法和减少冗余文档的数量 .
+   在写一个新加密算法或认证算法文档的过程中目标应专注于专用的算法在ESP和 AH中的
+应用.通用的 ESP和 AH概念,定义,和论点均被包括在 ESP和 AH文档中.这些算法自身未被
+描述在这些文档中.这给了我们增加新算法并说明任一给定算法和其他的算法互相影响的能
+力.意图是达到避免信息的重复和大量的文档（所谓的"草稿展开"影响）的目标.
+2. IPsec文档的相护关系
+   文档描述 IPsec协议集被分为七组.这在图1中有说明.有覆盖了通用的概念,安全性要求,
+定义,和定义 IPsec技术的机制的主要体系结构文件.
+   ESP协议文件和 AH协议文件包括了数据包格式和通用的关于各自的协议的主题.
+   如果适当,这些协议文档也包含缺省值，比如默认填充目录,和实现算法的命令.这些文档
+指出了在解释域文件 [DOI]中的一些值.
+   注意 DOI文件本身是 IANA赋值编号机制的一部分，因此这些描述在 DOI中的值是众所
+周知的.如需要该机制的更多信息，请参见[DOI]文档.
+   加密算法文档集被显示在图1的左边，是描述各种加密算法如何为ESP使用的文档集.这
+些文档想适合指南,并且将避免和 ESP协议文件和AH协议文件相重复.[DES-Detroit]和[CBC]
+文档是这些文档的例子.当这些或其他的加密算法被使用为ESP时, DOI文件不得不指示确定
+的值,如 加密算法标识符,因此这些文档为 DOI提供输入.
+    认证算法文档集被显示在图1的右边，是描述各种认证算法如何为ESP和AH使用的文档
+集.这些文档想适合指南,并且避免和 ESP协议文件和AH协议文件相重复.[HMAC-MD5]和
+[HMAC-SHA-1]文档是这些文档的例子.当这些或其他的算法被使用为ESP或AH时, DOI文件
+不得不指示确定的值,如 算法类型,因此这些文档为 DOI提供输入.
+    密匙管理文档被显示在图1的底部,是描述IETF标准跟踪密匙管理计划的文档.这些文档
+也提供DOI的确定的值.注意 密匙管理的主题应该在此处指出而不在此处描述,例如:ESP和
+AH协议文件.
+ DOI文件被显示在图1的中间,包含了其他文件彼此联系所需要的值.这些值包括加密算法,
+认证算法,和可选参数如密匙生存时间.
+
+
+                      +--------------+
+                      | Architecture |
+                      +--------------+
+                        v          v
+               +<-<-<-<-+          +->->->->+
+               v                            v
+      +----------+                       +----------+
+      |   ESP    |                       |    AH    |
+      | Protocol |                       | Protocol |
+      +----------+                       +----------+
+        v      v                           v       v
+        v      +->->->->->->->->+          v       v
+        v      v                v          v       v
+        v      v                v          v       v
+        v  +------------+     +----------------+   v
+        v  | +------------+   | +----------------+ v
+        v  | | Encryption |   | | Authentication | v
+        v  +-| Algorithm  |   +-| Algorithm      | v
+        v    +------------+     +----------------+ v
+        v        v                       v         v
+        v        v        +-----+        v         v
+        +>->->->-+->->->->| DOI |<-<-<-<-+-<-<-<-<-+
+                          +-----+
+                             ^
+                       +------------+
+                       |    KEY     |
+                       | MANAGEMENT |
+                       +------------+
+
+                  图 1. IPsec 文档指南.
+
+
+3. 密匙材料
+    在不同文档中描述加密和认证算法提高了这一问题,密匙管理协议如何知道当和ESP一
+起使用时所要求的密匙材料的长度.它也提高了如何分配密匙材料的问题.这就是所谓的"薄
+片和切片"信息.
+每个加密算法和认证算法文件将明确记载他们的各自的密匙属性 (如:如何填充,奇偶位
+的位置,多密匙算法的密匙顺序和长度).密匙管理协议将使用各自的算法文档指明的密匙长
+度生成要求长度的密匙材料 .
+密匙管理协议生成足够健壮和足够大小的密匙材料以为单独的算法生成密匙.IPsec 体系结
+构文件指明了当要求多个密匙时密匙是如何从密匙材料的一个单独的块中抽取出来的(如使
+用认证的ESP).加密算法和认证算法文档负责为每个算法指定密匙的大小和健壮性.无论如
+何,无论整个密匙材料被传给内核以执行分割,还是被密匙管理协议分割,是一个实现上的问
+题.AH协议文件没有这样的要求.
+
+4. 算法文档的推荐内容 
+    这些文档描述了一个特定的加密或认证算法如何被使用以包含适用于该算法的信息.本
+节列举了将被提供的信息.本文档指南的意图是:
+   .  通用的协议信息进入各自的 ESP或 AH协议文档.
+   .  密匙管理信息进入密匙管理文档.
+   .  被分配的值和可协商项的常量进入DOI文档.
+加密和认证算法要求一些可选参数的集合或可选模式的操作(如:IVs,认证数据长度,和
+密匙长度).为了帮助消除一些相关的密匙管理不得不协商大量的算法-特定的参数的复杂度,
+当被认为技术上合理和可行的时,加密或认证算法文档将为这些参数选择固定的值.
+   注意, 以下信息只能作为通用的指导:
+4.1 加密和认证算法
+      本节描述了同时包括在加密算法和认证算法文档中的信息.
+   密匙材料
+. 密匙的大小,包括最小值,最大值,推荐值和/或要求大小.注意:安全性考虑节应为任何
+  弱点指明特定的大小.
+. 被推荐或被要求的伪随机数字发生器的方法和属性提供足够强大的密匙.[RANDOM]文
+  档为产生健壮的随机数以供安全使用提供推荐.
+. 密匙材料的格式
+. 已知弱密匙或关于已知弱密匙的参考文档.
+    . 推荐或要求的输入密匙材料的过程, 奇偶校验的产生或检查.
+    . 关于密匙材料被更新的频率的要求和/或推荐
+  性能考虑 
+. 任何对执行这一算法的可用评估.
+. 任何可用的对比数据(如:比较DES或MD5).
+. 输入数据大小或其他能改进或退化执行的考虑.
+  ESP 环境考虑
+. 任何已知的关于算法和ESP的其他方面相互作用的问题,如确定的认证计划的使用.
+  注意: 作为被用于ESP的新加密和认证算法,稍后的文档将被要求指明与以前的特
+  定算法的相互作用.
+  负载内容和格式描述
+. 指明大小,位置,和没有在ESP或AH协议文档(如.IV)中定义的算法-特有的域的内容.
+  安全性考虑
+. 讨论任何已知的攻击.
+. 讨论任何已知的普通执行的缺陷,如使用弱随机数字发生器.
+. 讨论任何相关的确认程序,如测试向量.[RFC-2202]是包括了一套认证算法的测试向量
+  的例子文档.
+4.2 加密算法
+   本节描述了包括在加密算法文档中的信息.
+   加密算法描述:
+      .关于加密算法被用于ESP的通常信息.
+      .背景材料的描述和形式算法的描述.
+      .被ESP使用的加密算法的特点,包括加密和/或认证.
+      .提及所有实用性问题,如知识产权的所有权考虑.
+      .在IEIF模式中,背景材料的参考资料,如FIPS文档.
+
+算法方式的操作
+ .关于算法是如何被操作的,算法是块模式,流模式或其他模式的描述.
+ .关于输入或输出块格式的要求.
+ .该算法的填充要求. 注意:在基本ESP文档中已指明了默认的填充,因此在这里只需
+  指明是否能使用默认的填充.
+     .任何特定算法的操作参数,如巡回的次数.
+     .区分可选参数和可选操作模式和挑选合理的固定值和清楚的技术解释.
+     .区分这些可选参数在那些值和方法下将保持有清楚的技术解释的可选性,为什么固
+      定值和方法不能使用.
+     .不能确定的算法-特有的可选参数的默认范围和指定范围.
+    
+4.3 认证算法
+本节描述了包括在认证算法文档中的信息.在大多数情况下,不管它被用于ESP还是AH, 一个
+认证算法执行相同的操作.这被表示在一个单独的认证算法文档中.
+   认证算法的描述
+     .关于认证算法被用于ESP和AH的通常信息.
+     .背景材料的描述和形式算法的描述.
+     .该认证算法的特点.
+     .提及所有实用性问题,如知识产权的所有权考虑.
+     .在IEIF模式中,背景材料的参考资料(如FIPS文档)和关于潜在算法的权威描述.
+
+   算法方式的操作
+     . 关于算法是如何被操作的描述.
+     . 算法-特有的操作参数,如:巡回的次数,输入或输出的块格式.
+     . 暗示和指明的该算法的填充要求.注意:在AH协议文档中指明了的认证数据域有默认
+       的填充方法. 因此在这里只需指明是否能使用默认的填充.
+     . 区分可选参数和可选操作模式和挑选合理的固定值和清楚的技术解释.
+     . 区分这些可选参数在那些值和方法下将保持有清楚的技术解释的可选性,为什么固
+       定值和方法不能使用.
+     . 不能确定的算法-特有的可选参数的默认范围和指定范围.
+     . 该算法的认证数据的比较标准.注意:在AH协议文档中已经指明了一种校验认证数
+       据的默认方法. 因此在这里只需指明是否能使用默认(如:当使用一个带符号的哈
+       希时).
+ 
+5. 安全性考虑
+   本文档为写作加密和认证算法文件提供了指南和指导方针.读者应遵从在Ipsec 体系结
+构,ESP协议,AH协议,加密算法和认证算法文档中描述的所有安全过程和指导方针.注意:许
+多加密算法如果不与某些认证机制一起使用不被认为是安全的。
+
+6. 声明:
+   在写本文档时参考了几篇因特网草稿.依赖于这些文档在IETF标准途径的位置, 这些文档
+也许不在IETF RFC的仓库内了.在某些情况下,读者也许会想知道这些参考文档的版本.这些
+文档是:
+    .  DES-Detroit: this is the ANX Workshop style of ESP, based on the
+       Hughes draft as modified by Cheryl Madson and published on the ANX
+       mailing list.
+    .  DOI: draft-ietf-ipsec-ipsec-doi-02.txt.
+    .  3DES: this is <the Triple-DES shim document>.
+    .  CAST: this is draft-ietf-ipsec-esp-cast-128-cbc-00.txt, as revised
+       to relate to this document.
+    .  ESP: draft-ietf-ipsec-esp-04.txt, mailed to the IETF mailing list
+       in May/June 1997.
+    .  AH: draft-ietf-ipsec-auth-05.txt, mailed to the IETF mailing list
+       in May/June 1997.
+    .  HUGHES: this is draft-ietf-ipsec-esp-des-md5-03.txt
+    .  ISAKMP: There are three documents describing ISAKMP.  These are
+       draft-ietf-ipsec-isakmp-07.txt, draft-ietf-ipsec-isakmp-oakley-
+       03.txt, and draft-ietf-ipsec-ipsec-doi-02.txt.
+
+7. 参考资料
+
+   [CBC]         Periera, R., and R. Adams, "The ESP CBC-Mode Cipher
+                 Algorithms", RFC 2451, November 1998.
+
+   [Arch]        Kent, S., and R.  Atkinson, "Security Architecture for
+                 the Internet Protocol", RFC 2401, November 1998.
+
+   [DES-Detroit] Madson, C., and N. Doraswamy, "The ESP DES-CBC Cipher
+                 Algorithm With Explicit IV", RFC 2405, November 1998.
+
+   [DOI]         Piper, D., "The Internet IP Security Domain of
+                 Interpretation for ISAKMP", RFC 2407, November 1998.
+
+   [AH]          Kent, S., and R. Atkinson, "IP Authentication Header",
+                 RFC 2402, November 1998.
+
+   [ESP]         Kent, S., and R. Atkinson, "IP Encapsulating Security
+                 Payload (ESP)", RFC 2406, November 1998.
+
+   [HMAC]        Krawczyk, K., Bellare, M., and R. Canetti, "HMAC:
+                 Keyed-Hashing for Message Authentication", RFC 2104,
+                 February 1997.
+
+   [HMAC-MD5]    Madson, C., and R. Glenn, "The Use of HMAC-MD5 within
+                 ESP and AH", RFC 2403, November 1998.
+
+   [HMAC-SHA-1]  Madson, C., and R. Glenn, "The Use of HMAC-SHA-1 within
+                 ESP and AH", RFC 2404, November 1998.
+
+   [RANDOM]      Eastlake, D., Crocker, S., and J. Schiller, "Randomness
+                 Recommendations for Security", RFC 1750, December 1994.
+
+   [RFC-2202]    Cheng, P., and R. Glenn, "Test Cases for HMAC-MD5 and
+                 HMAC-SHA-1", RFC 2202, March 1997.
+
+
+8. 作者地址
+
+   Rodney Thayer
+   Sable Technology Corporation
+   246 Walnut Street
+   Newton, Massachusetts  02160
+   EMail: mailto:rodney@sabletech.com
+
+
+   Naganand Doraswamy
+   Bay Networks
+   EMail: naganand@baynetworks.com
+
+
+   Rob Glenn
+   NIST
+   EMail: rob.glenn@nist.gov
+
+9.  全部版权声明
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+RFC2411――IP Security Document Roadmap                  IP安全文件指南
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,272 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：刘学武 （Arlen  arlen@pub.sd.cninfo.net ）
+译文发布时间：2001-5-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                            M. Civanlar
+Request for Comments: 2343                                            G. Cash
+Category: Experimental                                              B. Haskell
+                                                        AT&T Labs-Research
+May 1998
+
+
+
+应用于捆绑的MPEG的RTP有效载荷的格式
+(RFC 2343  RTP Payload Format for Bundled MPEG)
+
+本备忘录的状态
+
+    这份备忘录定义了一个应用于Internet业界的实验性的协议。本备忘录没有规定一个任
+何种类的Internet标准。它需要得到进一步的讨论和建议。本备忘录的分发是没有限制的。
+
+版权通告
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+目 录
+摘要	2
+1. 介绍	2
+2. 捆绑的MPEG 视频和音频的封装	3
+2.1. RTP 应用于BMPEG封装的固的头部	3
+2.2. BMPEG 头的细节:	4
+3. 安全性考虑	4
+附录 1. 错误恢复 (ERROR RECOVERY)	5
+附录 2. 再同步（RESYNCHRONIZATION）	5
+参考	6
+作者的地址	6
+完整的版权声明	7
+摘要
+    这份文档描述了一种适合于捆绑的、MPEG-2编码的、可以应用RTP协议的视频和音频数
+据的有效载荷类型，这是第二版。对于这种有效载荷类型，当它用于视频点播应用系统时，
+捆绑具有明显的优势。当这种优势足够重要，以至于可以牺牲已分离的音频视频流的模块化
+时，就可能使用这种有效载荷。
+1. 介绍
+    这份文档描述了一种适用于MPEG-2编码的、使用实时传输协议(RTP)第二版[1]的音频和
+视频流的捆绑式打包方案。
+
+    MPEG-2 国际标准由三个层次组成：音频，视频和系统[2]。音频和视频层定义了相应的
+“基本流(elementary streams)”的语法和语义。系统层支持多重压缩流的同步和交叉，缓
+冲区的初始化和管理，以及时间的鉴定。RFC 2250[3]描述了为传输单独的音频和视频基本流，
+即传输流，而采用的打包技术，该流在系统层定义，使用RTP。
+    捆绑打包方案是必须的，因为对于某些重要的应用，它比其他的方案有几个优势。这些
+应用包括了视频点播(VOD)，在那里音频和视频总是一起使用。与音频和视频和独立打包相比，
+其优势在于：
+
+     1. 每一个“节目”(例如捆绑的音频/视频)使用唯一的端口。这种方法增加了可服务的
+流数，例如来自一个VOD服务器。而且，它消除了在客户端两个端口应用于分离的音频和视
+频流时的性能碰撞。
+
+     2．提供音频和视频的显式的同步(implicit synchronization)。当音频和视频数据以
+交叉格式存储在服务器时，这是一个明显的便利。
+
+     3．减少了头部的总开销(overhead)。既然使用大包会增加丢失和延迟的影响，那么仅
+有音频包需要较小的总开销增加。A/V捆绑格式可以提供总共大约1％的减少。考虑到MPEG-2
+编码的素材使用高位率，例如在4Mbps时，节省的位数就是40Kbps，这可以提供可察觉的音
+频或视频质量的改善。
+
+     4．可以全面地减小接收器的缓冲区大小。音频和视频流在传输时可能经历不同的延迟。
+接收器的缓冲区必须设计得适合这些延迟中的最大值。例如，让我们假设使用两个缓冲区，
+每一个的大小都是B，对于每个流单独传送时的概率P都是足够用的。同样大小的缓冲区能
+足够接收两个流时的概率是P乘以能足够接收第一个流并能足够接收给出的第二个流的B的
+条件概率。这个条件概率，一般地，比用一个较大的缓冲区达到相同的概率等级要小。
+
+     5．可以有助于控制被一个A/V节目使用的总体带宽。
+
+    并且，与传输层流的打包相比，其优势在于：
+
+     1．总开销的减少。它不包含系统层的信息，对于RTP这是多余的。（essentially they 
+address similar issues）
+
+     2．更容易进行错误恢复。因为结构化的打包与应用层分帧(application layer framing 
+(ALF))规则相一致，丢失掩蔽(loss concealment)和错误恢复(error recovery)更加简单而
+有效。
+2. 捆绑的MPEG 视频和音频的封装
+    视频封装遵循与在[3]中描述的适用于MPEG基流(MPEG elementary streams)的封装相似
+的规则。特别地：
+
+     1．MPEG Video_Sequence_Header 出现的时候，将总是在一个RTP有效载荷的开始处。
+
+     2．一个MPEG GOP_header出现的时候，将总是在一个RTP有效载荷的开始处，或跟
+随在一个Video_Sequence_Header的后面。
+
+     3．一个MPEG Picture_header出现的时候，将总是在一个RTP有效载荷的开始处，或
+跟随在一个GOP_header的后面。
+
+   除此之外，还需要：
+
+     4．每一个包还必须包含一个整数数目的视频片断(Video slices)。
+
+    应用程序有责任调整放置到每一个RTP包中的片断的大小和数量，这样不致于产生底层
+的分段(lower level fragmentation)。当传输器(transmitrer)的打包器(packetizer)的复杂度有某种
+程度的增加时，这种途径可以简化接收器(receiver)。考虑到一个片断可能小到与微块
+(macroblock)相同，可以防止大多数情况下的分段。如果一个包的大小超出了路径最大传输单
+元(path maximum transmission unit (path-MTU))[4]，尽管该有效载荷的类型依赖于适合分段的
+较低的协议层，但这可能引发综合服务的包分级(packet classification)方面的问题(例如RSVP
+方面)。
+
+    视频数据后面跟随了足够数量的完整的音频帧，能够覆盖包中的视频段的时间区间。例
+如，如果第一个包包含了三个1/900秒的视频片断，并使用了44.1khz采样率的Layer I音频
+编码，那么只需要有时长384/44100秒的音频包含在这个包里面。既然该音频帧的长度(8.71 
+msec.)比包含在该包中的视频段的长度(3.33 msec.)长，那么在接下来的几个包中就可以不包
+含任何的音频数帧，直到在一个包中的视频段的历时扩展到了先前传输的音频帧之外。在本
+建议中，另一种选择是在“无音频”的包中重发最近的音频帧来达到包丢失的恢复(resilence)。
+此外，应用程序有责任根据最小MTU的尺寸调整捆绑包的大小来避免分段。
+2.1. RTP 应用于BMPEG封装的固的头部
+   下列的RTP头部域要被使用：
+
+     有效载荷类型(Payload Type):一个独特的有效载荷类型数字，它有可能是动态的，并
+应指派给BMPEG。
+
+     M位(M Bit): 为包含图象结尾的包而设置。
+
+     时间戳(timestamp)：32位90 khz 时间戳表示MPEG 图象的采样时间。如果B图出现，
+那么它可能不是单调增加的。对于包含同一图象的包，它都是相同的。对于仅包含一个序列、
+扩展和/或GOP头的包，该时间戳是后续图象的时间戳。
+2.2. BMPEG 头的细节:
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | P |N|MBZ|    Audio Length   | |         Audio Offset          |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                 MBZ
+
+    P: 图象类型Picture type (2 bits). I (0), P (1), B (2).
+
+    N: 头数据改变(1 bit)。如果视频序列、扩展、GOP和头数据的任何部分不同于先前传 
+       送的头，该位将被设置。当所有的头数据被重发时，该位被重置(参阅 附录1)。
+
+    MBZ: 必须为0。保留作为将来使用。
+
+    Audio Length音频长度:  
+        (10 bits)以字节(byte)表示该包中音频数据的长度。音频数据的开始可以通过从 
+        接收包的总长度中减去“Audio Length”得到。 
+
+    Audio Offset 音频偏移量:  
+        (16 bits) 以音频采样数表示音频帧开始处与该包RTP时间戳之间的偏移量(对于 
+        多同道源(multi-channel sources)，为达到此目的，覆盖所有通道的一组采样被 
+        计为一个采样)。
+
+音频偏移量在它的两种补余形式中是一个有符号整数。在44.1khz音频采样时，它允许
+一个~ +/- 750 msec的偏移。对于视频帧速率非常低的情况(例如，每秒1帧)，这个偏移量
+可能是不够用的，那么这种有效载荷格式可能是不能用的。
+
+如果B帧出现，音频帧没有和视频一起被重排序(re-ordered)。而是，它们以它们的传
+输顺序与视频帧一起被打包(例如，与一个对应于P图的视频段一起打包的音频段可能属于一
+个将被后来传送并应该与这个音频段同时被呈现的B图)。尽管视频段被重排序，对应于一个
+特定音频段的音频偏移仍然是相对于包含该音频段的包中的RTP时间戳。
+
+既然一个专用的图象计数器，象[3]的“时间参考”域，没有包含在这个有效载荷格式中，
+丢失的GOP头可能没有被检测到。这点的唯一影响可能是对于一些编辑过的视频素材，紧跟
+在丢失的GOP头后面的B图被错误地解码。
+3. 安全性考虑
+   使用在本文档中定义的有效载荷格式的RTP包服从于在RTP规范[1]中讨论的安全性考虑。
+这意味着媒体流的机密性可以通过加密达到。因为这个有效载荷格式使用的数据压缩适用于
+端对端(end-to-end)，加密可以在压缩之后执行，这样两种操作之间不会发生冲突。
+
+    这个有效载荷类型没有在接受端包处理的计算复杂度方面显示出任何重大的非一致性
+(non-uniformity)，不会引发潜在的拒绝服务(denial-of-service)的危胁
+
+回顾本有效载荷格式的安全性，没有发现超出RTP规范需要额外考虑的问题。
+
+附录 1. 错误恢复 (Error Recovery)
+    包丢失可以从RTP固定头中的序列号(sequence number)和时间戳(timestamp)域的组合
+检测到。丢失的范围可以决定于包中的时间戳、片断号(slice number)和第一个片断的水平
+位置(horizontal location)。片断号和水平位置可以决定于片断头和第一个微块
+(macroblock)的增量，它们都位于固定的位位置(bit positions)。
+
+    如果组成丢失数据的片断全部来自同一个图象，那么跟随在丢失部分后面的新数据可以
+简单地送到视频解码器，它通常重复前一图象中缺少的象素。下一个音频帧必须在由包含在
+该接收包中的时间戳和音频偏移量决定的适当的时刻播放。适当的音频帧(例如，表现背景噪
+音)可能需要回馈到音频解码器中丢失音频帧的位置，以保持口形同步(lip-synch)，和/或掩
+盖丢失造成的影响。
+
+    如果在丢失之后的新数据来自下一个图象(例如，并没有丢失整个图象)且N位没有被设
+置，则先前接受到的对于特定图象类型(由P位决定)的头可以送到视频解码器，后面跟随新
+的数据。如果N位被设置，那么除非通过其它某个通道而使头对于接收器来说可用，否则可
+以采用数据删除，直到一个新图象的起始码。
+
+    如果多于一个图象的数据被丢失并且头不可用，那么可以采用再同步
+(Resynchronization)到一个新的视频序列头部，除非N为0并且对于相同类型的每一个插入
+图象(intervening picture)至少接受到一个包，且这些图象中的每一个的N位都是0。
+
+   在所有严重的包丢失的情况下，如果正确的头对于丢失的图象来说是可用的，它们可以送
+到视频解码器，且可以不考虑N位的值或丢失图象的数目而使用接受到的数据。
+
+附录 2. 再同步（Resynchronization）
+   如[3]所描述的，频繁的视频序列头的使用使任意次数地参加到节目中成为可能。它也缩
+短了在严重丢失之后的再同步时间。
+
+
+
+参考
+   [1] Schulzrinne, H., Casner, S., Frederick, R., and V. Jacobson, 
+       "RTP: A Transport Protocol for Real-Time Applications",  
+       RFC 1889, January 1996.
+
+   [2] ISO/IEC International Standard 13818; "Generic coding of  
+       moving pictures and associated audio information",  
+       November 1994.
+
+   [3] Hoffman, D., Fernando, G., Goyal, V., and M. Civanlar, "RTP 
+       Payload Format for MPEG1/MPEG2 Video", RFC 2250,  
+       January 1998.
+
+   [4] Mogul, J., and S. Deering, "Path MTU Discovery", RFC 1191, 
+       November 1990.
+作者的地址
+   M. Reha Civanlar
+   AT&T Labs-Research
+   100 Schultz Drive
+   Red Bank, NJ 07701
+   USA
+
+   EMail: civanlar@research.att.com
+
+
+   Glenn L. Cash
+   AT&T Labs-Research
+   100 Schultz Drive
+   Red Bank, NJ 07701
+   USA
+
+   EMail: glenn@research.att.com
+
+
+   Barry G. Haskell
+   AT&T Labs-Research
+   100 Schultz Drive
+   Red Bank, NJ 07701
+   USA
+
+   EMail: bgh@research.att.com
+
+完整的版权声明
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished 
+to others, and derivative works that comment on or otherwise explain 
+it or assist in its implementation may be prepared, copied, published   
+and distributed, in whole or in part, without restriction of any   
+kind, provided that the above copyright notice and this paragraph 
+are included on all such copies and derivative works.  However, this   
+document itself may not be modified in any way, such as by removing   
+the copyright notice or references to the Internet Society or other   
+Internet organizations, except as needed for the purpose of   
+developing Internet standards in which case the procedures for   
+copyrights defined in the Internet Standards process must be   
+followed, or as required to translate it into languages other than   
+English.
+
+   The limited permissions granted above are perpetual and will not 
+be revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+"AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE 
+DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING   BUT NOT LIMITED TO ANY 
+WARRANTY THAT THE USE OF THE INFORMATION   HEREIN WILL NOT INFRINGE ANY RIGHTS OR 
+ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+RFC 2343  RTP Payload Format for Bundled MPEG           应用于捆绑的MPEG的RTP有效载荷的格式

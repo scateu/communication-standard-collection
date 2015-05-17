@@ -1,0 +1,142 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-9-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                            K. Fujisawa
+Request for Comments: 2855                                  Sony Corporation
+Category: Standards Track                                           June 2000
+
+IEEE 1394的DHCP
+(RFC2855――DHCP for IEEE 1394)
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2000)。版权所有。
+摘要
+IEEE 1394-1995标准是一个高速串行总线的标准。因为1394使用一种和常规的IEEE 
+802/Ethernet不同的链路层编址方式，必须澄清一些字段的用法来实现互操作性。本文档详
+细描述了1394 DHCP消息中一些字段的详细用法。
+
+目录
+1. 介绍	2
+2. 有关1394链路地址的问题	2
+3. DHCP消息字段的1394特殊应用	2
+4. 安全因素	3
+致谢	3
+参考文献	3
+作者地址：	3
+完整的版权声明	3
+致谢	4
+
+
+
+
+1. 介绍
+IEEE 1394-1995标准是一个高速串行总线的标准。IETF IP1394工作组详细描述了在
+IEEE1394网络中运载IPv4数据报和1394 ARP包[RFC2734]的方法。
+动态主机配置协议(Dynamic Host Configuration Protocol，缩写为DHCP)[RFC2131] 提
+供了一种构架，来给TCP/IP网络中的主机提供临时的配置信息。
+Since 1394采用了一种和常规的IEEE802/Ethernet不同的链路层编址方法，为了实现
+互操作性，必须澄清一些字段的用法。本备忘录叙述了1394中关于DHCP的一些字段的详
+细用法。DHCP机制和每个字段的注解见[RFC2131]。
+在RFC 2119 [RFC2119]中解释了本文档中的关键词“必须”、“不应该”、“必要的”、“应
+该”、“不必”、“推荐”、“可以”和“选择”的含义。
+2. 有关1394链路地址的问题
+With 通常的链路层协议，就象Ethernet那样，“chaddr”(客户机硬件地址)字段用于从
+DHCP服务器(或中继代理)向客户机返回应答消息。因为1394链路地址(节点ID)是临时的，
+而且在穿越1394网桥时会不一致，所以我们已经决定不把它放入“chaddr”字段。当1394 
+ARP也没有可能时，DHCP客户机应该通过设置广播标记请求服务器发送一个广播应答。
+注意：通常，不鼓励使用广播应答，但是我们认为，在1394网络中，碰撞不是问题。
+3. DHCP消息字段的1394特殊应用
+当一台DHCP客户机连接到一个IEEE1394网络时，会采用下列规则。
+“htype”(硬件地址类型)必须是24[ARPPARAM]。
+“hlen”(硬件地址长度)必须是0。
+“chaddr”(客户机硬件地址)字段保留。发送端必须把该字段设置为0，接收端和中继
+代理必须忽略它收到的值。
+1394上的一台DHCP客户机应该在DHCPDISCOVER 和DHCPREQUEST消息中设
+置一个广播标记(并且设置“ciaddr”为0)来保证服务器(或中继代理)把它的应答广播给客户
+机。
+注意：正如在[RFC2131]中描述的那样，在跳跃、更新或重装状态下，“ciaddr”必须用
+客户机的IP地址添满，所以，不应当设置广播标记。在这些案例中，DHCP服务器向“ciaddr”
+中的地址单播DHCPACK消息。链路地址将由1394 ARP决定。
+由于缺少“chaddr”，从客户机到服务器，在DHCP消息中必须使用“client identifier”
+选项。“client identifier”选项可以由任何数据组成。因为每个1394 节点上的IP有一个EUI-64 
+(节点独有ID)，EUI-64构成了明确的“client identifier”。1394客户机应该在“client identifier”
+选项中包括一个EUI-64标识符。EUI-64类型值为27 [ARPPARAM]，举例说明格式如下。
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+Code
+Len
+Type
+Client-Identifier
+61
+9
+27
+EUI-64 (node unique ID)
+注意本备忘录不排除其他“client identifier”类型的用法，就象正式域名(fully qualified 
+domain name，缩写为FQDN)那样的。
+细节详见[RFC2132]中的“9.14. Client-identifier”。
+4. 安全因素
+目前，DHCP不提供认证或安全机制。在DHCP协议规范[RFC2131]的第7节中讨论了
+可能引起攻击的潜在漏洞。
+恶意的客户机可能伪造它的EUI-64标识符，来伪装成其他的客户机。
+致谢
+作者对Dynamic Host Configuration工作组成员的校订工作和宝贵意见表示感谢。
+参考文献
+[RFC2734]  Johansson, P., "IPv4 over IEEE 1394", RFC 2734, December 1999.
+[RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", 
+RFC 2119, March 1997.
+[RFC2131]  Droms, R., "Dynamic Host Configuration Protocol", RFC 2131, March 
+1997.
+[RFC2132]  Alexander, S. and R. Droms, "DHCP Options and BOOTP Vendor 
+Extensions", RFC 2132, March 1997.
+[ARPPARAM] http://www.iana.org/numbers.html
+作者地址：
+Kenji Fujisawa
+Sony Corporation
+6-7-35, Kitashinagawa,
+Shinagawa-ku, Tokyo, 141-0001 Japan
+
+Phone: +81-3-5448-8507
+EMail: fujisawa@sm.sony.co.jp
+完整的版权声明
+Copyright (C) The Internet Society (2000)。版权所有。
+This document and translations of it may be copied and furnished to others, and 
+derivative works that comment on or otherwise explain it or assist in its implementation 
+may be prepared, copied, published and distributed, in whole or in part, without restriction 
+of any kind, provided that the above copyright notice and this paragraph are included on all 
+such copies and derivative works.  However, this document itself may not be modified in 
+any way, such as by removing the copyright notice or references to the Internet Society or 
+other Internet organizations, except as needed for the purpose of developing Internet 
+standards in which case the procedures for copyrights defined in the Internet Standards 
+process must be followed, or as required to translate it into languages other than English.
+The limited permissions granted above are perpetual and will not be revoked by the 
+Internet Society or its successors or assigns.
+This document and the information contained herein is provided on an "AS IS" basis 
+and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE 
+DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT 
+LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL 
+NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY 
+OR FITNESS FOR A PARTICULAR PURPOSE.
+致谢
+目前，RFC编者活动的基金由Internet社团提供。
+RFC2855――DHCP for IEEE 1394                                             IEEE 1394的DHCP
+
+
+1
+RFC文档中文翻译计划                                                                

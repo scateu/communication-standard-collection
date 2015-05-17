@@ -1,0 +1,296 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：（sbook   ssx@tech.com.cn）
+译文发布时间：2001-4-2
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                        R. Gellens
+Request for Comments: 2384                       QUALCOMM, Incorporated
+Category: Standards Track                                   August 1998
+
+
+RFC2384―POP协议的URL方案
+（RFC2384----POP URL Scheme）
+
+本备忘录状态
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+
+
+目录
+1.介绍................................................. ..........................................	2
+2. 在本文当中的一些约定...................................................................	2
+3. POP方案................................................. ....................................	2
+4. POP用户名与身份验证机制.............................................................	3
+5.  相对性POP URLS........................................................................	4
+6 . 跨国问题.....................................................................................	4
+7 . 样例...........................................................................................	4
+8. POP URL  方案的ABNF(缩略语) ....................................................	6
+9. 安全问题................................................. ....................................	6
+10. 背景知识....................................................................................	7
+11. 参考文献....................................................................................	7
+12．作者地址....................................................................................	8
+13．完整版权声明..............................................................................	8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1.介绍
+    
+     [POP3]是一种广泛应用的邮件传输协议.许多程序都要访问POP3消息存储设备,因此需要了解POP3的配置信息.为了访问一个信箱,需要有若干必须的配置单元,所以使用单精度型的字符串表示法是将会很方便.
+
+      一个POP3邮箱(像[IMAP4]邮箱一样)是一种网络资源,而URLs(全球资源定位)是一种被广泛支持的网络资源的通用的表示方法。
+  
+      在很多程序和协议中，一些将一个POP3信箱指定作为一个URL的方法的是很有用的.[ACAP]就是是这样一个例子,在这里,必须要有一个对需要用来访问网络服务的单元的封装.比如,在ACAP数据集中,一个[IMAP4]消息存储设备通常被指定为一个[IMAP-URL].
+  
+       这个备忘录为涉及到的POP信箱定义了一个URL方案.
+
+2. 在本文当中的一些约定.
+	
+    在本文当中,关键字"必须","禁止","应该","不宜","可以"和在"确定了必要标准的RFCs(请求注解)中所使用的关键字"[KEYWORDS]的解释相一致.
+
+3. POP方案
+
+      POP URL方案指定了一个POP服务器,一个端口号,身份验证机制,身份验证帐号,以及/或者说是授权账号.
+
+      除了完全的文本口令显示不被允许以外，POP URL遵循定义在RFC 1738[BASIC-URL]通用的Internet方案的文法.假如:<port(端口)>被省略,默认端口将会是110.
+
+      下面是一个POP URL通常的格式:
+
+           pop://<user>;auth=<auth>@<host>:<port>
+
+      其中,<user(用户)>,<host(主机)>和<port(端口)>被定义在RFC 1738,并且除了"pop://"和<host>,剩下的单元可以被部分或者全部省略.
+
+4. POP用户名与身份验证机制
+
+     下列元素也许要被提供:对某个信箱进行访问的授权,用口令来核对的身份验证(为了简明,这里仅涉及到用户名),以及验证机制名.在与POP服务器连接之后,这些将被用于"USER","APOP","AUTH(身份验证)"[POP-AUTH]或者扩展命令.假如URL并没有提供一个验证标识符,那么解释POP URL的程序'应该'从用户那里请求一个这样的标识符.
+
+      一个身份验证机制,能够通过增加";AUTH=<enc-auth-type>(已编码的身份验证类型)"到用户名末端而表述出来.假如验证机制名的前面没有一个"+",它就是一个SASL POP[SALS]机制.假如验证机制明前面有一个"+",它要么就是"APOP",要么就是一个扩展机制.
+
+      当一个<enc-auth-type>被指定以后,客户端'应该'请求来自那个机制的合适的证书,并且使用"AUTH","APOP"或者扩展命令来替代"USER"命令.假如没有用户名被指定,'应该'从这个机制获取或者向用户请求一个合适的用户名.
+
+      字符串";AUTH=*"指示出客户端'应该'选择一个合适的身份验证机制,它'可以'是被POP服务器支持的任何机制.
+
+      假如一个不用同于"AUTH=*"<enc-auth-type>被指定,客户端"不宜"使用一种没有明确用户允许的不同机制.
+ 
+      假如一个用户名没有包括身份验证机制,那么将默认";ATUH=*".
+
+      因为URLs可能来自于一个非置信信息源,所以当解析一个需要或者请求任何有某种程度的身份验证的URL的时候,我们必须特别的小心.假如身份验证证书是由错误的服务器所提供,那也许会损害用户账号的安全.在这种情况下, 解析URL的程序应当确信符合至少一个以下的准则:
+
+(1)URL来自于一个可信赖的信息源,比如一个已经被客户所验证的指定的服务器.并且客户总是信任这个站点的政策.注意能否确认URL的用户入口是一个可信赖的信息源,依赖于用户的经验和站点政策.
+
+(2)明确的本地站点政策允许客户端连接到URL上的服务器.举个例子,假如客户知道这个站点的域名,站点政策也许会指出任何以这个域名结束的主机名都是可信任的.
+
+(3)用户确认连接到那个有指定证书或者验证机制的域名是允许的.
+
+(4)在通过一个潜在的可能泄密的客户证书之前,使用某种验证机制来验证服务器.
+
+(5)因为某些服务器可能会危及将来的连接的安全,所以使用某种不会像那种服务器暴露信息的身份验证机制.
+
+       一个包含着";AUTH=*"字样的URL应该引起特别的注意,因为在这样的情况下,这个URL可能依赖于一种脆弱的安全机制.最终,客户会因为仅仅依赖一种有";ATUH=*"字样的简易文本密码而失望,除非这个连接有强大的加密算法(比如一个超过56比特长度的密钥).
+
+      注意,诸如" "(空格)或者";"(分号)等不安全的字符或者保留字,假如它们出现在用户名或者身份验证机制中,那他们必须按照RFC 1738[BASIC-URL]所描述得来编码.
+
+5.  相对性POP URLs
+
+      相对性的POP URLs被禁止.
+
+6 . 跨国问题
+
+     因为在URLs中不允许使用8-bit字符，所以在必要的时候,[UTF8]字符将按照URL的规范来编码.
+
+7 . 样例
+
+     以下的例子示范了一个POP客户端程序如何将各种各样的POP URLs 转换成一系列的POP命令.从客户端发送到服务器的命令被赋予前缀"C:",从服务器发送到客户端的响应被赋予前缀"S:".
+     
+      样例URL:
+      
+           <pop://rg@mailsrv.qualcomm.com>
+
+      产生以下客户端命令:
+          
+           <请求用户口令>
+           <连接到 mailsrv.qualcomm.com,端口 110>
+           S:+OK POP3 server ready(服务器待命)
+  <1896.697170952@mailsrv.qualcomm.com>
+           C: USER rg
+           S: +OK
+           C: PASS secret (口令通过)
+           S: +OK rg's mailbox has 2 messages (信箱中有两条消息)(320 octets(字节)) 
+
+      样例URL:
+
+      <pop://rg;AUTH=+APOP@mail.eudora.com:8110>
+
+      产生以下客户端命令.
+
+            <客户端请求用户口令>
+            <连接到mail.eudora.com,端口8110>
+            S:+OK POP3 server ready<1896.697170952@mail.eudora.com>
+            C:APOP rg c4c9334bac560ecc979e58001b3e22fb
+            S:+OK mailbox has 1 message (369 octets)
+
+       样例URL:
+
+       <pop://baz;AUTH=SCRAM-MD5@foo.bar>
+
+        产生以下客户端命令:
+      
+             <连接到foo.bar,端口110>
+
+             S: +OK POP3<server ready 1896.697170952@foo.bar>
+             C: AUTH SCRAM-MD5
+AGNocmlzADx0NG40UGFiOUhCMEFtL1FMWEI3MmVnQGVsZW
+                  Fub3IuaW5ub3NvZnQuY29tPg==
+              S: +dGVzdHNhbHQBAAAAaW1hcEBlbGVhbm9yLmlubm9zb2Z0LmNvbQBq
+                aGNOWmxSdvBiemlGcCt2TFYrTkN3
+              C: AQAAAMg9jU8CeB4KOfk7sUhSQPs=
+              S: +U0odqYw3B7XIIW0oSz65OQ==
+              C:
+              S: +OK mailbox has 1 message (369 octets)
+
+8. POP URL  方案的ABNF(缩略语)
+     用[ABNF]来描述POP URL方案:
+
+          achar               = uchar / "&" / "=" /"~"
+                                     ; 见[BASIC-URL] 对 "uchar" 的定义
+
+          auth                 = ";AUTH=" ( "*" / enc-auth-type )
+
+          enc-auth-type   =enc-sasl / enc-ext
+
+          enc-ext             ="+"("APOP" / 1*achar) 
+                                     ;APOP 或者已编码的扩充机制名
+
+          enc-sasl            = 1*achar
+                                      ;已编码的[SASL]"auth_type"版本
+
+          enc-user           = 1*achar
+                                   ;已编码的[POP3]信箱版本
+   
+          pop-url             = "pop://" sever
+     
+          sever                = [user-auth "@"] hostport
+                                     ;见 [BASIC-URL]对"hostport"的定义
+
+          user-auth          = enc-user [auth]
+9. 安全问题
+      在[POP3]规范中所讨论的安全问题和[BASIC-URL]规范中所讨论的安全问题是有关系的.有关身份验证的URLs安全问题已经在本文档的第四节讨论过.
+
+      许多电子邮件客户端软件在第一次登录到POP服务器以后,为用户存储了简单的文本口令以便用户下次登录.在没有用户明确许可对指定的主机名提供相应的口令的情况下,这样的客户端软件必须'禁止'用被存储的口令来响应一个POP URL .
+10. 背景知识
+    这篇文档大量借用了Chris Newman's [IMAP-URL]规范,并且力争符合[URL-GUIDELINES]中的参考说明.
+
+11. 参考文献
+
+     [ANBF]          Crocker, D.,and P. Overell, "Augmented BNF for
+                         Syntax Specifications: ABNF", RFC 2234,November
+                         1997  .
+    
+     [ACAP]             Newman, C., and J. Myers, "ACAP -- Application
+                          Configuration Access Protocol", RFC 2244, November
+                          1997.
+
+     [BASIC-URL]      Berners-Lee, T., Masinter, L., and M. McCahill,
+                    "Uniform Resource Locators (URL)", RFC 1738,
+                    December 1994.
+
+   [IMAP-URL]       Newman, C., "IMAP URL Scheme", RFC 2192,  September 1997.
+
+   [IMAP4]          Crispin, M., "Internet Message Access Protocol -
+                    Version 4rev1", RFC 2060, December 1996.
+
+   [KEYWORDS]       Bradner, S., "Key words for use in RFCs to Indicate
+                    Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [POP-AUTH]       Myers, J., "POP3 AUTHentication command", RFC 1734,
+                    December 1994.
+
+   [POP3]           Myers, J., and M. Rose, "Post Office Protocol --
+                    Version 3", STD 53, RFC 1939, May 1996.
+
+   [SASL]           Myers, J., "Simple Authentication and Security Layer
+                    (SASL)", RFC 2222, October 1997.
+
+   [URL-GUIDELINES] Masinter, Alvestrand, Zigmond, "Guidelines for new
+                    URL Schemes", Work in Progress.
+
+   [UTF8]           Yergeau, F., "UTF-8, a transformation format of ISO
+                    10646", RFC 2279, January 1998.
+
+12．作者地址：  
+   Randall Gellens
+   QUALCOMM, Incorporated
+   6455 Lusk Blvd.
+   San Diego, CA  92121-2779
+   U.S.A.
+
+   Phone: +1 619 651 5115
+   Fax:   +1 619 651 5334
+   EMail: Randy@Qualcomm.Com
+13．完整版权声明：
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns. 
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE。
+ RFC2384    POP URL Scheme                                 POP协议的URL方案
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

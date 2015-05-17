@@ -1,0 +1,472 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：lv_xinyang (lv_xinyang  xylv@travelsky.com)
+译文发布时间：2001-5-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                           J. Kempf
+Request for Comments: 3082                                J. Goldschmidt
+Category: Experimental                                  Sun Microsystems
+March 2001
+
+服务定位协议（SLP）的预研报告
+(RFC3082   Notification and Subscription for SLP)
+
+本备忘录的说明：
+本备忘录描述了一个基于因特网的实验中的协议。此协议并不指定任何一种特定的因特网标
+准，它还有待进一步的讨论和建议加以完善。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).  All Rights Reserved.
+摘要
+    服务定位协议（SLP）能够提供一些机制，通过这些机制服务代理客户能够发布通告，
+而用户代理客户能够查询各种服务。此协议是按照需求驱动模式设计的，这样当用户代理对
+服务信息发出特定请求时能够获得这些信息。此外，还存在另一类的用户代理应用，即要求
+通知某一新服务的开通或取消。在RFC 2608的设计中，上述应用是通过向网络中发轮询信
+号来获知改变的情况。而在此文中，我们描述的协议能够实现当改变发生时不必发轮询信号，
+这些代理就能得到消息。
+
+目录
+1.  简介……………………………………………………………………………………………2
+2.	词汇约定解释…………………………………………………………………………………2
+3.	术语……………………………………………………………………………………………2
+4.	设计考虑………………………………………………………………………………………2
+5.	通知设计描述…………………………………………………………………………………3
+    5.1 小网络设计………………………………………………………………………………3
+    5.2 大型网络设计……………………………………………………………………………4
+6.	预约扩展………………………………………………………………………………………4
+7.	通知所在（NotifyAt）扩展…………………………………………………………………. 5
+    7.1 在收到的SrvRply消息中的NotifyAt………………………………………………….6
+    7.2 接收到的多目传送DAAdvert消息中的NotifyAt……………………………………..6
+    7.3 收到的SrvAck消息中的NotifyAt……………………………………………………...6
+8.	多目传送地址分配…………………………………………………………………………….7
+9.	多目传送发送算法…………………………………………………………………………….7
+10.	DA失效的情况………………………………………………………………………………..7
+11.	网络管理考虑………………………………………………………………………………….8
+12.	安全考虑……………………………………………………………………………………….8
+13.	IANA 考虑…………………………………………………………………………………….9
+14.	鸣谢…………………………………………………………………………………………….9
+15.	参考资料……………………………………………………………………………………….9
+16.	作者地址……………………………………………………………………………………...10
+版权声明……………………………………………………………………………………...10
+致谢…………………………………………………………………………………………...11
+
+1．	简介
+服务定位协议（SLP）[1] 提供一种机制，使得服务代理(SA)客户发布网络服务通知，而
+使用户代理(UA)客户能够得到这些通知。这一机制是需求驱动型的。UAs（用户代理）
+只能通过主动查询方式获得服务信息，否则无法获得这些信息。尽管这种设计可以满足
+大部分的应用，但还有某些应用对时间要求更高，它们要求更及时的知道相关服务是否
+存在。理想情况是，当某一新服务出现或一个服务取消时，能够马上使应用程序得到通
+知。
+如果按照RFC 2608 中描述的SLP 来处理的话，要想获得这种信息，应用程序必须经常
+向网络发轮询信号以周期性的刷新它们缓存中的可用服务纪录。
+举一例说明这种客户，比如一个图形用户界面的桌面机，它能够显示网络中标识所有服
+务的图标，每当增加了新服务时，一个新的包含所有服务的图标的画面能够马上提供给
+用户。
+由于发轮询信号既效率低下又浪费网络及处理机资源，我们想给这些应用程序一种机制，
+使得他们能够准确及时的得到改变的通知。
+在此文中，我们描述了一种可升级的机制，能够使UAs及时的得到关于服务可用性的改
+变的通知。
+
+2．	词汇约定解释
+此文中下列词汇的解释见：RFC 2119 [2]
+   "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", "OPTIONAL"
+
+3．	术语
+这部分，我们提出另外一些术语，它们超出了[1]和[3]所含的范围。
+Notification （通知） ―― 指一条消息，它被发送给某个相关的代理通知某服务开通或取
+                        消。
+    Subscription （预约）―― 指一个请求，它要求得到关于某一特定的服务类型和范围
+的服务可用性的改变情况的信息。
+
+4．	设计考虑
+
+    对于SLP的通知协议，我们设计上主要考虑的是希望它能同底层SLP协议一样，具有
+很强的可升级性及健壮性。此协议必须能够工作良好，不论是在只有几个SAs的小网络中，
+还是在包含成百上千的SAs和DAs的大型企业网中。
+小型网络不必为了能够获得通知而配置DAs。同样我们也希望能够保证在大型网络中，
+通知不会给任何的SLP代理带来巨大的系统开销。这就要求通知任务能够分布式的处理而
+不是集中处理，以避免出现让某一个代理进行所有通知的任务。
+最终，我们希望通知被设计得如同基本SLP的设计一样，即使在DA失效的情况下，
+也有足够的健壮性。本协议设计上的一个重要的考虑之处是UA 客户能及时的得到SA的通
+知。
+如果某一个UA预约了某个特定服务类型的通知，那么不管介入的DA的状态如何，
+UA一定能收到这个通知。SLP对支持某一特定的范围的DAs是透明的；也就是说，一个
+UA可以在一个特定的范围使用任一DA并能够得到同样的服务通知。这些通知在属性上应
+该完全相同。一个UA能否收到一条通知并不依赖于它所连接的DA。这样就保证了DAs
+的身份保密。
+另一个目标是通知消息包含了足够的关于触发事件的信息，这些触发事件是指UA能够
+不通过改变另一个SLP要求的优先权而知道在大量的突发情况中哪些是它需要处理的。当
+然，UA由于类似原因可以提交一个SLP请求，但它必须保证这个请求不能携带足以在大多
+数情况下触发通知的事件。这就减少了与事件相关的网络拥塞。
+为简化起见，网络不论大小，我们对消息的设计采用了类似的机制。当然，机制不是
+完全相同的，但是我们希望这些机制不会是截然不同，那将导致需要完全不同的安装方法。
+一个最低目标是在任何地方能够充分利用现有的SLP消息类型和机制。这就减少了需
+要改动通知机制的代码的数量，因为许多代码可以在基本SLP和通知机制之间重复利用。
+特别是，我们希望能够充分利用SLP扩展机制于某些支持预约的情况下。
+
+5. 通知设计描述
+为了支持可升级性，我们把设计分成两部分。一个是小型网络设计，其中没有DAs。
+另一个是包含DAs在网络中的大网络设计。
+下面分别描述了这两种设计：
+5.1 小网络设计
+在没有DAs的网络中，当SA 出现或消失时UAs都能得到通知。这就使UAs能够知道
+SA支持的服务类型。
+在小型网络中，对新出现的SAs没有集中处理代理来执行预约。这就排除了任何种类
+的预约设计，在那样的设计中某个UA对特定兴趣范围的特定服务的通知进行预约，因为当
+不存在一个集中处理代理时，新出现的SA无法区分是否有预约。因此，只要SAs能够执行
+通知，那么不管他们的范围或服务类型如何，当他们上线或优先于关闭状态时都会执行通知。
+这就意味着某个UA能收到全部的范围和服务类型的所有类型的改变信息的通知，接着它还
+能够滤掉那些与它无关的改变信息（其他范围，其他服务类型）。
+这一设计要求SAs通过进行IP多目发送（在IPv4中如果不支持多目发送则用广播）SLP 
+SrvReg 或 SrvDereg 消息来执行通知，多目发送算法描述见 9.0章。
+
+用于通知的端口号不是默认的SLP端口，这个端口只对某些操作系统的特权用户开放。IANA
+规定用端口1847作为通知的端口号。
+在IPv4中，SA通过SLP多目传送地址（239.255.255.253, default TTL 255）进行多目
+传送，并与SLP有相同的执行范围[4]。需要通知服务的 IPv4 UAs加入到多目组
+239.255.255.253中并在端口1847监听。
+    在IPv6中，多目传送由用于服务类型广播的范围内的IPv6地址集实现，详细情况参考
+[8]。  
+SA 向它所支持的最大的多目传送范围的全部地址发布消息。需要通知服务的IPv6 UAs
+遵从多目传送范围和与其相关的服务类型而加入广播组，并在端口1847进行监听。
+例如：某个具有站点局部范围接入权限的 IPv6 UA 对某项散列值为42的服务类型有需
+求，他按照[8]中的算法计算之后，加入从FF01:0:0:0:0:0:10042到FF05:0:0:0:0:0:10042的组
+中。
+5.2 大型网络设计
+    
+    在有DAs的大型网络中，某个支持特定范围的DA能够作为执行UA预约的中介。一
+个预约包含了一项服务类型及一组范围。需要得到某一特定类型服务改变通知的UA 将预
+约扩展部分附加在一个SrvRqst（服务请求） 消息中发送给DA。这里通知是基于8.0节描
+述的算法得到的，而DA获取用来发布通知的那些多目传送组地址并把它们加入到SrvRply
+（服务回应）所包含的通知扩展部分中。
+UA监听用于回应通知的那些组地址。当一个新预约产生时，现有的 SAs使用下述方
+法得到预约的通知。DA对新预约和旧预约的服务类型和范围进行比较。如果出现旧有预约
+所没有的新的类型和范围，DA 必须使用多目发送算法（9.0节有述）多目发送一个
+DAAdvert，并且必须包括带有用于通知的多目传送组地址的服务扩展。如果现有的预约已
+经含有与新预约相同的服务类型和范围，DA不会多目发送一个DAAdvert。
+某个DA在其被界定的任何范围内，它不仅要跟踪它所处理的预约，也要跟踪此范围的
+其他的DA处理的预约。为了避免多目发送多重的NotifyAt（通知所在）消息，DA在多目
+发送带有NotifyAt消息的DAAdvert前必须等待一段时间，这一时间规定为0―3秒内的均
+匀分布的一个随机数。在这一时间段内，DA必须监听是否有匹配新预约的NotifyAt消息。
+如果侦测到匹配的NotifyAt消息，DA不会进行多目发送。
+当一个新的SA与一个有预约的DA发生关联时，这个SA得到通知，它应该按照下述
+步骤执行。如果新SA的SrvReg消息所包含的服务类型和范围与已有的某个预约相匹配的
+话，那么SrvAck一定会包含一个NotifyAt信息，这一信息中带有用于通知的多目传送地址。
+如果这个SA不支持通知的话，它就会忽略掉这个扩展特性。如果在新SA的SrvReg中的
+服务类型和范围与任何现有的预约都不匹配的话, DA不会包含一条NotifyAt消息。
+当一项服务通告超时，DA自己也必须发布通知，按照多目传送算法执行。服务通告超
+时导致DA要为撤销登记的URL多目传送一条SrvDereg消息。这就使得相关的UAs能够
+得到服务通告已经取消的通知，即使SA没有正常注销登记而撤销。然而，当DA收到SA
+发来的一条SrvReg消息时，它就不会发出通知了，因为这个工作本就是SA的。
+和小型网络情况一样，通知的发布主要是由SAs执行的。如果一个SA 收到一个
+DAAdvert 或带有一个NotifyAt扩展的 SrvAck并满足以下三个条件时，SA就根据它所支
+持的范围和服务类型保存多目传送地址。三个条件是：
+1，	SA支持通知；
+2，	SA的服务类型与NotifyAt扩展中的服务类型匹配；
+3，	SA的范围与NotifyAt扩展中的范围匹配。
+在SA对DA发布了SrvReg 或SrvDereg消息之后，必须马上发布通知。当SA侦测到在它
+的范围内的一个DA，那么它不会多目传送任何通知，除非它在一个SrvAck中收到一条
+NotifyAt扩展，并且这一扩展部分的服务类型和范围与此SA的服务类型和范围匹配。
+6.  预约扩展
+    预约扩展格式如下：
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |    Extension Type = 0x0004    |        Extension Length       |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | Ex. Len. (ct) | Abs. Type Fl. |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    
+    扩展的范围和服务类型从附带的SrvRqst中获得。抽象类型标记指示出特定UA是否关
+心得到来自所有SAs的抽象类型的具体例子[3]，而且仅当在SrvRqst中的服务类型是一个
+具体类型时才有效。如果标志为1，UA关心来自所有 SAs通告具体类型这些类型与SrvRqst
+有相同的抽象类型。如果标志为0，UA仅仅关心接收支持SrvRqst中的特定具体类型的SAs
+的消息。如果在附带的SrvRqst中服务类型不是一个具体类型，此标记被忽略。
+
+7．通知所在（NotifyAt）扩展
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |    Extension Type = 0x0005    |        Extension Length       |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | Ext. Len (ct) |  Subscription Lifetime        |SGL List Len.  \
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |SGL L. Len (ct)|       Scope/Group List                        \
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |  Length of Service Type Name  |        Service Type Name      \
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+服务类型名与SrvRqst中的有相同的格式。范围/组 列表是一组范围名和多目传送组地
+址的列表。下列ABNF [5]缩略词描述了这个表：
+        sglist          = sgitem / sgitem "," sglist
+        sgitem          = scope-name ":" ip-addr
+        ip-addr         = ipv4-number | ipv6-number
+        scope-name      =  ; See RFC 2608 for the format of scope names.
+        ipv4-number     =  1*3DIGIT 3("." 1*3DIGIT)
+        ipv6-number     = ;See RFC 2373 [9] Section 2.2
+
+IPv4中的一个范围/组列表的例子：
+
+        eng:239.255.255.42,corp:239.255.255.43    
+
+IPv6中的一个范围/组列表的例子：
+
+        eng:FF02:0:0:0:0:0:1:1042,corp:FF03:0:0:0:0:0:1:1042
+
+此列表给出了用来发布通知的多目传送地址信息，这里的通知是指包括给定范围的服务类型
+的通知。
+
+服务类型名可以是一个简单类型名，一个抽象类型名，或者一个具体类型名。
+如果是一个抽象类型名，所有的发布抽象类型的SAs必须发布通知。如果是一个具体或简
+单类型名，只有那些发布简单或具体类型的SAs必须发布通知,其它的不发。当某个DA收
+到一个用于一个带有抽象类型标记位的具体类型的预约时,它必须在它所发出的所有
+NotifyAt消息中加入抽象类型名。如果DA收到的用于具体类型的预约没有带抽象类型标记，
+那它就不会在发出消息中加入抽象类型名，但它还是必须得加入此具体类型名。
+出现下列三种情况时，一个代理会收到一个NotifyAt 扩展信息：
+1．	在一个返回给某UA的SrvRply消息中；
+2．	在一个多目传送的DAAdvert消息中；
+3．	在一个返回给某SA的SrvAck消息中。
+
+下面三小节介绍了每种情况下处理的情况：
+
+7.1 在收到的SrvRply消息中的NotifyAt
+
+当某个UA发出带一个预约扩展的SrvRqst消息后，DA回应一个带有NotifyAt的
+SrvRply 。这种情况下，除了NotifyAt ，DA不会发送其它任何信息。另外，如果SrvRqst
+消息没有带预约扩展，DA也不会发送NotifyAt消息。
+UA通过设立一个多路传送监听器来回应，此监听器用来监测来自SLP通知端口1847
+的扩展中的组地址。UA也可能希望记录下通过DA提交的预约的失效期，以便在失效期到
+来之前重发一个预约。
+
+7.2 接收到的多目传送DAAdvert消息中的NotifyAt 
+
+当某个UA发出请求通知消息，而预约中存在新的范围和服务类型时，DA就利用多
+目传送算法发出一条带有NotifyAt的DAAdvert消息。这个消息通知给那些没关闭的
+SAs，要求他们在关闭前多目传送通知。
+    如果某个参与通知的SA的服务类型和范围匹配，它会响应上面的通知并记录多目
+传送地址。在它下线前，它会首先按此地址发出一个SrvDereg消息而不必先向它的DAs中
+加入标签（虽然这样才符合标准SLP），此外，它还必须按照多目传送发送算法将此消息多
+目传送出去。一旦预约失效期来到，SA必须停止发布通知，除非收到一条附加于预约的
+NotifyAt消息，它延长了预约的失效期。
+当然，某个执行被动DA侦测的UA也会收到此扩展信息，它会将其忽略。
+
+7.3 收到的SrvAck消息中的NotifyAt
+
+当某个SA刚刚上线并于一个DA注册时，它会收到一个带有NotifyAt的SrvAck消息。
+如果DA所得到的来自UAs的预约中有由此SA提供的服务类型和范围，它必须在SrvAck
+消息中带一个NotifyAt消息。
+
+SA收到此NotifyAt消息后，它会马上按照多目传送发送算法，多目传送它回应此DA
+的SrvReg消息。SA必须执行此算法而且只能执行一次，即使它注册的DA不止一个并且从
+其它的DA也收到此NotifyAt消息。在此SA关闭或在某DA注销前，它必须发出SrvDereg
+进行通知，详见7.2节所述。
+
+8. 多目传送地址分配
+
+支持SLP通知的企业网络应配置多目传送地址分配结构（MAAA），它包括管理范围内
+的多目传送和多目传送地址动态客户端分配协议（MADCAP）[6]。
+只要能获得一个用于SLP通知的多目传送地址，SLP多目传送地址就会被使用。
+如果配置了MAAA平台，DAs和SAs就从MADCAP获得它们的范围配置，因为SLP
+范围与MADCAP范围一致。每个SLP范围必须对应一个多目传送范围名，[6]中有说明。
+在这种情况下，DA使用MADCAP分配地址，它按照UA预约的服务类型和范围，为每对
+新的服务类型/范围分配新的多目传送组地址。针对范围的分配是由MADCAP按多目传送
+地址表执行的。这样，只有那些在其提交的预约中要求此种特定服务类型和范围的UAs才
+会收到这个多目传送通知。DA对多目传送地址建立租用以符合预约保持时间的要求。如果
+MADCAP服务器用光了地址，SLP多目传送组就作为备份使用。
+例如：如果多目传送范围的地址组是从239.1.0.0 到 239.1.255.255，那么用于表示A范围内
+的服务类型X的通知组地址可以是239.1.0.42，而用于表示B范围内的服务类型Y的通知
+组地址可以是239.1.42.42。
+
+9. 多目传送发送算法
+
+    DA 和 SA使用的多目传送发送算法类似于SLP中的发现服务使用的算法，这在RFC 
+2608 [1]中有详细说明，不同之处是执行通知的代理不用等待回复。执行通知的代理每15秒
+发出一条通知，在发送的时间间隔期内进行幂次补偿。这一算法的原理是限制多目传送声明
+的持续时间和范围但还能保证重复传送声明多次以增加消息成功到达的几率。
+
+    对SA来说，一条通知消息或者是SrvReg 消息，或者是SrvDereg消息，这取决于SA
+是注册一个新服务还是注销一项服务。当新服务注册后，SrvReg消息必须在SLP头段设置
+新位来标识。此项服务的整个属性值表要包括进来。SrvDereg 消息不会包含属性表。为了
+减少多目传送阻塞，通知不是随时都可发送。
+由于一个SrvReg消息可以包含任意长度的属性表，那消息可能会使UDP方式传输的
+MTU包溢出。如果某个属性表能导致MTU包溢出，SA必须在SLP头里设置溢出位。通知
+消息中的属性表必须符合格式，这样即使溢出发生了，UA仍可使用这些属性。如果传送给
+UA的通知信息中缺少UA想要的属性，它会向DA或SA（如果此时无DA可用）申请发
+送这些属性。
+当DA收到一条预约，它发现其中所含服务类型和范围无法与已知的预约中的任何一个
+匹配，它就多目传送一条DAAdvert消息。一定要使用相同的算法。如果DA的属性和NotifyAt
+消息的组合使得DAAdvert溢出UDP包的范围，DA属性值必须截短以满足的NotifyAt需要，
+同时头中的溢出位要进行设置。由于NotifyAt扩展的存在，SA知道此消息的目的是通知它
+有一个新预约而不仅仅是一个被动的通告，这样它就可以根据设在头中的溢出位来忽略DA
+的属性列表域。当一项服务通告由于超时而被注销时，DA也要发送一条SrvDereg消息，同
+SA规则一样。
+
+10	DA失效的情况
+
+本设计的一个重要目标是要保证在DA失效时的健壮性。当DA由于不可预料的情况失
+效时，来自UA的预约消息丢失。UAs 继续从现有的SAs 获得通知。然而，除非其它DAs
+还有这个预约消息，新的SAs不会得到此预约。因为一个UA可能无法发现一个新DA，除
+非它发出主动请求，因此UA可能会错过得到新服务的通知。解决方法时，关心收到所有已
+有服务的通知的UAs要向每一个新出现的DA提交预约，当然要求此DA支持的范围与这
+些UA一致。类似地，如果某个DA由于正常关闭而消失，UA会通过其被动发现机制侦测
+到并重新提交预约给另一个DA。
+
+对SA来说，当某个DA离线时，现有的SAs继续发出通知直到预约过期失效。在停止
+通知前，SA必须判断DA是否还可用，如果不可用了，将与另一个DA校验预约是否已经
+被延时了。如此时没有DA，SA必须忽略预约失效时间而继续发送通知直到出现新的DA。
+当新DA出现时，SA必须按RFC 2608 [1]，给DA发送一个新SrvReg消息。如果UA通过
+DA已经更新了它的预约，则回应的SrvAck包含了一个NotifyAt扩展。如果SrvAck没有包
+含一个NotifyAt扩展，SA必须继续发通知直到预约过期失效。如果UA希望继续获得通知，
+它就在原有预约超时前通过新DA更新预约，这样SA就得到通知，会继续发通知。
+    
+请注意这一步骤中还存在一段时间间隔使得SAs不能得到消息，就是在新DA启动过
+程的时间与UA通过此新DA已经更新的预约时间的间隔中。考虑到这种情况，冗余
+DAs就是非常必要的，以保证当一个DA离线时所有的预约还在控制范围内。
+
+11.  网络管理考虑
+
+在RFC 2608中对使用DAs的SLP网络规定，唯一的多目传送是SrvRqst，它用来指示
+在主动发现DA方式下执行的DAAdverts消息，对于被动发现方式而言，DA周期性的发送
+主动提供的DAAdverts消息。在UA提交查询或SA注册时不涉及多目传送。这就允许网络
+管理员设立一些DAs用于一组特定的IP子网，并且可以限制所有的服务发现流量在SA和
+UA客户端以及DA之间传送。
+管理范围内的多目传送还能够用来限制主动发现DA方式以及被动DA通告的范围。多
+目传送消息的数量受到限制，不会过高，而DHCP DA和范围配置可用来限制某个特定的
+UA或SA客户端可见的DAs数量，也可用来限制整个多目传送，以使得UAs和SAs只能
+使用配置好的DAs。
+然而通知也会带来大量的与SAs的事件相关的多目传送流量。因为DAs要求的多目传
+送地址是基于范围和服务类型，与特定事件相关的多目传送事件应该被限制为只能发送给有
+相同范围的UAs和SAs的子网中。因此应该配置相应的用于多目传送范围管理的路由器以
+限制多目传送流量。如果没配置DAs（或没配置MAAA），那么当通知接收并被使用时按
+SLP多目传送地址进行的多目传送的数量就非常大了。
+
+12. 安全考虑
+
+    SrvReg 和 SrvDereg 消息包含了用于所有由DAs支持的SLP SPIs的认证块，SA是通
+过这些SPIs在DAs上注册的。由于这些SPIs与UAs能校验的SPIs相同，UA就必须在接
+收一个多目传送通知时进行校验。方法是UA辨认出认证块或者它能够校验的块以进行校
+验。如果由于缺少认证块，或缺少正确的SPI导致认证失败，UA就扔掉这条通知。在没有
+DAs的网络中，UA和SA的SPI也要匹配。
+
+13. IANA 考虑
+     
+SLP 通知服务使用IANA分配的端口号：1847。IANA分配的SLP扩展的标识符是：
+0x0004 用于预约， 0x0005 用于 NotifyAt。
+
+14. 鸣谢
+
+首先感谢Nokia 公司的Charles Perkins以及 Sun Microsystems 公司的Erik Guttman and 
+Jonathan Wood, 感谢他们在预约/通知模型设计的初期阶段的积极参与和建议。
+还要感谢Erik，在规范制订的后期，它进行了周密的审核工作。它的建议在设计的改进
+中具有重要的指导意义。还有HP公司的Shivaun Albright, 对简化协议使之仅仅集中关注于
+初始化注册及注销作了重要工作。Vaishali Mithbaokar 实现了简化后的协议。
+
+15. 参考资料
+
+   [1] Guttman, E., Perkins, C., Veizades, J. and M. Day, "Service
+       Location Protocol", RFC 2608, July 1999.
+
+   [2] Bradner, S., "Key Words for Use in RFCs to Indicate Requirement
+       Levels", BCP 14, RFC 2119, March 1997.
+
+   [3] Guttman, E., Perkins, C. and J. Kempf, "Service Templates and
+       service: Schemes", RFC 2609, July 1999.
+
+   [4] Meyer, D., "Administratively Scoped IP Multicast", RFC 2365, July
+       1998.
+
+   [5] Crocker, D. and P. Overell, "Augmented BNF for Syntax
+       Specifications: ABNF", RFC 2234, November 1997.
+
+   [6] Hanna, S., Patel,B. and M. Shah, "Multicast Address Dynamic
+       Client Allocation Protocol (MADCAP)", RFC 2730, December 1999.
+
+   [7] http://www.isi.edu/in-notes/iana/assignments/multicast-addresses
+
+   
+   [8] Guttman, E., "Service Location Protocol Modifications for IPv6",
+       Work in Progress.
+
+   [9] Hinden, R. and S. Deering, "IP Version 6 Addressing
+       Architecture", RFC 2375, July 1997.
+
+16. 作者地址
+
+   James Kempf
+   Sun Microsystems
+   UMPK15-214
+   901 San Antonio Rd.
+   Palo Alto, CA 94040
+   USA
+
+   Phone:    +1 650 786 5890
+   EMail:    james.kempf@sun.com
+
+   Jason Goldschmidt
+   Sun Microsystems
+   UMPK17-202
+   901 San Antonio Rd.
+   Palo Alto, CA 94040
+   USA
+
+   Phone: +1 650 786 3502
+   EMail: jason.goldschmidt@sun.com
+
+版权声明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+
+   感谢Internet Society 近来对RFC编辑提供的资助.
+
+
+
+
+[ Index | Search | What's New | Comments | Help ] 
+Comments/Questions about this archive ? Send mail to rfc-admin@faqs.org
+                                                                           
+                                                                           
+                                                                             
+                     
+                           
+                               
+                                    
+                                        
+                                              
+                                                   
+                                                        
+                                                             
+                                                                    
+                                                                            
+RFC3082――Notification and Subscription for SLP    服务定位协议（SLP）的预研报告
+1
+
+1
+RFC文档中文翻译计划

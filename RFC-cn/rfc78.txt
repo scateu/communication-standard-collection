@@ -1,0 +1,64 @@
+组织：中国互动出版网（<http://www.china-pub.com/>）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm <http://www.china-pub.com/>）
+E-mail：ouyang@china-pub.com <mailto:ouyang@china-pub.com>
+译者：董苛（cnchris    duke913@163.com）
+译文发布时间：2001-10-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                   E. Harslem
+Request for Comments:  78                               J. Heafner
+NIC 5199                                                J. White
+
+                       NCP状态报告:UCSB/RAND
+                  ( NCP Status Report:  UCSB/RAND )
+
+NCP调查
+ 
+   UCSB和RAND最近管理了各个NCP的UCSB控制台往/来RAND控制台的鉴定工作.这个实验    只想简单的证明各NCP是遵守一号文献协议工作的.
+
+了解到的东西
+
+   UCSB和RAND NCP都按着一号文献指定的给予了响应.RAND暴露了一些问题,这些问题     是有关连接视图控制台到NCP的网络服务程序(NSP)的.这些问题的特性是数据格式的    转化和一些人为因素,包括状态信息显示的提供.
+
+不久的将来
+
+   1. UCSB和RAND都将很高兴的参加到其他站点对NCP的鉴定工作中来.
+   2. 我们打算作更多的实验包括数据重组和文件传输.
+
+   JFH:hs
+
+         [ This RFC was put into machine readable form for entry ]
+           [ into the online RFC archives by Josh Elliott 1/98 ]
+
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+   

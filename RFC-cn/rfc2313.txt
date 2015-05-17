@@ -1,0 +1,545 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：徐孜骏（happygogo    happygogo@sina.com）
+译文发布时间：2001-7-14
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                      B. Kaliski
+Request for Comments: 2313                      RSA Laboratories East
+Category: Informational                                    March 1998
+
+                PKCS#1：RSA加密 版本1.5
+
+本备忘录的状态
+本备忘录为Internet社区提供了信息。它没有讲述任何一种Internet标准.本备忘录的发
+布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1998).  保留所有权利。
+略读
+此篇文章描述了如何使用RSA公钥密码体系加密数据。
+目录
+1、范围	2
+2、参考	2
+3、定义	4
+4、标志和缩写	5
+5、总的概述	5
+6、密钥生成	5
+7、密钥语法	6
+7．1公钥语法	6
+7．2私钥语法	6
+8、加密过程	7
+8．1加密块格式化	7
+8．2 8位字节串到整数的转换	8
+8．3 RSA计算	8
+8．4 整数到字节串的转换	9
+9、解密过程	9
+9．1 字节串到整数的转换	9
+9．2  RSA计算	9
+9．3 整数到字节串的转换	9
+9．4 需加密块解析	10
+10、签名算法	10
+10．1 签名过程	10
+10．2 验证过程	12
+11、对象标识符	13
+安全考虑	14
+修订版记录	14
+鸣谢	14
+作者地址	14
+版权声明	15
+
+1、范围
+此篇文档描述了如何使用RSA公钥密码体系加密数据。这将被用作数字签名和数字信
+封，且在PKCS#7中有描述：
+?	数字签名：签名内容首先被消息散列算法（如MD5）缩减成一个消息散列，然后
+使用签名者的RSA私钥加密含有消息散列的字符串。原文和被加密的消息散列一
+起组成符合PKCS #7中语法的数字签名。这种应用和PEM是兼容的。
+?	数字信封：首先将被加信封的内容使用一个内容加密算法（例如DES）的内容加
+密密钥加密，然后使用收件人的RSA公钥加密内容加密密钥。那个被加密内容和
+被加密的密钥一起组成符合PKCS #7中语法的数字信封。这种应用和PEM是兼
+容的。
+此篇文档还描述了有关一个RSA公钥和私钥的语法。公钥语法被用于证书；私钥语法
+被用于PKCS#8中的私钥信息。公钥语法在X.509和PEM是完全相同的。这样X.509/PEM 
+RSA密钥能被用于此篇文当中。
+此篇文档还定义了三个签名算法，它们被用于签署X.509/PEM证书和CRL，PKCS#6
+扩展证书，和其他使用数字签名的对象（例如X.401消息标记）。
+有关消息散列和内容加密算法的细节并不属于此篇文档的范围，并且有关被文档要求
+的假随机位的来源也不在此文档范围中。
+
+2、参考
+   FIPS PUB 46-1  National Bureau of Standards. FIPS PUB 46-1:
+             Data Encryption Standard. January 1988.
+
+   PKCS #6   RSA Laboratories. PKCS #6: Extended-Certificate
+             Syntax. Version 1.5, November 1993.
+
+   PKCS #7   RSA Laboratories. PKCS #7: Cryptographic Message
+             Syntax. Version 1.5, November 1993.
+
+   PKCS #8   RSA Laboratories. PKCS #8: Private-Key Information
+             Syntax. Version 1.2, November 1993.
+
+   RFC 1319  Kaliski, B., "The MD2 Message-Digest
+             Algorithm," RFC 1319, April 1992.
+
+   RFC 1320  Rivest, R., "The MD4 Message-Digest
+             Algorithm," RFC 1320, April 1992.
+
+   RFC 1321  Rivest, R., "The MD5 Message-Digest
+             Algorithm," RFC 1321, April 1992.
+
+   RFC 1423  Balenson, D., "Privacy Enhancement for
+             Internet Electronic Mail: Part III: Algorithms,
+             Modes, and Identifiers," RFC 1423, February 1993.
+
+   X.208     CCITT. Recommendation X.208: Specification of
+             Abstract Syntax Notation One (ASN.1). 1988.
+
+   X.209     CCITT. Recommendation X.209: Specification of
+             Basic Encoding Rules for Abstract Syntax Notation
+             One (ASN.1). 1988.
+
+   X.411     CCITT. Recommendation X.411: Message Handling
+             Systems: Message Transfer System: Abstract Service
+             Definition and Procedures.1988.
+
+   X.509     CCITT. Recommendation X.509: The Directory--
+             Authentication Framework. 1988.
+
+   [dBB92]   B. den Boer and A. Bosselaers. An attack on the
+             last two rounds of MD4. In J. Feigenbaum, editor,
+             Advances in Cryptology---CRYPTO '91 Proceedings,
+             volume 576 of Lecture Notes in Computer Science,
+             pages 194-203. Springer-Verlag, New York, 1992.
+
+   [dBB93]   B. den Boer  and A. Bosselaers. Collisions for the
+             compression function of MD5. Presented at
+             EUROCRYPT '93 (Lofthus, Norway, May 24-27, 1993).
+
+   [DO86]    Y. Desmedt and A.M. Odlyzko. A chosen text attack
+             on the RSA cryptosystem and some discrete
+             logarithm schemes. In H.C. Williams, editor,
+             Advances in Cryptology---CRYPTO '85 Proceedings,
+             volume 218 of Lecture Notes in Computer Science,
+             pages 516-521. Springer-Verlag, New York, 1986.
+
+   [Has88]   Johan Hastad. Solving simultaneous modular
+             equations. SIAM Journal on Computing,
+             17(2):336-341, April 1988.
+
+   [IM90]    Colin I'Anson and Chris Mitchell. Security defects
+             in CCITT Recommendation X.509--The directory
+             authentication framework. Computer Communications
+             Review, :30-34, April 1990.
+
+   [Mer90]   R.C. Merkle. Note on MD4. Unpublished manuscript,
+             1990.
+
+   [Mil76]   G.L. Miller. Riemann's hypothesis and tests for
+             primality. Journal of Computer and Systems
+             Sciences, 13(3):300-307, 1976.
+
+   [QC82]    J.-J. Quisquater and C. Couvreur. Fast
+             decipherment algorithm for RSA public-key
+             cryptosystem. Electronics Letters, 18(21):905-907,
+             October 1982.
+
+   [RSA78]   R.L. Rivest, A. Shamir, and L. Adleman. A method
+             for obtaining digital signatures and public-key
+             cryptosystems. Communications of the ACM,
+             21(2):120-126, February 1978.
+
+3、定义
+由于此篇文档的目的，下列定义将被使用。
+算法标识符：通过对象标识符定义一种算法和相关参数的类型，此类型被定义在X.509
+中。
+ASN.1：抽象语法标记1，定义在X.208中。
+BER：基础编码规则，定义在X.209中。
+DES：数据加密标准，定义在FIPS PUB 46-1中。
+MD2：RSA Data Security, Inc.的MD2消息散列算法，定义在RFC 1319中。
+MD4：RSA Data Security, Inc.的MD4消息散列算法，定义在RFC 1320中。
+MD5：RSA Data Security, Inc.的MD5消息散列算法，定义在RFC 1321中。
+Modulus（模数）：由两个素数形成的整数。
+PEM：因特网私人加密邮件，定义在RFC 1423和相关文当中。
+RSA：RSA公钥密码体系，定义在[RSA78]中。
+私人密钥：模数和私人指数。
+公开密钥：模数和公开指数。
+
+4、标志和缩写
+大写标志（例如BT）表示字符串和位串（就签名S而言），小写标志（例如c）表示
+整数。
+   ab   16进制8位组值         c    指数
+   BT   块类型                 d    私人指数
+   D    数据                   e    公开指数
+   EB   需加密块               k    模数的8位组长度                                
+   ED   被加密的数据           n    模数
+   M    消息                   p, q  模数的素数组成
+   MD   消息散列              x    整数需加密块
+   MD'  比较的消息散列         y    整数被加密数据
+   PS   填充字符串             mod n  模 n
+   S    签名                   X || Y  X，Y的级连
+   ||X||  X字节长
+
+5、总的概述
+下面的六个章节详细的叙述了密钥生成，密钥语法，加密过程，解密过程，签名算法
+和对象标识符。每个实体都要生成一对密钥：公钥和私钥。加密过程需要使用其中一个密钥，
+解密过程需要使用另一个密钥。所以加密过程或是一个公钥操作过程或是一个私钥操作过
+程，解密过程也一样。这两种过程都是把一个8位字符串转化成另一个8位字符串。这两个
+过程是互相相反的，如果一个过程使用了一个实体的公钥，那么另一个过程使用同一实体的
+私钥。加密和解密过程或是能实现典型的RSA转换，或是实现填充变换。
+
+6、密钥生成
+此章节描述RSA密钥生成。每个实体都需要选择一个正整数e作为它的公开指数。每
+个实体都需要私人的随机的选择两个不同的奇素数p和q，以便e和（p-1）*（q-1）互素。
+公开模数n是私人的素数p，q的乘积：n=p*q 。私人指数是一个正整数d，以便d*e-1可
+以被（p-1）*（q-1）整除。模数n的字节长为k，k满足2^(8(k-1)) <= n < 2^(8k)。模数长度
+k必须是至少12个字节，使之适应此文档中的块格式（见第8章）。
+注意：
+（1）	公开模数在特殊应用程序中可以是标准化的。在X.509的附录C中提到使用3
+或65537可以有一些实际的好处。
+（2）	为了使模数n的因数分解更困难，可以考虑一些额外的选择素数的条件。这些
+保障安全的条件超出了此文档的论述范围。长度k的下限是为了适应块格式，
+并不是为了保障安全。
+
+7、密钥语法
+此章节给出了RSA公钥和私钥的语法
+
+7．1公钥语法
+一个RSA公钥需要有ASN.1的RSAPublicKey类型：
+
+  RSAPublicKey ::= SEQUENCE {
+     modulus INTEGER, -- n
+     publicExponent INTEGER -- e }
+（这个类型被定义于X.509中，保留在此处是为了兼容性。）
+RSAPublicKey类型的字段有下列含义：
+modulus是模数n；
+publicExponent是公开指数e。
+
+7．2私钥语法
+一个RSA私钥有一个ASN.1的RSAPrivateKey类型：
+
+   RSAPrivateKey ::= SEQUENCE {
+     version Version,
+     modulus INTEGER, -- n
+     publicExponent INTEGER, -- e
+     privateExponent INTEGER, -- d
+     prime1 INTEGER, -- p
+     prime2 INTEGER, -- q
+     exponent1 INTEGER, -- d mod (p-1)
+     exponent2 INTEGER, -- d mod (q-1)
+     coefficient INTEGER -- (inverse of q) mod p }
+
+   Version ::= INTEGER
+RSAPrivateKey类型的字段有下列含义：
+?	version是一个为兼容将来此文档的修改的版本号。为了适应此文档的版本它
+应该是0；
+?	modulus是模数n；
+?	publicExponent是公开指数e；
+?	privateExponent是私人指数d；
+?	prime1是组成模数n的一个素数p；
+?	prime2是组成模数n的一个素数q；
+?	exponent1是d mod (p-1)；
+?	exponent2是d mod (q-1)；
+?	coefficient是中国剩余理论中的系数q-1 mod p。
+注意：
+（1）	一个RSA私钥逻辑上仅包含模数n和私人指数d。p，q， d mod (p-1)， d 
+mod (p-1)和q-1 mod p的出现是为了提高效率，正如Quisquater和Couvreur
+显示在[QC82]中。如果公钥知道的话，按照Miller[Mil76]的结果，一个不
+包含其他值的私人密钥语法是很容易转化成此处定义的语法。
+（2）	公开指数e的出现是为了可以容易的从私钥中得到公钥。
+
+8、加密过程
+此章节描述了RSA的加密过程。
+加密过程包括4个步骤：加密块格式化，8位字符串到整数的转化，RSA计算，整数
+到8位字符串的转化。加密过程的输入为数据8位字符串，模数n，指数c。对于公钥操作
+来说，整数c是实体的公开指数e；对于私钥操作来说，整数c是实体的私人指数d。加密
+过程的输出为被加密的数据，一个8位字符串ED。
+数据D的长度不应该长于k-11个8位字节，其必为正数，因为模数的长度k是至少
+12个8位字节。这种限制保证了填充串PS的长度至少为8个8位字节，这是一项安全措施。
+注意：
+（1）	在此文档的对于加密内容加密密钥和消息散列的典型应用中，||D|| <= 30。这样
+RSA模数的长度至少需要328位（41个8位字节），这是合理的，并且和安全
+建议是一致的。
+（2）	如果被加密的数据在传输中被破坏，加密过程并不提供一个帮助错误侦察的外
+在的完整性检查。然而，加密块的结构保证了破坏没被检查出的可能性小于
+2-16，这是一个随机加密块看起来像类型2的可能性的上限。
+（3）	定义在此的对于除了包含一个消息散列的8位字节串的数据的私钥操作的应用
+并不被推荐，需要更多的研究。
+（4）	此文档可以被扩展，来控制长度长于k-11个8位字节串
+
+8．1加密块格式化
+加密块是一个8位字节串EB，由块标记BT，填充块PS和数据D组成。
+EB = 00 || BT || PS || 00 || D          （1）
+块标记BT是一个标记字节，表示加密块的结构。对于此文档的版本，它有00，
+01，或02值。私钥操作为00，或01；公钥操作为02。
+填充串PS为k-3-||D||长的8位字节字符串。对于00型，填充串为00；对于01型，
+填充串为ff；对于02型，填充串为假散列生成的非0值。这使得加密块EB的长度为
+k。
+注意：
+（1）	开始的00值字节保证了转化成整数后的加密块小于模数。
+（2）	对于00型来说，数据D必须以一个非0字节开始，或是必须知道长度，
+以便加密块能被清楚的解析。对于01和02型来说，加密块能被清楚的解
+析，这是因为填充块PS不包含00值字节，它可以被一个00值字节从数据
+D分开。
+（3）	01型被推荐为私钥操作标志。01型有保证转化成整数的加密块很大的性
+能，这能防止Desmedt和Odlyzko [DO86]所建议的某种攻击。
+（4）	01和02型是和被描述在RFC1423中的PEM RSA的内容加密密钥和消息
+散列的加密是兼容的。
+（5）	对于02类型来说，建议为每一个加密过程都独立生成假散列字节，特别是
+如果相同的数据被输入多于一个的加密过程。Hastad的结果 [Has88]促进
+了这种建议。
+（6）	对于02类型来说，填充串至少是8个字节长，这是对于公钥操作的一个安
+全措施，为了防止攻击者通过测试所有可能的加密块来恢复数据。类似的，
+对于01类型最小长度是一样的。
+（7）	此文档将来可以扩展为包括其他类型。
+
+8．2 8位字节串到整数的转换
+加密块EB需要被转化为一个整数x，即整数加密块。从头到尾让EB1, ..., Ebk
+组成EB字节串。然后整数x应该满足：
+                                     k
+                x =  SUM  2^(8(k-i)) EBi             (2)
+                                   i = 1
+换句话来说，EB的第一个字节在整数中意义最重大，最后一个字节的重要性最
+低。
+注意：因为EB1 = 00并且 2^(8(k-1)) <= n，所以整数加密块x满足0 <= x < n。
+
+8．3 RSA计算
+整数加密块x需要被求c次方幂，然后模n，最后被赋给整数y，即整数被加密
+数据。
+y = x^c mod n,  0 <= y < n
+这是一个典型的RSA计算。
+
+8．4 整数到字节串的转换
+整数被加密数据y需要被转换成一个长度k的8位字节串ED，即被加密数据。
+被加密数据应该满足：
+                                     k
+                y =  SUM  2^(8(k-i)) EDi            (3)
+                                   i = 1
+这里ED1, ..., Edk就是字节串ED的组成。
+换句话说，ED的第一个字节在整数中最为重要，ED的最后一个字节重要性最低。
+
+9、解密过程
+此章节描述了RSA解密过程。
+解密过程包含4个步骤：字节串到整数的转换，RSA计算，整数到字节串的转换，和
+需加密块解析。解密过程的输入是一个8位字节串ED，即被加密数据；模数n；指数c。对
+一个公钥操作来说，整数c是一个实体的公开指数e；对一个私钥操作来说，整数c是一个
+实体的私人指数d。解密过程的输出是一个8位字节串D，即原始数据。
+如果被加密数据ED的长度不是k，则为错误。
+简短来说，解密过程是根据加密过程来描述的。
+9．1 字节串到整数的转换
+被加密的数据ED根据等式（3）被转化成整数被加密数据y。
+如果整数被加密数据不满足0 <= y < n，则为错误。
+
+9．2  RSA计算
+整数被加密数据y需要被求c次方幂，然后模n，最后被赋给整数x，即整数需加密块。
+x = y^c mod n,  0 <= x < n
+这是一个典型的RSA计算。
+
+9．3 整数到字节串的转换
+整数需加密块x根据等式（2）被转化成一个长度k的8位字节串EB，即需加密块。
+
+9．4 需加密块解析
+需加密块EB根据等式（1）被解析成一个由块标记BT，填充块PS和数据D组成的
+数据块。
+如果有下列情况发生，则为错误：
+?	需加密块不能被明白的解析（见8.1节的注意）。
+?	填充串PS少于8字节，或是和块标记BT不匹配。
+?	解密过程是一个公钥操作过程，块标记不能为00或01；或者解密过程是一个私
+钥操作过程，块标记不能为02。
+
+10、签名算法
+本章定义了3个基于被描述在第8、9章中的RSA加密过程的签名算法。签名算法主
+要被用于签署X.509/PEM证书，CRL，PKCS #6扩展证书，以及其他使用数字签名的对象，
+例如X.401消息环。算法并不被特意用来构建PKCS #7的数字签名。第一个签名算法把MD2
+散列算法和RSA结合起来（简称MD2 with RSA）；第二个签名算法把MD4散列算法和RSA
+结合起来（简称MD4 with RSA）；第三个签名算法把MD5散列算法和RSA结合起来（简
+称MD5 with RSA）。
+本章节描述了两个算法的签名过程和验证过程。所选的散列算法取决于签名算法，
+MD2或MD5。签名过程使用一个实体的私钥；而验证过程使用一个实体的公钥。签名过程
+把一个8位字节串（消息）转化成一个位串（签名）；而验证过程检验一个位串（签名）是
+否为一个8位字节串（消息）的签名。
+注意：被定义在此的签名算法和在PKCS #7中构建签名的方法（加密消息散列）之间
+的仅有的不同是此处的签名用位串表示，这和X.509 SIGNED宏是一致的。在PKCS #7中
+被加密的消息散列是8位字节串。
+
+10．1 签名过程
+签名过程包括4个步骤：消息散列，数据编码，RSA加密和8位字节串到位串的转换。
+签名过程的输入是一个8位字节串M，即消息；签名者的私人密钥。其输出是一个位串S，
+即签名。
+
+10．1．1 消息散列
+使用所选的消息散列算法来散列消息M，得到一个8位字节串MD，即消息散列。
+
+10．1．2 数据编码
+消息散列MD和消息散列算法标识符组成了以下描述的ASN.1类型DigestInfo的值，
+此类型将通过BER编码来生成一个8位字节串D，即原始数据。
+DigestInfo ::= SEQUENCE {
+     digestAlgorithm DigestAlgorithmIdentifier,
+     digest Digest }
+
+DigestAlgorithmIdentifier ::= AlgorithmIdentifier
+
+Digest ::= OCTET STRING
+
+类型DigestInfo的域有下列含义：
+?	digestAlgorithm表示用于散列的算法（以及相关参数）。对应用程序来说，它标识
+了所选的散列算法，MD2，MD4或MD5。作为参考，以下是相关的对象标识符：
+    md2 OBJECT IDENTIFIER ::=
+
+     { iso(1) member-body(2) US(840) rsadsi(113549)
+         digestAlgorithm(2) 2 } md4 OBJECT IDENTIFIER ::=
+     { iso(1) member-body(2) US(840) rsadsi(113549)
+         digestAlgorithm(2) 4 } md5 OBJECT IDENTIFIER ::=
+     { iso(1) member-body(2) US(840) rsadsi(113549)
+         digestAlgorithm(2) 5 }
+   对这些对象标识符来说，散列算法的参数域是空。
+?	digest是消息散列过程的结果，例如消息散列MD。
+
+注意：
+1.	DigestInfo值包含了一个消息散列算法标识符，用来限制由于使用消息散列算法
+压缩数据而导致的破坏。举例来说，如果攻击者能够找出带有给定的MD2消息
+散列的消息，那么他就可以通过找出一个表面无害的带有相同MD2散列的消息，
+并强迫签名者签署这个表面无害的消息，来伪造消息签名。这种攻击方法只有在
+使用MD2散列算法时才会成功。如果DigestInfo值只包括消息散列，攻击者就能
+攻击使用任何消息散列的签名者。
+2.	虽然使用SEQUENCE类型违背了在X.509 SIGNED和SIGNATURE宏中的签名
+是一个ENCRYPTED OCTET STRING的书面声明，但是正如I'Anson和Mitchell
+在[IM90]中指出的，这样的书面阐明并不被要求。
+3.	没有理由说MD4不是一个安全度很高的数字签名方案，但是由于MD4被设计的
+非常快，所以它处于被成功攻击的危险中。如果有人找出拥有同一个散列的两个
+消息这样的冲突，那么这个散列算法可以被认为是打破的（broken）。当冲突被发
+现在仅有两个散列循环[Mer90][dBB92]的MD4的变体中，并没有冲突出现在有三
+个散列循环的MD4中。在进一步的研究后，我们可以认为MD4有很高的安全性。
+MD5有四个散列循环，比MD4更慢。在MD4被研究前，它是被推荐使用的。
+在MD5内部的压缩功能[dBB93]中的假冲突并没有任何实际的安全影响。
+MD2是三者中最慢的一个，它有最保守的设计，没有任何对MD2的攻击被公布
+出来。
+
+10．1．3  RSA加密
+正如在第7章中描述的数据D被签名者的RSA私钥加密，生成一个8位字节串ED，
+即被加密的数据。其块标记为01（见8.1节）。
+
+10．1．4  8位字节串到位串的转换
+被加密数据ED被转换成一个位串S，即签名。具体来说，被加密数据的第一个字节
+的第一位成为签名的第一个数据位，以此类推，直到被加密数据的最后一个字节的最后一位，
+它将变成签名的最后一个数据位。
+注意：签名S的位长度是8的倍数。
+
+10．2 验证过程
+验证过程包括四个步骤：位串到字节串的转换，RSA解密，数据解码，消息散列和比
+较。验证过程的输入是字节串M，即消息；签名者的公钥；位串S，即签名。其输出是验证
+成功或失败的标记号。
+
+10．2．1 位串到字节串的转换
+签名S被转换成字节串ED，即被加密的数据。具体来说，假设S的位长度是8的倍
+数，S的第一位将变成字节串的第一个字节的第一位，以此类推，直到签名的最后一位变成
+字节串的最后一个字节的最后一位。
+如果签名的位长度不是8的倍数，则是错误。
+
+10．2．2 RSA解密
+正如在第8章节中描述的使用签名者的公钥对被加密数据ED进行解密，得到字节串
+D，即原始数据。
+如果在解密过程中恢复的块标记位不是01，则是错误的（见9.4节）。
+
+10．2．3 数据解码
+原始数据D将被BER解码为类型DigestInfo的ASN.1值，此值被分成消息散列MD
+和消息散列算法标识符。消息散列算法标识符决定了下一步所选的消息散列算法。
+如果消息散列算法标识符不是MD2，MD4或MD5消息散列算法，则为错误。
+
+10．2．4 消息散列和比较
+使用所选的消息散列算法对消息M进行散列，得到字节串MD`，即将进行比较的消
+息散列。如果MD`和MD相同，则表示验证成功，否则为失败。
+
+11、对象标识符
+本文档定义了5个对象标识符：pkcs-1，rsaEncryption，md2WithRSAEncryption，
+md4WithRSAEncryption和md5WithRSAEncryption。
+对象标识符pkcs-1等同于本篇文档。
+pkcs-1 OBJECT IDENTIFIER ::=
+
+     { iso(1) member-body(2) US(840) rsadsi(113549)
+         pkcs(1) 1 }
+对象标识符rsaEncryption等同于定义在第7章节中的RSA公/私钥和定义在第8、9章
+节中的RSA加/解密过程。
+rsaEncryption OBJECT IDENTIFIER ::= { pkcs-1 1 }
+rsaEncryption对象标识符被用于AlgorithmIdentifier类型的algorithm域的一个值。此
+类型的parameters域有算法特定的语法ANY DEFINED BY algorithm，在rsaEncryption算法
+中，其值为空。
+对象标识符md2WithRSAEncryption，md4WithRSAEncryption和
+md5WithRSAEncryption各自表示定义在第10章节中的MD2 with RSA，MD4 with RSA和
+MD5 with RSA签名及验证过程。
+   md2WithRSAEncryption OBJECT IDENTIFIER ::= { pkcs-1 2 }
+   md4WithRSAEncryption OBJECT IDENTIFIER ::= { pkcs-1 3 }
+   md5WithRSAEncryption OBJECT IDENTIFIER ::= { pkcs-1 4 }
+这些对象标识符被用于AlgorithmIdentifier类型中的algorithm域的一个值。此类型的
+parameters域有算法特定的语法ANY DEFINED BY algorithm，在此三个算法中，其值为空。
+注意：X.509的对象标识符rsa也表示定义在第7章节中的RSA公钥，但并不表示私钥，
+并且表示不同的加/解密过程。一些应用程序期望将鉴别RSA公钥。这些公钥和本文档是兼
+容的，使用RSA公钥的rsaEncryption过程等同于使用rsaEncryption公钥的rsaEncryption过
+程。
+
+
+安全考虑
+安全内容在此备忘录中讨论。
+
+修订版记录
+版本1.0-1.3
+此版本在1991的2月和3月被分发给RSA Data Security, Inc.的 Public-Key 
+Cryptography Standards会议的参加者。
+
+版本1.4
+此版本是在1991.6.3的第一次公开发布的PKCS中的一部分内容，并被发行作为
+NIST/OSI Implementors的工作组文档SEC-SIG-91-18。
+
+版本1.5
+此版本包括了几处改变，其中有参考的更新和修订版记录的增加。下列是几处实质的
+改变：
+?	第10章节：增加了MD4 with RSA的签名和验证过程。
+?	第11章节：增加了md4WithRSAEncryption对象标识符。
+代替1991.6.3的版本，它也被作为NIST/OSI Implementors的工作组文档
+SEC-SIG-91-18。
+
+鸣谢
+本文档基于RSA Data Security, Inc.的一个部门RSA Laboratories的撰稿。任何实质的
+使用本文档都必须感谢RSA Data Security, Inc.。RSA Data Security, Inc.要求所有对此文档的
+资料的阐述和参考都必须表示为RSA Data Security, Inc. PKCS #1。
+
+作者地址
+
+   Burt Kaliski
+   RSA Laboratories East
+   20 Crosby Drive
+   Bedford, MA  01730
+
+   Phone: (617) 687-7000
+   EMail: burt@rsa.com
+
+版权声明
+Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to others, and derivative 
+works that comment on or otherwise explain it or assist in its implementation may be prepared, 
+copied, published and distributed, in whole or in part, without restriction of any kind, provided 
+that the above copyright notice and this paragraph are included on all such copies and derivative 
+works. However, this document itself may not be modified in any way, such as by removing the 
+copyright notice or references to the Internet Society or other Internet organizations, except as 
+needed for the purpose of developing Internet standards in which case the procedures for 
+copyrights defined in the Internet Standards process must be followed, or as required to translate it 
+into languages other than English.
+   The limited permissions granted above are perpetual and will not be revoked by the Internet 
+Society or its successors or assigns.
+   This document and the information contained herein is provided on an "AS IS" basis and THE 
+INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS 
+ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY 
+WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE 
+ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS 
+FOR A  PARTICULAR PURPOSE.
+
+RFC2313――PKCS #1: RSA EncryptionVersion 1.5                      PKCS#1：RSA加密 版本1.5
+
+
+1
+RFC文档中文翻译计划
+
+

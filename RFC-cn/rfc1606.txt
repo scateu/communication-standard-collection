@@ -1,0 +1,104 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：kevin73(kevin73  panzhenyu_2@263.net)
+译文发布时间：2001-4-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                         J. Onions
+Request for Comments: 1606                                   Nexor Ltd.
+Category: Informational                                    1 April 1994
+
+
+
+使用IP版本9的历史观
+(RFC 1606  A Historical Perspective On The Usage Of IP Version 9)
+
+本备忘录的状态
+本备忘录是因特网社区的网络号和自治系统号码的状态报告。本备忘录无分发限制。
+
+摘要
+本论文回顾了旧的IP版本协议的使用。探讨它的一些成功和失败。
+目录
+1. 介绍	1
+2. 路由	2
+3. 分配	2
+4. 应用	2
+5．制造	3
+6．结论	3
+7．安全考虑	3
+8．作者地址	3
+版权说明	3
+致谢	4
+
+1. 介绍
+最近几年TCP/IPv9显著兴起。只有几百万台主机的时代已经过去，网络为人们所了解。再一次因为地址耗尽，IP版本9协议走向了有用生命的尽头，这里我们回顾一下本协议的一些成功之处。
+2. 路由
+IPv9的深达42层的路由层次是他得到广泛应用的关键特性。分配整个网络，或者一组网络给一个电子器件的能力是他兴起的原因之一。紧凑磁盘全息图（Compact Disk Hologram）单元的使用是这种应用的代表。典型的，他们有一个37层的网络号分配给每一个逻辑部分，一个36层的网络号分配给整个设备。这使得CDH的管理协议可以把单元作为设备的一个元素控制。同样，允许次芯片级的路由能够使用38层的地址来下载新的微代码。但是，40-42层还没有发现需求，虽然当需要的时候，39层被用为器件的原子结构的试验用途。
+3. 分配
+IPv9协议的大量的号码空间也使得分配地址可以用一种直接的方式。典型的，大部分高级街道商业互联网提供者提供给每个房屋10亿个地址。这些地址动态的分区成子网结构，允许百万个地址的组可以分配给每个单元（比如：房间/地面 等等）。子组的分配可以到控制器，比如电灯开关，电线插座，同样的可以到每一个插孔。分配过程可以再通过结构化分区的方式进行，每一个主要的应用从他的控制器请求一块地址。通过这种方式，电灯泡从电灯开关请求一个地址，电灯开关从电气系统，电气系统从房间/地面控制器依次请求地址。由于地址空间很大地址冲突不会有特别的问题发生，这种方式是很成功的，
+同时还有很多没有分配空间的地址正在快速增长。别的太阳系的智能生命的发现以及超光速传送栈的同时发现是主要的原因。这样就可以和他们实时通信，世界范围的地址空间的分配就有必要了，可以分配在第三层路由结构。有一个全局的（空间）第二层星系范围的网络可以分配给这个星系，可是在外太空建立的永久空间站开始消耗这个资源。最紧迫的问题是平行宇宙的情况。当然，假设没有比平行宇宙更高级的外推是不完备的。。。
+到目前为止，从遥远的星系的黑客设置窃听设备的情况还没有被确定，这是由于从办公室到家的路上的远端控制的查找问题引起的。
+4. 应用
+身体监视器的引入，作为IPv9可以取址的单元注入到血液流中，还没有作出结论。同时，在心脏，肾脏，大脑，等等中可以植入设备，在紧急情况下发送SNMPv9捕捉消息，这已经是医生的一个有用的监视工具，把血流既当作一个传送带也当作一个信息高速公路存在一些问题。在血流中移动的信号的干扰和神经的信号的近似，意味着病人同时承受着多个事件，可能导致猛烈的痉挛。这样，再加上早期的广播风暴导致病人血液沸腾的问题，导致人们对这个问题重新思考。同样，穿着愚蠢的碟形卫星天线帽的需要会使人觉得不好意思，当然除了在加尼福利亚，那儿这是最新的时髦。
+IPv9取址商品包装的使用是讨论的热点。行销人视他为神赐之物，它能够反馈商品到底是如何使用的。同样，直接广播极大地改善了回收。“请所有纸板组成的包装响应。”顾客对她是否是私生活的入侵并不在乎。猜物直接跳转器的引入（谣传IPv9要使用）发送直接的广播包到本地的食物包装网络，有效的重置网络掩码为全1，意思是你选择了这个食物。
+IPv9杂志的出现受到普遍欢迎。能够询问一般杂志目录在那里是最有用的特性。如果和联网报纸/杂志架结合起来，就有发现你把登有关于外太空割草机的文章的杂志放在那里的能力。最终会有自动下载阅读习惯到家庭控制器，然后告诉读者那里有同样主题的文章的能力。反对党成员所谓的信息查询，可以发现办公室内人们的“异常”行为，是所谓隐秘的运动鞋网络，鞋匠先驱的这个行动失败了。市场还没有准备接受发送详细分析脚臭到制造商那里的鞋子。  
+   
+5．制造
+当然，制造代价是设计IPv9时没有考虑的一个问题。它需要跳跃性的想象去相信有一天任何想要取址的东西都是IPv9可以取址的。他假设IPv9协议机随着芯片技术的进步价格会下降。很少有人预见到使用基因技术让病毒按指令建造纳米技术IPv9协议机的代价。同样，纳米机器人是否有地方放这些东西。
+最新的研究是夸克-夸克转换器，可以让原子当开关使用。制造这些东西非常昂贵（可能10倍于IPv9协议栈）,除非有非常特别的需要。
+
+6．结论
+不研究历史的人，注定要重复他。
+
+7．安全考虑
+本备忘录不讨论安全问题。
+
+8．作者地址
+  Julian Onions 
+  Nexor Ltd. 
+  PO Box 132 
+  Nottingham NG7 2UU, ENGLAND 
+  Phone: +44 602 520580 
+  EMail: j.onions@nexor.co.uk
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+RFC 1606  A Historical Perspective On The Usage Of IP Version 9     使用IP版本9的历史观
+
+
+
+
+1
+RFC文档中文翻译计划
+

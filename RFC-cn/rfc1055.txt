@@ -1,0 +1,178 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang  anpengwang@263.net）
+译文发布时间：2001-5-23
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          J. Romkey
+Request for Comments: 1055                                     June l988
+
+在串行线路上传输IP数据报的非标准协议
+（RFC1055  A NONSTANDARD FOR TRANSMISSION OF IP DATAGRAMS OVER SERIAL LINES: SLIP）
+
+目录
+
+简介	1
+历史（HISTORY）	1
+可用性（AVAILABILITY）	2
+协议（PROTOCOL）	2
+缺陷（DEFICIENCIES）	2
+SLIP驱动程序（SLIP DRIVERS）	3
+
+简介
+TCP/IP协议组运行在各种各样的网络媒介上：IEEE 802.3（以太网）和802.5（令牌环）局域网（LAN）、X.25线路、卫星链路以及串行线路。其中许多网络已经有IP分组的标准封装格式，但没有用于串行线路的标准。SLIP（串行线路IP）目前已成为事实上的标准，广泛地用于在点对点串行连接上运行TCP/IP。这并不是一个Internet标准，本备忘录的发布不受限制。
+
+历史（HISTORY）
+SLIP源于80年代初期的3COM UNET TCP/IP实现。SLIP只是一个分组分帧协议，仅仅定义了一系列在串行线路上构造IP分组的字符。它没有提供地址、分组类型标识、错误检查/修正或者压缩机制。因为这个协议所作的工作这么少，通常很容易实现。
+大约在1984年，Rick Adam为4.2Berkeley Unix和Sun Microsystem工作站实现了SLIP并公之于众，并作为一种使用串行线路连接TCP/IP主机和路由器的简单可靠的方法很快流行起来。
+SLIP通常专门用于串行连接，有时候也用于拨号网络，使用的线路速率一般介于1200bps和19.2Kbps之间。SLIP允许主机和路由器混合连接（主机-主机、主机-路由器、路由器-路由器都是SLIP网络通用的配置），因而非常有用。
+
+可用性（AVAILABILITY）
+SLIP可用于大多数基于Berkeley UNIX的系统，并且被包括进了Berkeley的4.3BSD标准版。SLIP可用于Ultrix、 Sun UNIX 和大多数派生自Berkeley的UNIX系统。一些终端集线器和IBM PC的实现也支持该协议。
+Berkeley UNIX的SLIP可以使用匿名FTP从uunet.uu.net上的pub/sl.shar.Z中获得。确保传输的是二进制文件，并使用UNIX解压程序打开它，然后把解开的文件作为UNIX/bin/sh（如/bin/sh sl.shar）的SHELL命令使用
+
+协议（PROTOCOL）
+SLIP定义了两个特殊字符：END和ESC。END是八进制的300（十进制192），ESC不同与ASCII的ESCAPE字符，是八进制的333（十进制219），本文中的ESC指的是SLIP ESC字符。发送分组时，SLIP主机只是简单地发送分组数据。如果数据中有一个字节与END字符的编码相同，就连续传输两个字节ESC和八进制的334（十进制220）代替它。如果与ESC字符相同，就连续传输两个字节ESC和八进制的335（十进制221）代替它。分组的最后一个字节发出后，再传送一个END字符。
+Phil Karn建议稍微修改一下这个算法，分组的开始以及结束都使用END字符，这样可以刷掉线路噪声造成的不正确的字节。一般情况下接收方将只看到两个紧挨着的END字符并生成一个坏的IP分组。如果SLIP实现没有丢弃长度为0的IP分组，IP实现就应该丢弃。如果存在线路噪声，接收到的由线路噪声造成的数据将被丢弃，而不会影响后续的分组。
+因为没有“标准的”SLIP规范，也就没有SLIP分组最大长度的实际定义。可能最好是接受Berkeley UNIX SLIP驱动程序使用的最大分组长度：1006字节，其中包括IP头和传输协议头，但不含分帧字符。这样任何新的SLIP实现都应能够接收1006字节的数据报，在一个数据报内发送的字节数不应超过1006。
+
+缺陷（DEFICIENCIES）
+有几种特性使许多用户希望SLIP提供而没有提供的。公平的讲，SLIP只是一个很久以前设计的非常简单的协议，而在当时这些问题还并不真正重要。下面是对现有SLIP协议一般认识到的缺陷：
+地址：
+SLIP连接的两台计算机都必须知道对方的IP地址才能传输。另外，在主机使用SLIP拨号连接一个路由器时，地址设置可能随时变化，路由器可能需要通知拨号主机IP地址的变更。SLIP目前没有为主机提供通过SLIP连接交换地址信息的机制。
+类型标识：
+SLIP没有类型字段。因此在一个SLIP连接上只能运行一个协议，即使在两台运行TCP/IP和DECnet的DEC计算机的配置中，如果使用SLIP，也不可能让TCP/IP和DECnet同时使用一条连接两者的串行线路。因为SLIP是“串行线路IP”，如果串行线路连接两台多协议计算机，这些计算机可以在这条线路上使用多个协议。
+错误检测/修正：
+嘈杂的电话线路可能破坏传输中的分组。因为线路速率可能很低（或许是2400波特），重新传输分组的代价很高。错误检测在SLIP层并非绝对需要，因为IP应用程序可以发现损坏的分组（IP头部与TCP和UDP的校验和就可以满足），但是一些通用程序如NFS通常忽略校验和而依赖网络媒介检测损坏的分组。因为重新传输被线路噪声破坏的分组需要很长时间，如果自身能够提供某种简单的纠错机制就可以改善SLIP的效率。
+压缩：
+拨号线路非常慢（通常是2400bps），分组压缩可以大幅提高分组的吞吐量。通常单纯的TCP连接分组流在IP和TCP头部有几个很少变动的字段，因而可以使用一种简单的压缩算法只发送头部变化的部分而不是整个头部。
+围绕着SLIP后继者的设计与实现，几个不同的团体已经做了一些工作，可能会部分或者全部解决这些问题。
+
+SLIP驱动程序（SLIP DRIVERS）
+下面的C语言函数发送并接收SLIP分组。它们依赖于send_char() 和 recv_char()，这两个函数在串行线路上发送和接收单个字符。
+
+   /* SLIP 特殊字符编码
+    */
+   #define END             0300    /* 分组结束标记 */
+   #define ESC             0333    /* 填充字节标记*/
+   #define ESC_END         0334    /* ESC ESC_END 表示数据字节END */
+   #define ESC_ESC         0335    /* ESC ESC_ESC 表示数据字节ESC */
+
+   /*  SEND_PACKET: 发送长“len”的分组，起始位置为“p”  */
+   void send_packet(p, len)
+           char *p;
+           int len; {
+
+     /* 发送一个初始END 字符，清除由于线路噪声可能堆积在接收方的任何数据
+     */
+        send_char(END);
+
+     /* 为分组中的每个字符发送适当的字符序列
+      */
+           while(len--) {
+                   switch(*p) {
+                   /* 如果与END字符相同，我们就发送
+                    * 两个特殊字符码避免接受方认为
+                    * 我们发出了END结束标记
+                    */
+                   case END:
+                           send_char(ESC);
+                           send_char(ESC_END);
+                           break;
+
+                   /* 如果与ESC字符编码相同，
+                    * 我们就发送两个特殊字符码
+                    * 避免接受方以为我们发送了ESC
+                    */
+                   case ESC:
+                           send_char(ESC);
+                           send_char(ESC_ESC);
+                           break;
+
+                   /* 否则，我们就发送字符本身
+                    */
+                   default:
+                           send_char(*p);
+                           }
+
+                   p++;
+                   }
+
+           /* 告诉接收方我们已经完成分组的发送
+            */
+           send_char(END);
+           }
+
+   /* RECV_PACKET: 接收分组并放入地址为“p”的缓冲区，
+    *      如果收到的字节数大于len，分组将被截断
+    *      返回保存在缓冲区的字节数
+    */
+   int recv_packet(p, len)
+           char *p;
+           int len; {
+           char c;
+           int received = 0;
+
+           /* 使用循环读取字节直到接受完整个分组
+            * 如果用完缓冲区就不再复制
+            */
+           while(1) {
+                   /* 取一个字符进行处理
+                    */
+                   c = recv_char();
+
+                   /* 如果需要则处理填充字符
+                    */
+                   switch(c) {
+
+                   /* 如果是END字符就表示分组完成
+                    */
+                   case END:
+                           /* 一点小小的改进：如果分组没有数据则忽略掉。
+                            *这意味着避免双END字符构成的空分组打扰IP，
+                            *这种空分组用于检测线路噪声。
+                            */
+                           if(received)
+                                   return received;
+                           else
+                                   break;
+
+                   /* 如果收到ESC字符，则等待
+                    * 下一个字符来决定把什么字符存入分组
+                    */
+                   case ESC:
+                           c = recv_char();
+
+                           /* 如果“c”不是这两个字符中的一个，
+                            * 就违反了协议。最好的办法似乎是 
+                            * 单独保留这个字符并填入分组 
+                            */
+                           switch(c) {
+                           case ESC_END:
+                                   c = END;
+                                   break;
+                           case ESC_ESC:
+                                   c = ESC;
+                                   break;
+                                   }
+
+                   /* 现在到了缺省处理情况，就让它保存字符
+                    */
+                   default:
+                           if(received < len)
+                                   p[received++] = c;
+                           }
+                   }
+           }
+
+
+
+RFC1055  A NONSTANDARD FOR TRANSMISSION OF IP DATAGRAMS OVER SERIAL LINES: SLIP       在串行线路上传输IP数据报的非标准协议
+
+
+
+
+1
+RFC 文档中文翻译计划
+

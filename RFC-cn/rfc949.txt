@@ -1,0 +1,57 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：lou_goodman（lou_goodman  lou_oxygen@163.com）
+译文发布时间：2001-6-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                     Mike Padlipsky
+Request for Comments: 949                                          Mitre
+Semisupersedes RFC 505                                         July 1985
+
+
+FTP 未公开的独特命令
+(RFC949 Mike Padlipsky)
+
+STATUS OF THIS MEMO
+
+   This RFC proposes an extension to the File Transfer Protocol for the
+   ARPA-Internet community, and requests discussion and suggestions for
+   improvements.  Distribution of this memo is unlimited.
+
+摘要:
+这篇文档提出了FTP协议的扩展,并进行了讨论,给出了进一步发展的建议.你可以自由
+的传播这篇文档.
+
+讨论:
+由许多文章都讨论了具有当前STOR 作用的FTP命令.但是他们都要求发送者提供一个
+文件名,从而是目的文件有一个唯一的名字和当前的目录相对应.这种方法对于各种类型的存
+储池型目录时非常有用的.这种目录类型和容易使我们想起打印队列,传真和打孔机队列,尽
+管打印队列简单到只需要一个命令足以解决问题,和我们要讨论的问题还有相当大的不同.
+如果我们接受这样的FTP扩展,那么就不需要在管什么"X"命令啦.关键的问题是怎样才
+能较好的管理它.也许最自然的办法是给STOR的语法树加上控制参数.既然有那么多的
+UNIXtm以至与我们对Multics trick不再陌生,并且FTP不考虑和命令单失配的命令,只是我
+们相信附加命令是我们要走的方向.
+命令的名字需要一点考虑.STORe的名字(STUN)太笨啦;UNIQue 来自于广告甚至商标(让你感
+到迷惑); Stor Uniquely NaMed (SUNM)也有一点广告的味道; Uniquely Named STore (UNST) 
+看起来有点像DELEte,虽然她没那么坏; SToRe Uniquely named (STRU) 被采用,的确是这
+样;最好的选择好像是 STOU.
+     实际中的问题是发送者是否需要通知唯一的名字是什么.直觉上,问题就是这个,有时
+他又不是.是他人一的确需要太多的工作.因此我们为什么不把它包括在一个适合的回应文
+本里(除非由他多的评论繁多这一点)?
+     顺便说一下,我们并没有忽略访问控制,认证和统计管理这些用户在旧的STOR和新的
+STOU中遇到的东西,相反通过账号和密码,我们能做的和RFC 505中的一样好.
+
+评论:
+    作为一个新的命令---STOU,这个东西像STOR一样,除了它的目的文件是创建在当前的
+目录下,它有一个和目录一样唯一的名字.250回应应该包括文件名(我所拿的FTP文当时如
+此的旧,也许250不再正确了).
+
+
+RFC949 Mike Padlipsky                              FTP 未公开的独特命令
+
+
+1
+RFC文档中文翻译计划

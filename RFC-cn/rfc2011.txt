@@ -1,0 +1,714 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                  K. McCloghrie，Editor
+Request for Comments: 2011                                  Cisco Systems 
+Updates: 1213                                              November 1996 
+Category: Standards Track            
+  
+有关采用SMIv2 Internet协议的SNMPv2 MIB
+(RFC2011――SNMPv2 Management Information Base for the Internet Protocol using SMIv2)
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的”Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+IESG注释：
+目前，IP、UDP和TCP MIB模块仅支持IPv4。这3个模块采用IpAddress类型，定
+义了一个4段长的八位字符串来描述IPv4 32位internet地址。(见RFC 1902，SNMPv2
+的SMI。)它们不支持新的128位IPv6 internet地址。
+目录
+1. 介绍	1
+2. 定义	2
+3. 致谢	16
+4. 参考文献	16
+5. 需要考虑的安全问题	16
+6. 编者地址	17
+
+1. 介绍
+一个管理系统应该包括：几个(也许更多)节点，每个节点都有一个称为代理的处理实体，
+对设备拥有管理的权限；最少一个管理站点；一种管理协议，用来在代理和管理站点之间传
+递管理信息。在定义了认证、授权、访问控制和加密策略的管理框架下实现了协议的业务。
+管理工作站执行检测和控制被管理单元的管理应用程序。被管理单元是可以通过访问他
+们的管理信息来控制和检测的诸如主机、路由器、终端服务器等等设备。
+管理信息是被管理对象的集合，驻留在称为管理信息数据库 (Management Information 
+Base，缩写为MIB) 的虚拟的信息数据库中。在MIB模块中定义了相关对象的集合。这些
+模块采用OSI的抽象语法符号1(Abstract Syntax Notation One ASN.1)[1]的子集写成， 称
+为管理信息结构(Structure of Management Information，缩写为SMI) [2]。
+这个文档是定义了管理用户数据报协议(User Datagram Protocol，缩写为UDP) [3]的
+应用的被管理对象的MIB模块。
+在这个MIB模块中的被管理对象最初采用SNMPv1框架，定义做MIB-II[5]的一部分。  
+从此，RFC1354 [6]针对在IP网际网中的和管理路由相关的被管理对象作了升级。这个文
+档对这些协议保留了MIB-II对象，并且根据SNMPv2框架对它们进行了定义。
+2. 定义
+IP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+ MODULE-IDENTITY，对象类型，整数32，
+ Counter32，IpAddress，mib-2FROM SNMPv2-SMI
+ PhysAddressFROM SNMPv2-TC
+ MODULE-COMPLIANCE，对象类 FROM SNMPv2-CONF;
+
+ipMIB MODULE-IDENTITY
+ LAST-UPDATED “9411010000Z”
+ ORGANIZATION “IETF SNMPv2 Working Group”
+ CONTACT-INFO
+“Keith McCloghrie
+ Postal: Cisco Systems，Inc.
+170 West Tasman Drive
+San Jose，CA95134-1706
+US
+ Phone:+1 408 526 5260
+ Email:kzm@cisco.com”
+描述
+“管理IP和ICMP实施的MIB模块，但除了IP路由的管理。”
+ REVISION”9103310000Z”
+描述
+“本MIB模块的最初版本是MIB- II的一部分。”
+ ::= { mib-2 48}
+
+--IP类
+
+ip对象标识符 ::= { mib-2 4 }
+
+ipForwarding对象类型
+语法：整数{
+forwarding(1)，-- 作为一个路由器
+notForwarding(2)―不作为一个路由器
+ }
+最大权限：读/写
+状态：现行
+描述
+“表明这个实体在转发这个实体收到的(而不是目的地址指向实体的)数据报时是否被
+当作一个IP路由器。路由器转发数据报。而IP主机不转发(除了通过主机的那些源路由)。”
+ ::= { ip 1 }
+
+ipDefaultTTL对象类型
+语法：整数(1..255)
+最大权限：读/写
+状态：现行
+描述
+“插入源于这个实体的数据报的IP报头的TTL字段的缺省值，无论何时TTL值都不会
+由传输层协议提供。”
+ ::= { ip 2 }
+
+ipInReceives对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“从接口收到的输入数据报的总量，包括收到的错误。”
+ ::= { ip 3 }
+
+ipInHdrErrors对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“由于IP数据报头错误而丢弃的输入的数据报的数量(包括校验和错误、版本号不匹配、
+其他的格式错误、生命周期超时以及在处理IP选项时发现的错误等等)。”
+ ::= { ip 4 }
+
+ipInAddrErrors对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“因为这个实体收到的在数据报头源地址字段中的IP地址无效而丢弃的输入数据报的
+数量。这个数据包括了无效地址(例如0.0.0.0)和不支持的地址类型(例如E类地址)。对于非
+IP路由器和不转发数据报的实体，这个数据包括了因为目的地址不是本地地址而丢弃的数
+据报。”
+ ::= { ip 5 }
+
+ipForwDatagrams对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“这个实体不是输入数据报最终IP目的地址的数量，这就导致为了把它们向最终地址
+转发而试图找到一个路由。在非IP路由器的实体中，这个数据只包括通过这个实体的源路
+由数据包(而且源路由选项处理成功的)。”
+ ::= { ip 6 }
+
+ipInUnknownProtos对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“因为某种不可知或者不支持的协议，成功接收了但是又丢弃了的本地地址数据报的数
+量。”
+ ::= { ip 7 }
+
+ipInDiscards对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“虽然数据包本身没有问题，但是遇到了阻止它继续处理的情况而丢弃的输入IP数据
+报的数量(例如，缺乏缓存空间)。注意这个数字不包括在等待重新装配时丢弃的任何数据
+报。”
+ ::= { ip 8 }
+
+ipInDelivers对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“成功传送给IP用户协议(包括ICMP)的输入数据报的总数。”
+ ::= { ip 9 }
+
+ipOutRequests对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“本地的IP用户协议(包括ICMP)为传输IP请求而补充的IP数据报的总量。注意这个
+数字不包括任何在ipForwDatagrams中已经记数的数据报。”
+::= { ip 10 }
+
+ipOutDiscards对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“数据报本身没有问题，但是被丢弃的输出的IP数据报的数量(例如缺乏缓存空间)。
+注意：如果这种数据报符合这种(任意的)丢弃的准则，那么这个数字包括了任何在
+ipForwDatagrams中已经记数的数据报。”
+ ::= { ip 11 }
+
+ipOutNoRoutes对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“由于没有找到数据报的目的地址而丢弃的IP数据报的数量。注意：这个数值包括了
+对任何在ipForwDatagrams中符合‘no-route’准则的记数。注意：也包含了由于所有缺
+省路由器是宕的时，主机无法路由的任何数据报。”
+ ::= { ip 12 }
+
+ipReasmTimeout对象类型
+语法：32位整数
+最大权限：只读
+状态：现行
+描述
+“当收到的数据帧在实体中等待重新组合时处理数据帧的最大时长(以秒记)。”
+ ::= { ip 13 }
+
+ipReasmReqds对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“在该实体中收到的需要重组的IP分片的数量。”
+ ::= { ip 14 }
+
+ipReasmOKs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“成功重组的Ip数据报的数量。”
+ ::= { ip 15 }
+
+ipReasmFails对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“由IP重组算法(由于超时、数据错等等)检测到的失效数量。注意：没必要对丢弃的
+IP数据帧进行记数，因为在接收时，通过混合，一些算法(特别是在RFC 815中的算法)可
+能遗失分帧数量记录。”
+ ::= { ip 16 }
+
+ipFragOKs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“在该实体中成功分片的IP数据报的数量。”
+ ::= { ip 17 }
+
+ipFragFails对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“由于应该分片而没有分片导致的已经丢弃的IP数据报的数量 (例如由于设置了不可
+分片标记)。” 
+ ::= { ip 18 }
+
+ipFragCreates对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“作为把这个表项分段而产生的IP数据报分片的数量。”
+ ::= { ip 19 }
+
+--IP地址列表
+
+ipAddrTable对象类型
+语法：IpAddrEntry的序列
+最大权限：不可访问
+状态：现行
+描述
+“关于实体IP地址编址信息的列表。”
+ ::= { ip 20 }
+
+ipAddrEntry对象类型
+语法：IpAddrEntry
+最大权限：不可访问
+状态：现行
+描述
+“实体IP地址的编址信息。”
+索引{ ipAdEntAddr }
+ ::= { ipAddrTable 1 }
+
+IpAddrEntry ::= 序列{
+ipAdEntAddr
+IpAddress，
+ipAdEntIfIndex
+整数，
+ipAdEntNetMask
+IpAddress，
+ipAdEntBcastAddr
+整数，
+ ipAdEntReasmMaxSize
+整数
+ }
+
+ipAdEntAddr对象类型
+语法：IpAddress
+最大权限：只读
+状态：现行
+描述
+“和该实体编址信息相符合的IP地址。”
+ ::= { ipAddrEntry 1 }
+
+ipAdEntIfIndex对象类型
+语法：整数(1..2147483647)
+最大权限：只读
+状态：现行
+描述
+“这个索引值唯一地定义了应用这个表项的接口。由这个索引的实际值定义的接口和由
+RFC1537中的ifIndex 定义的接口是同一个。”
+ ::= { ipAddrEntry 2 }
+
+ipAdEntNetMask对象类型
+语法：IpAddress
+最大权限：只读
+状态：现行
+描述
+“和这个表项的IP地址相关的子网掩码。掩码的值是所有的网络IP地址位设置为1，
+而所有的主机IP地址位设置为0。”
+ ::= { ipAddrEntry 3 }
+
+ipAdEntBcastAddr对象类型
+语法：整数(0..1)
+最大权限：只读
+状态：现行
+描述
+“和这个实体的IP地址相关的在(逻辑)接口上用于发送数据报的无效位的数量。例如，
+当采用了Internet标准统一广播地址时，这个数值会是1。这个数据适用于实体（逻辑）接
+口上的所有子网和网络广播地址。”
+ ::= { ipAddrEntry 4 }
+
+ipAdEntReasmMaxSize对象类型
+语法：整数(0..65535)
+最大权限：只读
+状态：现行
+描述
+“把从在这个接口上收到的输入的拆分成IP数据报的表项重新装配的IP数据报的最大
+长度。”
+ ::= { ipAddrEntry 5 }
+
+-- ipRouteTable::={ ip 21 }废止
+
+--IP地址解析列表
+
+-- 地址解析列表包含了IpAddress到“物理”地址的等价。一些接口做路由解析列表
+来判定地址等价(例如，DDN-X.25有一种算法)；如果所有接口是这类的，那么地址解析列
+表为空，也就是没有实体。
+
+ipNetToMediaTable对象类型
+语法：IpNetToMediaEntry的序列
+最大权限：不可访问
+状态：现行
+描述
+“用于把IP地址映射到物理地址的IP地址解析列表。”
+ ::= { ip 22 }
+
+ipNetToMediaEntry对象类型
+语法：IpNetToMediaEntry
+最大权限：不可访问
+状态：现行
+描述
+“各个实体包含了1个IpAddress到‘物理’地址的等价。”
+索引{ ipNetToMediaIfIndex，
+ipNetToMediaNetAddress }
+ ::= { ipNetToMediaTable 1 }
+
+IpNetToMediaEntry ::=序列{
+ ipNetToMediaIfIndex 
+整数，
+ ipNetToMediaPhysAddres
+PhysAddress，
+ ipNetToMediaNetAddress
+IpAddress，
+ipNetToMediaType
+整数
+ }
+
+ipNetToMediaIfIndex对象类型
+语法：整数(1..2147483647)
+最大权限：读确认
+状态：现行
+描述
+“和该实体等价的有效接口。由该索引的实际值标识的接口是和RFC 1573的ifIndex
+的相同的值标识相同的接口。”
+ ::= { ipNetToMediaEntry 1 }
+
+ipNetToMediaPhysAddress对象类型
+语法：PhysAddress
+最大权限：读确认
+状态：现行
+描述
+“介质相关的‘物理’地址。”
+ ::= { ipNetToMediaEntry 2 }
+
+ipNetToMediaNetAddress对象类型
+语法：IpAddress
+最大权限：读确认
+状态：现行
+描述
+“对应于介质相关的‘物理’地址的IpAddress。”
+ ::= { ipNetToMediaEntry 3 }
+
+ipNetToMediaType对象类型
+语法：整数{
+ other(1)， -- 以下一个也没有
+ invalid(2)，-- 无效映射
+ dynamic(3)，
+ static(4)
+}
+最大权限：读确认
+状态：现行
+描述
+“映射的类型。
+把这个对象的值设置成无效会使在ipNetToMediaTable 中的相关表项失效。也就是说，
+它有效的分离了从上述表项到由上述表项定义接口的映射。是否代理从表格中除去了一个无
+效的表项是一种特殊应用事件。因此，管理工作站必须准备好从代理那里接收制成表格的现
+在停用的相应实体的信息。对这种表项的具体解释依赖于对相关ipNetToMediaType对象的
+检测。”
+ ::= { ipNetToMediaEntry 4 }
+
+ipRoutingDiscards对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“即使有效但是被选定要释放的路由表项的数量。导致丢弃这样一个表项的一种可能的
+原因是为其他的路由表项释放缓存空间。”
+ ::= { ip 23 }
+
+--ICMP类
+
+icmp对象标识符::= { mib-2 5 }
+
+icmpInMsgs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“实体接收到的ICMP消息的总量。注意计数器包括了所有由icmpInErrors数出的数。”
+ ::= { icmp 1 }
+
+icmpInErrors对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“实体接收到，但是有明显的ICMP错误的(坏的ICMP校验和，坏的长度等等)ICMP
+消息的总量。”
+ ::= { icmp 2 }
+
+icmpInDestUnreachs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP目的不可达消息的数量。”
+ ::= { icmp 3 }
+
+icmpInTimeExcds对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP超时消息的数量。”
+ ::= { icmp 4 }
+
+icmpInParmProbs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP参数问题消息的数量。”
+ ::= { icmp 5 }
+
+icmpInSrcQuenchs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP源终止消息的数量。”
+ ::= { icmp 6 }
+
+icmpInRedirects对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP重定向消息的数量。”
+ ::= { icmp 7 }
+
+icmpInEchos对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP Echo (请求)消息的数量。”
+ ::= { icmp 8 }
+
+icmpInEchoReps对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP Echo回复消息的数量。”
+ ::= { icmp 9 }
+
+icmpInTimestamps对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP时间戳记(请求) 消息的数量。”
+ ::= { icmp 10 }
+
+icmpInTimestampReps对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP时间戳记回复消息的数量。”
+ ::= { icmp 11 }
+
+icmpInAddrMasks对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP地址掩码请求消息的数量。”
+ ::= { icmp 12 }
+
+icmpInAddrMaskReps对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“接收到的ICMP地址掩码回复消息的数量。”
+ ::= { icmp 13 }
+
+icmpOutMsgs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“实体试图发送的ICMP消息的总量。注意本计数器包括了所有由icmpOutErrors数的
+数。”
+ ::= { icmp 14 }
+
+icmpOutErrors对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“由于在ICMP中发现诸如缓存短缺等问题导致的本实体不能发送的ICMP消息的总
+量。本数值不包括发现的ICMP层以外的错误，例如IP无法路由合成数据报。在一些应用
+中，不会有使计数器的数值增大的错误类型。”
+ ::= { icmp 15 }
+
+icmpOutDestUnreachs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP目的不可达消息总量。”
+ ::= { icmp 16 }
+
+icmpOutTimeExcds对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP超时消息总量。”
+ ::= { icmp 17 }
+
+icmpOutParmProbs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP参数问题消息总量。”
+ ::= { icmp 18 }
+
+icmpOutSrcQuenchs对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP源终止消息总量。”
+ ::= { icmp 19 }
+
+icmpOutRedirects对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP重定向消息总量。对于主机，本对象总是0，因为主机不发送重定向消
+息。”
+ ::= { icmp 20 }
+
+icmpOutEchos对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP Echo (请求) 消息总量。”
+ ::= { icmp 21 }
+
+icmpOutEchoReps对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP Echo回复消息总量。”
+ ::= { icmp 22 }
+
+icmpOutTimestamps对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP时间戳记(请求)消息总量。”
+ ::= { icmp 23 }
+
+icmpOutTimestampReps对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP时间戳记回复消息总量。”
+ ::= { icmp 24 }
+
+icmpOutAddrMasks对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP地址掩码请求消息总量。”
+ ::= { icmp 25 }
+
+icmpOutAddrMaskReps对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“发送的ICMP地址掩码回复消息总量。”
+ ::= { icmp 26 }
+
+--一致信息
+
+ipMIBConformance对象标识符 ::= { ipMIB 2 }
+
+ipMIBCompliances对象标识符 ::= { ipMIBConformance 1 }
+ipMIBGroups对象标识符 ::= { ipMIBConformance 2 }
+
+--依从状态
+
+ipMIBCompliance依从的模块
+状态：现行
+描述
+“执行IP 的SNMPv2实体的依从状态。”
+MODULE―本模块
+强制类{ ipGroup，icmpGroup }
+ ::= { ipMIBCompliances 1 }
+
+-- 一致的单元
+
+ipGroup对象类
+对象{ ipForwarding，ipDefaultTTL，ipInReceives，ipInHdrErrors，ipInAddrErrors，
+ipForwDatagrams，ipInUnknownProtos，ipInDiscards，ipInDelivers，ipOutRequests，
+ipOutDiscards，ipOutNoRoutes，ipReasmTimeout，ipReasmReqds，ipReasmOKs，
+ipReasmFails，ipFragOKs，ipFragFails，ipFragCreates，ipAdEntAddr，ipAdEntIfIndex，
+ipAdEntNetMask，ipAdEntBcastAddr，ipAdEntReasmMaxSize，ipNetToMediaIfIndex，
+ipNetToMediaPhysAddress，ipNetToMediaNetAddress，ipNetToMediaType，
+ipRoutingDiscards }
+状态：现行
+描述
+“对象的IP类提供了对IP实体的基本管理，除了对IP路由的管理。”
+ ::= { ipMIBGroups 1 }
+
+icmpGroup 对象类
+对象{ icmpInMsgs，icmpInErrors，icmpInDestUnreachs，icmpInTimeExcds，
+icmpInParmProbs，icmpInSrcQuenchs，icmpInRedirects，icmpInEchos，icmpInEchoReps，
+icmpInTimestamps，icmpInTimestampReps，icmpInAddrMasks，icmpInAddrMaskReps，
+icmpOutMsgs，icmpOutErrors，icmpOutDestUnreachs，icmpOutTimeExcds，
+icmpOutParmProbs，icmpOutSrcQuenchs，icmpOutRedirects，icmpOutEchos，
+icmpOutEchoReps，icmpOutTimestamps，icmpOutTimestampReps，icmpOutAddrMasks，
+icmpOutAddrMaskReps }
+状态：现行
+描述
+“对象的icmp类提供了ICMP统计表。”
+ ::= { ipMIBGroups 2 }
+
+END
+3. 致谢
+本文档包含了对RFC 1213裁减后的一个子集。
+4. 参考文献
+[1]Information processing systems - Open Systems Interconnection - Specification of 
+Abstract Syntax Notation One (ASN.1)，International Organization for 
+Standardization.International Standard 8824，(December，1987).
+[2]McCloghrie，K.，Editor，“Structure of Management Information for version 2 of the 
+Simple Network Management Protocol (SNMPv2)”，RFC 1902，Cisco Systems，January 
+1996.
+[3]Postel，J.，“Internet Protocol - DARPA Internet Program Protocol Specification”，
+STD 5，RFC 791，DARPA，September 1981.
+[4]Postel，J.，“Internet Control Message Protocol - DARPA Internet Program Protocol 
+Specification”，STD 5，RFC 792，USC/Information Sciences Institute，September 1981.
+[5]McCloghrie，K.，and M. Rose，“Management Information Base for Network 
+Management of TCP/IP-based internets: MIB-II”，STD 17，RFC 1213，March 1991.
+[6]Baker，F.，“IP Forwarding Table MIB”，RFC 1354，ACC，July 1992.
+5. 需要考虑的安全问题
+在本备忘录中不考虑安全问题。
+6. 编者地址
+Keith McCloghrie
+Cisco Systems，Inc.
+170 West Tasman Drive
+San Jose，CA95134-1706
+US
+Phone: +1 408 526 5260
+EMail: kzm@cisco.com
+
+
+RFC2011――SNMPv2 Management Information Base for the Internet Protocol using SMIv2
+有关采用SMIv2 Internet协议的SNMPv2 MIB
+
+
+1
+RFC文档中文翻译计划

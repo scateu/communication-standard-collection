@@ -1,0 +1,1085 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：肖威（xiaoweiking    xiaoweiking@263.net）
+译文发布时间：2001-11-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                        V. Schryver
+Request for Comments: 1977                                   August 1996
+Category: Informational
+
+PPP BSD 压缩协议
+（RFC1977--PPP BSD Compression Protocol）
+
+本备忘录的状态
+
+   This memo provides information for the Internet community.  This memo
+   does not specify an Internet standard of any kind.  Distribution of
+   this memo is unlimited.
+
+摘要
+
+点对点协议（PPP）【1】在点对点链路的基础上为传输多协议数据报提供了一种的标准
+方法。
+PPP压缩控制协议【2】为基于用点对点协议(PPP)封装的链路提供了一种协商和利用压
+缩协议的方法。
+本文描述了Unix Compress压缩协议压缩PPP数据包的应用。
+
+目录
+1．简介	2
+1.1.特许声明	2
+2.BSD 压缩包（BSD Compress Packets）	3
+2．1.包格式	4
+3．配置选项格式	5
+A. BSD 压缩算法	6
+安全考虑	25
+参考文献	25
+致谢	25
+主席地址	26
+作者地址	26
+1．简介
+
+UNIX Compress 被收录在广为传播的BSD源代码中，它具有一下的特点：
+
+－ 当压缩效果下降时，动态表格清除。
+
+－ 当压缩后全部最终结果不比输入数据小时，自动停止压缩。
+
+－ 在预先设定的范围内动态选择编码的宽度。
+
+－ 多年来在网络中被普遍使用，在调制解调器以及其他点对点链路上传输网络新闻。
+
+－ 在发送及接收方都必须有不少于64KB的内存以保证有效的编码宽度。
+
+1.1.特许声明
+
+BSD Unix 压缩命令源程序可以被广泛地自由获取，对于电脑用户来说，没有任何附加
+条款。所含源程序是基于BSD压缩命令源程序的， 只有The Regents of the University of 
+California 对其拥有版权。用户自己承担使用源代码所带来的风险。不提供任何形式的保
+证和补偿。请注意LZW算法有专利权保护.
+
+2.BSD 压缩包（BSD Compress Packets）
+
+在任何BSD压缩包相互通信之前，点对点协议（PPP）必须到达网络层协议阶段，CCP(压
+缩控制协议)控制协议必须处于打开的状态。
+ 
+准确地说，只有一个BSD 压缩数据报被封装在点对点协议（PPP）的信息字段里，这时
+PPP协议字段中包含0xFD或者0xFB。当没有使用PPP多链路协议或者“高于”多链路的时
+候，就用0xFD；“低于”多链路的时候则用0xFB，在一个多链路包里对不同的链路各自进
+行压缩。
+
+在PPP链路上传输的BSD压缩数据报的最大长度等于PPP包信息字段的最大长度。
+ 
+PPP协议编号在0x0000到0x3FFF之间的包，除了0xFD和0xFB的编号之外都将被压缩，
+而其他的PPP包则一般不经压缩就被发送出去。控制包非常少，所以为了健壮性的原因，它
+们将不被压缩。
+
+填充数据
+
+如果有填充数据被附加在BSD压缩包里，就需要在事前对自解释的填充数据配置选项
+（Self-Describing-Padding Configuration Option）【3】进行交流协商。如果没有填充
+数据，那么自解释的填充数据（Self-Describing-Padding）也就不需要了
+
+可靠性与顺序
+
+BSD压缩算法要求包在传递的时候要按照顺序传递。用重置－请求和重置－应答压缩控
+制包（CCP）或者是对压缩控制协议（Compression Control Protocl【2】）的再安排，可
+以指示发送端与接收端在同步过程中的信息流失情况。如果帧检查序列探测到损坏了的数据
+包，普通机制将废弃这些包。包的丢失和包顺序错位是通过每个包内的序列号来检查出来的。
+在对包进行解码之前必须要检查包的序列号。
+
+当发现解压错误的情况时，接收端不是传输一组重置－请求包，而是通过传输一组新的
+CCP配置－请求，强制CCP短时间退出打开状态。但是，前者比后者的开销要小。
+
+当接收端第一次碰到意料之外的序列号，它应该发送一个在压缩控制协议里定义好的重
+置－请求CCP包。发送端发送重置－应答包或者接受端收到一个重置－应答包时，就必须将
+序列号置成零值并清除压缩字典，然后接着发送和接受压缩数据包。在检测到错误之后，接
+收端必须丢弃所有的压缩包直到收到一个重置－应答包。这种策略可以看作是放弃传输旧
+“文件”而重新开始传输一个新“文件”。
+
+发送端必须清楚它的压缩字典，对收到的每一个重置－请求都反馈一个重置－应答，因
+为它不知道前面发送的重置－应答是否到达接收端。接收端在每次接收到一个重置－应答之
+后必须清除它的压缩字典，因为发送端已经将它的压缩字典清除了。
+
+当链路忙的时候，在收到重置－应答之前，解压缩错误通常会一个接一个的出现。用比
+链路的往返传输时间还要短的周期发送重置－请求信号是不必要的，因为多余的重置－请求
+会导致不必要的压缩字典清除。接收端每当收到一个压缩的或未被压缩的数据包时都可能传
+输一个附加的重置－请求，直到最终它收到一个重置－应答，但是，接收端不应该再继续传
+输重置－请求，除非与之相对应的重置－应答迟到了。接收端应该传输足够的重置－请求包
+以保证发送端至少接收到了一个。例如，接收端可能不会在一秒钟之内再次发送重置－请求，
+除非超过一秒钟。（或者，当然，一个重置－应答已经被接收到，然后继续解压缩）
+
+数据扩充
+
+当发现了重要的数据扩充，PPP包必须以未被压缩的格式发送出去。数据扩充量少于3
+个字节的包应该以未被压缩的格式发送出去，但是如果扩充结果没有超过链路的MTU，也可
+以以压缩格式发送出去。这就要求大会标准文档来解释到底哪一个字节，例如协议里的字段，
+用来记录扩充量。
+
+如果接收的一个包的PPP协议号码在0x0000到0x3FFF之间(当然必须除掉0xFD和0xFB),
+则可以假定这个包已经引起了扩充.为了更新压缩历史记录,包在本地被压缩了.
+
+发送非压缩包的时候使用其本身的封装格式可以避免传输单元复杂性的扩大化.如果非
+压缩包比其原有格式还要大，那么，对于上级执行层来说，就有必要认为PPP链路有一个更
+小的MTU，以保证压缩过的不可压缩包的大小不会大于协商好了的PPP MTU的大小。
+ 
+对于不可压缩包使用原有的封装格式使实施过程变得复杂。发送端和接收端必须开始把
+信息放到压缩字典里面去，都是以相同的包作为开头，而不需要为了同步等待一个压缩包。
+在清除字典之后的一些包通常是不可压缩的，而且很可能以他们的原有封装格式发送出去，
+就像在传输压缩数据之前一样。如果CCP或者LCP包与网络层包分开处理（例如：一个
+“daemon"用来处理控制包，一个“kernel code”处理数据包），必须非常注意以保证发
+送端发送配置－应答或者重置－应答使来同步清除字典，因为它们是压缩开始的标志，接收
+端也同样必须确认它的字典在处理下一个包之前被清除了。
+  
+接收端必须与发送端在同一时刻自动的清除它的字典，这个由发送数据产生的困难可能
+扩充非压缩数据。在标准的BSD压缩码中，用代码256来作为清除字典的信号。因为可能被
+扩充的数据在传输的时候是不被压缩的，所以当要清除字典的时候，对于发送端来说，没有
+一种可靠的方法能够很明显的表示出来。通过设定控制字典清除的参数，让发送端和接收端
+同时清除字典的方法可以解决这个问题。
+  
+2．1.包格式
+
+以下是BSD压缩包格式的概要。
+ 
+字段是从左到右传输的。
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         PPP Protocol          |           Sequence
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Data ...
+   +-+-+-+-+-+-+-+-+
+
+PPP协议（点对点协议）
+ 
+在点对点协议封装中描述了PPP协议字段。
+
+如果BSD Compress 压缩协议和PPP 压缩控制协议能很好地沟通，那么协议字段的值就
+是0xFD 或者 0xFB。当两边认同协议字段压缩（Protocol-Field-Compression）时，这个
+值就可能被压缩。
+
+顺序
+
+顺序号先用八进制数来发送。当字典被清除之后它便从0开始，每当收到一个包，也包
+括非压缩包，就加一。65535之后的顺序号是0。换句话说，数序号通常自动循环。
+
+顺序号可以保证丢失或者颠倒包的次序不会引起两边数据库不同步。当出现了一个意想
+不到的顺序号的时候，字典必须用CCP重置－请求或者配置－请求来重新同步。可以在一个
+压缩包解压之前检查包的顺序号。
+
+数据
+
+压缩的PPP封装包，由协议段和原始数据段组成，后面紧跟的是非压缩包。
+
+协议字段在顺序号被计算或者这个包被压缩之前，必须在原有包里压缩，不管PPP协议
+字段压缩是否协商过。因而，如果原有协议数字小于0x100，那么就不许压缩到一个字节。
+
+压缩数据的格式在例子“BSD压缩算法”里有精确的描述。
+
+3．配置选项格式
+
+描述
+
+CCP BSD压缩配置选项在链路上协调BSD压缩的使用。在默认或者最终未达成一致的情
+况下，是不使用压缩的。
+
+下面是BSD压缩配置选项格式的概要。字段从左向右传输。
+
+    0                   1                   2
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     | Vers|   Dict  |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+21或者0x15表示BSD压缩。
+      
+   Length
+      3
+
+   Vers
+必须为二进制代码001
+ 
+   Dict
+用bit位表示的所用到的最大代码的长度。它的范围是9到16。一般选择12。这个代
+码可以支持9到15的代码长度。
+
+把Vers和Dict字段中的字节看做一个单独的字段会比较方便一点，它的范围是0x29
+到0x30。
+
+请注意压缩数据接收端必须和发送端的编码长度一样。接收端用大一些的字典或者长一
+点的编码是不实际的，因为两边的字典要在同时清除，即使数据不是可压缩的，如果是这样
+的话，那么将会传输非压缩包，接收端也不能收到LZW“清除”编码。
+
+如果收到的配置－请求指定一个比当前选择小一些的字典，最好接受，而不是用配置－
+不应答信号要求指定一个大些的字典。
+
+A. BSD 压缩算法
+
+这些代码是一个商用工作站实现压缩算法的核心。是由4.X BSD压缩命令转换而得来的。
+对于mbufs和流缓冲（STREAMS buffers）组合不同于本系统的，这些代码可能不能直接使
+用。如果想使用本代码,除了包含多个寄存器和有确定寻址模式的RISC之外,对于其他的CPU
+都需要调整mbufs和STREAMS buffers的组合。然而，使BSD压缩算法能够适应于数据流而
+不只是一个文件，则需要做一些改动，这些代码正是对这些改动做最精确定义的方法。
+
+请注意，假设“short”类型包含16位，“int”类型包含32位。如果“int”和“long”
+的长度超过32位，那么“__uint32_"就会被替换。
+
+/* 因为这个代码来源于4.3BSD压缩源程序;*
+ *
+ * Copyright (c) 1985, 1986 The Regents of the University of California.
+ * 保留所有权利.
+ *
+ * 此代码源于James A. Woods向伯克利捐献的软件,最初是由Spencer Thomas和Joseph 
+* Orost 编写的.
+*
+ * 如果符合以下的条件,不管修改与否,以源代码和二进制格式应用,都是允许的:
+* 1. 当再次发布源程序的时候必须保留上面的版权说明,这些条款和以下的拒绝条款
+* 2. 以二进制形式再次发布时,必须在文档里或者/和其他的一同发布的材料之内复制
+* 上面的版权说明,这些条款和以下的拒绝条款
+ * 3.任何涉及本软件特征和用途的广告材料必须显示以下的感谢信息:
+ *      本产品使用了加州理工伯克利分校和其他贡献者一同开发的软件
+ * 4.使用了本软件得产品,如果没有书写优先权,学校和贡献者的名字都不得在产品中出
+* 现或者用来促销产品
+*
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* ***************** */
+
+
+
+
+struct bsd_db {
+    int     totlen;                     /* length of this structure */
+    u_int   hsize;                      /* size of the hash table */
+    u_char  hshift;                     /* used in hash function */
+    u_char  n_bits;                     /* current bits/code */
+    u_char  debug;
+    u_char  unit;
+    u_short mru;
+    u_short seqno;                      /* # of last byte of packet */
+    u_int   maxmaxcode;                 /* largest valid code */
+    u_int   max_ent;                    /* largest code in use */
+    u_int   in_count;                   /* uncompressed bytes */
+    u_int   bytes_out;                  /* compressed bytes */
+    u_int   ratio;                      /* recent compression ratio */
+    u_int   checkpoint;                 /* when to next check ratio */
+    int     clear_count;                /* times dictionary cleared */
+    int     incomp_count;               /* incompressible packets */
+    int     decomp_count;               /* packets decompressed */
+    int     overshoot;                  /* excess decompression buf */
+    int     undershoot;                 /* insufficient decomp. buf */
+    u_short *lens;                      /* array of lengths of codes */
+    struct bsd_dict {
+        union {                         /* hash value */
+            __uint32_t  fcode;
+            struct {
+#ifdef BSD_LITTLE_ENDIAN
+
+                u_short prefix;         /* preceding code */
+                u_char  suffix;         /* last character of new code */
+                u_char  pad;
+#else
+                u_char  pad;
+                u_char  suffix;         /* last character of new code */
+                u_short prefix;         /* preceding code */
+#endif
+            } hs;
+        } f;
+        u_short codem1;                 /* output of hash table -1 */
+        u_short cptr;                   /* map code to hash table */
+    } dict[1];
+};
+#define BSD_OVHD (2+2)                  /* overhead/packet */
+#define MIN_BSD_BITS    9
+#define MAX_BSD_BITS    15              /* implementation limit */
+#define BSD_VERS        1               /* when shifted */
+#ifdef _KERNEL
+extern struct bsd_db *pf_bsd_init(struct bsd_db*, int, int, int);
+extern int pf_bsd_comp(struct bsd_db*,u_char*,int,struct mbuf*,int);
+extern mblk_t* pf_bsd_decomp(struct bsd_db*, mblk_t*);
+extern void pf_bsd_incomp(struct bsd_db*, mblk_t*, u_int);
+#endif
+
+/* ***************** */
+/* PPP "BSD compress" compression
+ *  The differences between this compression and the classic BSD LZW
+ *  source are obvious from the requirement that the classic code worked
+ *  with files while this handles arbitrarily long streams that
+ *  are broken into packets.  They are:
+ *
+ *      When the code size expands, a block of junk is not emitted by
+ *          the compressor and not expected by the decompressor.
+ *
+ *      New codes are not necessarily assigned every time an old
+ *          code is output by the compressor.  This is because a packet
+ *          end forces a code to be emitted, but does not imply that a
+ *          new sequence has been seen.
+ *
+ *      The compression ratio is checked at the first end of a packet
+ *          after the appropriate gap.  Besides simplifying and speeding
+ *          things up, this makes it more likely that the transmitter
+ *          and receiver will agree when the dictionary is cleared when
+ *          compression is not going well.
+ */
+
+/*
+ * the next two codes should not be changed lightly, as they must not
+ * lie within the contiguous general code space.
+ */
+#define CLEAR   256                     /* table clear output code */
+#define FIRST   257                     /* first free entry */
+#define LAST    255
+
+#define BSD_INIT_BITS   MIN_BSD_BITS
+
+#define MAXCODE(b) ((1 << (b)) - 1)
+#define BADCODEM1 MAXCODE(MAX_BSD_BITS);
+
+#define BSD_HASH(prefix,suffix,hshift) ((((__uint32_t)(suffix)) \
+                                         << (hshift)) \
+                                        ^ (__uint32_t)(prefix))
+#define BSD_KEY(prefix,suffix) ((((__uint32_t)(suffix)) << 16)  \
+                                + (__uint32_t)(prefix))
+
+#define CHECK_GAP       10000           /* Ratio check interval */
+
+#define RATIO_SCALE_LOG 8
+#define RATIO_SCALE     (1<<RATIO_SCALE_LOG)
+#define RATIO_MAX       (0x7fffffff>>RATIO_SCALE_LOG)
+
+/* clear the dictionary
+ */
+static void
+pf_bsd_clear(struct bsd_db *db)
+{
+	db->clear_count++;
+        db->max_ent = FIRST-1;
+        db->n_bits = BSD_INIT_BITS;
+        db->ratio = 0;
+        db->bytes_out = 0;
+        db->in_count = 0;
+        db->incomp_count = 0;
+        db->decomp_count = 0;
+        db->overshoot = 0;
+        db->undershoot = 0;
+        db->checkpoint = CHECK_GAP;
+}
+
+/* If the dictionary is full, then see if it is time to reset it.
+ *
+ * Compute the compression ratio using fixed-point arithmetic
+ * with 8 fractional bits.
+
+ *
+ * Since we have an infinite stream instead of a single file,
+ * watch only the local compression ratio.
+ *
+ * Since both peers must reset the dictionary at the same time even in
+ * the absence of CLEAR codes (while packets are incompressible), they
+ * must compute the same ratio.
+ */
+static int                              /* 1=output CLEAR */
+pf_bsd_check(struct bsd_db *db)
+{
+        register u_int new_ratio;
+
+        if (db->in_count >= db->checkpoint) {
+                /* age the ratio by limiting the size of the counts */
+                if (db->in_count >= RATIO_MAX
+                    || db->bytes_out >= RATIO_MAX) {
+                        db->in_count -= db->in_count/4;
+                        db->bytes_out -= db->bytes_out/4;
+                }
+
+                db->checkpoint = db->in_count + CHECK_GAP;
+
+                if (db->max_ent >= db->maxmaxcode) {
+                        /* Reset the dictionary only if the ratio is
+                         * worse, or if it looks as if it has been
+                         * poisoned by incompressible data.
+                         *
+                         * This does not overflow, because
+                         *      db->in_count <= RATIO_MAX.
+                         */
+                        new_ratio = db->in_count<<RATIO_SCALE_LOG;
+                        if (db->bytes_out != 0)
+                                new_ratio /= db->bytes_out;
+
+                        if (new_ratio < db->ratio
+                            || new_ratio < 1*RATIO_SCALE) {
+                                pf_bsd_clear(db);
+                                return 1;
+                        }
+                        db->ratio = new_ratio;
+                }
+        }
+        return 0;
+}
+
+/* Initialize the database.
+
+ */
+struct bsd_db *
+pf_bsd_init(struct bsd_db *db,          /* initialize this database */
+            int unit,                   /* for debugging */
+            int bits,                   /* size of LZW code word */
+            int mru)                    /* MRU for input, 0 for output*/
+{
+        register int i;
+        register u_short *lens;
+        register u_int newlen, hsize, hshift, maxmaxcode;
+
+        switch (bits) {
+        case 9:                         /* needs 82152 for both comp &*/
+        case 10:                        /* needs 84144          decomp*/
+        case 11:                        /* needs 88240 */
+        case 12:                        /* needs 96432 */
+                hsize = 5003;
+                hshift = 4;
+                break;
+        case 13:                        /* needs 176784 */
+                hsize = 9001;
+                hshift = 5;
+                break;
+        case 14:                        /* needs 353744 */
+                hsize = 18013;
+                hshift = 6;
+                break;
+        case 15:                        /* needs 691440 */
+                hsize = 35023;
+                hshift = 7;
+                break;
+        case 16:                        /* needs 1366160--far too much*/
+                /* hsize = 69001; */    /* and 69001 is too big for */
+                /* hshift = 8; */       /* cptr in struct bsd_db */
+                /* break; */
+        default:
+                if (db) {
+                        if (db->lens)
+                                kern_free(db->lens);
+                        kern_free(db);
+                }
+                return 0;
+        }
+        maxmaxcode = MAXCODE(bits);
+        newlen = sizeof(*db) + (hsize-1)*(sizeof(db->dict[0]));
+
+        if (db) {
+                lens = db->lens;
+
+                if (db->totlen != newlen) {
+                        if (lens)
+                                kern_free(lens);
+                        kern_free(db);
+                        db = 0;
+                }
+        }
+        if (!db) {
+                db = (struct bsd_db*)kern_malloc(newlen);
+                if (!db)
+                        return 0;
+                if (mru == 0) {
+                        lens = 0;
+                } else {
+                        lens = (u_short*)kern_malloc((maxmaxcode+1)
+                                                     * sizeof(*lens));
+                        if (!lens) {
+                                kern_free(db);
+                                return 0;
+                        }
+                        i = LAST+1;
+                        while (i != 0)
+                                lens[--i] = 1;
+                }
+                i = hsize;
+                while (i != 0) {
+                        db->dict[--i].codem1 = BADCODEM1;
+                        db->dict[i].cptr = 0;
+                }
+        }
+
+        bzero(db,sizeof(*db)-sizeof(db->dict));
+        db->lens = lens;
+        db->unit = unit;
+        db->mru = mru;
+        db->hsize = hsize;
+        db->hshift = hshift;
+        db->maxmaxcode = maxmaxcode;
+        db->clear_count = -1;
+
+        pf_bsd_clear(db);
+
+        return db;
+}
+
+/* compress a packet
+ *      Assume the protocol is known to be >= 0x21 and < 0xff.
+
+ *      One change from the BSD compress command is that when the
+ *      code size expands, we do not output a bunch of padding.
+ */
+int                                     /* new slen */
+pf_bsd_comp(struct bsd_db *db,
+            u_char *cp_buf,             /* compress into here */
+            int proto,                  /* this original PPP protocol */
+            struct mbuf *m,             /* from here */
+            int slen)
+{
+        register int hshift = db->hshift;
+        register u_int max_ent = db->max_ent;
+        register u_int n_bits = db->n_bits;
+        register u_int bitno = 32;
+        register __uint32_t accum = 0;
+        register struct bsd_dict *dictp;
+        register __uint32_t fcode;
+        register u_char c;
+        register int hval, disp, ent;
+        register u_char *rptr, *wptr;
+        struct mbuf *n;
+
+#define OUTPUT(ent) {                   \
+        bitno -= n_bits;                \
+        accum |= ((ent) << bitno);      \
+        do {                            \
+                *wptr++ = accum>>24;    \
+                accum <<= 8;            \
+                bitno += 8;             \
+        } while (bitno <= 24);          \
+        }
+
+        /* start with the protocol byte */
+        ent = proto;
+        db->in_count++;
+
+        /* install sequence number */
+        cp_buf[0] = db->seqno>>8;
+        cp_buf[1] = db->seqno;
+        db->seqno++;
+
+        wptr = &cp_buf[2];
+        slen = m->m_len;
+        db->in_count += slen;
+        rptr = mtod(m, u_char*);
+        n = m->m_next;
+        for (;;) {
+
+                if (slen == 0) {
+                        if (!n)
+                                break;
+                        slen = n->m_len;
+                        rptr = mtod(n, u_char*);
+                        n = n->m_next;
+                        if (!slen)
+                                continue;   /* handle 0-length buffers*/
+                        db->in_count += slen;
+                }
+
+                slen--;
+                c = *rptr++;
+                fcode = BSD_KEY(ent,c);
+                hval = BSD_HASH(ent,c,hshift);
+                dictp = &db->dict[hval];
+
+                /* Validate and then check the entry. */
+                if (dictp->codem1 >= max_ent)
+                        goto nomatch;
+                if (dictp->f.fcode == fcode) {
+                        ent = dictp->codem1+1;
+                        continue;       /* found (prefix,suffix) */
+                }
+
+                /* continue probing until a match or invalid entry */
+                disp = (hval == 0) ? 1 : hval;
+                do {
+                        hval += disp;
+                        if (hval >= db->hsize)
+                                hval -= db->hsize;
+                        dictp = &db->dict[hval];
+                        if (dictp->codem1 >= max_ent)
+                                goto nomatch;
+                } while (dictp->f.fcode != fcode);
+                ent = dictp->codem1+1;  /* found (prefix,suffix) */
+                continue;
+
+nomatch:
+                OUTPUT(ent);            /* output the prefix */
+
+                /* code -> hashtable */
+                if (max_ent < db->maxmaxcode) {
+                        struct bsd_dict *dictp2;
+                        /* expand code size if needed */
+                        if (max_ent >= MAXCODE(n_bits))
+                                db->n_bits = ++n_bits;
+
+                        /* Invalidate old hash table entry using
+                         * this code, and then take it over.
+                         */
+                        dictp2 = &db->dict[max_ent+1];
+                        if (db->dict[dictp2->cptr].codem1 == max_ent)
+                                db->dict[dictp2->cptr].codem1=BADCODEM1;
+                        dictp2->cptr = hval;
+                        dictp->codem1 = max_ent;
+                        dictp->f.fcode = fcode;
+
+                        db->max_ent = ++max_ent;
+                }
+                ent = c;
+        }
+
+        OUTPUT(ent);                    /* output the last code */
+        db->bytes_out += (wptr-&cp_buf[2]   /* count complete bytes */
+                          + (32-bitno+7)/8);
+
+        if (pf_bsd_check(db))
+                OUTPUT(CLEAR);          /* do not count the CLEAR */
+
+        /* Pad dribble bits of last code with ones.
+         * Do not emit a completely useless byte of ones.
+         */
+        if (bitno != 32)
+                *wptr++ = (accum | (0xff << (bitno-8))) >> 24;
+
+        /* Increase code size if we would have without the packet
+         * boundary and as the decompressor will.
+         */
+        if (max_ent >= MAXCODE(n_bits)
+            && max_ent < db->maxmaxcode)
+                db->n_bits++;
+
+        return (wptr - cp_buf);
+#undef OUTPUT
+}
+
+/* Update the "BSD Compress" dictionary on the receiver for
+ * incompressible data by pretending to compress the incoming data.
+ */
+void
+pf_bsd_incomp(struct bsd_db *db,
+              mblk_t *dmsg,
+              u_int ent)                /* start with protocol byte */
+{
+
+        register u_int hshift = db->hshift;
+        register u_int max_ent = db->max_ent;
+        register u_int n_bits = db->n_bits;
+        register struct bsd_dict *dictp;
+        register __uint32_t fcode;
+        register u_char c;
+        register int hval, disp;
+        register int slen;
+        register u_int bitno = 7;
+        register u_char *rptr;
+
+        db->incomp_count++;
+
+        db->in_count++;                 /* count protocol as 1 byte */
+        db->seqno++;
+        rptr = dmsg->b_rptr+PPP_BUF_HEAD_INFO;
+        for (;;) {
+                slen = dmsg->b_wptr - rptr;
+                if (slen == 0) {
+                        dmsg = dmsg->b_cont;
+                        if (!dmsg)
+                                break;
+                        rptr = dmsg->b_rptr;
+                        continue;       /* skip zero-length buffers */
+                }
+                db->in_count += slen;
+
+                do {
+                        c = *rptr++;
+                        fcode = BSD_KEY(ent,c);
+                        hval = BSD_HASH(ent,c,hshift);
+                        dictp = &db->dict[hval];
+
+                        /* validate and then check the entry */
+                        if (dictp->codem1 >= max_ent)
+                                goto nomatch;
+                        if (dictp->f.fcode == fcode) {
+                                ent = dictp->codem1+1;
+                                continue;   /* found (prefix,suffix) */
+                        }
+
+                        /* continue until match or invalid entry */
+                        disp = (hval == 0) ? 1 : hval;
+                        do {
+                                hval += disp;
+                                if (hval >= db->hsize)
+                                        hval -= db->hsize;
+                                dictp = &db->dict[hval];
+
+                                if (dictp->codem1 >= max_ent)
+                                        goto nomatch;
+                        } while (dictp->f.fcode != fcode);
+                        ent = dictp->codem1+1;
+                        continue;       /* found (prefix,suffix) */
+
+nomatch:                                /* output (count) the prefix */
+                        bitno += n_bits;
+
+                        /* code -> hashtable */
+                        if (max_ent < db->maxmaxcode) {
+                            struct bsd_dict *dictp2;
+                            /* expand code size if needed */
+                            if (max_ent >= MAXCODE(n_bits))
+                                    db->n_bits = ++n_bits;
+                            /* Invalidate previous hash table entry
+                             * assigned this code, and then take it over
+                             */
+                            dictp2 = &db->dict[max_ent+1];
+                            if (db->dict[dictp2->cptr].codem1==max_ent)
+                                db->dict[dictp2->cptr].codem1=BADCODEM1;
+                            dictp2->cptr = hval;
+                            dictp->codem1 = max_ent;
+                            dictp->f.fcode = fcode;
+
+                            db->max_ent = ++max_ent;
+                            db->lens[max_ent] = db->lens[ent]+1;
+                        }
+                        ent = c;
+                } while (--slen != 0);
+        }
+        bitno += n_bits;                /* output (count) last code */
+        db->bytes_out += bitno/8;
+
+        (void)pf_bsd_check(db);
+
+        /* Increase code size if we would have without the packet
+         * boundary and as the decompressor will.
+         */
+        if (max_ent >= MAXCODE(n_bits)
+            && max_ent < db->maxmaxcode)
+                db->n_bits++;
+}
+
+/* Decompress "BSD Compress"
+ */
+mblk_t*                                 /* 0=failed, so zap CCP */
+
+pf_bsd_decomp(struct bsd_db *db,
+              mblk_t *cmsg)
+{
+        register u_int max_ent = db->max_ent;
+        register __uint32_t accum = 0;
+        register u_int bitno = 32;      /* 1st valid bit in accum */
+        register u_int n_bits = db->n_bits;
+        register u_int tgtbitno = 32-n_bits; /* bitno when accum full */
+        register struct bsd_dict *dictp;
+        register int explen, i;
+        register u_int incode, oldcode, finchar;
+        register u_char *p, *rptr, *rptr9, *wptr0, *wptr;
+        mblk_t *dmsg, *dmsg1, *bp;
+
+        db->decomp_count++;
+        rptr = cmsg->b_rptr;
+        ASSERT(cmsg->b_wptr >= rptr+PPP_BUF_MIN);
+        ASSERT(PPP_BUF_ALIGN(rptr));
+        rptr += PPP_BUF_MIN;
+
+        /* get the sequence number */
+        i = 0;
+        explen = 2;
+        do {
+                while (rptr >= cmsg->b_wptr) {
+                        bp = cmsg;
+                        cmsg = cmsg->b_cont;
+                        freeb(bp);
+                        if (!cmsg) {
+                                if (db->debug)
+                                        printf("bsd_decomp%d: missing"
+                                               " %d header bytes\n",
+                                               db->unit, explen);
+                                return 0;
+                        }
+                        rptr = cmsg->b_rptr;
+                }
+                i = (i << 8) + *rptr++;
+        } while (--explen != 0);
+        if (i != db->seqno++) {
+                freemsg(cmsg);
+                if (db->debug)
+                        printf("bsd_decomp%d: bad sequence number 0x%x"
+                               " instead of 0x%x\n",
+                               db->unit, i, db->seqno-1);
+                return 0;
+        }
+
+        /* Guess how much memory we will need.  Assume this packet was
+         * compressed by at least 1.5X regardless of the recent ratio.
+         */
+        if (db->ratio > (RATIO_SCALE*3)/2)
+                explen = (msgdsize(cmsg)*db->ratio)/RATIO_SCALE;
+        else
+                explen = (msgdsize(cmsg)*3)/2;
+        if (explen > db->mru)
+                explen = db->mru;
+
+        dmsg = dmsg1 = allocb(explen+PPP_BUF_HEAD_INFO, BPRI_HI);
+        if (!dmsg1) {
+                freemsg(cmsg);
+                return 0;
+        }
+
+        wptr = dmsg1->b_wptr;
+
+        ((struct ppp_buf*)wptr)->type = BEEP_FRAME;
+        /* the protocol field must be compressed */
+        ((struct ppp_buf*)wptr)->proto = 0;
+        wptr += PPP_BUF_HEAD_PROTO+1;
+
+        rptr9 = cmsg->b_wptr;
+        db->bytes_out += rptr9-rptr;
+        wptr0 = wptr;
+        explen = dmsg1->b_datap->db_lim - wptr;
+        oldcode = CLEAR;
+        for (;;) {
+                if (rptr >= rptr9) {
+                        bp = cmsg;
+                        cmsg = cmsg->b_cont;
+                        freeb(bp);
+                        if (!cmsg)      /* quit at end of message */
+                                break;
+                        rptr = cmsg->b_rptr;
+                        rptr9 = cmsg->b_wptr;
+                        db->bytes_out += rptr9-rptr;
+                        continue;       /* handle 0-length buffers */
+                }
+
+                /* Accumulate bytes until we have a complete code.
+                 * Then get the next code, relying on the 32-bit,
+                 * unsigned accum to mask the result.
+                 */
+                bitno -= 8;
+                accum |= *rptr++ << bitno;
+                if (tgtbitno < bitno)
+
+                        continue;
+                incode = accum >> tgtbitno;
+                accum <<= n_bits;
+                bitno += n_bits;
+
+                if (incode == CLEAR) {
+                        /* The dictionary must only be cleared at
+                         * the end of a packet.  But there could be an
+                         * empty message block at the end.
+                         */
+                        if (rptr != rptr9
+                            || cmsg->b_cont != 0) {
+                                cmsg->b_rptr = rptr;
+                                i = msgdsize(cmsg);
+                                if (i != 0) {
+                                        freemsg(dmsg);
+                                        freemsg(cmsg);
+                                        if (db->debug)
+                                                printf("bsd_decomp%d: "
+                                                       "bad CLEAR\n",
+                                                       db->unit);
+                                        return 0;
+                                }
+                        }
+                        pf_bsd_clear(db);
+                        freemsg(cmsg);
+                        wptr0 = wptr;
+                        break;
+                }
+
+                /* Special case for KwKwK string. */
+                if (incode > max_ent) {
+                        if (incode > max_ent+2
+                            || incode > db->maxmaxcode
+                            || oldcode == CLEAR) {
+                                freemsg(dmsg);
+                                freemsg(cmsg);
+                                if (db->debug)
+                                   printf("bsd_decomp%d: bad code %x\n",
+                                          db->unit, incode);
+                                return 0;
+                        }
+                        i = db->lens[oldcode];
+                        /* do not write past end of buf */
+                        explen -= i+1;
+                        if (explen < 0) {
+                                db->undershoot -= explen;
+                                db->in_count += wptr-wptr0;
+
+                                dmsg1->b_wptr = wptr;
+                                CK_WPTR(dmsg1);
+                                explen = MAX(64,i+1);
+                                bp = allocb(explen, BPRI_HI);
+                                if (!bp) {
+                                        freemsg(cmsg);
+                                        freemsg(dmsg);
+                                        return 0;
+                                }
+                                dmsg1->b_cont = bp;
+                                dmsg1 = bp;
+                                wptr0 = wptr = dmsg1->b_wptr;
+                               explen=dmsg1->b_datap->db_lim-wptr-(i+1);
+                        }
+                        p = (wptr += i);
+                        *wptr++ = finchar;
+                        finchar = oldcode;
+                } else {
+                        i = db->lens[finchar = incode];
+                        explen -= i;
+                        if (explen < 0) {
+                                db->undershoot -= explen;
+                                db->in_count += wptr-wptr0;
+                                dmsg1->b_wptr = wptr;
+                                CK_WPTR(dmsg1);
+                                explen = MAX(64,i);
+                                bp = allocb(explen, BPRI_HI);
+                                if (!bp) {
+                                        freemsg(dmsg);
+                                        freemsg(cmsg);
+                                        return 0;
+                                }
+                                dmsg1->b_cont = bp;
+                                dmsg1 = bp;
+                                wptr0 = wptr = dmsg1->b_wptr;
+                                explen = dmsg1->b_datap->db_lim-wptr-i;
+                        }
+                        p = (wptr += i);
+                }
+
+                /* decode code and install in decompressed buffer */
+                while (finchar > LAST) {
+                        dictp = &db->dict[db->dict[finchar].cptr];
+                        *--p = dictp->f.hs.suffix;
+                        finchar = dictp->f.hs.prefix;
+                }
+                *--p = finchar;
+
+                /* If not first code in a packet, and
+                 * if not out of code space, then allocate a new code.
+                 *
+                 * Keep the hash table correct so it can be used
+                 * with uncompressed packets.
+                 */
+                if (oldcode != CLEAR
+                    && max_ent < db->maxmaxcode) {
+                        struct bsd_dict *dictp2;
+                        __uint32_t fcode;
+                        int hval, disp;
+
+                        fcode = BSD_KEY(oldcode,finchar);
+                        hval = BSD_HASH(oldcode,finchar,db->hshift);
+                        dictp = &db->dict[hval];
+                        /* look for a free hash table entry */
+                        if (dictp->codem1 < max_ent) {
+                                disp = (hval == 0) ? 1 : hval;
+                                do {
+                                        hval += disp;
+                                        if (hval >= db->hsize)
+                                                hval -= db->hsize;
+                                        dictp = &db->dict[hval];
+                                } while (dictp->codem1 < max_ent);
+                        }
+
+                        /* Invalidate previous hash table entry
+                         * assigned this code, and then take it over
+                         */
+                        dictp2 = &db->dict[max_ent+1];
+                        if (db->dict[dictp2->cptr].codem1 == max_ent) {
+                                db->dict[dictp2->cptr].codem1=BADCODEM1;
+                        }
+                        dictp2->cptr = hval;
+                        dictp->codem1 = max_ent;
+                        dictp->f.fcode = fcode;
+
+                        db->max_ent = ++max_ent;
+                        db->lens[max_ent] = db->lens[oldcode]+1;
+
+                        /* Expand code size if needed.
+                         */
+                        if (max_ent >= MAXCODE(n_bits)
+                            && max_ent < db->maxmaxcode) {
+                                db->n_bits = ++n_bits;
+                                tgtbitno = 32-n_bits;
+                        }
+                }
+
+                oldcode = incode;
+        }
+
+        db->in_count += wptr-wptr0;
+        dmsg1->b_wptr = wptr;
+        CK_WPTR(dmsg1);
+
+        db->overshoot += explen;
+
+        /* Keep the checkpoint right so that incompressible packets
+         * clear the dictionary at the right times.
+         */
+        if (pf_bsd_check(db)
+            && db->debug) {
+                printf("bsd_decomp%d: peer should have "
+                       "cleared dictionary\n", db->unit);
+        }
+
+        return dmsg;
+}
+
+安全考虑
+   Security issues are not discussed in this memo.
+
+参考文献
+   [1]   Simpson, W., "The Point-to-Point Protocol (PPP)", STD 51,
+         RFC 1661, July 1994.
+
+   [2]   Rand, D., "The PPP Compression Control Protocol (CCP)", RFC
+         1962, June 1996.
+
+   [3]   Simpson, W., "PPP LCP Extensions", RFC 1570, January 1994.
+
+   [4]   Simpson, W., "PPP in HDLC-like Framing", STD 51, RFC 1662,
+         July 1994.
+
+致谢
+   William Simpson provided and supported the very valuable idea of not
+   using any additional header bytes for incompressible packets.
+
+
+主席地址
+   The working group can be contacted via the current chair:
+
+   Karl Fox
+   Ascend Communications
+   3518 Riverside Drive, Suite 101
+   Columbus, Ohio 43221
+
+   EMail: karl@ascend.com
+
+作者地址
+   Questions about this memo can also be directed to:
+
+   Vernon Schryver
+   2482 Lee Hill Drive
+   Boulder, Colorado 80302
+
+   EMail: vjs@rhyolite.com
+
+
+RFC1977――PPP BSD Compression Protocol                 PPP BSD 压缩协议
+
+
+1
+RFC文档中文翻译计划

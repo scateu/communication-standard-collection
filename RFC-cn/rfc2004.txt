@@ -1,0 +1,172 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：hlp（uangliuqi  hlq@mail.ndsc.com.cn）
+译文发布时间：2001-6-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                         C. Perkins
+Request for Comments: 2004                                           IBM
+Category: Standards Track                                   October 1996
+
+
+
+IP最小封装
+(RFC2004 capsulation within IP)
+
+文档现状
+   本文档为Internet社区定义一种Internet标准跟踪协议,尚需讨论以期提高.关于本协议
+的标准化情况请参阅最新版本的"因特网正式协议标准" (STD 1)。本文档可以任何形式分发。.
+摘要
+   本文档定义了一种在IP数据报中封装另一个IP数据报（作为净负载）的方法,可以比“传
+统的”IP封装（每一个数据报中封装另一个IP头部）的开销要小。封装通过把他们送往某
+个中间目的地（不是由原IP头部的IP Destination Address域）把正常的IP路由变为数据
+报。封装可用于多方面,例如使用移动IP把数据报传送到某个移动节点.
+1.简介
+   本文档定义了一种在IP数据报中封装另一个IP数据报（作为净负载）的方法,可以比“传
+统的”IP封装（每一个数据报中封装另一个IP头部）的开销要小。封装通过把路由信息送
+往某个中间目的地（不是由原IP头部的IP Destination Address域）把正常的IP路由变为
+数据报。封装可用于多方面,例如使用移动IP把数据报传送到某个移动节点.封装与拆分数据
+报的过程通常称为数据报“隧道”（"tunneling"），封装方和拆分方分别为隧道的端点
+（“endpoints"）;封装方称为隧道的“入口点”（"entry point"）,拆分方称为隧道的出口
+点（"exit point"）.
+
+2. 动机
+   移动IP工作组已经规定把封装作为从移动节点的“家乡网络”（"home network" ）向代
+理（agent）传送数据包的方法，该代理能够以传统方式在移动节点在当前异于家乡的位置“本
+地”地传送数据包（参考文献[5]）。封装的使用也可表明在IP数据报的源地址（或者中间路
+由器）必须影响数据报送达最终目的地所经过的路由。封装的其他的应用包括多播，预付费,
+安全属性选择路由，通用（general）路由选择策略。
+   封装比IP松散路由选择的优点见参考文献[4]。使用IP头部封装数据报要求内部IP头部
+的几个多余的域;可以通过指定一种封装机制来节省多余的空间。图中显示的方案来自移动
+IP工作组（在早期的草案中）,与参考文献[2]中定义的相似.
+3.最小封装
+   最小转发头部在数据报中定义，在封装前没有分片.这种封装方法是可选的.最小封装不允
+许原始（original）的数据报已经分片,因为在转发头部中没有空间存储分片信息.为使用最
+小封装来封装IP数据报，最小转发头部被插入到数据报中如下所示：
+     +---------------------------+       +---------------------------+
+     |                           |       |                           |
+     |         IP Header         |       |     Modified IP Header    |
+     |                           |       |                           |
+     +---------------------------+ ====> +---------------------------+
+     |                           |       | Minimal Forwarding Header |
+     |                           |       +---------------------------+
+     |         IP Payload        |       |                           |
+     |                           |       |                           |
+     |                           |       |         IP Payload        |
+     +---------------------------+       |                           |
+                                         |                           |
+                                         +---------------------------+
+
+
+   原始IP的头部已经被修改,在IP头部的后面插入了最小转发头部（minimal forwarding 
+header），紧跟着的是原始数据报的IP净负载（如传输层头部，传输层数据）。数据报中没有
+再其他的其他的IP头部。
+   在封装数据报的过程中,原始IP头部（参考文献[6]）按如下修改:
+    -  IP头部的Protocol域被一个协议号55所取代，以说明使用最小封装协议.
+    -  IP头部的Destination Address域被隧道的出口的IP地址所取代.
+-  如果封装器不在数据报的源地址,IP头部中Source Address域被封装器的IP地址取
+代。
+- IP头部中的Total Length域增加插入数据报的最小转发头部的大小.增加的可能是12
+字节或8字节,取决于转发头部中是否设置了“原始源地址出现”（Original Source 
+Address Present (S位)）标志。
+    - IP头部的Header Checksum域被重新计算（参考文献[6]）或者更新因为封装的IP头
+部已经发生改变。 
+    注意跟IP-in-IP封装（参考文献[4]）不同,IP头部中的Time to Live(TTL)域在封装的
+过程中并不修改;如果封装器正在转发该数据报,该域将由于正常IP转发而递减。同样,因为
+封装后的IP头部依然保留原来的TTL，转发到隧道内部的数据报可见，例如"traceroute"。
+
+
+   最小转发头部的格式如下所示:
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Protocol    |S|  reserved   |        Header Checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                 Original Destination Address                  |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   :            (if present) Original Source Address               :
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      Protocol
+         从原来IP头部的Protocol域拷贝。
+      Original Source Address Present (S)
+0	原始源地址Original Source Address）域为空.这种情况下最小隧道头部
+的长度为8个字节.
+1	原始源地址（Original Source Address）域不为空。 这种情况下最小隧
+道头部为12字节。
+      reserved
+         按0发送;接收时忽略.
+      Header Checksum
+         最小转发头部中所有16比特字和的补码.为计算检验和checksum域的值设置为0.
+在计算检验和时不包括IP头部和IP静负载(位于最小转发头部之后).
+      Original Destination Address
+         从原IP头部中的Destination Address域拷贝.
+      Original Source Address
+        从原IP头部中的Source Address域拷贝。该域仅在设置Original Source Address         
+Present (S)标志时存在.
+
+   在拆分数据报时，最小转发头部各域存放在IP头部中,转发头部从数据报中删除。另外，
+IP头部中的Total Length域递减掉从数据报中删除的最小转发头部,IP头部的Checksum域 
+被重新计算（参考文献[6]）或者更新，以说明在拆分时IP头部的变化.
+   封装器（encapsulator）可以使用现存合适的的IP机制把封装以后的净负载传送到隧道
+出口点.特别是,允许选择IP的使用,如果IP头部中不设置"Don't Fragment"位还允许使用分
+片。要求对分片加以限定以便使用Path MTU Discovery （参考文献[3]）能得到他们寻找的
+信息.
+4.路由失败（ Routing Failures）
+   用于路由的封装方法使路由环回的敏感度上升.为削减危险,路由器应该遵循参考文献[4]
+中描述的规程.
+5. 来自隧道内部的ICMP信息
+   ICMP信息用参考文献[4]中的方法进行处理,包括维护隧道的“软状态”（"soft state"）.
+6.安全方面的考虑
+   安全考虑不在本文当中论述，但与参考文献[4]中描述的基本相似.
+7.致谢
+
+   很多第3部分的原文从移动IP草案（参考文献[1]）中获得.感谢David Johnson对草案
+的连贯性及其它方面的改进。
+
+
+参考文献
+   [1] Perkins, C., Editor, "IPv4 Mobility Support", Work in Progress,
+       May 1995.
+   [2] David B. Johnson.  Scalable and Robust Internetwork Routing
+       for Mobile Hosts.  In Proceedings of the 14th International
+       Conference on Distributed Computing Systems, pages 2--11, June
+       1994.
+   [3] Mogul, J.,  and S. Deering, "Path MTU Discovery", RFC 1191,
+       November 1990.
+ [4] Perkins, C., "IP Encapsulation within IP", RFC 2003,
+       October 1996.
+   [5] Perkins, C., Editor, "IP Mobility Support", RFC 2002,
+       October 1996.
+   [6] Postel, J., Editor, "Internet Protocol", STD 5, RFC 791,
+       September 1981.
+作者地址
+   关于本文档的问题可直接通过下面的方式与作者联系:
+   Charles Perkins
+   Room H3-D34
+   T. J. Watson Research Center
+   IBM Corporation
+   30 Saw Mill River Rd.
+   Hawthorne, NY  10532
+   Work:   +1-914-784-7350
+   Fax:    +1-914-784-6205
+   EMail: perk@watson.ibm.com
+
+   工作组可以通过现任主席联系:
+
+   Jim Solomon
+   Motorola, Inc.
+   1301 E. Algonquin Rd.
+   Schaumburg, IL  60196
+
+   Work:   +1-847-576-2753
+   EMail: solomon@comm.mot.com
+ RFC2004 capsulation within IP                                        IP最小封装
+
+
+1
+RFC文档中文翻译计划

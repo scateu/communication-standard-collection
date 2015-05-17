@@ -1,0 +1,417 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：于德雷 (于德雷   ydl_ldy@sina.com)
+译文发布时间：2001-8-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                        W. Simpson
+equest for Comments: 1994                                      DayDreamer
+Obsoletes: 1334                                               August 1996
+Category: Standards Track
+
+
+PPP挑战握手认证协议(CHAP)
+（RFC1994――PPP Challenge Handshake Authentication Protocol (CHAP) ) 
+
+此备忘录的状态
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+摘要
+
+   PPP【1】提供了点到点链路传输多协议数据报的标准方法。
+
+   在PPP中也定义了一种可扩展的LCP，允许协商认证协议，从而可以在进行网络层
+   协议传输之前对对端进行认证。
+
+   本文定义了一种PPP认证方法，该方法利用随机“挑战”和依据“挑战”和密钥
+   计算出的加密哈希“应答”来完成认证。
+
+目录
+1.  简介	2
+1.1.  要求规范	2
+1.2.  术语	3
+2.  挑战握手认证协议  Challenge-Handshake Authentication Protocol	3
+2.1. 优点	4
+2.2.  缺点	4
+2.3.  设计要求	4
+3.  配置选项格式	5
+4.  包格式	5
+4.1.  挑战和应答	6
+4.2.  成功与失败	8
+安全考虑	9
+鸣谢	10
+参考文献	10
+
+1.  简介
+   为了在点到点链路上建立通信，PPP链路的每一端在链路建立阶段必须首先发送
+   LCP包进行数据链路配置。链路建立之后，PPP提供可选的认证阶段，可以在进入
+   NLP阶段之前实行认证。
+
+   缺省情况下，认证并非是强制执行的，如果需要链路认证，PPP实现必须在链路
+   建立阶段指定“认证协议配置”选项。
+
+   这些认证协议主要用于主机和路由器，这些主机和路由器一般通过交换电路线
+   或者拨号线连在PPP网络服务器上，但是也可以通过专线实现。服务器可以用主
+   机或路由器的连接身份来作为网络层协商的选项。
+
+   本文定义了PPP认证协议，链路建立阶段和认证阶段以及认证协议配置选项都
+   已经在PPP【1】中定义。
+
+1.1.  要求规范
+   在本文中，用以下几个词表示规范描述要求，这几个词用大写标明。
+
+   MUST       “必须”，也就是形容词“必需的”，意思是该项是本规范的绝对要求。
+
+   MUST NOT  “不得”，意思是该项是本规范所绝对禁止的。
+
+   SHOULD    “应该”，也就是形容词“推荐的”，意思是在某些场合可能由于某种原因忽
+略该项，但是协议的完全实现必须能够理解该项，在决定其
+             他方式之前要经过仔细考虑。
+
+   MAY     “可以”，也就是形容词“可选的”，意思是该项可以作为可选集使
+             用，不包含该选项的协议实现必须能够和包含了该选项的实现交互协
+             作。
+
+1.2.  术语
+   本文频繁使用的术语包括以下几个：
+
+   Authenticator   认证者
+
+             链路要求认证的一端，认证者在链路建立阶段的Configure-Request
+             中指定认证协议。
+
+   peer   对端   
+
+             点到点链路的另一端；由认证者认证的一端。
+
+   silently discard   静静丢弃
+
+             协议实现直接丢弃数据包，不作进一步处理，实现应该提供记录错误
+             的能力――包括被静静丢弃的包的内容，还应该在统计计数器里记录
+             事件。
+
+2.  挑战握手认证协议  Challenge-Handshake 
+Authentication Protocol
+   挑战握手认证协议（CHAP）通过三次握手周期性的认证对端的身份，在初始链路
+   建立时完成，可以在链路建立之后的任何时候重复进行。
+
+   1.    链路建立阶段结束之后，认证者向对端发送“挑战”消息。
+
+   2.    对端用经过单向哈希函数计算出来的值做应答。
+
+   3.    认证者根据它自己的预期哈希值的计算来检查应答，如果值匹配，认证得
+         到承认；否则，连接应该终止。
+
+   4.    经过一定的随机间隔，认证者发送一个新的挑战给对端，重复1到3。
+
+2.1. 优点
+   通过递增改变的标识符和可变的挑战值，CHAP防止了重放攻击，重复挑战限制了
+   对单个攻击的暴露时间，认证者控制挑战的频度。
+
+   该认证方法依赖于认证者和对端共享的密钥，密钥不是通过该链路发送的。
+
+   虽然该认证是单向的，但是在两个方向都进行CHAP协商，同一密钥可以很容易的
+   实现交互认证。
+
+   由于CHAP可以用在许多不同的系统认证中，因此可以用NAME字段作为索引，以便
+   在一张大型密钥表中查找正确的密钥，这样也可以在一个系统中支持多个NAME/
+   密钥对，在会话中随时改变密钥。
+
+2.2.  缺点
+   CHAP要求密钥以明文形式存在，无法使用通常的不可回复加密口令数据库。
+
+   在大型设备中不适用，因为每个可能的密钥由链路的两端共同维护。
+
+      注：为了避免在网络的其他链路上发送密钥，推荐在中心服务器中检查挑战
+      和应答，而不是在每一个接入服务器中，否则，密钥最好发送到可回复加密
+      格式的服务器中。无论那种情况都需要信任关系，信任关系的讨论超出本文
+      的范围。
+
+2.3.  设计要求
+   CHAP算法要求密钥长度必须至少是一字节，至少应该不易让人猜出，密钥最好
+   至少是哈希算法（16字节，MD5）所选用的哈希值的长度，如此可以保证密钥
+   不易受到穷搜索攻击。
+
+   所选用的哈希算法，必须使得从已知挑战值和应答值来确定密钥在计算上是不
+   可行的。
+
+   每一个挑战值应该是唯一的，否则在同一密钥下，重复挑战值将使攻击者能够
+   用以前截获的应答值响应挑战。由于希望同一密钥可以用于地理上分散的不同
+   服务器的认证，因此挑战应该全局临时唯一。
+
+   每一个挑战值也应该是不可预计的，否则攻击者可以欺骗对端，让对端响应一
+   个预计的的挑战值，然后用该响应冒充对端欺骗认证者。
+
+   虽然CHAP不能防止实时的主动搭线窃听攻击，然后只要能产生不可预计的挑战
+   就可以防范大多数的主动攻击。
+
+   唯一性来源和分歧可能性在魔术数配置选项【1】中讨论。
+
+3.  配置选项格式
+   协商CHAP的“认证协议配置选项”格式如下图所示，字段从左到右传输。
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |     Authentication-Protocol   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Algorithm   |
+   +-+-+-+-+-+-+-+-+
+
+   类型  Type
+
+      3
+
+   长度   Length
+
+      5
+
+   认证协议   Authentication-Protocol
+
+      0xc223  CHAP
+
+   算法
+
+      算法字段一字节，指示所使用的认证方法，最新值在最新的“Assigned
+      Number”【2】中指定，必须实现的值是：
+
+         5    MD5【3】下的CHAP
+
+4.  包格式
+   CHAP数据包封装在PPP数据链路层帧的信息域中，PPP的协议字段指示0xc223，
+   CHAP包格式如下图所示，字段从左到右传输。
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Code      |  Identifier   |            Length             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |    Data ...
+   +-+-+-+-+
+
+   代码  Code
+
+      代码字段一字节，指示CHAP包的类型，分配如下：
+
+         1       挑战  Challenge
+         2       应答  Response
+         3       成功  Success
+         4       失败  Failure
+
+   标识符  Identifier
+
+      标识符字段一字节，辅助匹配挑战、应答和响应。
+
+   长度  Length
+
+      长度字段两字节，指示CHAP包的长度，包括代码、长度和数据字段。超出
+      长度的字节应该视为数据链路层填充，接收方应该忽略。
+
+   数据  Data
+
+      数据字段是零个或多个字节，数据字段格式由代码字段确定。
+
+4.1.  挑战和应答
+   描述
+
+      挑战包是CHAP的开始，认证者必须传送代码字段为1的CHAP包，其他挑战
+      数据包必须在有效应答数据包成功接收之后或者可选重试计数器计满后发
+      送。
+
+      为了确保连接没有被更改，挑战包也可以在NLP阶段的任何时候发送。
+
+      对端应该随时为认证阶段和NLP阶段的挑战做好准备，任何时候收到挑战
+      包，对端都必须传送代码字段为2（应答）的CHAP数据包。
+
+      无论何时，如果收到应答包，认证者都必须把应答值和自己计算的预期值
+      比较，基于这种比较，认证者必须发送成功（Success）或者失败
+      （Failure）CHAP包。
+
+         注：由于成功包可能丢失，认证者在NLP阶段中必须允许重复的应答包，
+         为了发现更改的名字和密钥，收到具有当前挑战标识符的应答包必须返
+         回与先前挑战同样的响应代码（消息部分可能不相同），在任何其他阶
+         段收到的任何应答包必须静静丢弃。
+
+         如果“失败包”丢失，认证者终止了链路，那么可以由LCP的“终止请
+         求”和“终止应答”来指示认证失败。
+
+   挑战包和应答包的格式如下，字段从左到右传输。
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Code      |  Identifier   |            Length             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Value-Size   |  Value ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Name ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   代码  Code
+
+      1  挑战 Challenge;
+
+      2  应答 Response.
+
+   标识  Identifier
+
+      标识字段一字节，每次发送挑战都必须要改变标识字段的值。
+
+      应答标识必须由响应的挑战标识字段拷贝得来。
+
+   值大小  Value-Size
+
+      一字节长，指示“值”字段的长度。
+
+   值  Value
+
+      值字段一个或者多个字节，首先传输最高位。
+
+      挑战值是可变字节流，上文已经叙述了挑战值唯一性的重要性和它与密钥
+      之间的关系。挑战值必须在每次发送挑战时都要改变。挑战值的具体长度
+      由产生它的方法而定，独立于所用的哈希算法。
+
+      应答值由标识串接密钥串接挑战值然后经过哈希运算得出，其长度由所用
+      的哈希算法决定（对于MD5，为16字节）。
+
+   名字  Name
+
+      名字字段一个或多个字节，代表传输数据包的系统的标识，字段内容没有
+      限制，如，可以是ASCII字串，或者是全局唯一的ASN.1标识，名字不应该
+      是NUL或者CR/LF终止符。其长度由长度字段确定。
+
+4.2.  成功与失败
+   描述
+
+      如果接收到的应答值等于预期值，那么认证者必须传送代码字段为3（
+      成功）的CHAP数据包。
+
+      如果接收到的应答值不等于预期值，那么认证者必须传送代码字段为4
+      （失败）的CHAP数据包，并且应该终止链路。
+
+   成功和失败包格式如下所示，字段从左到右传输。
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Code      |  Identifier   |            Length             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Message  ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-
+
+   代码  Code
+
+      3   成功 Success;
+
+      4   失败 Failure.
+
+   标识  Identifier
+
+      标识字段一字节，辅助匹配应答和响应，从响应的应答标识字段拷贝得
+      来。
+
+   消息  Message
+
+      消息字段是一个或者多个字节，其内容与具体实现无关，最好可以直接
+      阅读，但是不得影响协议操作，推荐使用可显示的ASCII字符（从32到
+      126）。扩展到其他字符集机制的研究留在以后进行，其长度由长度字段
+      确定。
+
+
+安全考虑
+
+   安全问题是该RFC的主题。
+
+   PPP认证协议的交互作用依赖于具体实现，本文通篇的“应该”字样已经暗示了
+   这一点。
+
+   例如，对于认证失败，一些实现可能并不终止链路，而只是限制网络层协议的
+   流量，允许用户更新密钥或向网络管理员发送邮件表示有问题发生。
+
+   对于失败的认证不做二次审定，然而，LCP状态机可以在任何时候重新协商认证
+   协议，因而允许新的尝试，推荐让认证失败计数器只有在成功认证之后或者终
+   止失败链路之后才重新设置。
+
+   不需要双工认证，也不需要在两个方向上使用同一个认证协议，在不同的方向
+   上使用不同的认证协议完全是可以接受的，当然，这都要根据具体协议协商而
+   定。
+
+   两个方向上的密钥不应该相同，否则，攻击者可以重放对端的挑战、接受经过
+   运算的应答以及使用该应答来进行认证等。
+
+   实际上，对于每个PPP服务器，有一个关联用户名和认证信息（密钥）的数据
+   库，不要让特定用户由多个认证方法来认证，因为这会使攻击者容易选择一
+   个安全性较低的认证方法入侵（如，用PAP，而不是CHAP）。如果使用了相同
+   的密钥，PAP便会暴露CHAP所使用的密钥。
+
+   对于每一个用户名，应该指示一种特定的认证方法，如果用户在不同的环境下
+   使用不同的认证方法，那么他应该在不同的环境下使用不同的用户名，每个用
+   户名标识一个认证方法。
+
+   口令和其他其他密钥应该分别存在每一端，以便尽可能限制访问，理想的做法
+   是，密钥只能由执行认证的进程访问。
+
+   密钥的发布机制应该尽量限制处理密钥的实体，理想的做法是，非授权人不应
+   该得到密钥的半点信息，这些机制的讨论产出本文的范围。
+
+鸣谢
+   David Kaufman, Frank Heinrich, and Karl Auerbach used a challenge
+   handshake at SDC when designing one of the protocols for a "secure"
+   network in the mid-1970s.  Tom Bearson built a prototype Sytek
+   product ("Poloneous"?) on the challenge-response notion in the 1982-
+   83 timeframe.  Another variant is documented in the various IBM SNA
+   manuals.  Yet another variant was implemented by Karl Auerbach in the
+   Telebit NetBlazer circa 1991.
+
+   Kim Toms and Barney Wolff provided useful critiques of earlier
+   versions of this document.
+
+   Special thanks to Dave Balenson, Steve Crocker, James Galvin, and
+   Steve Kent, for their extensive explanations and suggestions.  Now,
+   if only we could get them to agree with each other.
+
+参考文献
+
+   [1]   Simpson, W., Editor, "The Point-to-Point Protocol (PPP)", STD
+         51, RFC 1661, DayDreamer, July 1994.
+
+   [2]   Reynolds, J., and J. Postel, "Assigned Numbers", STD 2, RFC
+         1700, USC/Information Sciences Institute, October 1994.
+
+   [3]   Rivest, R., and S. Dusse, "The MD5 Message-Digest Algorithm",
+         MIT Laboratory for Computer Science and RSA Data Security,
+         Inc., RFC 1321, April 1992.
+
+
+
+Contacts
+
+   Comments should be submitted to the ietf-ppp@merit.edu mailing list.
+   This document was reviewed by the Point-to-Point Protocol Working
+   Group of the Internet Engineering Task Force (IETF).  The working
+   group can be contacted via the current chair:
+
+      Karl Fox
+      Ascend Communications
+      3518 Riverside Drive, Suite 101
+      Columbus, Ohio 43221
+
+          karl@MorningStar.com
+          karl@Ascend.com
+
+
+   Questions about this memo can also be directed to:
+
+      William Allen Simpson
+      DayDreamer
+      Computer Systems Consulting Services
+      1384 Fontaine
+      Madison Heights, Michigan  48071
+
+          wsimpson@UMich.edu
+          wsimpson@GreenDragon.com (preferred)
+RFC1994――PPP Challenge Handshake Authentication Protocol (CHAP)
+PPP挑战握手认证协议(CHAP)
+
+
+10
+RFC文档中文翻译计划

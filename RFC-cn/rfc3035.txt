@@ -1,0 +1,357 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：张惠卿（zhang_vivian   y00415@em.njupt.edu.cn ）
+译文发布时间：2001-3-28
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+
+
+
+
+Network Working Group                                           B. Davie
+Request for Comments: 3035                                   J. Lawrence
+Category: Standards Track                                  K. McCloghrie
+                                                                E. Rosen
+                                                              G. Swallow
+                                                     Cisco Systems, Inc.
+                                                              Y. Rekhter
+                                                        Juniper Networks
+                                                               P. Doolan
+                                                 Ennovate Networks, Inc.
+                                                            January 2001
+
+
+
+用LDP和ATM的VC交换实现MPLS
+
+（RFC 3035----MPLS using LDP and ATM VC Switching）
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+
+摘要  
+
+多协议标签交换(MPLS)体系讨论了一种将ATM交换机用作标签交换路由器的方式. ATM交换机执行网络层路由算法(如开放最短优先路由(OSPF), 中间-中间层系统(IS-IS)等), 并基于这些路由算法来转发数据. 不需要特定的ATM路由或寻址. 在这里, ATM交换机被称为ATM-标签交换路由器.  这篇文档通过详细说明向ATM-LSR分配和从ATM-LSR得到的代表等效前传类(FECs)的标签的过程,  扩充和阐明了[1]和[2]的相关部分. FECs 是在逐跳方式的基础上,通过网络层路由算法来决定路由. 这篇文档还详细说明了向ATM-LSR发送和从ATM-LSR中等到标签分组的MPLS封装, 关于此方面的介绍参见相关文档[3].
+
+
+
+目录
+
+1. 概述	2
+2. 定义	2
+3. ATM交换的特征	3
+4. ATM标签交换控制组件	3
+5. 混合交换(夜晚行船)	4
+6. 使用VPI/VCI	4
+6.1 直接连接	4
+6.2 通过ATM VP的连接	5
+6.3 通过ATM SVC的连接	5
+7. 标签分配及维护过程	5
+7.1 边缘LSR行为	5
+7.2 传统ATM交换(非VC合并)	6
+7.3 能实现VC合并的ATM交换	7
+8. 封装	8
+9. TTL操作	8
+10. 可选环路检测: 分布路径矢量	9
+10.1 何时发送下游路径矢量	9
+10.2 何时发送上游路径矢量	10
+11. 安全考虑	10
+12 参考文献	10
+1. 概述
+        MPLS体系结构讨论了一种将ATM交换机用作标签交换路由器的的方式. ATM交换机运行网络层路由算法(如OSPF, IS-IS等), 并基于这些路由算法转发数据. 不需要特定的ATM路由或寻址. ATM交换机在此称为ATM-标签交换路由器(ATM-LSR).    
+          这篇文档通过详细说明向ATM-LSR分配和从ATM-LSR得到代表等效前传类(FECs)的标签的过程, 扩充及阐明了[1]和[2]的相关部分. FECs是由网络层路由算法基于逐跳方式来决定路由. 这里所说的标签分配技术在[1]中被称为"下游按需". 对不能进行VC合并的ATM-LSR必须使用标签分配技术(在第三部分中定义), 对能进行VC合并的ATM-LSR可以随意选择.
+       这篇文档对在下述情况下的标签分配技术没有规范定义.
+* 在标签分配开始前, 路由就被确定, 而不是由逐跳机制标签分配过程中确定.
+* 路由与任何时候由传统逐跳路由决定的路由不相同.
+* 标签代表了包括了多播组的等效前传类.
+* 标签分配路由器使用"VP合并"
+      文档关于ATM-LSR标签的进一步阐述, 不必要在以上情况中应用.
+     文档还详细说明了当发送或接收ATM-LSR的标签分组时使用的MPLS的封装, 在这个方面,还有一个相关的[3]文档. 这种封装规范还将用于多播或显式路由标签分组.
+
+2. 定义
+LSR---标签交换路由器是实现标签交换控制和转发在[1]中描述的组件的设备
+LC-ATM---标签交换控制ATM接口是由标签交换控制组件控制的ATM接口. 当接收一个穿越该接口的分组时, 该分组就视为标签分组. 由VCI字段或VPI及VCI联合字段的内容来决定分组的最高标签. 任何两个通过LC-ATM接口连接的对等LPD(标识分发协议)将使用LDP协议来决定以上的情况的哪种适应于该接口.
+ATM-LSR---是一种有许多LC-ATM接口的LSR,  用在VCI字段或VPI/VCI字段在携带的标签, 在接口间转发信元, 而不是在转发前将信元重组成帧.
+基于帧的LSR是一种在它的接口间转发完整帧的LSR. 注意这样的LSR可能没有, 或有一个, 多个LC-ATM接口.
+有时一个单一的盒, 对于特定的接口, 实现ATM-LSR的功能, 但在其它的场合, 又可实现基于帧的LSR功能. 如, 有以太接口的ATM交换机, 在它的LC-ATM接口中转发信元时可以实现ATM-LSR的功能, 然而要在它的以太接口到其中一个LC-ATM接口间转发帧时, 就实现基于帧的LSR功能. 在这种情况下, 可以在同一个盒子中实现两种功能.
+常用一个LC-ATM接口来连接两个ATM-LSRs, 或连接一个ATM-LSR到基于帧的LSR上. 在文档中没有考虑使用LC-ATM接口来连接两个基于帧的LRS.
+ATM-LSR域是一组ATM-LSR, ATM-LSR由LC-ATM接口相互连接.
+ATM-LSR域的边缘组是一组基于帧的LSR, 它们通过LC-ATM接口在组的各个域中互连. 基于帧的LSR, 若是ATM-LSR域中边缘组的成员, 则被称为边缘LSR.
+VC合并即交换机在几个输入VCI中接收信元并在单一的输出VCI中将信元输出, 不会导致不同的AAL5 层PDU信元交错.
+
+3. ATM交换的特征
+      MPLS体系在LSR的实现方面有很大的灵活性, ATM-LSR拘泥于硬件(可能已经存在)的性能, 还可能受ATM标准的信元格式约束. 基于这些约束, ATM-LSR上需要一些特定的程序.
+      下面是一些象LSR一样影响ATM交换机性能的主要特性:
+       ---在信元头字段(VCI或VPI)中执行标签交换功能, 这指示分组的大小和标签的替代. 
+       ---一般不支持多点到单点VC和多点到多点VC. 即大多数交换机不支持上面定义的VC合 
+            并.
+      ---一般没有实现像在路由器中IP头中的TTL-消耗的功能.
+      文档描述了在这些约束下在ATM交换机在应用标签交换的方法.
+
+4. ATM标签交换控制组件
+ 为支持标签交换, ATM交换机必须执行标签交换的控制组件功能. 这主要包括标签分配, 分布, 维护过程.  标签绑定信息由几个机制来传递, 特别是标签分发协议(LDP). 文档对LDP作了一些定义.
+  文档只考虑了标签交换控制组件使用直接从网络层路由协议中得到信息的情况. 即在这些协议中交换机是对等的.
+  在某些情况下, LSR要使用其它一些协议(如, RSVP, PIM, BGP)来分发标签绑定信息. 在这种情况下, ATM-LSR将需要参与到这些协议中. 然而, 文档没有明确考虑这些内容.
+  在ATM交换机上支持 标签交换不需要交换机支持由ITU及ATM论坛定义的ATM控制组件 (如UNI,PNNI). ATM-LSR对OAM信元的响应是可选的.
+  
+5. 混合交换(夜晚行船)
+存在于ATM交换机上的标签交换控制组件, 不排除对由ITU及ATM论坛在同一交换和同一接口上定义的ATM控制组件的支持. 这两种控制组件, 标签交换组件及ITU/ATM论坛定义的组件, 是相互独立地操作. 
+文档没有定义这种设计是如何操作的. 然而, 这两种控制组件之间只有一小部分信息是需要一致的, 如每一种组件都有的VPI/VCI部分的空间大小.
+
+6. 使用VPI/VCI 
+实现标签交换的过程:联合前传等效类的标签, 使用标签值来转发分组, 包括决定任一需替代标签的值. 细节问题请参见[1]. 在ATM-LSR中, 标签信息由VPI/VCI字段携带, 或当两个ATM-LSR通过ATM"虚通路"连接时, 由VCI字段携带. 
+标签分组必须使用空封装来传送, 如RFC 2684中的6.1部分所定义.
+另外, 如果两个对等LDP通过LC-ATM接口连接, 那么必须有一个能携带未标识IP分组的非MPLS连接. 这个非MPLS连接是在两个对等LDP之间传送LDP分组, 也可以(不一定需要)传送其它非标识分组(如OSPF包等). RFC 2684[5]的LLC/SNAP封装必须用于非MPLS连接.
+可以用传送控制信息或非标识分组的附加VPI/VCI来配置LC-ATM接口. 在这种情况下, VCI的值不能是0到32之间. 0到32的值用于空封装, 如RFC 2684[5]中的6.1部分所定义, 或是用于LLC/SNAP封装, 如RFC 2684[5]中的5.1部分所定义.
+
+6.1 直接连接
+    如果一个LSR经过LC-ATM接口传送的所有信元都将到达另外一个LSR, 且在这两个LSR之间没有其它ATM交换机, 我们就称这两个LSR在LC-ATM接口上是直接连接的.
+若两个LSR通过LC-ATM接口直接连接, 它们将在接口上共同控制VPI/VCI的分配. 它们也可以使用VPI/VCI字段对单一标签进行编码.
+在非MPLS连接中VPI/VCI的缺省值是VPI=0, VCI=32. 也可以配置其它的值, 只要双方都知道这个值就行了.
+VPI/VCI值中, 如果它的VCI部分的值是在0到32之间(包含0,32), 那么它就不能被视为是标签的编码.
+除了这些保留值以外, 用于连接的两个方向中的VPI/VCI值都是独立的空间.
+VCI允许范围内的值通过LDP传送.
+
+6.2 通过ATM VP的连接
+有时, 认为两个LSR在LC-ATM接口上相邻(在一些LSP)的想法是很用的, 即使它们俩的连接是通过ATM虚通路的ATM云团建立起来. 这样, 对MPLS来说, VPI字段是没有用的, 标签必须完全在VCI字段内编码.
+这样, 在LSR之间的非MPLS连接中, VCI缺省值是32. 也可以配置其它的值, 只要比方都知道配置的值就行了. VPI可以设置成利用虚通路所需要的任何值.
+VPI/VCI值中, 如果它的VCI部分的值是在0到32之间(包含0,32), 那么它就不能被视为是标签的编码.
+除了这些保留值以外, 用于连接的两个方向中的VPI/VCI值都是独立的空间.
+VPI/VCI允许范围内的值通过LDP传送. 在标签交换中, 如果使用了多个VPI, 则对每一个VPI, VCI允许的范围是不同的, 每一个VCI范围通过LDP传送.
+
+6.3 通过ATM SVC的连接
+    有时, 认为两个LSR在LC-ATM接口上相邻(在一些LSP)的想法是很用的, 即使它们俩的连接是通过一组ATM交换虚电路的ATM云团建立起来.   
+文档没有详细说明处理这个连接的过程. 可以在[4]中找到这个处理过程. [4]中描述的过程允许分配VCID到每一个VC中, 并详细说明了如何使用LDP在FEC中绑定VCID. 接收分组中的最高标识符将由分组到达时的虚电路推断出(通过一对一映射). 在非MPLS连接中不是缺省的VPI或VCI值.
+
+7. 标签分配及维护过程
+    文档讨论了ATM-LSR 使用的"下游按需"标签分配. 不支持VC合并的ATM-LSR必须使用这些标签分配过程, 而支持VC合并的ATM-LSR也可以使用. 而这两种情况下的处理过程有一些不同. 下面我们将依次对这两种情况进行描述. 我们首先描述ATM-LSR域的边缘组成员的行为,这些行为对域中有没有支持VC合并的LSR都是一样的.
+        
+7.1 边缘LSR行为
+考虑ATM-LSR域的边缘组的成员. 假设, 有一个路由计算结果, 选择一个ATM-LSR作为一个特定FEC的下一跳, 而且这下一跳可以通过LC-ATM接口到达. 边缘LSR使用LDP为来自下一跳的FEC请求标签绑定. 请求中的跳计数字段被置1(参见下一段). 一旦边缘LSR收到标签绑定信息, 它就使用MPLS转发过程以在指定FEC中传送分组, 使用指定标签作为输出标签. (或如果使用[4]中的VCID技术, 就用VPI/VCI来响应指定的VCID以作为输出标签). 
+注意: 如果边缘LSR的前一跳使用下游按需标签分配来为一指定FEC请求来自边缘LSR的标签, 如果边缘LSR不将来自前一跳的LSP与其它LSP合并, 如果来自前一跳的请求有h的跳计数值, 那么边缘LSR发出的请求中跳计数值应该置1, 而不是h+1.
+边缘LSR接收的绑定信息包含跳计数, 跳计数表示一个分组使用该标签 经过ATM-LSR域时需要的跳数. 如果跳计数与绑定相联合, ATM-LSR就要在发送分组前用这个数调整数据分组的TTL值. 在任何情况下, 必须在传送前至少调整数据分组的TTL值一次. 第10部分将详细讨论了这个过程(以IP分组为例). 第9部分详细讨论了分组的封装过程.
+当ATM-LSR域的边缘组的成员从ATM-LSR中接收到标签绑定请求时, 它分配一个标签, 并将包含已分配标签的绑定返回(通过LDP)到最先发起请求的对等层. 它将绑定中的跳计数置1. 
+当路由计算引起边缘LSR改变指定FEC的下一跳时, 原先的下一跳在ATM-LSR域中, 边缘LSR将要通报(通过LDP)原先的下一跳, 即与FEC关联的标签绑定, 不再使用了.
+
+7.2 传统ATM交换(非VC合并)
+ATM-LSR在LC-ATM接口上与另一个ATM-LSR的对等连接上, 接收(通过LDP)某一FEC的标签绑定请求时, ATM-LSR做以下的行为:
+---分配标签,
+---为FEC请求(通过LDP)下一跳的标签绑定,
+---将包含已分配标签的绑定返回(通过LDP)到最先发起请求的对等层,
+为这个过程, 我们定义了最大跳数值MAXHOP. 缺省值为255, 可以配置成其它值.
+ATM-LSR发送请求(发送至下一跳LSR)中的跳计数字段, 要比从上游LSR中接收的请求中的跳计数值加1. 如果此时跳计数值超过MAXHOP, 请求将不能发送到下一跳, ATM-LSR必须通报邻近上游, 请求被禁止.
+否则, 一旦ATM-LSR接收来自下一跳的绑定, 又将使用已用的标签.
+ATM-LSR可以在返回上游绑定前选择等待来自下游的请求响应. 这是一种"受控控制"方式(如[1],[2]中所定义), 特殊"入口初始受控控制". 这样, 只要ATM-LSR接收来自下游的跳数大小0且小于MAXHOP, 在返回上游时, 必须将跳数值加1, 并在绑定中包含这个结果. 然而, 如果跳数超过MAXHOP, 就不能给上游传递标签绑定. 而是, 必须通报对等上游LDP, 所请求的标签绑定被禁止. 如果从下游接收的跳数是0, 则传递给上游的跳数也是0; 这表明实际跳数是未知.
+ATM-LSR也可以选择返回上游绑定, 不必等待来自下游的绑定("独立控制", 如[1],[2]中所定义). 这样, 它绑定时指定跳数为0, 表明真实跳数未知. 跳数的正确值将在后面返回, 如下所述.
+注意ATM-LSR, 或ATM-LSR域边缘组的成员, 可以从同一ATM-LSR中接收同一FEC的多个绑定请求. 它必须为每一请求产生一个新的绑定(假定有足够的资源可以这么做), 保留任一现存的绑定. 为每一接收的请求, ATM-LSR还必须为FEC产生发送到下一跳的新的绑定请求.
+当路由计算引起ATM-LSR改变一个FEC的下一跳时, ATM-LSR必须通报(通过LDP)原先的下一跳, 即与FEC关联的标签绑定, 不再使用了.
+当LSR接收到声明指定的标签绑定不再使用的通告时, LSR将对与该绑定相关的标签进行解分配, 然后去除该绑定. ATM-LSR在接收到这样的通告和去除绑定的情况下, 必须通报FEC的下一跳, 不再使用该标签绑定了. 如果LSR不去除绑这一绑定, 只有在下面情况下, 它可以重新用此绑定, 即它接收到同一FEC的请求, 且跳数值与最先导致这一绑定产生的请求的跳数值相同. 
+当路由改变时, 标签绑定要从与先前路由不同处的路由点开始重新确立. 该点的LSR上游不用改变(有一个例外, 如下所述).
+不管LSR何时改变它特定FEC的下一跳, 如果新的下一跳通过LC-ATM接口可达, 那么对每一与该FEC相关的标签, 及分布式上游, 它都必须从下一跳中请求新的标签绑定.
+ATM-LSR从邻近下游接收到指定FEC的标签绑定时, 由于使用独立控制方式, 或由于来自下游的新绑定是路由改变的结果, 它可能已经将与该FEC相关的标签绑定发送到邻近上游. 这样, 除非跳数值为0, ATM-LSR必须将新绑定的跳数值加1. 如果新跳数值与原先发送到邻近上游的跳数值不同(包括邻近上游被赋于"未知"跳数值的情况), ATM-LSR必须向邻近上游通报这个改变. 每一ATM-LSR必须依次将跳数值加1 , 并传送至上游直到到达入口边缘LSR. 如果此间任何一点的跳数值等于MAXHOP, ATM-LSR就要从邻近上游中收回绑定. 跳数值0必须不变的传送到上游.
+作为从另一个LSR(上游)接收标签绑定请求的结果, ATM-LSR对它的下一跳LSR发出标签绑定请求, 当送往下一跳LSR的请求被禁止时, ATM-LSR应当删除对接收请求响应产生的绑定, 并通报请求者(通过LDP).
+ATM-LSR接收的绑定请求中如果包含超过MAXHOP值的跳数值, 它就不能建立绑定, 必须向请求方返回一个错误值.
+当LSR丢失了与另一个LSR的LDP部分, 将会采取下列行为. 通过LDP这一连接得到的任何绑定信息都必须丢弃. 作为从对等端接收标签绑定请求的结果而建立的任一标签绑定, LSR都将去除(解分配与这些绑定相关的标签).
+ATM-LSR从它的邻处响应绑定请求时, 使用"水平分割"方法. 就是说, 如果ATM-LSR接收一个指定FEC的绑定请求, LSR根据ATM-LSR使该请求成为指定FEC的下一跳, ATM-LSR不为路由返回绑定.
+非合并ATM-LSR通常使用"保守标签方式" [1].
+
+7.3 能实现VC合并的ATM交换
+为适应支持VC合并的ATM-LSR, 需要作一些相关的小变化. 支持VC合并的ATM-LSR的最主要的差别是对每一个FEC只需要一个输出标签, 即使从邻近上游中接收了FEC的多个标签绑定请求.
+支持VC合并的ATM-LSR从某一FEC的上游LSR中接收了绑定请求时, 对这个FEC, 它还没有输出标签绑定(或对这个标签绑定有一个明显请求), ATM-LSR必须对它的下一跳发出绑定请求, 就象不支持合并的ATM-LSR一样. 然而, 如果ATM-LSR已经有一个输出标签绑定, 它就不需要发出一个下游绑定请求. 相反, ATM-LSR会简单地分配一个输入标签, 用一个绑定向上游请求端返回该标签. 当对应这个标签的分组的最高标识被请求端接收时, 最高标识值将被现有的对应于同一FEC的输出标签值替代.
+如果ATM-LSR对FEC没有输出标签绑定, 但却有一个明显请求, 它就不需要发送另外的请求了.
+发送上游标签绑定时, 下游与相应绑定关联的跳数值必须加1, 加1后的跳数值,即新绑定关联的跳数值必须传送到上游. 然而, 有两个例外: 跳数值为0时必须将该值不变地传送到上游, 跳数值已是MAXHOP, ATM-LSR不是传送上游绑定, 而是传送一个错误信息到上游.
+注意, 既然有不支持VC合并的上游交换, 象传统的ATM-LSR和ATM-LSR域的边缘组成员一样, 支持VC合并的ATM-LSR必须在每次从上游接收到请求时, 发出新的绑定. 然而, ATM-LSR只需要在它没有标签绑定合适路由时,发送相应下游绑定请求.
+支持VC合并的ATM-LSR的路由表发生变化时, 会引起对它的FEC选择新的下一跳, 它会随意地释放原先下一跳的路由绑定. 支持VC合并的ATM-LSR对新的下一跳没有相应的绑定时,它会请求绑定.(可以选择执行保守及自由标签模式[1])
+如果获得了新绑定, 其中包含的跳数与原先的旧绑定中的跳数不同, ATM-LSR必须将新的跳数值加1, 并向所有的同一FEC标签绑定的邻近上游通报这个新值. 与传统的ATM-LSR一样, 能够将新值往回传送到ATM-LSR域的入口处. 如果在此中任何一个点上跳数值超过了MAXHOP,那么这个路由的标签绑定, 必须从所有邻近上游到该绑定先前提供处, 一一被收回. 这样, 可以确保瞬时路由引起的环路被检测出并被破坏掉.
+
+8. 封装
+这个部分描述的过程仅涉及ATM-LSR域的边缘LSR. ATM-LSR本身不对这种封装作任何修改.
+必须使用RFC 2684 [5] 6.1部分中的空封装来传递标识分组. 
+除了下面说明的特殊情况外, 当标识分组在LC-ATM接口被传递时, VPI/VCI(或VCID)值被认为标签栈中的最高标签, 分组必须包含"通用头" [3].
+如果分组的标签栈有n个条目, 则它必须有n个条目的通用头. 最高标签的实际值在VPI/VCI字段中编码. 通用头的最高条目的标签值(仅是一个"占位符"条目)在传送时必须被置0, 在接收时也必须被忽略. 分组的输出TTL, 及它的Cos信息, 分别在通用头最高栈条目中的TTL和Cos字段中携带.
+注意, 如果分组只有一个条目的标签栈, 就需要一个单目通用头(4个字节), 即使实际标签值在VPI/VCI字段中编码. 这样才能保证分组都有一个通用头. 否则, 就不可能确定分组有没有通用头, 也不可能确定它有没有额外标签栈条目.
+要消除这个额外开销的唯一方法是:
+---据先验知识分组仅有一个标签(如: 可能网络仅支持一级标签)
+---对每个FEC使用两个VC, 一个用于仅含一个标签的分组, 另一个用于有多于一个标签的分组.
+第二种方法要求有一种信令方法, VC通过LDP仅传送含一个标签的分组, 而不传送通用头. 若支持VC合并, 还必须注意不要把不使用VC的通用头合并VC到一个使用VC的通用头中, 或反之. 
+若上面两种方法都不允许使用, 就可能没有其它更实用的方法了. 注意, 如果通用头不存在, 输出TTL将在网络层头中的TTL字段中传送.
+
+9. TTL操作
+这个部分描述的过程仅涉及ATM-LSR域的边缘LSR. ATM-LSR本身不对TTL作任何修改.
+TTL调整过程的细节如下所述. 如果分组作为未标识分组被边缘LSR中接收, "输入TTL"值来自IP报头(其它网络层协议的过程需要进一步的研究). 如果分组作为标识分组被边缘LSR中被接收, 就使用[3]中详细说明的封装, "输入TTL"值来自标签栈的最高条目.
+如果跳数值与传送分组时使用的标签绑定关联, "输出TTL"就设置为下面两个值中的较大者: 0, 输入TTL与跳数值的差值. 如果跳数值不与传送分组时使用的标签绑定关联, "输出TTL"就设置为下面两个值中的较大者: 0, 比输入TTL小1的值. 
+如果这使得输出TTL变成零, 这个分组将不能视为使用指定标签的标签分组而传送. 将对分组作如下两种方法之一的处理:
+---分组超时; 将发送ICMP报文;
+---分组将作为未标识分组向前传送, TTL值为1, 比输入TTL小; 这样的传送需要在非MPLS连接上进行. 
+当然, 如果输入TTL为1, 就只能是这两种情况中的第一种.
+如果分组作为标识分组传送, 携带的输出TTL如第九部分中所指定.
+边缘LSR从LC-ATM接口中接收到标识分组时, 能从一般封装的最高标签栈条目中得到输入TTL, 或如果没有封装, 就从IP报头中得到. 
+如果分组的下一跳是ATM-LSR, 输出TTL将使用本部分讲述的过程形成. 否则输出TTL使用[3]中描述的过程形成.
+本部分的过程本来仅是用于单播分组.
+
+10. 可选环路检测: 分布路径矢量
+    作为一个可配置选项, 每一ATM-LSR必须实现下面的检测传送环路的过程. 我们称之为LDPV过程(路径矢量的环路检测). LDPV不阻止传送环路的信息, 但确保任一这样的环路被检测到. 如果该选项没有被激活, 将使用原先讨论的跳数机制检测环路. 如果该选项被激活, 环路检测将更为快速, 但这是以高开销为代价的.
+
+10.1 何时发送下游路径矢量
+假定LSR R 为特定LSP向下一跳发送一个标签绑定请求. R不支持VC合并, R 被配置成使用LDPV过程:
+---如果R为LSP发送请求, 是因为R是一个入节点, 或因为R已获得新的一跳, R将必须在请求中包括路径矢量对象, 且路径矢量对象必须只包含R的自身地址.
+---如果R从上游LSR中接收了请求后而发送请求, 那么:
+* 如果接收的请求有路径矢量对象, R必须将自身地址加入到接收的路径矢量对象中, 且必须将新路径矢量对象传送随标签绑定请求传送到它的下一跳;
+* 如果接收的请求没有路径矢量对象, R必须在发送的请求中包含路径矢量对象, 且该路径矢量对象只包含R的自身地址.
+支持VC合并的LSR不应该在它向下一跳发送的请求中包含路径矢量对象.
+如果LSR接收的标签绑定请求, 它里面的路径矢量对象包含节点自身的地址, LSR则推断出该标签绑定请求已在环路中传播了一周. LSR此时所作的处理与出现跳数值超过MAXHOP情况时所作的处理一样.(参见8.2部分)
+这一过程检测出请求消息围绕非合并ATM-LSR序列循环的情况.
+
+10.2 何时发送上游路径矢量
+如第八部分所述, 存在如下情况: LSR R必须通过标签绑定响应信息, 向它的邻近上游告知指定LSP的跳数值改变. 如果以下条件都成立:
+---R 被配置成使用LDPV过程,
+---R支持VC合并,
+---R不是LSP的出口
+---R不向它的邻处通告跳数值的减少
+那么R必须在响应信息中包含路径矢量对象.
+如果跳数值的改变是由于R的下一跳S告知跳数值改变的结果, 且从S向R传送的消息包含了路径矢量对象, 那么如果上述的条件成立, R必须在该对象中加入其自身地址, 并将结果传送到上游. 否则, 如果上述条件不成立, R必须创建一个只包含自身地址的新对象.
+如果R 被配置成使用LDPV过程, 且R支持VC合并, 那么它可以在任一向上游发送的标签绑定响应消息中包含路径矢量对象. 特别地, 当R 收到从它的下一跳中发来的标签绑定响应时, 如果该响应包含路径矢量, R可以(如果已配置成使用LDPV过程)向它的邻近上游发送响应, 其中包括在接收路径矢量中将自身地址加入而形成的路径矢量对象.
+如果R不支持VC合并, 它不能发送上游路径矢量对象.
+如果LSR从它的下一跳中接收了消息, 其中的路径矢量对象包含LSR自身地址, 那么LSR所作的处理与它在接收到的消息中跳数值等于MAXHOP情况下作的处理是一样的.
+配置成使用LDPV过程的LSR, 一旦相应路径矢量对象已被传送, 就不能存储路径矢量.
+注意, 如果ATM-LSR域完全由非合并ATM-LSR组成, 路径矢量就不需要被传送至上游, 因为通过路径矢量下游传播的方法就可以检测到任一环路.
+除非跳数值增加, 否则采用不发送路径矢量的方法时就要避免在没有环路的情况下发送. 代价是在没有环路的某些情况下, 花费在检测环路的时间会延长.
+
+11. 安全考虑
+文档详细说明的封装和过程并没有涉及任何认证过程和/或对网络层分组的加密过程(如对IP数据报的IPSEC应用). 
+文档中描述的MPLS标签过程不是不能变更的(或是偶然的, 或是恶意的).这种变更将导致错误前传.
+文档中描述的过程, 接收LSR不能鉴别传送LSR.
+在[2]在可以找到适用于标签分配机制的安全问题讨论.
+
+12 参考文献
+
+   [1] Rosen, E., Viswanathan, A. and R. Callon "Multi-Protocol Label
+       Switching Architecture", RFC 3031, January 2001.
+
+   [2] Andersson L., Doolan P., Feldman N., Fredette A. and R. Thomas,
+       "LDP Specification", RFC 3036, January 2001.
+
+   [3] Rosen, E., Rekhter, Y., Tappan, D., Farinacci, D., Fedorkow, G.,
+       Li, T. and A. Conta, "MPLS Label Stack Encoding", RFC 3032,
+       January 2001.
+
+   [4] Nagami, K., Demizu N., Esaki H. and P. Doolan, "VCID Notification
+       over ATM Link for LDP", RFC 3038, January 2001.
+
+   [5] Grossman, D., Heinanen, J., "Multiprotocol Encapsulation over ATM
+Adaptation Layer 5", RFC 2684, September 1999.
+
+
+13. Acknowledgments
+
+   Significant contributions to this work have been made by Anthony
+   Alles, Fred Baker, Dino Farinacci, Guy Fedorkow, Arthur Lin, Morgan
+   Littlewood and Dan Tappan.  We thank Alex Conta for his comments.
+
+14. Authors' Addresses
+
+   Bruce Davie
+   Cisco Systems, Inc.
+   250 Apollo Drive
+   Chelmsford, MA, 01824
+
+   EMail: bsd@cisco.com
+
+   Paul Doolan
+   Ennovate Networks Inc.
+   60 Codman Hill Rd
+   Boxborough, MA 01719
+
+   EMail: pdoolan@ennovatenetworks.com
+
+   Jeremy Lawrence
+   Cisco Systems, Inc.
+   99 Walker St.
+   North Sydney, NSW, Australia
+
+   EMail: jlawrenc@cisco.com
+
+   Keith McCloghrie
+   Cisco Systems, Inc.
+   170 Tasman Drive
+   San Jose, CA, 95134
+
+   EMail: kzm@cisco.com
+
+   Yakov Rekhter
+   Juniper Networks
+   1194 N. Mathilda Avenue
+   Sunnyvale, CA 94089
+
+   EMail: yakov@juniper.net
+
+   Eric Rosen
+   Cisco Systems, Inc.
+   250 Apollo Drive
+   Chelmsford, MA, 01824
+
+   EMail: erosen@cisco.com
+
+   George Swallow
+   Cisco Systems, Inc.
+   250 Apollo Drive
+   Chelmsford, MA, 01824
+
+   EMail: swallow@cisco.com
+
+15.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+
+
+  
+
+ 
+ 
+RFC 3035----MPLS using LDP and ATM VC Switching              用LDP和ATM的VC交换实现MPLS  
+
+
+
+
+1
+RFC文档中文翻译计划
+

@@ -1,0 +1,812 @@
+
+
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：张海斌（netdebug    internetdebug@elong.com ）
+译文发布时间：2002-01-31
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                        N. Haller
+Request for Comments: 2289                                    Bellcore
+Obsoletes: 1938                                                C. Metz
+Category: Standards Track                   Kaman Sciences Corporation
+                                                             P. Nesser
+                                            Nesser & Nesser Consulting
+                                                              M. Straw
+                                                              Bellcore
+                                                         February 1998
+
+一次口令系统
+A One-Time Password System
+
+备忘录状况
+这份文档为Internet社区指定为Internet标准（轨迹）协议，并且为进一步改进需要讨论和建议。这份协议的标准化状态和状况请参阅"Internet官方协议标准（Internet Official Protocol Standards ）"(STD 1)的当前版。这份备忘录的分发不受限制。
+
+版权声明
+   Copyright (C) The Internet Society (1998).  版权所有.
+
+目录
+目录	2
+0.译者的话	2
+1.0 摘要	3
+2.0 概述	3
+3.0 介绍	3
+4.0 需求术语	4
+5.0 安全哈希函数（SECURE HASH FUNCTION）	4
+6.0 一次口令的产生	5
+7.0 一次口令的验证	7
+8.0 一次口令更改	7
+9.0 避免竞争攻击	8
+10.0 安全考虑	9
+11.0 确认	9
+12.0 参考文献	9
+13.0 作者的地址	10
+附录 A  -  安全哈希算法界面	11
+附录 B   -  可替换字典算法	13
+附录 C  -  OTP认证例子	14
+附录 D - 六词和二进制格式之间转换的字典	17
+完整版权声明	23
+
+0.译者的话
+	译者在翻译这份文档的时候，采取直译的方式，尽量保证原文的原意。同时也尽量考虑了中文的语义顺畅，便于中文读者阅读，译者在译文中加入了一些修饰语和译注，修饰语一般在括号中写明，而译注均有“译者注”字样。由于译者翻译本篇文挡时间有限，译文中一定会存在许多理解有误、用词不当之处，欢迎读者来信指正，共同学习。
+
+
+1.0 摘要
+   	这篇文档描述一次口令认证系统（one-time password authentication system）(OTP)。系统提供对系统访问（login）的认证以及针对基于重放获取可再用口令（replaying captured reusable passwords）之上的被动攻击的安全认证需求的其他应用。OPT从S/KEY 演化而来（S/KEY是Bellcore的商标）。一次口令系统被Bellcore（贝尔通讯研究所）释放，在参考[3]和[5]中描述。
+译者注：one-time password称为一次性口令，在本文中称为一次口令。
+
+2.0 概述
+   	一种互联网计算系统的攻击形式是监听网络连接以获得认证信息，例如合法用户的登录IDs和口令。一旦这个信息被捕获，它就能获得用于以后对系统的访问（权）。一次口令系统被设计为还击这种攻击类型，称作“重播攻击”[4]（"replay attack"）。
+
+   	在本文档中描述的认证系统使用一秘密通行短语（pass-phrase）去衍生一系列一次口令（单独使用的）。使用这个系统，用户的秘密通行短语任何时候（例如认证过程中或者通行短语更改过程中）都不在网络中传输。因此，对重放攻击是非脆弱的。附加的安全通过无秘密信息需要被存储在任何系统中的特征被提供，包括被保护的服务。
+
+   	OTP系统避免针对认证子系统受到外部被动攻击的危害。它不能阻止网络监听去获得私有信息的存取以及不能提供避免或者“社会工程”（"social engineering"）或者主动攻击（active attacks）[9]的危害的保护。 
+
+3.0 介绍
+   	在OPT一次口令系统的操作中存在两个实体。发起者（generator）必须从用户的秘密通行短语和从服务的质疑（challenge）中提供的信息产生适当的一次口令。服务必须发送包括给发起者适当的产生参数的质疑，必须验证接收的一次口令，必须存储接收到的最近有效的一次口令，以及必须存储相应的一次口令序列数（sequence number）。同时服务必须也便于以安全的方式对用户的秘密通行短语的改变。
+
+   	OTP系统发起者传送用户的秘密通行短语，随后接收到从服务质疑的一部分的（随机）种子（seed），通过安全哈希函数（hash function）多次叠代运算产生一个一次口令。每一次成功的验证之后，安全哈希函数叠代的次数减少1。这样，唯一序列的口令产生了。服务通过计算安全哈希函数一次和比较先前从发起者接收到的一次口令来验证发起者的一次口令。这个技术由Leslie Lamport [1]第一次提出。
+
+4.0 需求术语
+   	在这篇文档中，用于定义每一个特殊需求的重要意义的词通常大写。这些词是：
+
+     - MUST
+
+       这个词或者形容词"REQUIRED"表示这项是具体指定的绝对需求。
+
+     - SHOULD
+
+       这个词或者形容词"RECOMMENDED"表示在特定的环境中存在有效的理由去忽略这项，但是完整的含义应该被理解以及在做出不同的进程之前要仔细衡量。
+
+     - MAY
+
+       	这个词或者形容词"OPTIONAL"表示这项是真正可选的。例如，一个销售商可以选择包括这项，因为市场的需求或者增强产品（的功能）；而另一个销售商可以忽略同一个选项。 
+
+5.0 安全哈希函数（SECURE HASH FUNCTION）
+   	OTP系统的安全依赖于安全哈希函数的不可逆性。这样的函数必须是正向易于计算的，但是反过来计算不可行。
+
+   	这里有三个这样的哈希算法接口被定义，Ronald Rivest 的MD4 [2]和MD5 [6]，以及NIST 的SHA [7]。所有服务和发起者之间一致的工具必须（MUST）支持MD5。他们应该（SHOULD）支持SHA和可以（MAY）也支持MD4。明显的，发起者和服务之间为了互操作必须使用同样的算法。其他哈希算法可以通过公开适当的接口为这个系统的使用具体指定。
+
+   	上面列出的安全哈希算法有其可以接收任意长度的输入和产生固定大小输出的特性。OPT系统使用附录A中定义的算法将输出折叠为64 bit。64 bit也是一次口令的长度。当必要时这个程度可以确认对安全是足够长的以及对于手工输入是足够短的（参见下面，输出的格式）。
+
+6.0 一次口令的产生
+   	这部分描述一次口令的产生。这个处理过程由所有输入被组合在一起的初始化步骤、安全哈希函数被应用指定次数的运算步骤，和64 bit一次口令被转化为人类可读格式的输出函数组成。
+
+   	附录C包含给定输入的集合的输出例子。它提供了证实这些算法应用的表达实现。
+
+   初始化步骤
+
+   	原则上，用户的安全通行短语可以是任何长度。为了减少来自例如穷举搜索或者字典攻击的危险，通讯短语字符串必须（MUST）至少包含10个字符（参见下面的输入格式）。所有工具必须（MUST）支持至少63个字符的通行短语。安全通行短语通常，但不被要求，是由用户提供的原文信息。
+
+   	在这个步骤中，通行短语与从服务方以明文方式传递过来的种子（seed）连接在一起。这个非安全（non-secret）种子允许客户在多个机器上（使用不同的种子）使用同样的安全通行短语以及通过改变种子安全地再循环使用他们的安全通行短语。
+
+   	这个连接的结果通过使用附录A中列举的安全哈希函数算法之一，然后产生64 bit输出。
+
+   计算步骤
+
+   	一系列一次口令通过应用对初始化步骤（称为S）的输出多次安全哈希函数运算产生。也就说，第一个一次口令通过将S传递到由用户指定次数（N次）的安全哈希函数运算产生。下一个一次口令通过传递S到安全哈希函数N-1次运算产生。监视一次口令传输的监听者不能产生下一个需要的口令，因为要做到这些就意味着哈希函数的逆运算。
+
+   输入的格式
+
+   	安全通行短语仅被OTP发起者看到。为了允许发起者之间的可交互性，所有的发起者必须（MUST）支持10到63字符长度的安全通行短语。执行工具可以（MAY）支持更长的通行短语，但是这样的工具存在与仅支持短通行短语的工具之间失去交互性。
+
+   	种子必须（MUST）由纯正的字母数字字符（alphanumeric characters）组成以及在长度上为16字符长。种子是一串必须（MUST）不能包含空格（blanks）和应该由严格的从来自ISO-646内部编码集合（ISO-646 Invariant Code Set）的字母数字字符组成的字符串。种子必须（MUST）是大小写无关的以及必须（MUST）是在处理之前内部转换为小写。
+
+   	序列号和种子一起组成一个大的数据单元称为挑战（challenge）。挑战作为从安全通行短语计算正确的一次口令需要的参数提供给发起者。挑战必须（MUST）是标准语法以便自动产生在上下文中能识别的挑战以及提取这些参数。挑战的语法如下：
+           otp-<algorithm identifier> <sequence integer> <seed>
+
+   	三个标志段（tokens）必须（MUST）以空格分开(可以定义为任何数量的空格和/或制表符tabs)和整个挑战字符串必须（MUST）以或者是空格或者一新行结束。字符串"otp-"必须（MUST）为小写。算法标识符是大小写敏感的(已知存在的标识符都是小写)，以及种子是大小写不敏感的并且在使用之前转换为小写。如果额外的算法被定义，适当的标识符(短的，但是没有限制为三或者四个字符)必须被定义。当前定义的算法标识符是：
+
+       md4        MD4 Message Digest
+       md5        MD5 Message Digest
+       sha1       NIST Secure Hash Algorithm Revision 1
+
+   一个OTP挑战例子是：otp-md5 487 dog2
+
+   输出的格式
+
+   上面处理过程产生的一次口令在长度上为64 bit。输入一个64 bit数字是困难的并且容易出错的过程。 一些产生器插入口令到输入流中和另外一些对于“剪切和粘贴”的系统使其有效。仍然有一些其他的布置（arrangements）需要一次口令手工输入。OTP系统设计为易于手工输入而没有妨碍自动的方法。因此一次口令可以（MAY）转换为，和所有服务必须（MUST）有能力接受的，仅使用从ISO-646 IVCS字符集中的六个（1到4个字母letter）简单类型词（word）的序列。每个词从2048个词的字典中选取；每个词为11bit，所有一次口令可以被编码。 
+
+   	在这个编码中两个附加位（bits）用于存储校验和（checksum）。密钥的64 bits被分裂为一对bits,然后这些对（pairs）被加和在一起。 这个和（sum）的两个最低有效位在随着和（sum）的最低有效位作为最低位编码的六词（word）序列的最后两位（bits）被编码。所有OTP产生器必须（MUST）计算这个校验和以及所有OTP服务必须（MUST）作为解码（decoding）这个一次口令的代表操作的一个部分显式的验证这个校验和。 
+
+   	产生六词格式（six-word format）的产生器必须（MUST）以单空格作为分隔的大写形式展示。所有服务必须（MUST）接受六词格式而忽略大小写和用作分隔的空格。下面两行表示同一个一次口令。第一行作为从产生器输出和服务的输入是有效的，第二行仅作为手工输入到服务是有效的。
+
+            OUST COAT FOAL MUG BEAK TOTE
+            oust coat foal  mug  beak  tote
+
+   	互操作要求所有的OTP服务和产生器使用相同的字典。标准字典起初在其描述在RFC 1760 [5]中的"S/KEY One Time Password System"明确指定。
+
+     为了便于小的产生器的实现（implementation），对于一次口令的表示十六进制输出是一个可选择的表示。所有服务软件的实现必须（MUST）接受同六词格式一样的大小写不敏感的十六进制（数字）。十六进制数字可以由空格分隔,所以服务要求（REQUIRED）忽略所有的空格。如果表示是通过空格分开的，首位的零必须保留。十六进制格式的例子如下：
+
+           Representation（表示）        Value（值）
+
+           3503785b369cda8b              0x3503785b369cda8b
+           e5cc a1b8 7c13 096b           0xe5cca1b87c13096b
+           C7 48 90 F4 27 7B A1 CF       0xc74890f4277ba1cf
+           47 9 A68 28 4C 9D 0 1BC       0x479a68284c9d01bc
+
+   	除了接受六词和十六进制的64 bit一次口令编码之外，服务应该（SHOULD）接受在附录B中描述的可替换的字典编码。在这个编码中的六个词一定（MUST）不能与在标准字典词的集合中重叠（overlap）。为了避免十六进制表示的含糊不清（ambiguity），在可替换字典中的词必须（MUST）不能仅由字母A-F构成。这样编码的解码词不需要任何可替换字典使用的知识，所以任何可选字典的可接受暗含着所有字典的可接受。在可替换字典中的词是大小写敏感的。产生器和服务必须（MUST）在处理这些词的过程中保护大小写。 
+
+   	总的来说，所有兼容的服务必须（MUST）接受使用标准字典（RFC 1760 和附录D）的六词输入，必须（MUST）接受十六进制编码，和应该（SHOULD）接受使用可替代字典技术（Alternative Dictionary technique）（附录B）的六词输入。一次口令的十六进制编码看上去像一个有效的六词标准字典编码是有很小的可能性的，所有工具（implementations）必须（MUST）使用下列模式（scheme），如果一个六词编码的一次口令是有效的，它被接受。否则如果一次口令可以作为十六进制被解释，和编码是有效的，那么它被接受。
+
+7.0 一次口令的验证
+   	正如上文描述的一个期望OTP验证需求的服务系统的应用发送一个OTP挑战。从这个挑战和安全通行短语给定参数，发起者能计算（或者查找）通过服务被验证的一次口令。
+
+   	服务系统有一个数据库，包含每一个用户，从最后成功验证的一次口令或者新近初始化的第一个OTP序列。为了验证用户，服务解码从发起者接受到的一次口令为64-bit 密钥并且然后这个密钥通过安全哈希函数一次。如果这个操作的结果匹配存储的先前OTP，验证是成功的和接受的一次口令被存储为将来使用。
+
+8.0 一次口令更改
+   	由于哈希函数应用的数目通过产生器每次减少1执行，在一些点上用户必须重新初始化系统，否则不能够进行验证。
+
+   	尽管一些计算站（installations）可能不允许用户初始化远端，应用工具必须（MUST）提供一种方法去做，而不泄露用户的安全通行短语。一种方法是通过明确指定第一个一次口令的方式提供一个重新初始化的序列。
+
+   	当一次口令序列被重新初始化的时候，工具必须（MUST）验证种子或者通行短语被更换。计算站应该（SHOULD）不鼓励任何以明文的方式在网络上发送安全通行短语的操作，因为这样的行为失去了一次口令的概念。
+
+   工具可以（MAY）为[重新]初始化使用下列的技术：
+
+      o  用户选择一个新的种子和哈希计数（count）(默认的值可以被提供)。用户提供这些，然后相应产生一次口令，对于主机系统。
+
+      o  用户也可以（MAY）作为错误检查对count-1次产生相应的一次口令。
+
+      o  用户应该（SHOULD）针对原有的种子和原有的哈希计数产生一次口令为了保护空闲终端（idle terminal）或者工作站（这个暗含着当计数是1的时候，用户能够登陆但是不能修改种子或者计数）。 
+
+   	将来明确指定的协议可以被定义，对于所有的主机和产生器将能够允许平滑的和也许自动的互操作的重新初始化。
+
+9.0 避免竞争攻击
+   	所有一致服务工具必须（MUST）在避免本部分中描述的竞争状况的危害。抵御这个攻击的防护是概括的；工具可以（MAY）使用这个方法（approach）或者可以（MAY）选择一个可选择的防御。
+
+   	对于一个攻击者去监听大多数的一次口令，猜测剩余的，然后迅速传递合法用户完成授权是可能的。多数针对六词格式的最后一个词进行猜测更可能成功。
+
+   	一个可能的防御是防止用户同时开始多个认证会话。这个意味着一次合法用户已经初始化的认证，攻击者将被阻塞直到第一次认证处理完成。在这个方法（approach）中，为防止拒绝服务攻击（denial of service attack）超时时间是必须的。
+
+10.0 安全考虑
+   	这篇文档讨论针对简单口令系统[4]的通过限定已经使用的监听/重放攻击的危险改善安全的认证系统。
+
+   	OTP系统的使用仅提供避免被动监听/重放攻击危害的保护。它没有提供对于传输数据的保密，以及它没有提供避免例如在当前Internet[9]上已知存在的会话拦劫（session hijacking）的主动攻击的危害保护。IP Security(IPsec)的使用，参见[10], [11], 和[12]针对TCP会话拦劫的保护被推荐。
+
+   	OTP系统对主机系统的成功保护依赖于使用的安全哈希函数不可逆性（non-invertability）。据我们所知，没有哈希算法已经被攻破，但是通常认为MD4没有MD5安全强度高。如果服务支持多种哈希算法，它（系统的安全）仅同最弱算法的安全强度。
+
+11.0 确认
+   	在OTP的认证观念（idea）由Leslie Lamport[1]第一次提出建议。Bellcore（贝尔通讯研究所）的 S/KEY系统，其是OTP的起源，由Phil Karn提出建议，其也发表了大部分的Bellcore参考实现（implementation）。 
+
+12.0 参考文献
+   [1]  Leslie Lamport, "Password Authentication with Insecure
+        Communication", Communications of the ACM 24.11 (November
+        1981), 770-772
+
+   [2]  Rivest, R., "The MD4 Message-Digest Algorithm", RFC 1320,
+        April 1992.
+
+   [3]  Neil Haller, "The S/KEY One-Time Password System", Proceedings
+        of the ISOC Symposium on Network and Distributed System
+        Security, February 1994, San Diego, CA
+
+   [4]  Haller, N., and R. Atkinson, "On Internet Authentication",
+        RFC 1704, October 1994.
+
+   [5]  Haller, N., "The S/KEY One-Time Password System",
+        RFC 1760, February 1995.
+
+   [6]  Rivest, R., "The MD5 Message-Digest Algorithm", RFC 1321,
+        April 1992.
+
+   [7]  National Institute of Standards and Technology (NIST),
+        "Announcing the Secure Hash Standard", FIPS 180-1, U.S.
+        Department of Commerce, April 1995.
+
+   [8]  International Standard - Information Processing -- ISO 7-bit
+        coded character set for information interchange (Invariant Code
+        Set), ISO-646, International Standards Organization, Geneva,
+        Switzerland, 1983
+
+   [9]  Computer Emergency Response Team (CERT), "IP Spoofing and
+        Hijacked Terminal Connections", CA-95:01, January 1995.
+        Available via anonymous ftp from info.cert.org in
+        /pub/cert_advisories.
+
+   [10] Atkinson, R., "Security Architecture for the Internet Protocol",
+        RFC 1825, August 1995.
+
+   [11] Atkinson, R., "IP Authentication Header", RFC 1826, August
+        1995.
+
+   [12] Atkinson, R., "IP Encapsulating Security Payload (ESP)", RFC
+        1827, August 1995.
+
+13.0 作者的地址
+   Neil Haller
+   Bellcore
+   MCC 1C-265B
+   445 South Street
+   Morristown, NJ, 07960-6438, USA
+
+   Phone: +1 201 829-4478
+   Fax:   +1 201 829-2504
+   EMail: nmh@bellcore.com
+
+
+   Craig Metz
+   Kaman Sciences Corporation
+   For NRL Code 5544
+   4555 Overlook Avenue, S.W.
+   Washington, DC, 20375-5337, USA
+
+   Phone: +1 202 404-7122
+   Fax:   +1 202 404-7942
+   EMail: cmetz@cs.nrl.navy.mil
+
+
+   Philip J. Nesser II
+   Nesser & Nesser Consulting
+   13501 100th Ave NE
+   Suite 5202
+   Kirkland, WA 98034, USA
+
+   Phone: +1 206 481 4303
+   EMail: pjnesser@martigny.ai.mit.edu
+
+
+   Mike Straw
+   Bellcore
+   RRC 1A-225
+   445 Hoes Lane
+   Piscataway, NJ 08854-4182
+
+   Phone:  +1 908 699-5212
+   EMail:  mess@bellcore.com
+
+附录 A  -  安全哈希算法界面
+   	原始互操作测试提供了有效的察看当转换协议规范到运行编码时的细微的问题。特别是，数据比特顺序的操作依赖于硬件结构，计算机存储多字节数据的具体方式。这种方法典型的称为大或者小头（"endian"）。大头机器存储数据最高有效位在前，而小头机器存储数据最低有效位在前。这样，在大头机器上数据存储从左到右，而小头机器存储数据从右到左。
+
+   	例如，四字节值0x11AABBCC存储在大头机器是按照下列四字节序列"0x11", "0xAA", "0xBB", 和"0xCC"，而在小头机器上存储序列将是"0xCC", "0xBB", "0xAA", 和"0x11"。
+
+   	由于历史的原因，和为了促进已存在设备的互操作性，决定所有哈希合并到OTP协议必须（MUST）存储哈希函数的输出以小头格式，这在输出比特流折叠为64比特（bits）之前发生。这个在MD4和MD5执行中被做（参见参考[2]和[6]），然而对于SHA1（参见参考[7]）的执行必须明确被做。
+
+   	任何未来应用到OTP协议的哈希函数应该（SHOULD）提供允许独立应用操作成功的相似的代码参考片断。
+
+   MD4 消息文摘 (参见参考 [2])
+
+     MD4_CTX md;
+     unsigned char result[16];
+
+     strcpy(buf, seed);     /* seed must be in lower case */
+     strcat(buf, passwd);
+     MD4Init(&md);
+     MD4Update(&md, (unsigned char *)buf, strlen(buf));
+     MD4Final(result, &md);
+
+     /* Fold the 128 bit result to 64 bits */
+     for (i = 0; i < 8; i++)
+             result[i] ^= result[i+8];
+
+MD5 消息文摘 (参见参考[6])
+
+     MD5_CTX md;
+     unsigned char result[16];
+     strcpy(buf, seed);     /* seed must be in lower case */
+     strcat(buf, passwd);
+     MD5Init(&md);
+     MD5Update(&md, (unsigned char *)buf, strlen(buf));
+     MD5Final(result, &md);
+
+     /* Fold the 128 bit result to 64 bits */
+     for (i = 0; i < 8; i++)
+             result[i] ^= result[i+8];
+
+
+SHA 安全哈希算法 (参见参考[7])
+
+     SHA_INFO sha;
+     unsigned char result[16];
+     strcpy(buf, seed);     /* seed must be in lower case */
+     strcat(buf, passwd);
+     sha_init(&sha);
+     sha_update(&sha, (unsigned char *)buf, strlen(buf));
+     sha_final(&sha);       /* NOTE:  no result buffer */
+
+     /* Fold the 160 bit result to 64 bits */
+     sha.digest[0] ^= sha.digest[2];
+     sha.digest[1] ^= sha.digest[3];
+     sha.digest[0] ^= sha.digest[4];
+
+     /*
+      * copy the resulting 64 bits to the result buffer in little endian
+      * fashion (analogous to the way MD4Final() and MD5Final() do).
+      */
+     for (i = 0, j = 0; j < 8; i++, j += 4)
+     {
+             result[j]   = (unsigned char)(sha.digest[i] & 0xff);
+             result[j+1] = (unsigned char)((sha.digest[i] >> 8) & 0xff);
+             result[j+2] = (unsigned char)((sha.digest[i] >> 16) & 0xff);
+             result[j+3] = (unsigned char)((sha.digest[i] >> 24) & 0xff);
+     }
+
+附录 B   -  可替换字典算法
+   	OTP一次口令可替换字典编码的目的是允许特指语言或者友好词句的使用。大小写转换总没有很好的定义，所以可替换字典编码是大小写敏感的。服务应该（SHOULD）接受除了标准六词和十六进制编码以外的这种编码。
+
+   	使用可替换字典的编码生成程序
+
+   标准六词编码使用在字典中词的布局表示11-bit 数字的编码。那么64-bit一次口令能够通过六个词表示。
+
+     	一个2048词的可替换字典可以这样创造，每个词W和词在字典中的位置顺序N的关系如下：
+             alg( W ) % 2048 == N
+    其中
+             alg是使用的哈希算法 (例如 MD4, MD5, SHA1)。
+
+    此外，在标准字典中没有词可以被选择。
+
+    产生器通过计算标准六词编码的奇偶校验扩展64-bit 一次口令到66 bits。六个11-bit数字然后通过使用例如上面关系创造的字典转换为词。
+
+   可替换字典一次口令的服务解码
+
+    使用上面的编码服务接受可替换字典编码转换每一个词到11-bit数字。这些数字然后使用同样的方式解码标准字典词来形成66-bit 一次口令。
+
+    服务不需要已经存取了其要被验证的一次口令创建使用的可替换字典。这是因为从词到11-bit 数字的解码不必使用任何字典。作为字典独立的结果，服务可以接受一个可替换字典，就可以接受所有的可替换字典。
+
+附录 C  -  OTP认证例子
+   	这个附录提供了三个定义的OTP密码哈希算法一系列的输入和正确的输出――MD4、MD5和SHA1。这篇文档目的是当创建产生器和服务时为了开发者互操作检查使用。输出在文档附录D中以十六进制计数法和六词编码提供。
+
+   普通检查
+
+   注意给定这些检查的输出不是为了逐字地去做，但是动作类型的描述应该给出。
+
+   Pass Phrase Length（通行短语长度）
+
+ Input:（输入）
+   Pass Phrase: Too_short（通行短语）
+   Seed: iamvalid（种子）
+   Count: 99（计数）
+   Hash: ANY（哈希算法）
+ Output:（输出）
+   ERROR:  Pass Phrase too short（通行短语太短）
+
+ Input:
+   Pass Phrase:
+     1234567890123456789012345678901234567890123456789012345678901234
+   Seed: iamvalid
+   Count: 99
+   Hash: ANY
+ Output:
+   WARNING: Pass Phrase longer than the recommended maximum length of 63（通行短语的长度大于推荐的最长长度63）
+
+Seed Values（种子值）
+
+ Input:
+   Pass Phrase:  A_Valid_Pass_Phrase
+   Seed: Length_Okay
+   Count: 99
+   Hash: ANY
+ Output:
+   ERROR: Seed must be purely alphanumeric（种子必须完全是字母数字）
+
+ Input:
+   Pass Phrase:  A_Valid_Pass_Phrase
+   Seed: LengthOfSeventeen
+
+   Count: 99
+   Hash: ANY
+
+ Output:
+   ERROR: Seed must be between 1 and 16 characters in length（种子必须在1到16个字母长度之间）
+
+ Input:
+   Pass Phrase:  A_Valid_Pass_Phrase
+   Seed: A Seed
+   Count: 99
+   Hash: ANY
+ Output:
+   ERROR: Seed must not contain any spaces（种子必须不能包括任何空格）
+
+Parity Calculations（奇偶校验计算）
+
+ Input:
+   Pass Phrase: A_Valid_Pass_Phrase
+   Seed: AValidSeed
+   Count: 99
+   Hash: MD5
+ Output:
+   Hex: 85c43ee03857765b
+   Six Word(CORRECT):          FOWL KID MASH DEAD DUAL OAF
+   Six Word(INCORRECT PARITY): FOWL KID MASH DEAD DUAL NUT
+   Six Word(INCORRECT PARITY): FOWL KID MASH DEAD DUAL O
+   Six Word(INCORRECT PARITY): FOWL KID MASH DEAD DUAL OAK
+
+MD4 ENCODINGS（MD4编码）
+
+Pass Phrase     Seed    Cnt Hex                 Six Word Format
+========================================================================
+This is a test. TeSt     0  D185 4218 EBBB 0B51
+                                           ROME MUG FRED SCAN LIVE LACE
+This is a test. TeSt     1  6347 3EF0 1CD0 B444
+                                           CARD SAD MINI RYE COL KIN
+This is a test. TeSt    99  C5E6 1277 6E6C 237A
+                                           NOTE OUT IBIS SINK NAVE MODE
+AbCdEfGhIjK     alpha1   0  5007 6F47 EB1A DE4E
+                                           AWAY SEN ROOK SALT LICE MAP
+AbCdEfGhIjK     alpha1   1  65D2 0D19 49B5 F7AB
+                                           CHEW GRIM WU HANG BUCK SAID
+AbCdEfGhIjK     alpha1  99  D150 C82C CE6F 62D1
+                                           ROIL FREE COG HUNK WAIT COCA
+OTP's are good  correct  0  849C 79D4 F6F5 5388
+                                           FOOL STEM DONE TOOL BECK NILE
+OTP's are good  correct  1  8C09 92FB 2508 47B1
+                                           GIST AMOS MOOT AIDS FOOD SEEM
+OTP's are good  correct 99  3F3B F4B4 145F D74B
+                                           TAG SLOW NOV MIN WOOL KENO
+MD5 ENCODINGS（MD5编码）
+
+Pass Phrase     Seed    Cnt Hex                 Six Word Format
+========================================================================
+This is a test. TeSt     0  9E87 6134 D904 99DD
+                                           INCH SEA ANNE LONG AHEM TOUR
+This is a test. TeSt     1  7965 E054 36F5 029F
+                                           EASE OIL FUM CURE AWRY AVIS
+This is a test. TeSt    99  50FE 1962 C496 5880
+                                           BAIL TUFT BITS GANG CHEF THY
+AbCdEfGhIjK     alpha1   0  8706 6DD9 644B F206
+                                           FULL PEW DOWN ONCE MORT ARC
+AbCdEfGhIjK     alpha1   1  7CD3 4C10 40AD D14B
+                                           FACT HOOF AT FIST SITE KENT
+AbCdEfGhIjK     alpha1  99  5AA3 7A81 F212 146C
+                                           BODE HOP JAKE STOW JUT RAP
+OTP's are good  correct  0  F205 7539 43DE 4CF9
+                                           ULAN NEW ARMY FUSE SUIT EYED
+OTP's are good  correct  1  DDCD AC95 6F23 4937
+                                           SKIM CULT LOB SLAM POE HOWL
+OTP's are good  correct 99  B203 E28F A525 BE47
+                                           LONG IVY JULY AJAR BOND LEE
+
+SHA1 ENCODINGS（SHA1编码）
+
+Pass Phrase     Seed    Cnt Hex                 Six Word Format
+========================================================================
+This is a test. TeSt     0  BB9E 6AE1 979D 8FF4
+                                           MILT VARY MAST OK SEES WENT
+This is a test. TeSt     1  63D9 3663 9734 385B
+                                           CART OTTO HIVE ODE VAT NUT
+This is a test. TeSt    99  87FE C776 8B73 CCF9
+                                           GAFF WAIT SKID GIG SKY EYED
+AbCdEfGhIjK     alpha1   0  AD85 F658 EBE3 83C9
+                                           LEST OR HEEL SCOT ROB SUIT
+AbCdEfGhIjK     alpha1   1  D07C E229 B5CF 119B
+                                           RITE TAKE GELD COST TUNE RECK
+AbCdEfGhIjK     alpha1  99  27BC 7103 5AAF 3DC6
+                                           MAY STAR TIN LYON VEDA STAN
+OTP's are good  correct  0  D51F 3E99 BF8E 6F0B
+                                           RUST WELT KICK FELL TAIL FRAU
+OTP's are good  correct  1  82AE B52D 9437 74E4
+                                           FLIT DOSE ALSO MEW DRUM DEFY
+OTP's are good  correct 99  4F29 6A74 FE15 67EC
+                                           AURA ALOE HURL WING BERG WAIT
+
+附录 D - 六词和二进制格式之间转换的字典
+
+   这个字典来自于原始Bellcore （贝尔通讯研究所）参考发行的模块put.c（文件）。
+
+{        "A",     "ABE",   "ACE",   "ACT",   "AD",    "ADA",   "ADD",
+"AGO",   "AID",   "AIM",   "AIR",   "ALL",   "ALP",   "AM",    "AMY",
+"AN",    "ANA",   "AND",   "ANN",   "ANT",   "ANY",   "APE",   "APS",
+"APT",   "ARC",   "ARE",   "ARK",   "ARM",   "ART",   "AS",    "ASH",
+"ASK",   "AT",    "ATE",   "AUG",   "AUK",   "AVE",   "AWE",   "AWK",
+"AWL",   "AWN",   "AX",   "AYE",   "BAD",   "BAG",   "BAH",   "BAM",
+"BAN",   "BAR",   "BAT",   "BAY",   "BE",    "BED",   "BEE",   "BEG",
+"BEN",   "BET",   "BEY",   "BIB",   "BID",   "BIG",   "BIN",   "BIT",
+"BOB",   "BOG",   "BON",   "BOO",   "BOP",   "BOW",   "BOY",   "BUB",
+"BUD",   "BUG",   "BUM",   "BUN",   "BUS",   "BUT",   "BUY",   "BY",
+"BYE",   "CAB",   "CAL",   "CAM",   "CAN",   "CAP",   "CAR",   "CAT",
+"CAW",   "COD",   "COG",   "COL",   "CON",   "COO",   "COP",   "COT",
+"COW",   "COY",   "CRY",   "CUB",   "CUE",   "CUP",   "CUR",   "CUT",
+"DAB",   "DAD",   "DAM",   "DAN",   "DAR",   "DAY",   "DEE",   "DEL",
+"DEN",   "DES",   "DEW",   "DID",   "DIE",   "DIG",   "DIN",   "DIP",
+"DO",    "DOE",   "DOG",   "DON",   "DOT",   "DOW",   "DRY",   "DUB",
+"DUD",   "DUE",   "DUG",   "DUN",   "EAR",   "EAT",   "ED",    "EEL",
+"EGG",   "EGO",   "ELI",   "ELK",   "ELM",   "ELY",   "EM",    "END",
+"EST",   "ETC",   "EVA",   "EVE",   "EWE",   "EYE",   "FAD",   "FAN",
+"FAR",   "FAT",   "FAY",   "FED",   "FEE",   "FEW",   "FIB",   "FIG",
+"FIN",   "FIR",   "FIT",   "FLO",   "FLY",   "FOE",   "FOG",   "FOR",
+"FRY",   "FUM",   "FUN",   "FUR",   "GAB",   "GAD",   "GAG",   "GAL",
+"GAM",   "GAP",   "GAS",   "GAY",   "GEE",   "GEL",   "GEM",   "GET",
+"GIG",   "GIL",   "GIN",   "GO",    "GOT",   "GUM",   "GUN",   "GUS",
+"GUT",   "GUY",   "GYM",   "GYP",   "HA",    "HAD",   "HAL",   "HAM",
+"HAN",   "HAP",   "HAS",   "HAT",   "HAW",   "HAY",   "HE",    "HEM",
+"HEN",   "HER",   "HEW",   "HEY",   "HI",    "HID",   "HIM",   "HIP",
+"HIS",   "HIT",   "HO",   "HOB",   "HOC",   "HOE",   "HOG",   "HOP",
+"HOT",   "HOW",   "HUB",   "HUE",   "HUG",   "HUH",   "HUM",   "HUT",
+"I",     "ICY",   "IDA",   "IF",    "IKE",   "ILL",   "INK",   "INN",
+"IO",    "ION",   "IQ",   "IRA",   "IRE",   "IRK",   "IS",    "IT",
+"ITS",   "IVY",   "JAB",   "JAG",   "JAM",   "JAN",   "JAR",   "JAW",
+"JAY",   "JET",   "JIG",   "JIM",   "JO",    "JOB",   "JOE",   "JOG",
+"JOT",   "JOY",   "JUG",   "JUT",   "KAY",   "KEG",   "KEN",   "KEY",
+"KID",   "KIM",   "KIN",   "KIT",   "LA",    "LAB",   "LAC",   "LAD",
+"LAG",   "LAM",   "LAP",   "LAW",   "LAY",   "LEA",   "LED",   "LEE",
+"LEG",   "LEN",   "LEO",   "LET",   "LEW",   "LID",   "LIE",   "LIN",
+"LIP",   "LIT",   "LO",   "LOB",   "LOG",   "LOP",   "LOS",   "LOT",
+"LOU",   "LOW",   "LOY",   "LUG",   "LYE",   "MA",    "MAC",   "MAD",
+"MAE",   "MAN",   "MAO",   "MAP",   "MAT",   "MAW",   "MAY",   "ME",
+"MEG",   "MEL",   "MEN",   "MET",   "MEW",   "MID",   "MIN",   "MIT",
+"MOB",   "MOD",   "MOE",   "MOO",   "MOP",   "MOS",   "MOT",   "MOW",
+"MUD",   "MUG",   "MUM",   "MY",    "NAB",   "NAG",   "NAN",   "NAP",
+
+"NAT",   "NAY",   "NE",   "NED",   "NEE",   "NET",   "NEW",   "NIB",
+"NIL",   "NIP",   "NIT",   "NO",    "NOB",   "NOD",   "NON",   "NOR",
+"NOT",   "NOV",   "NOW",   "NU",    "NUN",   "NUT",   "O",     "OAF",
+"OAK",   "OAR",   "OAT",   "ODD",   "ODE",   "OF",    "OFF",   "OFT",
+"OH",    "OIL",   "OK",   "OLD",   "ON",    "ONE",   "OR",    "ORB",
+"ORE",   "ORR",   "OS",   "OTT",   "OUR",   "OUT",   "OVA",   "OW",
+"OWE",   "OWL",   "OWN",   "OX",    "PA",    "PAD",   "PAL",   "PAM",
+"PAN",   "PAP",   "PAR",   "PAT",   "PAW",   "PAY",   "PEA",   "PEG",
+"PEN",   "PEP",   "PER",   "PET",   "PEW",   "PHI",   "PI",    "PIE",
+"PIN",   "PIT",   "PLY",   "PO",    "POD",   "POE",   "POP",   "POT",
+"POW",   "PRO",   "PRY",   "PUB",   "PUG",   "PUN",   "PUP",   "PUT",
+"QUO",   "RAG",   "RAM",   "RAN",   "RAP",   "RAT",   "RAW",   "RAY",
+"REB",   "RED",   "REP",   "RET",   "RIB",   "RID",   "RIG",   "RIM",
+"RIO",   "RIP",   "ROB",   "ROD",   "ROE",   "RON",   "ROT",   "ROW",
+"ROY",   "RUB",   "RUE",   "RUG",   "RUM",   "RUN",   "RYE",   "SAC",
+"SAD",   "SAG",   "SAL",   "SAM",   "SAN",   "SAP",   "SAT",   "SAW",
+"SAY",   "SEA",   "SEC",   "SEE",   "SEN",   "SET",   "SEW",   "SHE",
+"SHY",   "SIN",   "SIP",   "SIR",   "SIS",   "SIT",   "SKI",   "SKY",
+"SLY",   "SO",    "SOB",   "SOD",   "SON",   "SOP",   "SOW",   "SOY",
+"SPA",   "SPY",   "SUB",   "SUD",   "SUE",   "SUM",   "SUN",   "SUP",
+"TAB",   "TAD",   "TAG",   "TAN",   "TAP",   "TAR",   "TEA",   "TED",
+"TEE",   "TEN",   "THE",   "THY",   "TIC",   "TIE",   "TIM",   "TIN",
+"TIP",   "TO",    "TOE",   "TOG",   "TOM",   "TON",   "TOO",   "TOP",
+"TOW",   "TOY",   "TRY",   "TUB",   "TUG",   "TUM",   "TUN",   "TWO",
+"UN",    "UP",    "US",   "USE",   "VAN",   "VAT",   "VET",   "VIE",
+"WAD",   "WAG",   "WAR",   "WAS",   "WAY",   "WE",    "WEB",   "WED",
+"WEE",   "WET",   "WHO",   "WHY",   "WIN",   "WIT",   "WOK",   "WON",
+"WOO",   "WOW",   "WRY",   "WU",    "YAM",   "YAP",   "YAW",   "YE",
+"YEA",   "YES",   "YET",   "YOU",   "ABED",  "ABEL",  "ABET",  "ABLE",
+"ABUT",  "ACHE",  "ACID",  "ACME",  "ACRE",  "ACTA",  "ACTS",  "ADAM",
+"ADDS",  "ADEN",  "AFAR",  "AFRO",  "AGEE",  "AHEM",  "AHOY",  "AIDA",
+"AIDE",  "AIDS",  "AIRY",  "AJAR",  "AKIN",  "ALAN",  "ALEC",  "ALGA",
+"ALIA",  "ALLY",  "ALMA",  "ALOE",  "ALSO",  "ALTO",  "ALUM",  "ALVA",
+"AMEN",  "AMES",  "AMID",  "AMMO",  "AMOK",  "AMOS",  "AMRA",  "ANDY",
+"ANEW",  "ANNA",  "ANNE",  "ANTE",  "ANTI",  "AQUA",  "ARAB",  "ARCH",
+"AREA",  "ARGO",  "ARID",  "ARMY",  "ARTS",  "ARTY",  "ASIA",  "ASKS",
+"ATOM",  "AUNT",  "AURA",  "AUTO",  "AVER",  "AVID",  "AVIS",  "AVON",
+"AVOW",  "AWAY",  "AWRY",  "BABE",  "BABY",  "BACH",  "BACK",  "BADE",
+"BAIL",  "BAIT",  "BAKE",  "BALD",  "BALE",  "BALI",  "BALK",  "BALL",
+"BALM",  "BAND",  "BANE",  "BANG",  "BANK",  "BARB",  "BARD",  "BARE",
+"BARK",  "BARN",  "BARR",  "BASE",  "BASH",  "BASK",  "BASS",  "BATE",
+"BATH",  "BAWD",  "BAWL",  "BEAD",  "BEAK",  "BEAM",  "BEAN",  "BEAR",
+"BEAT",  "BEAU",  "BECK",  "BEEF",  "BEEN",  "BEER",  "BEET",  "BELA",
+"BELL",  "BELT",  "BEND",  "BENT",  "BERG",  "BERN",  "BERT",  "BESS",
+"BEST",  "BETA",  "BETH",  "BHOY",  "BIAS",  "BIDE",  "BIEN",  "BILE",
+"BILK",  "BILL",  "BIND",  "BING",  "BIRD",  "BITE",  "BITS",  "BLAB",
+"BLAT",  "BLED",  "BLEW",  "BLOB",  "BLOC",  "BLOT",  "BLOW",  "BLUE",
+"BLUM",  "BLUR",  "BOAR",  "BOAT",  "BOCA",  "BOCK",  "BODE",  "BODY",
+
+"BOGY",  "BOHR",  "BOIL",  "BOLD",  "BOLO",  "BOLT",  "BOMB",  "BONA",
+"BOND",  "BONE",  "BONG",  "BONN",  "BONY",  "BOOK",  "BOOM",  "BOON",
+"BOOT",  "BORE",  "BORG",  "BORN",  "BOSE",  "BOSS",  "BOTH",  "BOUT",
+"BOWL",  "BOYD",  "BRAD",  "BRAE",  "BRAG",  "BRAN",  "BRAY",  "BRED",
+"BREW",  "BRIG",  "BRIM",  "BROW",  "BUCK",  "BUDD",  "BUFF",  "BULB",
+"BULK",  "BULL",  "BUNK",  "BUNT",  "BUOY",  "BURG",  "BURL",  "BURN",
+"BURR",  "BURT",  "BURY",  "BUSH",  "BUSS",  "BUST",  "BUSY",  "BYTE",
+"CADY",  "CAFE",  "CAGE",  "CAIN",  "CAKE",  "CALF",  "CALL",  "CALM",
+"CAME",  "CANE",  "CANT",  "CARD",  "CARE",  "CARL",  "CARR",  "CART",
+"CASE",  "CASH",  "CASK",  "CAST",  "CAVE",  "CEIL",  "CELL",  "CENT",
+"CERN",  "CHAD",  "CHAR",  "CHAT",  "CHAW",  "CHEF",  "CHEN",  "CHEW",
+"CHIC",  "CHIN",  "CHOU",  "CHOW",  "CHUB",  "CHUG",  "CHUM",  "CITE",
+"CITY",  "CLAD",  "CLAM",  "CLAN",  "CLAW",  "CLAY",  "CLOD",  "CLOG",
+"CLOT",  "CLUB",  "CLUE",  "COAL",  "COAT",  "COCA",  "COCK",  "COCO",
+"CODA",  "CODE",  "CODY",  "COED",  "COIL",  "COIN",  "COKE",  "COLA",
+"COLD",  "COLT",  "COMA",  "COMB",  "COME",  "COOK",  "COOL",  "COON",
+"COOT",  "CORD",  "CORE",  "CORK",  "CORN",  "COST",  "COVE",  "COWL",
+"CRAB",  "CRAG",  "CRAM",  "CRAY",  "CREW",  "CRIB",  "CROW",  "CRUD",
+"CUBA",  "CUBE",  "CUFF",  "CULL",  "CULT",  "CUNY",  "CURB",  "CURD",
+"CURE",  "CURL",  "CURT",  "CUTS",  "DADE",  "DALE",  "DAME",  "DANA",
+"DANE",  "DANG",  "DANK",  "DARE",  "DARK",  "DARN",  "DART",  "DASH",
+"DATA",  "DATE",  "DAVE",  "DAVY",  "DAWN",  "DAYS",  "DEAD",  "DEAF",
+"DEAL",  "DEAN",  "DEAR",  "DEBT",  "DECK",  "DEED",  "DEEM",  "DEER",
+"DEFT",  "DEFY",  "DELL",  "DENT",  "DENY",  "DESK",  "DIAL",  "DICE",
+"DIED",  "DIET",  "DIME",  "DINE",  "DING",  "DINT",  "DIRE",  "DIRT",
+"DISC",  "DISH",  "DISK",  "DIVE",  "DOCK",  "DOES",  "DOLE",  "DOLL",
+"DOLT",  "DOME",  "DONE",  "DOOM",  "DOOR",  "DORA",  "DOSE",  "DOTE",
+"DOUG",  "DOUR",  "DOVE",  "DOWN",  "DRAB",  "DRAG",  "DRAM",  "DRAW",
+"DREW",  "DRUB",  "DRUG",  "DRUM",  "DUAL",  "DUCK",  "DUCT",  "DUEL",
+"DUET",  "DUKE",  "DULL",  "DUMB",  "DUNE",  "DUNK",  "DUSK",  "DUST",
+"DUTY",  "EACH",  "EARL",  "EARN",  "EASE",  "EAST",  "EASY",  "EBEN",
+"ECHO",  "EDDY",  "EDEN",  "EDGE",  "EDGY",  "EDIT",  "EDNA",  "EGAN",
+"ELAN",  "ELBA",  "ELLA",  "ELSE",  "EMIL",  "EMIT",  "EMMA",  "ENDS",
+"ERIC",  "EROS",  "EVEN",  "EVER",  "EVIL",  "EYED",  "FACE",  "FACT",
+"FADE",  "FAIL",  "FAIN",  "FAIR",  "FAKE",  "FALL",  "FAME",  "FANG",
+"FARM",  "FAST",  "FATE",  "FAWN",  "FEAR",  "FEAT",  "FEED",  "FEEL",
+"FEET",  "FELL",  "FELT",  "FEND",  "FERN",  "FEST",  "FEUD",  "FIEF",
+"FIGS",  "FILE",  "FILL",  "FILM",  "FIND",  "FINE",  "FINK",  "FIRE",
+"FIRM",  "FISH",  "FISK",  "FIST",  "FITS",  "FIVE",  "FLAG",  "FLAK",
+"FLAM",  "FLAT",  "FLAW",  "FLEA",  "FLED",  "FLEW",  "FLIT",  "FLOC",
+"FLOG",  "FLOW",  "FLUB",  "FLUE",  "FOAL",  "FOAM",  "FOGY",  "FOIL",
+"FOLD",  "FOLK",  "FOND",  "FONT",  "FOOD",  "FOOL",  "FOOT",  "FORD",
+"FORE",  "FORK",  "FORM",  "FORT",  "FOSS",  "FOUL",  "FOUR",  "FOWL",
+"FRAU",  "FRAY",  "FRED",  "FREE",  "FRET",  "FREY",  "FROG",  "FROM",
+"FUEL",  "FULL",  "FUME",  "FUND",  "FUNK",  "FURY",  "FUSE",  "FUSS",
+"GAFF",  "GAGE",  "GAIL",  "GAIN",  "GAIT",  "GALA",  "GALE",  "GALL",
+"GALT",  "GAME",  "GANG",  "GARB",  "GARY",  "GASH",  "GATE",  "GAUL",
+"GAUR",  "GAVE",  "GAWK",  "GEAR",  "GELD",  "GENE",  "GENT",  "GERM",
+
+"GETS",  "GIBE",  "GIFT",  "GILD",  "GILL",  "GILT",  "GINA",  "GIRD",
+"GIRL",  "GIST",  "GIVE",  "GLAD",  "GLEE",  "GLEN",  "GLIB",  "GLOB",
+"GLOM",  "GLOW",  "GLUE",  "GLUM",  "GLUT",  "GOAD",  "GOAL",  "GOAT",
+"GOER",  "GOES",  "GOLD",  "GOLF",  "GONE",  "GONG",  "GOOD",  "GOOF",
+"GORE",  "GORY",  "GOSH",  "GOUT",  "GOWN",  "GRAB",  "GRAD",  "GRAY",
+"GREG",  "GREW",  "GREY",  "GRID",  "GRIM",  "GRIN",  "GRIT",  "GROW",
+"GRUB",  "GULF",  "GULL",  "GUNK",  "GURU",  "GUSH",  "GUST",  "GWEN",
+"GWYN",  "HAAG",  "HAAS",  "HACK",  "HAIL",  "HAIR",  "HALE",  "HALF",
+"HALL",  "HALO",  "HALT",  "HAND",  "HANG",  "HANK",  "HANS",  "HARD",
+"HARK",  "HARM",  "HART",  "HASH",  "HAST",  "HATE",  "HATH",  "HAUL",
+"HAVE",  "HAWK",  "HAYS",  "HEAD",  "HEAL",  "HEAR",  "HEAT",  "HEBE",
+"HECK",  "HEED",  "HEEL",  "HEFT",  "HELD",  "HELL",  "HELM",  "HERB",
+"HERD",  "HERE",  "HERO",  "HERS",  "HESS",  "HEWN",  "HICK",  "HIDE",
+"HIGH",  "HIKE",  "HILL",  "HILT",  "HIND",  "HINT",  "HIRE",  "HISS",
+"HIVE",  "HOBO",  "HOCK",  "HOFF",  "HOLD",  "HOLE",  "HOLM",  "HOLT",
+"HOME",  "HONE",  "HONK",  "HOOD",  "HOOF",  "HOOK",  "HOOT",  "HORN",
+"HOSE",  "HOST",  "HOUR",  "HOVE",  "HOWE",  "HOWL",  "HOYT",  "HUCK",
+"HUED",  "HUFF",  "HUGE",  "HUGH",  "HUGO",  "HULK",  "HULL",  "HUNK",
+"HUNT",  "HURD",  "HURL",  "HURT",  "HUSH",  "HYDE",  "HYMN",  "IBIS",
+"ICON",  "IDEA",  "IDLE",  "IFFY",  "INCA",  "INCH",  "INTO",  "IONS",
+"IOTA",  "IOWA",  "IRIS",  "IRMA",  "IRON",  "ISLE",  "ITCH",  "ITEM",
+"IVAN",  "JACK",  "JADE",  "JAIL",  "JAKE",  "JANE",  "JAVA",  "JEAN",
+"JEFF",  "JERK",  "JESS",  "JEST",  "JIBE",  "JILL",  "JILT",  "JIVE",
+"JOAN",  "JOBS",  "JOCK",  "JOEL",  "JOEY",  "JOHN",  "JOIN",  "JOKE",
+"JOLT",  "JOVE",  "JUDD",  "JUDE",  "JUDO",  "JUDY",  "JUJU",  "JUKE",
+"JULY",  "JUNE",  "JUNK",  "JUNO",  "JURY",  "JUST",  "JUTE",  "KAHN",
+"KALE",  "KANE",  "KANT",  "KARL",  "KATE",  "KEEL",  "KEEN",  "KENO",
+"KENT",  "KERN",  "KERR",  "KEYS",  "KICK",  "KILL",  "KIND",  "KING",
+"KIRK",  "KISS",  "KITE",  "KLAN",  "KNEE",  "KNEW",  "KNIT",  "KNOB",
+"KNOT",  "KNOW",  "KOCH",  "KONG",  "KUDO",  "KURD",  "KURT",  "KYLE",
+"LACE",  "LACK",  "LACY",  "LADY",  "LAID",  "LAIN",  "LAIR",  "LAKE",
+"LAMB",  "LAME",  "LAND",  "LANE",  "LANG",  "LARD",  "LARK",  "LASS",
+"LAST",  "LATE",  "LAUD",  "LAVA",  "LAWN",  "LAWS",  "LAYS",  "LEAD",
+"LEAF",  "LEAK",  "LEAN",  "LEAR",  "LEEK",  "LEER",  "LEFT",  "LEND",
+"LENS",  "LENT",  "LEON",  "LESK",  "LESS",  "LEST",  "LETS",  "LIAR",
+"LICE",  "LICK",  "LIED",  "LIEN",  "LIES",  "LIEU",  "LIFE",  "LIFT",
+"LIKE",  "LILA",  "LILT",  "LILY",  "LIMA",  "LIMB",  "LIME",  "LIND",
+"LINE",  "LINK",  "LINT",  "LION",  "LISA",  "LIST",  "LIVE",  "LOAD",
+"LOAF",  "LOAM",  "LOAN",  "LOCK",  "LOFT",  "LOGE",  "LOIS",  "LOLA",
+"LONE",  "LONG",  "LOOK",  "LOON",  "LOOT",  "LORD",  "LORE",  "LOSE",
+"LOSS",  "LOST",  "LOUD",  "LOVE",  "LOWE",  "LUCK",  "LUCY",  "LUGE",
+"LUKE",  "LULU",  "LUND",  "LUNG",  "LURA",  "LURE",  "LURK",  "LUSH",
+"LUST",  "LYLE",  "LYNN",  "LYON",  "LYRA",  "MACE",  "MADE",  "MAGI",
+"MAID",  "MAIL",  "MAIN",  "MAKE",  "MALE",  "MALI",  "MALL",  "MALT",
+"MANA",  "MANN",  "MANY",  "MARC",  "MARE",  "MARK",  "MARS",  "MART",
+"MARY",  "MASH",  "MASK",  "MASS",  "MAST",  "MATE",  "MATH",  "MAUL",
+"MAYO",  "MEAD",  "MEAL",  "MEAN",  "MEAT",  "MEEK",  "MEET",  "MELD",
+"MELT",  "MEMO",  "MEND",  "MENU",  "MERT",  "MESH",  "MESS",  "MICE",
+
+"MIKE",  "MILD",  "MILE",  "MILK",  "MILL",  "MILT",  "MIMI",  "MIND",
+"MINE",  "MINI",  "MINK",  "MINT",  "MIRE",  "MISS",  "MIST",  "MITE",
+"MITT",  "MOAN",  "MOAT",  "MOCK",  "MODE",  "MOLD",  "MOLE",  "MOLL",
+"MOLT",  "MONA",  "MONK",  "MONT",  "MOOD",  "MOON",  "MOOR",  "MOOT",
+"MORE",  "MORN",  "MORT",  "MOSS",  "MOST",  "MOTH",  "MOVE",  "MUCH",
+"MUCK",  "MUDD",  "MUFF",  "MULE",  "MULL",  "MURK",  "MUSH",  "MUST",
+"MUTE",  "MUTT",  "MYRA",  "MYTH",  "NAGY",  "NAIL",  "NAIR",  "NAME",
+"NARY",  "NASH",  "NAVE",  "NAVY",  "NEAL",  "NEAR",  "NEAT",  "NECK",
+"NEED",  "NEIL",  "NELL",  "NEON",  "NERO",  "NESS",  "NEST",  "NEWS",
+"NEWT",  "NIBS",  "NICE",  "NICK",  "NILE",  "NINA",  "NINE",  "NOAH",
+"NODE",  "NOEL",  "NOLL",  "NONE",  "NOOK",  "NOON",  "NORM",  "NOSE",
+"NOTE",  "NOUN",  "NOVA",  "NUDE",  "NULL",  "NUMB",  "OATH",  "OBEY",
+"OBOE",  "ODIN",  "OHIO",  "OILY",  "OINT",  "OKAY",  "OLAF",  "OLDY",
+"OLGA",  "OLIN",  "OMAN",  "OMEN",  "OMIT",  "ONCE",  "ONES",  "ONLY",
+"ONTO",  "ONUS",  "ORAL",  "ORGY",  "OSLO",  "OTIS",  "OTTO",  "OUCH",
+"OUST",  "OUTS",  "OVAL",  "OVEN",  "OVER",  "OWLY",  "OWNS",  "QUAD",
+"QUIT",  "QUOD",  "RACE",  "RACK",  "RACY",  "RAFT",  "RAGE",  "RAID",
+"RAIL",  "RAIN",  "RAKE",  "RANK",  "RANT",  "RARE",  "RASH",  "RATE",
+"RAVE",  "RAYS",  "READ",  "REAL",  "REAM",  "REAR",  "RECK",  "REED",
+"REEF",  "REEK",  "REEL",  "REID",  "REIN",  "RENA",  "REND",  "RENT",
+"REST",  "RICE",  "RICH",  "RICK",  "RIDE",  "RIFT",  "RILL",  "RIME",
+"RING",  "RINK",  "RISE",  "RISK",  "RITE",  "ROAD",  "ROAM",  "ROAR",
+"ROBE",  "ROCK",  "RODE",  "ROIL",  "ROLL",  "ROME",  "ROOD",  "ROOF",
+"ROOK",  "ROOM",  "ROOT",  "ROSA",  "ROSE",  "ROSS",  "ROSY",  "ROTH",
+"ROUT",  "ROVE",  "ROWE",  "ROWS",  "RUBE",  "RUBY",  "RUDE",  "RUDY",
+"RUIN",  "RULE",  "RUNG",  "RUNS",  "RUNT",  "RUSE",  "RUSH",  "RUSK",
+"RUSS",  "RUST",  "RUTH",  "SACK",  "SAFE",  "SAGE",  "SAID",  "SAIL",
+"SALE",  "SALK",  "SALT",  "SAME",  "SAND",  "SANE",  "SANG",  "SANK",
+"SARA",  "SAUL",  "SAVE",  "SAYS",  "SCAN",  "SCAR",  "SCAT",  "SCOT",
+"SEAL",  "SEAM",  "SEAR",  "SEAT",  "SEED",  "SEEK",  "SEEM",  "SEEN",
+"SEES",  "SELF",  "SELL",  "SEND",  "SENT",  "SETS",  "SEWN",  "SHAG",
+"SHAM",  "SHAW",  "SHAY",  "SHED",  "SHIM",  "SHIN",  "SHOD",  "SHOE",
+"SHOT",  "SHOW",  "SHUN",  "SHUT",  "SICK",  "SIDE",  "SIFT",  "SIGH",
+"SIGN",  "SILK",  "SILL",  "SILO",  "SILT",  "SINE",  "SING",  "SINK",
+"SIRE",  "SITE",  "SITS",  "SITU",  "SKAT",  "SKEW",  "SKID",  "SKIM",
+"SKIN",  "SKIT",  "SLAB",  "SLAM",  "SLAT",  "SLAY",  "SLED",  "SLEW",
+"SLID",  "SLIM",  "SLIT",  "SLOB",  "SLOG",  "SLOT",  "SLOW",  "SLUG",
+"SLUM",  "SLUR",  "SMOG",  "SMUG",  "SNAG",  "SNOB",  "SNOW",  "SNUB",
+"SNUG",  "SOAK",  "SOAR",  "SOCK",  "SODA",  "SOFA",  "SOFT",  "SOIL",
+"SOLD",  "SOME",  "SONG",  "SOON",  "SOOT",  "SORE",  "SORT",  "SOUL",
+"SOUR",  "SOWN",  "STAB",  "STAG",  "STAN",  "STAR",  "STAY",  "STEM",
+"STEW",  "STIR",  "STOW",  "STUB",  "STUN",  "SUCH",  "SUDS",  "SUIT",
+"SULK",  "SUMS",  "SUNG",  "SUNK",  "SURE",  "SURF",  "SWAB",  "SWAG",
+"SWAM",  "SWAN",  "SWAT",  "SWAY",  "SWIM",  "SWUM",  "TACK",  "TACT",
+"TAIL",  "TAKE",  "TALE",  "TALK",  "TALL",  "TANK",  "TASK",  "TATE",
+"TAUT",  "TEAL",  "TEAM",  "TEAR",  "TECH",  "TEEM",  "TEEN",  "TEET",
+"TELL",  "TEND",  "TENT",  "TERM",  "TERN",  "TESS",  "TEST",  "THAN",
+"THAT",  "THEE",  "THEM",  "THEN",  "THEY",  "THIN",  "THIS",  "THUD",
+
+"THUG",  "TICK",  "TIDE",  "TIDY",  "TIED",  "TIER",  "TILE",  "TILL",
+"TILT",  "TIME",  "TINA",  "TINE",  "TINT",  "TINY",  "TIRE",  "TOAD",
+"TOGO",  "TOIL",  "TOLD",  "TOLL",  "TONE",  "TONG",  "TONY",  "TOOK",
+"TOOL",  "TOOT",  "TORE",  "TORN",  "TOTE",  "TOUR",  "TOUT",  "TOWN",
+"TRAG",  "TRAM",  "TRAY",  "TREE",  "TREK",  "TRIG",  "TRIM",  "TRIO",
+"TROD",  "TROT",  "TROY",  "TRUE",  "TUBA",  "TUBE",  "TUCK",  "TUFT",
+"TUNA",  "TUNE",  "TUNG",  "TURF",  "TURN",  "TUSK",  "TWIG",  "TWIN",
+"TWIT",  "ULAN",  "UNIT",  "URGE",  "USED",  "USER",  "USES",  "UTAH",
+"VAIL",  "VAIN",  "VALE",  "VARY",  "VASE",  "VAST",  "VEAL",  "VEDA",
+"VEIL",  "VEIN",  "VEND",  "VENT",  "VERB",  "VERY",  "VETO",  "VICE",
+"VIEW",  "VINE",  "VISE",  "VOID",  "VOLT",  "VOTE",  "WACK",  "WADE",
+"WAGE",  "WAIL",  "WAIT",  "WAKE",  "WALE",  "WALK",  "WALL",  "WALT",
+"WAND",  "WANE",  "WANG",  "WANT",  "WARD",  "WARM",  "WARN",  "WART",
+"WASH",  "WAST",  "WATS",  "WATT",  "WAVE",  "WAVY",  "WAYS",  "WEAK",
+"WEAL",  "WEAN",  "WEAR",  "WEED",  "WEEK",  "WEIR",  "WELD",  "WELL",
+"WELT",  "WENT",  "WERE",  "WERT",  "WEST",  "WHAM",  "WHAT",  "WHEE",
+"WHEN",  "WHET",  "WHOA",  "WHOM",  "WICK",  "WIFE",  "WILD",  "WILL",
+"WIND",  "WINE",  "WING",  "WINK",  "WINO",  "WIRE",  "WISE",  "WISH",
+"WITH",  "WOLF",  "WONT",  "WOOD",  "WOOL",  "WORD",  "WORE",  "WORK",
+"WORM",  "WORN",  "WOVE",  "WRIT",  "WYNN",  "YALE",  "YANG",  "YANK",
+"YARD",  "YARN",  "YAWL",  "YAWN",  "YEAH",  "YEAR",  "YELL",  "YOGA",
+"YOKE"   };
+
+完整版权声明
+   	版权（C）因特网协会（1998）。版权所有。
+
+   	这个文档和它的翻译可以拷贝和分配给其他人，以及有关评论或者别样的解释或者其应用的帮助等派生工作可以被准备、拷贝、发表和发布，其整体或者部分没有受到任何限制，提供上述版权通知以及本段落应被包含在所有这样的拷贝和派生工作中。然而，这个文档本身不可以以任何方式修改，例如移走版权通知或者Internet协会或其他Internet组织的参考，除非为了发展Internet标准（其版权程序定义在Internet Standards进程如下），或者需要翻译成除英语以外的其他语言。
+
+   上述限制允许授权是持久的并且将不被Internet协会或者它的继承人隐藏或者转让。
+
+译者注：对于本文档的完整版权声明原文如下：
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+1
+
+

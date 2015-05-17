@@ -1,0 +1,25 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                   D. Walden
+Request for Comments: #591                              BBN-Net
+NIC: #20327                                             29 November 1973
+
+对Very Distant Host规范的补充
+（Addition to the Very Distant Host Specification）
+注意：我们应该在BBN报告1822（Very Distant Host规范）的附录F（主机（HOST）和IMP互相联络的规范）中的F-5到F-7页增加下列话语：
+“Null packets do not use a channel (nor a channel number) when sent and are not acknowledged when received/”
+请把这篇RFC归档到对BBN报告1822的更新文档的拷贝中。
+1973年12月3日，由NIC接受为标准。
+RFC591――Addition to the Very Distant Host Specification                对Very Distant Host规范的补充
+
+
+
+
+1
+RFC文档中文翻译计划
+

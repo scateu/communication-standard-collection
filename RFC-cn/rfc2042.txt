@@ -1,0 +1,90 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：cc8131(cc8131) 
+译文发布时间：2001-12-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                          B. Manning
+Request for Comments: 2042                                            ISI
+Category: Informational                                      January 1997
+
+
+                            注册新BGP属性
+                    (RFC2042－Registering New BGP Attribute Types)
+这篇文章的目的
+   这篇文章为互联时代提供了信息。但这篇文章并没有指定任何类型的网络标准，这篇文
+章的发行是无限的。
+目录
+步骤	1
+下面列出的是目前正在被使用的属性编码：	2
+安全事项	2
+参考书目	2
+作者地址	3
+
+步骤
+   这篇文章描述了创建新BGP属性编码的步骤，基本的属性编码已经在RFC1771的12－
+15页中介绍过了。现在这些新的即将在网络上用到的属性编码被注册为IANA。
+
+目前的步骤将包括该RFC文章中的BGP属性编码文件。把编码空间分割成公有／私有
+或者是IP／OSI，在或者是其他的部分不会有什么意义。
+
+由于每一种属性编码正在发展的进程中，它将会用一个255的八字节值，这种用法将会被保
+留。同时，文档和编码基数将会被升级以映射已授权的属性编码值。
+
+IANA维持的值将会在周期性更新的Assigned Numbers RFC [6]中发表。一个新的属性编码
+请求将以一个主题的方式被传送到IANA (IANA@IANA.ORG)，该主题包括短语"BGP 
+Attribute Type".
+下面列出的是目前正在被使用的属性编码：
+                 值        编码                                  参考
+                  1       ORIGIN                                  [1]
+                  2       AS_PATH                                 [1]
+                  3       NEXT_HOP                                [1]
+                  4       MULTI_EXIT_DISC                         [1]
+                  5       LOCAL_PREF                              [1]
+                  6       ATOMIC_AGGREGATE                        [1]
+                  7       AGGREGATOR                              [1]
+                  8       COMMUNITY                               [2]
+                  9       ORIGINATOR_ID                           [3]
+                  10      CLUSTER_LIST                            [3]
+                  11      DPA                                     [4]
+                  12      ADVERTISER                              [5]
+                  13      RCID_PATH / CLUSTER_ID                  [5]
+                  ...
+                  255     reserved for development
+安全事项
+这篇文章中并没有涉及到任何有关安全的话题。
+参考书目
+[1] Rekhter, Y., and Li, T., "A Border Gateway Protocol 4 (BGP-4)",
+       RFC 1771, March 1995.
+
+   [2] Chandra, R., Traina, P., and T. Li, "BGP Communities
+       Attribute", RFC 1997, August 1996.
+
+   [3] Bates, T., Chandra, R, "BGP Route Reflection An alternative
+       to full mesh IBGP", RFC 1998, June 1996.
+
+   [4] Chen, E., Bates, T., "Destination Preference Attribute for BGP",
+       Work in progress, March 1996.
+
+   [5] Haskin, D., "A BGP/IDRP Route Server alternative to a full mesh
+       routing", RFC 1863, October 1995.
+
+   [6] Reynolds, J., and J. Postel, "Assigned Numbers", STD 2, RFC 1700,
+       ISI, October 1994.
+作者地址
+Bill Manning
+ USC/ISI
+ 4676 Admiralty Way
+ Marina del Rey, CA. 90292
+电话：01.310.822.1511
+电子邮件：bmanning@isi.edu
+RFC2042－Registering New BGP Attribute Types                  注册新BGP属性
+
+
+1
+RFC文档中文翻译计划

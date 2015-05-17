@@ -1,0 +1,105 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang   mcsewang@21cn.com）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group												E. Harslem
+Request for Comments: 40											 J.Heafner
+                                                                			  RAND
+                                                          			March 1970
+
+
+关于未来协议的更多注解 
+（RFC40 More Comments on the Forthcoming Protocol）
+
+	我们最近同UCLA的Steve Crocker讨论了NWG/RFC#36和#39文档。Steve已经让我们详尽的阐述了曾经在NWG/RFC#39文档中提到的错误、询问和主机状况。
+	请尽快提出您的观点来修正未来协议的特性。
+
+错误信息
+
+	<ERR> <Code> <Command length> <Command in error>
+
+<Code>是一个8位字段，它指明了错误的类型。下面列举了预定义的错误代码。<Command length>是一个16位二进制整数，它指定了<Command in error>有多少个二进制的位（bit），<Command in error>是一条伪命令。
+
+<Code>的范围用十六进制表示如下：
+
+	 00     Unspecified error types（未指明错误类型）
+     01-0F  Resource errors（资源错误）
+     10-1F  Status errors（状态错误）
+     20-2F  Content errors（内容错误）
+     30-3F  Unused（未使用、预留）
+
+特定的<Code>字段值及其含义列举如下：
+
+     <Code> 值   		释义
+
+         00         未指定错误
+         01         无效资源请求
+         02         申请资源正被占用，过后再试
+        03-0F       未使用
+     <Code> 值   		释义
+
+         10         无效的<RSM>,即已连接但无法通信
+         11         无效的<SPD>.
+12 无效的<ASG>,即连接后未收到<RDY>
+         13         阻塞链路消息
+        14-1F       未使用
+         20         未知命令代码
+         21         断开链路消息
+         22         无效的<RFC>.
+         23         无效的<CLS>.
+         24         无效的<RSM>,即链路不通
+         25         无效的<FND>.
+         26         无效的<END>.
+         27         无效的<RDY>.
+         28         无效的<ASG>,即未连通
+        29-2F       未使用
+        30-FF       未使用
+
+
+查询
+
+	<QRY> <My Socket>
+或  <RPY> <Your Socket> <Text>
+
+<QRY>是NWG/RFC#39中指定的查询命令，而<RPY>是回应信息。<Text>的格式如下所示，请参考NWG/RFC#36的第3页。
+
+
+<Text>::= <16 bit count of relevant connection table entries>
+          <relevant connection table entries>
+
+<relevant connection table entries>::=
+                                     <relevant connection table entries>
+                                     <a relevant connection table entry>
+                                     <a relevant connection table entry>
+
+<a relevant connection table entry>::= <local socket> <foreign socket>
+                                       <link> <connection state>
+                                       <flow state and buffer control>
+                                       <reconnection control state>
+
+
+
+主机状态
+
+     <NOP>
+
+一个NCP进程的状态可以是运行、挂起、等待，等等。当一个NCP改变其状态为运行时，它会  发送一个<NOP>到每个远端的指明其可用的NCP。然后发送的NCP就可以由它收到的RFNM中创建一个主机状态的矢量。一个接收到<NOP>的NCP可以校正在其主机状态矢量中的发送方NCP的有效性。
+
+
+
+
+[ This RFC was put into machine readable form for entry ]
+[ into the online RFC archives by Richard Ames 6/97 ]
+RFC40 More Comments on the Forthcoming Protocol                 关于未来协议的更多注解
+
+
+
+
+1
+RFC文档中文翻译计划
+

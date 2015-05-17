@@ -1,0 +1,778 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2002-3-29
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+Network Working Group                                           J. Kunze
+Request for Comments: 2731                                   Dublin Core
+Category: Informational                              Metadata Initiative
+                                                           December 1999
+在HTML中使用DC元数据
+（Encoding Dublin Core Metadata in HTML）
+本备忘录状态
+本备忘录为Internet社区提供一些信息，但没有规定任何Internet标准。本备忘录的发布不受限制
+版权信息
+Copyright (C) The Internet Society (1999)。版权所有。
+目录
+1. 摘要	1
+2. HTML、Dublin核心元数据及其他原数据	1
+3．META标签	2
+4、LINK标签	2
+5、编码建议	3
+6、DC元数据的实际应用	4
+7、DC元素编码	4
+8、安全性问题	10
+9、附录――处理用META标签编码的元数据的Perl脚本程序	10
+10. 作者地址	15
+11、参考资料	15
+12、版权声明	17
+
+1. 摘要
+Dublin核心元数据 [DC1]是描述信息资源的小的元数据元素集合，本文讨论如何在HTML文档[HTML4.0]中通过META和LINK标签表示这些元素。嵌入HTML的元数据用于描述文档本身的信息。本文通过一些例子说明了如何用现有的软件来检索、显示和处理这些元数据，软件包括附录中列出的[SWISH-E]、[freeWAIS-sf2.0]、[GLIMPSE]、 [HARVEST]、 [ISEARCH]以及Perl[PERL]脚本语言等。
+2. HTML、Dublin核心元数据及其他原数据
+[DCHOME]发起的Dublin核心元数据推出了一组少量的资源描述类别DC1，或者叫元数据元素（从字面上看就是关于数据的数据）。一般而言，元数据元素相对它们所描述的资源要小得多，而且如果资源格式支持可以把元数据嵌入到资源中。支持嵌入元数据的有两类资源：超文本标记语言（HTML）与扩展标记语言（XML）。HTML已经得到了广泛的应用，但是一旦标准化，XML与资源描述框架（RDF）一起有望提供对源数据进行编码的更有效的方式。RDF规范实际上描述了在HTML文档中按照一种简洁语法应用RDF的方法。
+本文讲述了如何在HTML4.0中对元数据进行编码，这些元数据元素的语义在其他文档中定义。为了方便说明，文中提及了某些元数据的语义，但不应把这些语义看作是定义性的。
+HTML编码允许DC元数据元素与其它元素混合使用（前提是那些元素的用法支持混合使用）。DC元素使用前缀“DC”标记，其他元素则使用另外的标记，比方说AC表示来自A-Core[AC]的元素。
+3．META标签
+HTML中的META标签用于已经命名的元数据元素进行编码，每个元素描述了文档或者其他信息资源的一个方面。比方说<meta name="DC.Creator" content="Simpson, Homer">，这个元素说明创作者是Homer Simpson，其中Creator是DC元素集中定义的一个元素。更一般的形式为：
+<meta name    =  "PREFIX . ELEMENT_NAME"
+      content  =  "ELEMENT_VALUE">
+大写部分表示在应用时要换成真正的标记符，在上面的例子中，ELEMENT_NAME是Creator， ELEMENT_VALUE是Simpson, Homer而PREFIX则是DC。
+在META标签中，DC元素名的第一个字母要大写，但对元素值的大小写没有要求，也没有限制同时出现的META元素的个数与顺序。同一个DC元素可以出现多次，每个DC元素都是可选的。下面的例子是对一本书的说明，它有两位作者、两个标题：
+       <meta name    = "DC.Title"
+             content = "The Communist Manifesto">
+       <meta name    = "DC.Creator"
+             content = "Marx, K.">
+
+       <meta name    = "DC.Creator"
+             content = "Engels, F.">
+       <meta name    = "DC.Title"
+             content = "Capital">
+使用META编码的所有DC元素都带有“DC”前缀，与后面的元素名之间用点号（“.”）隔开。每个非DC元素的编码都应该有相应的前缀以便于跟踪其来源和定义，前缀与元素定义之间的联系通过LINK元素来完成，参阅下一节的说明。非DC元素，比如来自AC的Email可以与DC元素混合使用：
+       <meta name    = "DC.Creator"
+             content = "Da Costa, Jos&eacute;">
+       <meta name    = "AC.Email"
+             content = "dacostaj@peoplesmail.org">
+       <meta name    = "DC.Title"
+             content = "Jesse &#34;The Body&#34; Ventura--A Biography">
+这个例子还说明了特殊字符的编码，第一个元素作者名中使用HTML字符实体引用表示一个音标符号――带有重音号的字母E。类似的，最后一行中有两个双引号使用的是数字字符引用，以便于元素内容分隔符区别开。
+4、LINK标签
+HTML的LINK可以把元素名前缀与元素的参考定义关联在一起。如果没有LINK标签与相应的定义文档关联，只有META标签描述的资源是不完整的。前面的例子再加上以下两个元素就可以认为是完整的了：
+       <link rel     = "schema.DC"
+             href    = "http://purl.org/DC/elements/1.0/">
+       <link rel     = "schema.AC"
+             href    = "http://metadata.net/ac/2.0/">
+一般来说这种联系通常采用如下的形式：
+<link rel ="schema.PREFIX"  href =  "LOCATION_OF_DEFINITION" >
+其中的PREFIX要代换为实际使用的前缀，LOCATION_OF_DEFINITION则是定义文档的URL或URN。嵌入在HTML文档HEAD部分的LINK和META序列，描述的是该HTML文档自身的信息。下面是带有描述信息的一个完整的HTML文档。
+       <html>
+       <head>
+       <title> A Dirge </title>
+       <link rel     = "schema.DC"
+             href    = "http://purl.org/DC/elements/1.0/">
+       <meta name    = "DC.Title"
+             content = "A Dirge">
+       <meta name    = "DC.Creator"
+             content = "Shelley, Percy Bysshe">
+       <meta name    = "DC.Type"
+             content = "poem">
+       <meta name    = "DC.Date"
+             content = "1820">
+       <meta name    = "DC.Format"
+             content = "text/html">
+       <meta name    = "DC.Language"
+             content = "en">
+       </head>
+       <body><pre>
+               Rough wind, that moanest loud
+                 Grief too sad for song;
+               Wild wind, when sullen cloud
+                 Knells all the night long;
+               Sad storm, whose tears are vain,
+               Bare woods, whose branches strain,
+               Deep caves and dreary main, -
+                 Wail, for the world's wrong!
+       </pre></body>
+       </html>
+5、编码建议
+与这里推荐的元数据编码方式相比，在原理上和实际应用中HTML对元数据编码的要求更加宽松，不过稍加限制更有助于元数据解码和处理软件的开发。在目前的发展阶段，一些简单的原型和试验促进了实用标准的开发。
+因此最好按照本文以下所举例子的标记方法在HTML中书写元数据：前缀及元素名用大写、属性值用双引号括起来，一行中最多只有一个META元素。当然实际编写元数据代码的伸缩性很大，不过选择并始终坚持这种风格似乎更有助于元数据的处理与编辑。下面的三个标签都符合上面的建议，内容也相同但是书写风格不一致：
+       <META NAME="DC.Format"
+             CONTENT="text/html; 12 Kbytes">
+       <meta
+               Content = "text/html; 12 Kbytes"
+               Name = "DC.Format"
+       >
+       <meta name = "DC.Format" content = "text/html; 12 Kbytes">
+按照上述建议编码有助于使元数据被一些广泛使用的免费软件包所接受、检索和处理，比如[SWISH-E]、[freeWAIS-sf2.0]、[GLIMPSE]、[HARVEST]和[ISEARCH]。这些约定还可以与附录中的脚本，以及[DCHOME]网站上的大部分[DCPROJECTS]应用程序协同工作。支持LINK标签和修饰符约定（下一节）的软件现在还不多。
+元数据元素的顺序一般是不固定的。检索并显示元数据的软件的开发者应该尽量保持同名的META标签元素的相对顺序（比方说多个文档作者），但是如果通过不明系统传输，元数据的提供者与检索程序并不能保证元数据的先后顺序保持不变。
+6、DC元数据的实际应用
+在实际用与资源描述时，为了表达含义上的细微差别，经常需要对DCC元素作一些修饰。虽然这些修饰符的应用原则和具体语义超出了本文的范围，为了方便日常应用，后面通过一些例子介绍修饰语法。对下述在META标签中应用元数据描述符的三种语法（可能发生变化）不再作进一步的说明。
+    <meta lang    = "LANGUAGE_OF_METADATA_CONTENT" ... >
+    <meta scheme  = "CONTROLLED_FORMAT_OR_VOCABULARY_OF_METADATA" ... >
+    <meta name    = "PREFIX.ELEMENT_NAME.SUBELEMENT_NAME" ... >
+据此，某部西班牙语的遗作可以写为： 
+       <meta name    = "DC.Language"
+             scheme  = "rfc1766"
+             content = "es">
+       <meta name    = "DC.Title"
+             lang    = "es"
+             content = "La Mesa Verde y la Silla Roja">
+       <meta name    = "DC.Title"
+             lang    = "en"
+             content = "The Green Table and the Red Chair">
+       <meta name    = "DC.Date.Created"
+             content = "1935">
+       <meta name    = "DC.Date.Available"
+             content = "1939">
+需要注意，本文例中所使用的修饰符语法和标签后缀（跟在元素名和点号后）仅仅反映了修饰符HTML编码的趋势，这种语法格式和后缀既非标准也不建议这么做。
+7、DC元素编码
+这一节针对不同的DC元素举出了相应的应用实例：
+   Title (给出的资源名)
+   -----
+
+    <meta name    = "DC.Title"
+          content = "Polycyclic aromatic hydrocarbon contamination">
+
+    <meta name    = "DC.Title"
+          content = "Crime and Punishment">
+
+    <meta name    = "DC.Title"
+          content = "Methods of Information in Medicine, Vol 32, No 4">
+
+    <meta name    = "DC.Title"
+          content = "Still life #4 with flowers">
+
+    <meta name    = "DC.Title"
+          lang    = "de"
+          content = "Das Wohltemperierte Klavier, Teil I">
+
+   Creator (常见内容的实体)
+   -------
+
+    <meta name    = "DC.Creator"
+          content = "Gogh, Vincent van">
+    <meta name    = "DC.Creator"
+          content = "van Gogh, Vincent">
+
+    <meta name    = "DC.Creator"
+          content = "Mao Tse Tung">
+    <meta name    = "DC.Creator"
+          content = "Mao, Tse Tung">
+
+    <meta name    = "DC.Creator"
+          content = "Plato">
+    <meta name    = "DC.Creator"
+          lang    = "fr"
+          content = "Platon">
+
+    <meta name    = "DC.Creator.Director"
+          content = "Sturges, Preston">
+    <meta name    = "DC.Creator.Writer"
+          content = "Hecht, Ben">
+    <meta name    = "DC.Creator.Producer"
+          content = "Chaplin, Charles">
+
+   Subject （主题或关键字)
+   -------
+
+    <meta name    = "DC.Subject"
+          content = "heart attack">
+    <meta name    = "DC.Subject"
+          scheme  = "MESH"
+          content = "Myocardial Infarction; Pericardial Effusion">
+
+    <meta name    = "DC.Subject"
+          content = "vietnam war">
+    <meta name    = "DC.Subject"
+          scheme  = "LCSH"
+          content = "Vietnamese Conflict, 1961-1975">
+
+    <meta name    = "DC.Subject"
+          content = "Friendship">
+    <meta name    = "DC.Subject"
+          scheme  = "ddc"
+          content = "158.25">
+
+   Description (说明、小结与摘要)
+   -----------
+
+    <meta name    = "DC.Description"
+          lang    = "en"
+          content = "The Author gives some Account of Himself and Family
+                     -- His First Inducements to Travel -- He is
+                     Shipwrecked, and Swims for his Life -- Gets safe on
+                     Shore in the Country of Lilliput -- Is made a
+                     Prisoner, and carried up the Country">
+
+    <meta name    = "DC.Description"
+          content = "A tutorial and reference manual for Java.">
+
+    <meta name    = "DC.Description"
+          content = "Seated family of five, coconut trees to the left,
+                     sailboats moored off sandy beach to the right,
+                     with volcano in the background.">
+
+   Publisher (出版商、发布方)
+   ---------
+
+    <meta name    = "DC.Publisher"
+          content = "O'Reilly">
+
+    <meta name    = "DC.Publisher"
+          content = "Digital Equipment Corporation">
+
+    <meta name    = "DC.Publisher"
+          content = "University of California Press">
+
+    <meta name    = "DC.Publisher"
+          content = "State of Florida (USA)">
+
+   Contributor (其他贡献者)
+   -----------
+
+    <meta name    = "DC.Contributor"
+          content = "Curie, Marie">
+
+    <meta name    = "DC.Contributor.Photographer"
+          content = "Adams, Ansel">
+    <meta name    = "DC.Contributor.Artist"
+          content = "Sendak, Maurice">
+    <meta name    = "DC.Contributor.Editor"
+          content = "Starr, Kenneth">
+
+   Date (该资源生命期中的某个时点; 推荐[WTN8601])
+   ----
+
+    <meta name    = "DC.Date"
+          content = "1972">
+
+    <meta name    = "DC.Date"
+          content = "1998-05-14">
+    <meta name    = "DC.Date"
+          scheme  = "WTN8601"
+          content = "1998-05-14">
+
+    <meta name    = "DC.Date.Created"
+          content = "1998-05-14">
+    <meta name    = "DC.Date.Available"
+          content = "1998-05-21">
+    <meta name    = "DC.Date.Valid"
+          content = "1998-05-28">
+
+    <meta name    = "DC.Date.Created"
+          content = "triassic">
+    <meta name    = "DC.Date.Acquired"
+          content = "1957">
+
+    <meta name    = "DC.Date.Accepted"
+          scheme  = "WTN8601"
+          content = "1998-12-02T16:59">
+
+    <meta name    = "DC.Date.DataGathered"
+          scheme  = "ISO8601"
+          content = "98-W49-3T1659">
+
+    <meta name    = "DC.Date.Issued"
+          scheme  = "ANSI.X3.X30-1985"
+          content = "19980514">
+
+   Type (性质、流派、类别; 建议用[DCT1])
+   ----
+
+    <meta name    = "DC.Type"
+          content = "poem">
+
+    <meta name    = "DC.Type"
+          scheme  = "DCT1"
+          content = "software">
+    <meta name    = "DC.Type"
+          content = "software program source code">
+
+    <meta name    = "DC.Type"
+          content = "interactive video game">
+
+    <meta name    = "DC.Type"
+          scheme  = "DCT1"
+          content = "dataset">
+
+    <meta name    = "DC.Type"
+          content = "web home page">
+    <meta name    = "DC.Type"
+          content = "web bibliography">
+
+    <meta name    = "DC.Type"
+          content = "painting">
+    <meta name    = "DC.Type"
+          content = "image; woodblock">
+    <meta name    = "DC.Type"
+          scheme  = "AAT"
+          content = "clipeus (portrait)">
+    <meta name    = "DC.Type"
+          lang    = "en-US"
+          content = "image; advertizement">
+
+    <meta name    = "DC.Type"
+          scheme  = "DCT1"
+          content = "event">
+    <meta name    = "DC.Type"
+          content = "event; periodic">
+
+   Format (物理或逻辑格式以及可选的资源大小)
+   ------
+
+    <meta name    = "DC.Format"
+          content = "text/xml">
+    <meta name    = "DC.Format"
+          scheme  = "IMT"
+          content = "text/xml">
+
+    <meta name    = "DC.Format"
+          scheme  = "IMT"
+          content = "image/jpeg">
+    <meta name    = "DC.Format"
+          content = "A text file with mono-spaced tables and diagrams.">
+
+    <meta name    = "DC.Format"
+          content = "video/mpeg; 14 minutes">
+
+    <meta name    = "DC.Format"
+          content = "unix tar archive, gzip compressed; 1.5 Mbytes">
+
+    <meta name    = "DC.Format"
+          content = "watercolor; 23 cm x 31 cm">
+
+   Identifier (资源标识符)
+   ----------
+
+    <meta name    = "DC.Identifier"
+          content = "http://foo.bar.org/zaf/">
+
+    <meta name    = "DC.Identifier"
+          content = "urn:ietf:rfc:1766">
+
+    <meta name    = "DC.Identifier"
+          scheme  = "ISBN"
+          content = "1-56592-149-6">
+
+    <meta name    = "DC.Identifier"
+          scheme  = "LCCN"
+          content = "67-26020">
+
+    <meta name    = "DC.Identifier"
+          scheme  = "DOI"
+          content = "10.12345/33-824688ab">
+
+   Source (来源)
+   ------
+
+    <meta name    = "DC.Source"
+          content = "Shakespeare's Romeo and Juliet">
+
+    <meta name    = "DC.Source"
+          content = "http://a.b.org/manon/">
+
+   Language (内容所使用的语言；建议使用[RFC1766])
+   --------
+
+    <meta name    = "DC.Language"
+          content = "en">
+    <meta name    = "DC.Language"
+          scheme  = "rfc1766"
+          content = "en">
+    <meta name    = "DC.Language"
+          scheme  = "ISO639-2"
+          content = "eng">
+
+    <meta name    = "DC.Language"
+          scheme  = "rfc1766"
+          content = "en-US">
+
+    <meta name    = "DC.Language"
+          content = "zh">
+    <meta name    = "DC.Language"
+          content = "ja">
+    <meta name    = "DC.Language"
+          content = "es">
+    <meta name    = "DC.Language"
+          content = "de">
+
+    <meta name    = "DC.Language"
+          content = "german">
+    <meta name    = "DC.Language"
+          lang    = "fr"
+          content = "allemand">
+
+   Relation (相关资源)
+   --------
+
+    <meta name    = "DC.Relation.IsPartOf"
+          content = "http://foo.bar.org/abc/proceedings/1998/">
+
+    <meta name    = "DC.Relation.IsFormatOf"
+          content = "http://foo.bar.org/cd145.sgml">
+
+    <meta name    = "DC.Relation.IsVersionOf"
+          content = "http://foo.bar.org/draft9.4.4.2">
+
+    <meta name    = "DC.Relation.References"
+          content = "urn:isbn:1-56592-149-6">
+
+    <meta name    = "DC.Relation.IsBasedOn"
+          content = "Shakespeare's Romeo and Juliet">
+
+    <meta name    = "DC.Relation.Requires"
+          content = "LWP::UserAgent; HTML::Parse; URI::URL;
+                     Net::DNS; Tk::Pixmap; Tk::Bitmap; Tk::Photo">
+
+   Coverage (内容所涉及的范围)
+   --------
+
+    <meta name    = "DC.Coverage"
+          content = "US civil war era; 1861-1865">
+
+    <meta name    = "DC.Coverage"
+          content = "Columbus, Ohio, USA; Lat: 39 57 N Long: 082 59 W">
+
+    <meta name    = "DC.Coverage"
+          scheme  = "TGN"
+          content = "Columbus (C,V)">
+
+    <meta name    = "DC.Coverage.Jurisdiction"
+          content = "Commonwealth of Australia">
+
+   Rights (版权管理声明)
+   ------
+
+    <meta name    = "DC.Rights"
+          lang    = "en"
+          content = "Copyright Acme 1999 - All rights reserved.">
+
+    <meta name    = "DC.Rights"
+          content = "http://foo.bar.org/cgi-bin/terms">
+8、安全性问题
+本文所讨论的在HTML中应用DC元数据的语法规则不会给计算机和网络带来直接的危险。这些规则可能被用于编制不准确甚至有意误导（造成“垃圾检索信息”）的元数据信息，这反映了对HTML META标签的滥用，而且也不仅限于对DC元数据的编码。即使传统的元数据编码方案（比如[MARC]）也不能免于错误，虽然错误通常发生在数据量远远超出普通网站水平的情况下。
+对使用META标签进行编码的元数据进行处理的系统，应该作为设计与实现的一部分考虑与元数据的正确性和有效性有关的问题，使用这些系统的用户也要考虑系统设计和实现中的要求。不同的应用程序可能采用不同的方法，比方说增加元数据来源的声明、对元数据是用数字签名以及元数据创建过程中某些方面的自动化，但是这些都超出了本文以及META标签语法的范畴。
+9、附录――处理用META标签编码的元数据的Perl脚本程序
+这一节包括两个程序，适用于4和5版本的PERL脚本语言解释器。这两个程序可以自由地用于本单位的需要、研究目的或者风险资本的召唤。根据这些程序，程序员可以很容易把它们改造成其它的应用。
+脚本一：源数据格式转换
+这是一个简单的Perl脚本程序，能够正确识别本文所有例子中的元数据编码。这个例子说明如何用普通的脚本开发把元数据从一种格式转到另一种格式的实用程序，只要稍作改变就可以支持多种输出格式。
+
+#!/depot/bin/perl
+#
+# This simple perl script extracts metadata embedded in an HTML file
+# and outputs it in an alternate format.  Issues warning about missing
+# element name or value.
+#
+# Handles mixed case tags and attribute values, one per line or spanning
+# several lines.  Also handles a quoted string spanning multiple lines.
+# No error checking.  Does not tolerate more than one "<meta" per line.
+
+print "@(urc;\n";
+while (<>) {
+        next if (! /<meta/i);
+        ($meta) = /(<meta.*$)/i;
+        if (! /<meta.*>/i) {
+                while (<>) {
+                        $meta .= $_;
+                        last if (/>/);
+                }
+        }
+        $name     =    $meta =~ /name\s*=\s*"([^"]*)"/i
+                        ? $1 : "MISSING ELEMENT NAME";
+        $content  = $meta =~ /content\s*=\s*"([^"]*)"/i
+                        ? $1 : "MISSING ELEMENT VALUE";
+        ($scheme) =  $meta =~ /scheme\s*=\s*"([^"]*)"/i;
+        ($lang)   =    $meta =~ /lang\s*=\s*"([^"]*)"/i;
+
+        if ($lang || $scheme) {
+                $mod = " ($lang";
+                if (! $scheme)
+
+                        { $mod .= ")"; }
+                elsif (! $lang)
+                        { $mod .= "$scheme)" }
+                else
+                        { $mod .= ", $scheme)"; }
+        }
+        else
+                { $mod = ""; }
+
+        print "    @|$name$mod; $content\n";
+}
+print "@)urc;\n";
+# ---- end of Perl script ----
+如果该程序用于第四节中的元数据例子，则输出结果如下：
+        @(urc;
+            @|DC.Title; A Dirge
+            @|DC.Creator; Shelley, Percy Bysshe
+            @|DC.Type; poem
+            @|DC.Date; 1820
+            @|DC.Format; text/html
+            @|DC.Language; en
+        @)urc;
+脚本二――元数据创建自动化
+如果没有一些自动化的帮助――预先设定缺省值、语法检查、数据范围验证以及拼写检查等――创建和维护高质量的元数据可能非常困难。如果有某个脚本程序能够仅仅通过文档标题来加入相应的元数据内容，就可以极大减轻用户的工作量。下面的程序就可完成这项工作。HTML作者可以把整个内嵌资源描述缩写放在HTML注释声明中：
+       <!--metablock Little Red Riding Hood -->
+我们的脚本程序把该声明看作是一种专门的带有文档标题的“元数据块声明”。一般形式为：
+       <!--metablock TITLE_OF_DOCUMENT -->
+该声明的工作方式非常类似于“服务器端引入”，脚本程序用完整的元数据块代替该声明并机或其他的替换。装上后，该脚本就会生成与用户产品Web服务器程序兼容的HTML文件。
+文档提供者应该保有一份单独的文档模板，保存很少改变的预设值和元数据元素如果用户的需要非常简单，两份文档除了标题之外都相同，那么这些元素就能自动生成。使用该脚本程序，这些元数据的值可以向变量那样在模板或者HTML文档中引用。变量的引用形式类似于“(--mbVARNAME)”，模板中的格式如下：
+       <title> (--mbtitle) </title>
+       <meta name    = "DC.Creator"
+             content = "Simpson, Homer">
+       <meta name    = "DC.Title"
+             content = "(--mbtitle)">
+       <meta name    = "DC.Date.Created"
+             content = "(--mbfilemodtime)">
+       <meta name    = "DC.Identifier"
+             content = "(--mbbaseURL)/(--mbfilename)">
+       <meta name    = "DC.Format"
+             content = "text/html; (--mbfilesize)">
+       <meta name    = "DC.Language"
+             content = "(--mblanguage)-BUREAUCRATESE">
+       <meta name    = "RC.MetadataAuthority"
+             content = "Springfield Nuclear">
+       <link rel     = "schema.DC"
+             href    = "http://purl.org/DC/elements/1.0/">
+       <link rel     = "schema.RC"
+             href    = "http://nukes.org/ReactorCore/rc">
+只要把其中的变量引用代入实际值，上面的模板就可作为描述文档的元数据块。 根据我们的脚本，下述变量要同时在模板和文档中替换：
+       (--mbfilesize)            size of the final output file
+       (--mbtitle)               title of the document
+       (--mblanguage)            language of the document
+       (--mbbaseURL)             beginning part of document identifier
+       (--mbfilename)            last part (minus .html) of identifier
+       (--mbfilemodtime)         last modification date of the document
+这是一个应用该脚本的HTML文档：
+       <html>
+       <head>
+       <!--metablock Nutritional Allocation Increase -->
+       <meta name    = "DC.Type"
+             content = "Memorandum">
+       </head>
+       <body>
+       <p>
+       From:  Acting Shift Supervisor
+       To:    Plant Control Personnel
+       RE:    (--mbtitle)
+       Date:  (--mbfilemodtime)
+       <p>
+       Pursuant to directive DOH:10.2001/405aec of article B-2022,
+       subsection 48.2.4.4.1c regarding staff morale and employee
+       productivity standards, the current allocation of doughnut
+       acquisition funds shall be increased effective immediately.
+       </body>
+       </html>
+由于替换在整个文档范围内进行，作者只要输入标题一次就可以了（通常标题要在首部和HTML文档体内输入两次）。运行脚本程序后，上面的文件就被转换成：
+       <html>
+       <head>
+           <title> Nutritional Allocation Increase </title>
+       <meta name    = "DC.Creator"
+             content = "Simpson, Homer">
+       <meta name    = "DC.Title"
+             content = "Nutritional Allocation Increase">
+       <meta name    = "DC.Date.Created"
+             content = "1999-03-08">
+       <meta name    = "DC.Identifier"
+             content = "http://moes.bar.com/doh/homer.html">
+       <meta name    = "DC.Format"
+             content = "text/html;    1320  bytes">
+       <meta name    = "DC.Language"
+             content = "en-BUREAUCRATESE">
+       <meta name    = "RC.MetadataAuthority"
+             content = "Springfield Nuclear">
+       <link rel     = "schema.DC"
+             href    = "http://purl.org/DC/elements/1.0/">
+       <link rel     = "schema.RC"
+
+             href    = "http://nukes.org/ReactorCore/rc">
+       <meta name    = "DC.Type"
+             content = "Memorandum">
+       </head>
+       <body>
+       <p>
+       From:  Acting Shift Supervisor
+       To:    Plant Control Personnel
+       RE:    Nutritional Allocation Increase
+       Date:  1999-03-08
+       <p>
+       Pursuant to directive DOH:10.2001/405aec of article B-2022,
+       subsection 48.2.4.4.1c regarding staff morale and employee
+       productivity standards, the current allocation of doughnut
+       acquisition funds shall be increased effective immediately.
+       </body>
+       </html>
+下面是完成这一转换过程的脚本：
+#!/depot/bin/perl
+#
+# This Perl script processes metadata block declarations of the form
+# <!--metablock TITLE_OF_DOCUMENT --> and variable references of the
+# form (--mbVARNAME), replacing them with full metadata blocks and
+# variable values, respectively.  Requires a "template" file.
+# Outputs an HTML file.
+#
+# Invoke this script with a single filename argument, "foo".  It creates
+# an output file "foo.html" using a temporary working file "foo.work".
+# The size of foo.work is measured after variable replacement, and is
+# later inserted into the file in such a way that the file's size does
+# not change in the process.  Has little or no error checking.
+
+$infile = shift;
+open(IN, "< $infile")
+        or die("Could not open input file \"$infile\"");
+$workfile = "$infile.work";
+unlink($workfile);
+open(WORK, "+> $workfile")
+        or die("Could not open work file \"$workfile\"");
+
+@offsets = ();          # records locations for late size replacement
+$title = "";            # gets the title during metablock processing
+$language = "en";       # pre-set language here (not in the template)
+$baseURL = "http://moes.bar.com/doh";   # pre-set base URL here also
+$filename = "$infile.html";             # final output filename
+$filesize = "(--mbfilesize)";           # replaced late (separate pass)
+
+($year, $month, $day) = (localtime( (stat IN) [9] ))[5, 4, 3];
+$filemodtime = sprintf "%s-%02s-%02s", 1900 + $year, 1 + $month, $day;
+
+sub putout {            # outputs current line with variable replacement
+        if (! /\(--mb/) {
+                print WORK;
+                return;
+        }
+        if (/\(--mbfilesize\)/)                 # remember where it was
+                { push @offsets, tell WORK; }   # but don't replace yet
+        s/\(--mbtitle\)/$title/g;
+        s/\(--mblanguage\)/$language/g;
+        s/\(--mbbaseURL\)/$baseURL/g;
+        s/\(--mbfilename\)/$filename/g;
+        s/\(--mbfilemodtime\)/$filemodtime/g;
+        print WORK;
+}
+
+while (<IN>) {                          # main loop for input file
+        if (! /(.*)<!--metablock\s*(.*)/) {
+                &putout;
+                next;
+        }
+        $title = $2;
+        $_ = $1;
+        &putout;
+        if ($title =~ s/\s*-->(.*)//) {
+                $remainder = $1;
+        }
+        else {
+                while (<IN>) {
+                        $title .= $_;
+                        last if (/(.*)\s*-->(.*)/);
+                }
+                $title .= $1;
+                $remainder = $2;
+        }
+        open(TPLATE, "< template")
+                or die("Could not open template file");
+        while (<TPLATE>)                # subloop for template file
+                { &putout; }
+        close(TPLATE);
+        $_ = $remainder;
+        &putout;
+
+}
+close(IN);
+
+# Now replace filesize variables without altering total byte count.
+select( (select(WORK), $| = 1) [0] );   # first flush output so we
+if (($size = -s WORK) < 100000)         # can get final file size
+        { $scale = 0; }                 # and set scale factor or
+else {                  # compute it, keeping width of size field low
+        for ($scale = 0; $size >= 1000; $scale++)
+                { $size /= 1024; }
+}
+$filesize = sprintf "%7.7s %sbytes",
+        $size, (" ", "K", "M", "G", "T", "P") [$scale];
+
+foreach $pos (@offsets) {       # loop through saved size locations
+        seek WORK, $pos, 0;             # read the line found there
+        $_ = <WORK>;
+        # $filesize must be exactly as wide as "(--mbfilesize)"
+        s/\(--mbfilesize\)/$filesize/g;
+        seek WORK, $pos, 0;             # rewrite it with replacement
+        print WORK;
+}
+
+close(WORK);
+rename($workfile, "$filename")
+        or die("Could not rename \"$workfile\" to \"$filename\"");
+# ---- end of Perl script ----
+10. 作者地址
+John A. Kunze
+Center for Knowledge Management
+University of California, San Francisco
+530 Parnassus Ave, Box 0840
+San Francisco, CA  94143-0840, USA
+Fax:   +1 415-476-4653
+EMail: jak@ckm.ucsf.edu
+11、参考资料
+[AAT]Art and Architecture Thesaurus, Getty Information Institute.
+                    http://shiva.pub.getty.edu/aat_browser/
+[AC]The A-Core: Metadata about Content Metadata, (inprogress)
+                    http://metadata.net/ac/draft-iannella-admin-01.txt
+[DC1]Weibel, S., Kunze, J., Lagoze, C. and M. Wolf,"Dublin Core Metadata for Resource Discovery", RFC 2413, September 1998.
+                    ftp://ftp.isi.edu/in-notes/rfc2413.txt
+[DCHOME]Dublin Core Initiative Home Page.
+                    http://purl.org/DC/
+[DCPROJECTS]Projects Using Dublin Core Metadata.
+                    http://purl.org/DC/projects/index.htm
+[DCT1]Dublin Core Type List 1, DC Type Working Group, March 1999.
+                    http://www.loc.gov/marc/typelist.html
+[freeWAIS-sf2.0] The enhanced freeWAIS distribution, February 1999.
+                    http://ls6-www.cs.uni-dortmund.de/ir/projects/freeWAIS-sf/
+[GLIMPSE]Glimpse Home Page.
+                    http://glimpse.cs.arizona.edu/
+[HARVEST]Harvest Web Indexing.
+                    http://www.tardis.ed.ac.uk/harvest/
+[HTML4.0]Hypertext Markup Language 4.0 Specification, April 1998.
+                    http://www.w3.org/TR/REC-html40/
+[ISEARCH]Isearch Resources Page.
+                    http://www.etymon.com/Isearch/
+[ISO639-2]Code for the representation of names of languages, 1996.
+                    http://www.indigo.ie/egt/standards/iso639/iso639-2-en.html
+[ISO8601]ISO 8601:1988(E), Data elements and interchange formats -- Information interchange - Representation of dates and times, International Organization for standardization, June 1988.
+                    http://www.iso.ch/markete/8601.pdf
+[MARC]USMARC Format for Bibliographic Data, US Library of Congress.
+                    http://lcweb.loc.gov/marc/marc.html
+[PERL]L. Wall, T. Christiansen, R. Schwartz, Programming Perl, Second Edition, O'Reilly, 1996.
+[RDF]Resource Description Framework Model and Syntax Specification, February 1999.
+                    http://www.w3.org/TR/REC-rdf-syntax/
+[RFC1766]Alvestrand, H., "Tags for the Identification of Languages", RFC 1766, March 1996.
+                    ftp://ftp.isi.edu/in-notes/rfc1766.txt
+[SWISH-E]Simple Web Indexing System for Humans - Enhanced.
+                    http://sunsite.Berkeley.EDU/SWISH-E/
+[TGN]Thesaurus of Geographic Names, Getty Information Institute.
+                    http://shiva.pub.getty.edu/tgn_browser/
+[WTN8601]W3C Technical Note - Profile of ISO 8601 Date and Time Formats.
+                    http://www.w3.org/TR/NOTE-datetime
+[XML]Extensible Markup Language (XML).
+                    http://www.w3.org/TR/REC-xml
+12、版权声明
+Copyright (C) The Internet Society (1999).  All Rights Reserved.
+This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works.  However, this document itself may not be modified in any way, such as by removing the copyright notice or references to the Internet Society or other Internet organizations, except as needed for the purpose of developing Internet standards in which case the procedures for copyrights defined in the Internet Standards process must be followed, or as required to translate it into languages other than English.
+The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+This document and the information contained herein is provided on an  "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+Acknowledgement
+Funding for the RFC Editor function is currently provided by the Internet Society.
+
+
+
+RFC2731--Encoding Dublin Core Metadata in HTML                   在HTML中使用DC元数据
+
+
+
+RFC文档中文翻译计划
+
+
+
+
+

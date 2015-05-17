@@ -1,0 +1,28 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-4-26
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group						Steve Crocker
+RFC-25		   							UCLA
+										30 October 1969
+
+
+
+
+
+不使用高的连接号
+(RFC25  NO HIGH LINK NUMBERS)
+
+由于保留一个或者更多的连接号用于测试设备可能是指的的，而且256个连接号远远高
+于实际的需要，我们建议不要使用高于63的连接号。我们将在加州大学洛杉矶分校UCLA
+应用该限制实现我们的表。我们也注意到32可能更加接近实际，但64的确是足够了。
+RFC25  NO HIGH LINK NUMBERS                          不使用高的连接号
+
+
+1
+RFC 文档翻译计划

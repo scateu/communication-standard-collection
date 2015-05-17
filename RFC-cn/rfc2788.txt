@@ -1,0 +1,713 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：卢伍春（spacelu  wuchun_lu@163.net）
+译文发布时间：2001-5-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。 
+
+
+
+              RFC2788
+Network Working Group                                           N. Freed
+Request for Comments: 2788                                      Innosoft
+Category: Standards Track                                       S. Kille
+Obsoletes: 2248                                     MessagingDirect Ltd.
+                                                              March 2000
+         
+
+
+网络服务监视MIB 
+(RFC2788 Network Services Monitoring MIB)
+
+
+备忘录状态
+This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+版权申明
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+一个网络应用是一个或多个主机通过网络相连，或通过网络执行操作明确定义的实现。许多
+网络应用程序适合提供对网络用户进行SNMP监视。这些应用包括TCP/IP和OSI网络应用。
+这个文档定义了包含适用于任何网络应用监视元素的MIB。这个信息包括，所有可监视网
+络服务应用表，应用之间的连接，以及关联应用连接的参数和状态信息。
+MIB自己可以用在任何应用上，还足够提供对大部分简单应用的功能；还可以设计成一个
+模块和特定应用监视和管理连接使用。两个例子是MIB定义附加的参数来监听信息传输代
+理（MTA）服务或目录服务代理（DSA）服务。可以预测将来MIB的属性会被特别指定。
+MIB没有提供对网络服务应用运行的主机或主机组管理的工具，也没有提供监视除了网络
+服务外的应用工具。主机资源和通用运用监视用主机资源MIB[1]或应用MIB[2]操作。
+
+目录
+1  SNMP网络管理结构                                       
+2	网络服务监视MIB的基本原理                             
+1	和其它MIB的通用关系
+2	约束范围
+3	配置信息
+3	 应用对象
+4	定义
+5	从RFC2248的变化
+6	确认
+7	参考资料
+8	安全考虑
+9	作者地址
+10	版权状态
+
+1	SNMP网络管理结构
+目前的SNMP网络管理包括5个主要的部分：
+a)	全部总体的体系结构，如RFC2571描述。[3]
+b)	管理对象和事物描述和命名机制。管理信息结构（SMI）的第一版叫作SMIv1如
+RFC1155描述，STD16如RFC1212[5]和RFC1215所述。第二版，称作SMIv2，
+在STD58（RFC2578[7]），STD58（RFC2579[8]）和STD58（RFC2580[9]）描述。
+c)	传输管理信息协议。第一版的SNMP信息协议称为SNMP v1,如
+STD15(RFC1157[10])所述。SNMP信息协议的第二版不是标准的网络协议，称为
+SNMPv2c,如RFC1901[11]和RFC1906[12]所述。第三版称为SNMPv3，如RFC1906，
+RFC2572，RFC2574所述。
+d)	访问管理信息协议操作。协议操作和关联PDU格式的第一个集合在STD15
+（RFC1157[10]）中描述。第二个在RFC2575进行描述。
+e)	基本应用集，如RFC2573[16]  和基于观察的访问控制机制（如RFC2575[17]）。
+ 
+管理对象通过虚拟信息存储来访问，通过管理信息库及MIB。在MIB中的对象定义用
+在SMI定义的机制上。
+这个备忘录详细说明和SMIv2的MIB模块。和SMIv1相符的MIB可以通过相应的转
+换产生。MIB转换结果必须和原来等价，除了因为不可能转换（用counter64）而省略
+的对象和事件。在转换过程中，在SMIv2 中一些机器可读信息将被转换成SMIv1的
+文本描述。但是，机器可读信息的丢失不认为是MIB信息的改变。
+2   网络服务监视MIB的基本原理
+尽管已经努力开发管理低层网络设备工具，但是管理应用层实体的工作做得很少。只有
+用低层信息来管理所有应用层实体既没有效率也不合理。而且，随着应用实体变的更加
+复杂，管理应用程序的复杂性很快的增加。
+这个导致监视网络服务应用（特别是分布式组件如MTA和DSA）通过监视应用的特殊
+方面成为必要。这样监视的组件不仅仅包括测试负载，检测连接中断，孤立的系统失效
+和传送阻塞。
+为了有效的管理网络服务应用，必须满足两个条件：
+1．	必须使监视大量组件成为可能（特别是对大组织）。
+2．	监视应用程序必须能够集成到通用网络管理环境。
+这些设定定义了只是能够只读访问；它足够决定上/下状态和提供大量操作问题的指示。
+2.1 和其它MIB的通用关系
+这个MIB倾向于只提供监视任何网络服务应用程序的通用工具。它不提供监视特殊应
+用的所有必须工具。每一个特殊类型的网络应用程序有它自己的一个MIB来使用通用
+工具。
+2．2 使用范围
+这里提供的结构非常少；还有许多能完成的。如：
+1．	通用网络服务应用设置监视和控制。
+2．	在特殊服务要求队列中具体要求的详细检查和修改。
+3．	探测来决定特殊要求的状态（如，有一个特殊信息ID的邮件信息地址）。
+4．	执行一定的操作（如，强制未决信息到一些特殊系统的快速连接和传送）。
+所有这些功能都是有用的。但是，这些功能要求提供严格的安全检测。这些功能要求许
+多更复杂的设计，需要许多特别功能属性。总之，这些特性是有争议的而且难于实现。
+这个文档保持简单，集中描述管理网络服务应用的监视方面。目的是提供一个简单，有
+用，可以广泛实现的框架。
+2．3设置信息
+MIB主要提供应用操作方面的信息。另外，应用实际设置的消息可能在别初也给以保
+存；applDirectoryname或者applURL 指出保存信息的地址。
+3．	应用对象
+MIB定义了一组适合一定范围网络提供服务应用的通用目的属性。OSI和非OSE服务
+都提供。附加表提供了特别网络服务属性。
+这个表被定义成系统中每个可操作的网络应用服务对应表里的一行。应用的唯一静态信
+息是它的名字。所有其它的静态信息从不同的服务路径获得。AppldirectoryName是一
+个外键，它使一个SNMP MIB输入整齐地和X.500路径相关。在SNMP，应用在表中
+分组称为applTable,它以整数键applIndex为索引。
+应用类型可以通过下面一点或两点来确定：
+（1）	指定应用的附加MIB变量
+（2）	特殊协议应用的联合
+4．	定义
+NETWORK-SERVICES-MIB DEFINITIONS ::= BEGIN
+   IMPORTS
+       OBJECT-TYPE, Counter32, Gauge32, MODULE-IDENTITY, mib-2
+         FROM SNMPv2-SMI
+       TimeStamp, TEXTUAL-CONVENTION
+         FROM SNMPv2-TC
+       MODULE-COMPLIANCE, OBJECT-GROUP
+         FROM SNMPv2-CONF
+       SnmpAdminString
+           FROM SNMP-FRAMEWORK-MIB;
+   application MODULE-IDENTITY
+       LAST-UPDATED "200003030000Z"
+       ORGANIZATION "IETF Mail and Directory Management Working Group"
+       CONTACT-INFO
+         "        Ned Freed
+          Postal: Innosoft International, Inc.
+                  1050 Lakes Drive
+                  West Covina, CA 91790
+                  US
+             Tel: +1 626 919 3600
+             Fax: +1 626 919 3614
+          E-Mail: ned.freed@innosoft.com"
+描述
+ “MIB模块描述了网络服务应用”。
+修订  “200003030000Z”
+描述
+在RFC2788的修订大量的DisplayStrings成SnmpAdminStrings.注意这个变化不被SMIv2
+严格支持。但是，丢弃旧的对象和定义新对象的替换做法将导致在向前兼容性和互用性
+更加困难。明确名字的定义文档已经从RFC1799更新到RFC2253.
+修订 “199905120000Z”
+描述
+  "这次修订解决了一些前面版本中出现的问题，大部分关于MIB不同版本的相同组问
+题。自从RFC2248以来就没有改变MIB定义对象。
+修订 “199708170000Z”
+描述
+  “这次修订，在RFC2248，增加了applDescription和applURL对象，applOperStatus
+的停顿状态，和把MIB改名从APPLICATION-MIB到NETWORK-SERVICE-MIB“。
+修订“199311280000Z“
+描述
+“MIB的原始版本为RFC1565“
+::={mib-227}
+---文本协定
+---在目录中确切的名字用来表示对象
+DistinguishedName::=TEXTUL-CONVENTION
+     DISPLAY-HINT "255a"
+当前状态描述
+“显著名字依照RFC2253来表示，描述成按照RFC2279定义的UTF8字符。
+8字符串（大小（0..255））
+-同意资源位置存储杂在URL字串中。
+URLString ::= TEXTUAL-CONVENTION
+       DISPLAY-HINT "255a"
+       STATUS current
+描述
+“通用资源位置依照RFC1738和RFC2368来表示，在RFC854定义的Nvi ASCII字符表示。
+语法8字节串（大小（0..255））
+---基本的applTable包括一系列应用输入。
+applTable OBJECT-TYPE
+       SYNTAX SEQUENCE OF ApplEntry
+       MAX-ACCESS not-accessible
+       STATUS current
+描述
+“这个表保存各种网络服务提供应用对象。每个被监视的网络服务应用在表中有一个唯一输
+入。”
+       ::= {application 1}
+   applEntry OBJECT-TYPE
+       SYNTAX ApplEntry
+       MAX-ACCESS not-accessible
+       STATUS current
+描述
+  “和单一服务应用的输入”
+       INDEX {applIndex}
+       ::= {applTable 1}
+   ApplEntry ::= SEQUENCE {
+       applIndex
+           INTEGER,
+       applName
+           SnmpAdminString,
+       applDirectoryName
+           DistinguishedName,
+       applVersion
+           SnmpAdminString,
+       applUptime
+           TimeStamp,
+       applOperStatus
+           INTEGER,
+       applLastChange
+           TimeStamp,
+       applInboundAssociations
+           Gauge32,
+       applOutboundAssociations
+           Gauge32,
+       applAccumulatedInboundAssociations
+           Counter32,
+       applAccumulatedOutboundAssociations
+           Counter32,
+       applLastInboundActivity
+           TimeStamp,
+       applLastOutboundActivity
+           TimeStamp,
+       applRejectedInboundAssociations
+           Counter32,
+       applFailedOutboundAssociations
+           Counter32,
+       applDescription
+           SnmpAdminString,
+       applURL
+           URLString
+   }
+   applIndex OBJECT-TYPE
+       SYNTAX INTEGER (1..2147483647)
+       MAX-ACCESS not-accessible
+       STATUS current
+  描述
+“鉴别网络服务应用的索引。属性是表中按照字典顺序的索引。”
+::= {applEntry 1}
+   applName OBJECT-TYPE
+       SYNTAX SnmpAdminString
+       MAX-ACCESS read-only
+描述
+“命名网络服务应用选择众所周知的名字。”
+::=[applEntry2]
+applDirectoryName OBJECT-TYPE
+       SYNTAX DistinguishedName
+       MAX-ACCESS read-only
+当前状态
+描述
+“在目录里互相区分的名字表示应用静态信息。空串表明在这个目录里没有有用的应用。”
+::= {applEntry 3}
+applVersion OBJECT-TYPE
+   SYNTAX SnmpAdminString
+   MAX-ACCESS read-only
+当前状态
+描述
+“表示网络应用软件的版本。这个域通常由网络服务应用软件开发商来定义。”
+::= {applEntry 4}
+applUptime OBJECT-TYPE
+  SYNTAX TimeStamp
+  MAX-ACCESS read-only
+当前状态
+描述
+“sysUpTime的值是网络服务应用最后初始化的值。如果应用初始化先于网络管理子系统的
+初始化，那么它的值为0。”
+       ::= {applEntry 5}
+   applOperStatus OBJECT-TYPE
+       SYNTAX INTEGER {
+         up(1),
+         down(2),
+         halted(3),
+         congested(4),
+         restarting(5),
+         quiescing(6)
+       }
+       MAX-ACCESS read-only
+当前状态
+描述
+“表明了网络服务应用的状态。‘down"表示网络服务不可用。'up'表明网络服务可操作的可
+用的。'halted'表明服务可操作但不可用的。'congested'  表明服务是可操作的但没有附加的
+资源供给。’restarting'表示这个应用当前不可用但是正在启动并很快能用。‘quiescing'表明
+服务当前可操作但是在关闭状态。在’quiescing'状态额外的内部连接可能被应用拒绝。
+     ::= {applEntry 6}
+   applLastChange OBJECT-TYPE
+       SYNTAX TimeStamp
+       MAX-ACCESS read-only
+当前状态
+描述
+“applLastChange的值为网络服务应用进入当前状态的时间。如果当前状态进入先于本地网
+络子系统的初始化，那么这个对象值为0。”
+::= {applEntry 7}
+   applInboundAssociations OBJECT-TYPE
+       SYNTAX Gauge32
+       MAX-ACCESS read-only
+当前状态
+“表示当前作为响应者与网络服务应用相连的数目。一个连接发生在另外一个应用成功的和
+这个应用相连时。”
+       ::= {applEntry 8}
+   applOutboundAssociations OBJECT-TYPE
+       SYNTAX Gauge32
+       MAX-ACCESS read-only
+当前状态
+“表示从自身发起和其它网络服务应用相连的数目。一个向外连接发生在这个应用成功地和
+另外一个应用连接时。”
+::= {applEntry 9}
+   applAccumulatedInboundAssociations OBJECT-TYPE
+       SYNTAX Counter32
+       MAX-ACCESS read-only
+当前状态
+描述
+“表示从这个应用初始化开始外部应用进入和这个应用连接的总数。”
+::= {applEntry 10}
+   applAccumulatedOutboundAssociations OBJECT-TYPE
+       SYNTAX Counter32
+       MAX-ACCESS read-only   
+当前状态
+描述
+“表示从这个应用初始化开始作为发起者和外部应用连接的总数。”
+::= {applEntry 11}
+   applLastInboundActivity OBJECT-TYPE
+       SYNTAX TimeStamp
+       MAX-ACCESS read-only       
+当前状态
+描述
+“applLastInboundActivity表示这个应用最后被外部连接的时间。如果最后一次这类连接发
+生在网络子系统的最后一次初始化前，那么这个对象值为0。”
+::= {applEntry 12}
+   applLastOutboundActivity OBJECT-TYPE
+       SYNTAX TimeStamp
+       MAX-ACCESS read-only
+描述
+“sysUpTime的值表示应用最后一次往外连接的时间。如果最后一次连接的时间早于网络子
+系统最后一次初始化的时间，这个对象值为0。”
+::= {applEntry 13}
+   applRejectedInboundAssociations OBJECT-TYPE
+       SYNTAX Counter32
+       MAX-ACCESS read-only
+"该值表示这个应用实体从初始化以来拒绝的往内连接请求个数。往外被拒绝的个数不算在
+内。注意这个值只是表示这个应用实体拒绝别人的次数。它不包括更低层的拒绝次数。因此
+这个数量表示往内连接的应用请求拒绝次数。“
+::= {applEntry 14}
+applFailedOutboundAssociations OBJECT-TYPE
+       SYNTAX Counter32
+       MAX-ACCESS read-only
+      STATUS current
+描述
+“表示往外连接从初始化开始遭到拒绝的次数。自己解决别人的次数不算在内。“
+::= {applEntry 15}
+   applDescription OBJECT-TYPE
+       SYNTAX SnmpAdminString
+       MAX-ACCESS read-only
+描述
+“表示应用的文本描述。这个信息简略的说明和描述 了应用。“
+::= {applEntry 16}
+   applURL OBJECT-TYPE
+       SYNTAX URLString
+       MAX-ACCESS read-only
+       STATUS current
+描述
+“这个指向享用的描述信息。这个信息主要描述了信息的状态表现。“
+ ::= {applEntry 17}
+-assocTable更加详细地说明了appltable关于连接的信息。注意两层的兼容性在接下去进行
+描述，依赖于什么连接监视来管理。“
+assocTable OBJECT-TYPE
+       SYNTAX SEQUENCE OF AssocEntry
+       MAX-ACCESS not-accessible
+描述
+“这个表包括激活的所有应用联系集合。”
+::= {application 2}
+   assocEntry OBJECT-TYPE
+       SYNTAX AssocEntry
+       MAX-ACCESS not-accessible
+       STATUS current
+描述
+“表示和网络服务应用连接的输入。”
+INDEX {applIndex, assocIndex}
+       ::= {assocTable 1}
+   AssocEntry ::= SEQUENCE {
+       assocIndex
+           INTEGER,
+       assocRemoteApplication
+           SnmpAdminString,
+       assocApplicationProtocol
+           OBJECT IDENTIFIER,
+       assocApplicationType
+           INTEGER,
+       assocDuration
+           TimeStamp
+   }
+   assocIndex OBJECT-TYPE
+       SYNTAX INTEGER (1..2147483647)
+       MAX-ACCESS not-accessible
+       
+       STATUS current
+描述
+“表示对网络服务应用的每个连接的唯一标志。这个属性用作表字典顺序的索引。狐疑这个
+表同时以applIndex为索引。”
+::= {assocEntry 1}
+   assocRemoteApplication OBJECT-TYPE
+       SYNTAX SnmpAdminString
+       MAX-ACCESS read-only
+       STATUS current
+描述
+“表示运行远程网络服务应用的系统名称。对一个以IP为基础的应用，这个可能是一个域
+名也可能是IP地址。对一个OSI应用，这个是管理对象的编码名字字符串。对
+X.400(1984)MTA，没有一个区分的名字，RFC2156用在X400接收。注意，不是每一个在
+MTA的连接对另外一个MTA都是必须的。”
+::= {assocEntry 2}
+   assocApplicationProtocol OBJECT-TYPE
+       SYNTAX OBJECT IDENTIFIER
+       MAX-ACCESS read-only
+       STATUS current
+描述
+“表示为应用所用的协议标志，它是应用文本。对因特网应用型如[applTCPProtaID 端口]
+或[applUDProtoID 端口]的OID值分别用作基于TCP 和UDP协议的。在每一种情况下，依
+照所用协议的首要端口书，通常TANA优先级用作登记新协议的端口。”
+::= {assocEntry 3}
+
+   assocApplicationType OBJECT-TYPE
+       SYNTAX INTEGER {
+           uainitiator(1),
+           uaresponder(2),
+           peerinitiator(3),
+           peerresponder(4)}
+       MAX-ACCESS read-only
+       STATUS current   
+“表明是否是这个网络服务的某些类型的客户远程应用（如邮件服务代理）或者同等的服务。
+同时表明是否是初始化连接于一个网络服务的输入的远端或是否是和一个本地应用和外部
+连接一致。MTA和信息网关是和这些变量相同目的的。”
+::= {assocEntry 4}
+   assocDuration OBJECT-TYPE
+       SYNTAX TimeStamp
+       MAX-ACCESS read-only
+       STATUS current
+描述
+“表明这个应用持续的时间。如果一个连接先于网络子系统的最后一次初始化，这个对象值
+为0。“
+::= {assocEntry 5}
+--一致信息
+applConformance OBJECT IDENTIFIER ::= {application 3}
+   applGroups      OBJECT IDENTIFIER ::= {applConformance 1}
+   applCompliances OBJECT IDENTIFIER ::= {applConformance 2}
+   -- Compliance statements
+   applCompliance MODULE-COMPLIANCE
+       STATUS obsolete
+  描述
+“表示根据RFC1565执行的兼容状态，它支持网络服务监视MIB。这个是RFC1565的基本
+兼容状态。“
+模块
+MANDATORY-GROUPS {applRFC1565Group}
+       ::= {applCompliances 1}
+   assocCompliance MODULE-COMPLIANCE
+       STATUS obsolete
+描述
+“为网络服务应用和连接，支持网络服务监视MIB的RFC1565应用的兼容状态。“
+MODULE
+         MANDATORY-GROUPS {applRFC1565Group, assocRFC1565Group}
+       ::= {applCompliances 2}
+   applRFC2248Compliance MODULE-COMPLIANCE
+       STATUS deprecated
+描述
+“为网络服务应用，支持网络服务监视MIB的RFC2248应用的兼容状态。“
+MODULE
+         MANDATORY-GROUPS {applRFC2248Group}
+       ::= {applCompliances 3}
+   assocRFC2248Compliance MODULE-COMPLIANCE
+       STATUS deprecated
+描述
+“为网络服务应用和连接，支持网络服务监视MIB的RFC2248应用的兼容状态。“
+      MODULE
+         MANDATORY-GROUPS {applRFC2248Group, assocRFC2248Group}
+       ::= {applCompliances 4}
+   applRFC2788Compliance MODULE-COMPLIANCE
+       STATUS current
+描述
+“为网络服务应用，支持网络服务监视MIB的RFC2788应用的兼容状态。“
+       MODULE
+         MANDATORY-GROUPS {applRFC2788Group}
+       ::= {applCompliances 5}
+   assocRFC2788Compliance MODULE-COMPLIANCE
+       STATUS current
+描述
+“为网络服务应用和连接，支持网络服务监视MIB的RFC2788应用的兼容状态。“
+       MODULE
+         MANDATORY-GROUPS {applRFC2788Group, assocRFC2788Group}
+       ::= {applCompliances 6}
+   -- Units of conformance
+   applRFC1565Group OBJECT-GROUP
+       OBJECTS {
+         applName, applVersion, applUptime, applOperStatus,
+         applLastChange, applInboundAssociations,
+         applOutboundAssociations, applAccumulatedInboundAssociations,
+         applAccumulatedOutboundAssociations, applLastInboundActivity,
+         applLastOutboundActivity, applRejectedInboundAssociations,
+         applFailedOutboundAssociations}
+       STATUS obsolete
+描述
+“表示提供基本网络服务应用监视的对象集。这个初始化集在RFC1565中给以了定义。“
+       ::= {applGroups 7}
+   assocRFC1565Group OBJECT-GROUP
+       OBJECTS {
+         assocRemoteApplication, assocApplicationProtocol,
+         assocApplicationType, assocDuration}
+       STATUS obsolete
+描述
+“表示提供基本网络服务应用连接监视的对象集。这个初始化集在RFC1565中给以了定义。
+“
+       ::= {applGroups 2}
+   applRFC2248Group OBJECT-GROUP
+       OBJECTS {
+         applName, applVersion, applUptime, applOperStatus,
+         applLastChange, applInboundAssociations,
+         applOutboundAssociations, applAccumulatedInboundAssociations,
+         applAccumulatedOutboundAssociations, applLastInboundActivity,
+         applLastOutboundActivity, applRejectedInboundAssociations,
+         applFailedOutboundAssociations, applDescription, applURL}
+       STATUS deprecated
+描述
+“表示提供基本网络服务应用监视的对象集。这个初始化集在RFC2248中给以了定义；注
+意少了applDirectoryName。“
+       ::= {applGroups 3}
+   assocRFC2248Group OBJECT-GROUP
+       OBJECTS {
+         assocRemoteApplication, assocApplicationProtocol,
+         assocApplicationType, assocDuration}
+       STATUS deprecated
+描述
+“表示提供基本网络服务应用连接监视的对象集。这个初始化集在RFC2248中给以了定义；
+注意少了applDirectoryName。“
+       ::= {applGroups 4}
+   applRFC2788Group OBJECT-GROUP
+       OBJECTS {
+         applName, applDirectoryName, applVersion, applUptime,
+         applOperStatus, applLastChange, applInboundAssociations,
+         applOutboundAssociations, applAccumulatedInboundAssociations,
+         applAccumulatedOutboundAssociations, applLastInboundActivity,
+         applLastOutboundActivity, applRejectedInboundAssociations,
+         applFailedOutboundAssociations, applDescription, applURL}
+       STATUS current
+描述
+“表示提供基本网络服务应用监视的对象集。这个初始化集在RFC2788中给以了定义；它
+增加了RFC2248少掉的applDirectoryName。“
+ ::= {applGroups 5}
+   assocRFC2788Group OBJECT-GROUP
+       OBJECTS {
+         assocRemoteApplication, assocApplicationProtocol,
+         assocApplicationType, assocDuration}
+STATUS current
+描述
+“表示提供网络服务应用连接基本监视的对象集合。它是RFC2788的相关组。”
+       ::= {applGroups 6}
+形如“applTCPProtaID 端口）的OID是用作基本TCP协议对于基于UDP协议没有相关的
+形式因为没有付以OID.在每种情况下，端口依照这个协议所用的首要端口数。例如，假设
+没有OID指派给SMTP，applTcpProtolID 25的OID可以用，因为SMTP是基于TCP的协
+议用25端口作为首要端口。”
+   applTCPProtoID OBJECT IDENTIFIER ::= {application 4}
+   applUDPProtoID OBJECT IDENTIFIER ::= {application 5}
+   END
+5.从RFC2248的变化
+这次修订更正了在RFC2248中关于网络服务MIB结构的一些微小技术错误。另外，
+applName,appVersion,appDescription域从DisplayString 该到SnmpAdminStrings中。RFC1779
+已经更新成RFC22543,相应的增加了有UTF-8字符系列的区分名字能力。“
+6. 致谢
+这个文档是邮件和目录管理（MADMAN）工作组的产品。它基于前面S.Kille, T.  
+Lenggenhager, D. Partain, and W. Yeong设计的MIB。电子邮件协会TSC委员会提供器件和对
+RFC1565的一些更新使有了这个目前的版本。
+9.  参考资料
+   [1]  Grillo, P. and S. Waldbusser, "Host Resources MIB", RFC 1514,
+        September 1993.
+
+   [2]  Krupczak, C. and J. Saperia, "Definitions of System-Level
+        Managed Objects for Applications", RFC 2287, February 1998.
+
+   [3]  Wijnen, B., Harrington, D. and R. Presuhn, "An Architecture for
+        Describing SNMP Management Frameworks", RFC 2571, April 1999.
+
+   [4]  Rose, M. and K. McCloghrie, "Structure and Identification of
+        Management Information for TCP/IP-based Internets", STD 16, RFC
+        1155, May 1990.
+
+   [5]  Rose, M. and K. McCloghrie, "Concise MIB Definitions", STD 16,
+        RFC 1212, March 1991.
+
+   [6]  Rose, M., "A Convention for Defining Traps for use with the
+        SNMP", RFC 1215, March 1991.
+
+   [7]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Structure of
+        Management Information Version 2 (SMIv2)", STD 58, RFC 2578,
+        April 1999.
+
+   [8]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Textual
+        Conventions for SMIv2", STD 58, RFC 2579, April 1999.
+
+   [9]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Conformance
+        Statements for SMIv2", STD 58, RFC 2580, April 1999.
+
+   [10] Case, J., Fedor, M., Schoffstall, M. and J. Davin, "Simple
+        Network Management Protocol", STD 15, RFC 1157, May 1990.
+
+   [11] Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+        "Introduction to Community-based SNMPv2", RFC 1901, January
+        1996.
+
+   [12] Case, J., McCloghrie, K., Rose, M. and S. Waldbusser, "Transport
+        Mappings for Version 2 of the Simple Network Management Protocol
+        (SNMPv2)", RFC 1906, January 1996.
+
+   [13] Case, J., Harrington D., Presuhn R. and B. Wijnen, "Message
+        Processing and Dispatching for the Simple Network Management
+        Protocol (SNMP)", RFC 2572, April 1999.
+
+   [14] Blumenthal, U. and B. Wijnen, "User-based Security Model (USM)
+        for version 3 of the Simple Network Management Protocol
+        (SNMPv3)", RFC 2574, April 1999.
+
+   [15] Case, J., McCloghrie, K., Rose, M. and S. Waldbusser, "Protocol
+        Operations for Version 2 of the Simple Network Management
+        Protocol (SNMPv2)", RFC 1905, January 1996.
+
+   [16] Levi, D., Meyer, P. and B. Stewart, "SNMPv3 Applications", RFC
+        2573, April 1999.
+
+   [17] Wijnen, B., Presuhn, R. and K. McCloghrie, "View-based Access
+        Control Model (VACM) for the Simple Network Management Protocol
+        (SNMP)", RFC 2575, April 1999.
+
+   [18] Wahl, M., Kille, S. and T.Howes, "Lightweight Directory Access
+        Protocol (v3): UTF-8 String Representation of Distinguished
+        Names", RFC 2253, December 1997.
+
+   [19] Kille, S., "Mapping between X.400(1988) and RFC 822/MIME", RFC
+        2156, January 1998.
+
+   [20] Berners-Lee, T., Masinter, L. and M. McCahill, "Uniform Resource
+        Locators (URL)", RFC 1738, December 1994.
+
+   [21] Hoffman, P., Masinter, L. and J. Zawinski, "The mailto URL
+        Scheme", RFC 2368, July 1998.
+
+   [22] Freed, N. and S. Kille, "Network Services Monitoring MIB", RFC
+        2248, January 1998.
+
+   [23] Freed, N. and Kille, "Network Services Monitoring MIB", RFC
+        1565, January 1994.
+
+   [29] Postel, J. and J. Reynolds, "Telnet Protocol Specification", STD
+        8, RFC 854, RFC 855, May 1983.
+
+8.  安全考虑
+	在MIB中没有管理对象定义成有最大访问权限如读写和/或读创建。所以，如果MIB
+正确的执行，入侵者通过直接SNMP设置操作改变或创建MIB的任何管理对象是不可能的。
+	但是，这个MIB不提供给定主机关于应用的存在性，类型，设置的被动信息，这些信
+息可能显示一些攻击隐患。对后，MIB信息提供可以用作分析网络流量。
+SNMPv1自身不是一个安全环境。即使如果它自身是安全的（如用IPSec）,假使那样那么没
+有控制能够在网络上允许连通或GET/SET（read/change/create/delete）在MIB中的信息。
+	极力被推荐的具有安全特性的应用为SNMPv3.特别的，基本用户安全模型RFC2574[14]
+和基于观点连接控制模型RFC2575[17]是推荐使用的。
+	保证SNMP提供连通MIB是客户/用户的责任，应该配置成只有给那些合法用户有权实
+际Get或Set信息。
+9.  Author and Chair Addresses
+
+   Ned Freed
+   Innosoft International, Inc.
+   1050 Lakes Drive
+   West Covina, CA 91790
+   USA
+
+   Phone: +1 626 919 3600
+   Fax: +1 626 919 3614
+   EMail: ned.freed@innosoft.com
+
+   Steve Kille, MADMAN WG Chair
+   MessagingDirect Ltd.
+   The Dome, The Square
+   Richmond TW9 1DT
+   UK
+
+   Phone: +44 20 8332 9091
+   EMail: Steve.Kille@MessagingDirect.com
+
+10.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+RFC2788 Network Services Monitoring MIB                      网络服务监视MIB
+
+
+1
+RFC文档中文翻译计划

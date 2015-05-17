@@ -1,0 +1,959 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陶志荣（dick_hw  jerrytaowx@263.net）
+译文发布时间：2002-1-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         B. Kaliski
+Request for Comments: 2898                              RSA Laboratories
+Category: Informational                                   September 2000
+
+
+PKCS #5: 基于口令的密码系统规范 版本2.0
+(RFC2898――PKCS #5: Password-Based Cryptography Specification Version 2.0)
+
+
+本备忘录的状态
+本文档为Internet社区提供信息。 它并未定义任何Internet标准。本备忘录的发布
+不受任何限制。
+
+版权声明
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+	本备忘录代表源自RSA实验室的公钥密码系统标准(PKCS)系列的PKCS #5 v2.0的再版，
+变更控制仍保留在PKCS过程。该文档的主体，除了安全性考虑一节，都是直接从那个规范
+中获得的。
+	本文档提供基于口令的密码系统的实现建议，覆盖密钥导出函数，加密方案，消息鉴别
+方案，及与该技术等同的ASN.1语法。
+	建议的意图是供计算机和通信系统的一般程序使用，因此包括了相当数量的灵活性。它
+们特别为敏感信息的保护设计，例如PKCS #8[25]中的私钥。期望有基于这些规范的应用标
+准和实现轮廓可能包括附加的约束。
+	其它基于口令的密码技术，例如基于口令的密钥实体认证和密钥建立协议[4][5][26]不在
+本文档范围。口令的选取原则也不在本文档范围。
+
+
+
+								目录
+1介绍	2
+2记法	3
+3概览	3
+4盐和迭代次数	4
+4．1盐	4
+4．2 迭代计数	5
+5密钥导出函数	5
+5.1 PBKDF1	6
+5.2 PBKDF2	6
+6．加密程序	7
+6.1 PBES1	8
+6.2 PBES2	9
+7．消息验证方式	10
+7.1 PBMAC1	10
+8．安全考虑	11
+9．作者地址	11
+附录A  ASN.1语法	11
+A.1 PBKDF1	11
+A.2 PBKDF2	11
+A.3 PBES1	12
+A.4　PBES2	13
+A.5　PBMAC1	13
+B．支撑技术	14
+B.1　伪随机函数	14
+B.2　加密方法	15
+B.3 消息认证方法	17
+C. ASN.1模块	17
+知识产权考虑	20
+修订记录	21
+参考书目	21
+全部版权声明	24
+
+1介绍
+本文档为基于口令的密钥系统的实现提供建议，包括了下列的方面：
+-	密钥导出函数
+-	加密方案
+-	消息鉴别方案
+-	与该技术等同的ASN.1语法
+建议的意图是供计算机和通信系统的一般程序使用，照此包括了相当数量的灵活性。它
+们特别为敏感信息的保护设计，例如PKCS #8[25]中的私钥。期望有基于这些规范的应用标
+准和实现轮廓可能包括附加的约束。
+	其它基于口令的密码技术，例如基于口令的密钥实体认证和密钥建立协议[4][5][26]不在
+本文档范围。口令的选取原则也不在本文档范围。
+	本文档取代PKCS #5 v1.5[24]，但包含的技术是与之兼容的。
+
+2记法
+C		密文，一个字节串
+	c 		迭代次数，一个正整数
+	DK		导出密钥，一个字节串
+DkLen	导出密钥的字节长度，一个正整数
+EM		编码，一个字节串
+Hash	基础的哈希函数
+HLen   伪随机函数输出的字节长度，一个正整数
+l		导出密钥的块长度，一个正整数
+IV		初始向量，一个字节串
+K		加密密钥，一个字节串
+KDF	密钥导出函数
+M		消息，一个字节串
+P		口令，一个字节串
+PRF		基础的伪随机函数
+PS		填充串
+psLen	填充串的字节长度，一个正整数
+S		盐，一个字节串
+T		消息鉴别码，一个字节串
+T_1，…，T_1，U_1，…，U_c
+		中间数，一个字节串
+01，02，…，08
+		值为1，2，…，8的字节
+	\xor		两个字节串的按位异或
+	|| ||		字节长度操作符
+	||		级联操作符
+	<i..j>	子串抽取操作符：抽取字节i到j，0 <= i <= j 
+
+3概览
+在公钥密钥学的许多应用中，用户安全性最终取决于一个或多个秘密文本值或口令。口
+令不是直接可用作任何传统密码系统的密钥，相反，需要对口令进行一些处理才能用它
+进行密码操作。此外，由于口令通常是从一个相对小的空间选取的，处理中要求特殊的
+考虑以防止搜索攻击。
+基于口令的密码术的一个通用方法，由Morris和Thompson描述，用于口令表的保
+护，是把口令与盐结合以产生密钥。可把盐看作是对从口令导出的一个大密钥集合的索
+引，不需要保密。尽管攻击者有可能构造一个可能口令表(称作“字典攻击”)，但构造
+一个可能密钥表是很困难的，因为每个口令将有许多可能的密钥。对手将不得不为每一
+个盐单独搜索口令。
+	基于口令的密码术的另一个方法是构建相对昂贵的密钥导出技术，由此增加穷举搜
+索的代价。作法之一是在密钥导出技术中包括一个迭代次数，指示迭代多少次密钥导出
+的一些基本函数。一个适度的迭代次数，比如说1000，对合法方来说不可能是计算密
+钥时的负担，但对对手来说是一个很大的负担。
+	盐和迭代次数构成了PKCS #5 v1.5中基于口令加密的基础，在这里同样为各种密
+码操作所采用。这样，这里定义的基于口令的密钥导出是口令、盐和迭代次数的一个函
+数，其中后两个量不需要保密。
+	从基于口令的密钥导出函数，定义基于口令的加密和消息鉴别方案就简单了。正如
+PKCS #5 v1.5中，这里的基于口令的加密方案是基于一个基本的、传统加密方案，传统
+方案的密钥是从口令导出的。相似地，基于口令的消息鉴别方案也基于一个基本的传统
+方案。这两个层次的方法使基于口令的技术按照基于的基础技术模块化。
+	期待基于口令的密钥导出函数找到除了这里定义的加密和消息鉴别方案以外的其
+它应用。比如，用密钥导出函数的一个单个应用导出一个密钥集合。集合中的密钥作为
+密钥导出函数的输出的子串得到。该方法可在面向会话的协议中用作密钥建立的一部
+分。另外一个应用是口令检查，密钥导出函数的输出被存储(同盐和迭代次数一道)用于
+后续的验证口令的目的。
+	在本文档中，口令被视作一个任意长度的字节串，对其作为文本串的解释不作指定。
+但为了互操作性，建议应用遵循某些通用的文本编码规则。ASCII和UTF-8[27]是两种
+可能的选择。(ASCII是UTF-8的一个子集。)
+	尽管口令的选择不在本文档的范围，已有指导原则发布[17]，可供考虑。
+4盐和迭代次数
+由于盐和迭代次数是本文档定义的技术的中心，有理由进行一些深入的讨论。
+4．1盐
+基于口令的密码技术中的盐传统上用于产生对应于一给定口令的一个大集合的密钥，依
+据该盐值从中随机选取一个密钥。运用一密钥导出函数选择集合中的一个密钥，即：
+		DK = KDF(P， S)
+其中DK是导出密钥，P是口令，S是盐。这有两个好处：
+1．	预计算和口令字典相对应的所有密钥甚至最相像密钥是困难的。例如，如果盐
+是64位长，对每个口令来说，将有多达2^64个密钥。在基于口令的操作被执
+行并且得知盐后，对手只有搜索口令。
+2．	同一个密钥不可能被选择两次。再者，如果盐是64位长，依据生日悖论，在
+大约2^32个密钥已被产生之前，密钥间“碰撞”的机率并不大。这解决了对
+相同密钥的多个用户之间相互影响的顾虑，可能适用于某些加密和认证技术。
+在基于口令的的加密中，加密消息的一方只需在从一口令导出加密密钥时选择一个
+大的、足够随机的盐就能保证获得这些好处。产生消息鉴别码的一方能以类似的方式得
+到这些保证。
+但解密消息或验证消息鉴别码的一方不能确定另一方提供的盐实际上是随机产生
+的。例如，有可能盐是从另一个基于口令的操作中拷贝的，试图利用同一个密钥的多个
+用户间的相互影响。假设两个合法方交换一段加密过的消息，其中加密密钥是从一个共
+享口令使用盐导出的80位的密钥。对手能从密文中取出盐，并把它提供给另一方，尽
+管它本来适用于40位的密钥。如果一方用40位的密钥提示了解密的结果，对手可能解
+出40位密钥。在40位密钥是80位密钥头一半的情况下，对手然后能很容易地解开80
+位密钥的剩下40位。 
+为了防止这样的攻击，或者应仔细分析同一个密钥的多个用户之间的相互影响，或
+者盐应包含能明确区分不同操作的数据。例如，盐可以有一个附加的、非随机的字节，
+指定导出密钥是用于加密、消息认证，或一些其它操作。
+基于以上这些，对盐的选择作以下推荐：
+1.	如果不考虑用支持一给定口令的基于口令的加密和认证技术的拥有同一
+个密钥(或该密钥的一个前缀)的多个用户之间的相互影响的话，那么盐可
+以随机产生，接收到盐的一方不必检查是否符合特定格式。盐应至少八字
+节(64位)长。
+2.	否则，除了至少八字节长的随机部分外，盐应包括能明确区分不同操作和
+不同密钥长度的数据，而该数据应能被接收盐的一方检查或重新生成。比
+如，盐应包含一个附加的、非随机的字节指定导出密钥的用途。另一种办
+法是，它可以是指定有关导出密钥的详细信息的结构的编码，比如加密或
+认证技术，以及在由口令导出的不同密钥中的序列号。附加数据的特殊格
+式留给应用定义。
+注意，如果没有随机数或伪随机数发生器，产生盐(或它的随机部分)的一个确定性
+的替代法是对口令和待处理的消息M应用一个基于口令的密钥导出函数。例如，盐可
+用S=KDF(P，M)的密钥导出函数计算。但如果已知消息M属于一个小的消息空间(例
+如"Yes"或"No")，不推荐使用该方法，因为可能盐的数量很小。
+
+4．2 迭代计数
+迭代计数传统上用于增加从一口令生成密钥的代价，从而增加攻击的难度。对于本
+文档的方法，推荐最小1000迭代。这将显著增加对口令穷举搜索的代价，但对导出单
+个密钥的代价没有明显的影响。
+
+5密钥导出函数
+  密钥导出函数从一个基础密钥和其它参数产生一个导出密钥。在基于口令的密钥导出
+函数中，基础密钥是口令，其它参数是一盐值和一迭代次数，正如第3节描述的。
+这里定义的基于口令的密钥导出函数的主要应用在于第6节的加密策略和第7节的消息
+验证策略。由于这些函数的独立定义，其它的应用肯定是可能的。
+本节详述两个函数：PBKDF1和PBKDF2。推荐新的应用使用PBKDF2；PBKDF1只为
+同已有应用兼容，对新的应用不推荐使用。
+这里定义的密钥导出函数的一个典型应用可能包括以下几步：
+1.	选择一个盐S和一个迭代次数c，如第4节所述。
+2.	选择导出密钥的字节长度，dkLen。
+3.	将密钥导出函数应用于口令、盐、迭代次数和密钥长度以生成一个导出密钥。
+4.	输出导出的密钥。
+
+通过改变盐可从一个口令导出任意数量的密钥，正如第3节描述的那样。
+
+5.1 PBKDF1
+PBKDF1应用一个散列函数导出密钥，散列函数可以是MD2、MD5或SHA-1。导出密钥的
+长度受散列函数输出的长度的限制，MD2和MD5是16字节，SHA-1是20字节。PBKDF1同PKCS#5 
+v1.5的密钥导出过程相兼容。
+建议PBKDF1只用于同已有应用的兼容，因为它产生的密钥对某些应用来说不够大。
+	   PBKDF1 (P, S, c, dkLen)
+可选项：	Hash			基本散列函数
+输入：  P			口令，字节串
+			S			盐，一八字节串
+			c 			迭代次数，正整数
+dkLen       导出密钥的意定字节长度，正整数，MD2或MD5最多16，SHA-1
+最多20
+输出：	DK			导出密钥，dkLen字节
+步骤：
+1.	如果对于MD2和MD5，dkLen>16，或对于SHA-1，dkLen>20，(即dkLen大于散列函
+数的输出长度)，输出“derived key too long”并停止。
+2.	对口令P和附加盐S的串联应用基本散列函数，重复c次，然后抽取第一个dkLen
+字节以产生一导出密钥DK:
+		T_1 = Hash (P || S) ,
+                  T_2 = Hash (T_1) ,
+                  ...
+                  T_c = Hash (T_{c-1}) ,
+                  DK = Tc<0..dkLen-1>
+3.	输出导出密钥DK。
+
+5.2 PBKDF2
+PBKDF2应用一个伪随机函数(例子见附录B.1)以导出密钥。导出密钥的长度本质上是没
+有限制的。(但是，导出密钥的最大有效搜索空间受限于基本伪随机函数的结构。进一步的
+讨论参见附录B.1。)对新的应用推荐使用PBKDF2。
+PBKDF2(P，S，c，dkLen)
+可选项：	RPF		基本伪随机函数(hLen表示伪随机函数输出的字节长度)
+输入：	P		口令，一字节串
+			S		盐，字节串
+			c		迭代次数，正整数
+			dkLen	导出密钥的意定字节长度，正整数，最大约(2^32-1)*hLen
+输出：	DK		导出密钥，长度dkLen字节
+步骤：
+1．	如果dkLen>(2^32-1)*hLen，输出“derived key too long”并停止。
+2．	假设l是导出密钥的hLen个字节块的个数，r表示最后一个块的字节数。
+		l = CEIL (dkLen / hLen) ,
+        r = dkLen - (l - 1) * hLen .
+这里，CEIL(x)是“ceiling”函数，即，大于或等于x的最小整数。
+4.	对于导出密钥的每一块，运用函数F于口令P、盐S、迭代次数c和块索引以计算
+块：
+		T_1 = F (P, S, c, 1) ,
+                   T_2 = F (P, S, c, 2) ,
+                   ...
+                   T_l = F (P, S, c, l) ,
+	这里函数F定义为基本伪随机函数PRF应用于口令P和盐S的串联和块索引i
+的前c次循环的异或和。
+		F (P, S, c, i) = U_1 \xor U_2 \xor ... \xor U_c
+其中
+		U_1 = PRF (P, S || INT (i)) ,
+                  U_2 = PRF (P, U_1) ,
+                  ...
+                  U_c = PRF (P, U_{c-1}) .
+		这里，INT(i)是整数i的四字节编码，高字节在先。
+3．	串联各块，抽取前dkLen字节以产生导出密钥DK：
+		DK = T_1 || T_2 ||  ...  || T_l<0..r-1>
+4．	输出导出密钥DK。
+
+注意：函数F的构造遵循“belt-and-suspenders”方法。U_i次循环被递归计算以消
+除敌手的并行度；它们被异或到一起以减少有关递归退化到一个小的值集的担忧。
+6．加密程序
+在对称设置中，加密程序包括加密操作的解密操作，其中加密操作在一个密钥作用下从
+一个消息产生密文，而解密操作在同一个密钥作用下从密文恢复消息。在基于口令的加密 策
+略中，密钥就是口令。
+基于口令的加密方法的一个典型应用是私钥保护方法，其中消息包括私钥信息，如
+PKCS#8中的那样。这里定义的加密策略在那种情况下是合适的加密算法。
+本节详述的两个策略是PBES1和PBES2。PBES2推荐给新的应用，PBES1只为了同已有
+应用的兼容。
+6.1 PBES1
+PBES1结合了PBKDF1函数和一个基础的块加密，可以是CBC模式下的DES或RC2?。PBES1
+同PKCS#5 v1.5中加密策略相兼容。
+6.1.1 加密操作
+在口令P作用下加密消息M以产生密文C，包括以下步骤：
+1．	产生一八字节盐S和一迭代次数c，如第4节所述。
+2．	应用PBKDF1密钥导出函数(5.1节)到口令、附加盐S和迭代次数，以产生长度为16字
+节的导出密钥DK：
+	DK = PBKDF1 (P, S, c, 16) .
+3．	分割导出密钥DK成由DK的前8字节组成的加密密钥K，和一包含下8 个字节的初始化
+向量IV：
+	K   = DK<0..7> ,
+         IV  = DK<8..15> .
+4．	连接M和一填充串PS，以形成一编码消息EM：
+	EM = M || PS ,
+	其中填充串PS由8-(||M|| mod 8) 个字节组成，每个的值是8-(||M|| mod 8).填充串PS满
+足以下的表达式：
+                 PS = 01, if ||M|| mod 8 = 7 ;
+                 PS = 02 02, if ||M|| mod 8 = 6 ;
+                 ...
+                 PS = 08 08 08 08 08 08 08 08, if ||M|| mod 8 = 0.
+编码消息的字节长度将是8的倍数，从编码消息中可以无歧义地恢复出消息M。(填充规则
+来自于RFC 1423。
+5．	在加密密钥K和初始向量IV下，用基本块密码算法以CBC模式加密编码消息EM，以产
+生密文C。对于DES，密钥K应被看作一56位DES密钥并且奇位忽略的64位编码。对
+于 RC2，“有效密钥位“应为64位。
+6．	输出密文C。
+盐S和迭代次数c应以一AlgorithmIdentifier值传递给执行解密的一方。(见附录A.3)
+
+6.1.2 解密操作
+PBES1的解密操作包括以下步骤，在口令P的作用下解密密文C以恢复消息M：
+1．	获取八字节盐S和迭代次数c。
+2．	应用PBKDF1密钥导出函数(5.1节)于口令P、附加盐S和迭代次数以产生长度为16字
+节的导出密钥：
+	DK = PBKDF1 (P, S, c, 16)
+3．	分割导出密钥DK，由DK的前8 字节组成一加密密钥K， 和由下8字节组成的初始向量
+IV：
+	K = DK<0..7> ,
+IV  = DK<8..15> .
+4．	在加密密钥K和初始向量IV作用下，用基本块密码算法(DES或RC2)以CBC模式解密密
+文，以恢复编码消息EM。如果密文的字节长度不是8的倍数，输出“解密错”并停止。
+5．	把编码消息EM分割成一消息M和一填充串PS：
+	EM = M || PS ,
+	其中填充串PS由psLen个字节组成，每个的值是psLen，其中psLen介于1和8之间。如果
+不可能以这种方式分割编码消息EM，输出“解密错”并停止。
+6．输出恢复的消息M。
+
+6.2 PBES2
+PBES2结合一个基于口令的密钥导出函数，在PKCS#5的本版本中应为PBKDF2(5.2节)和一
+基本的加密策略(例子见附录B.2)。基本加密策略的密钥长度和任何其它参数依赖于策略。
+新的应用推荐使用PBES2。
+6.2.1加密操作
+PBES2的加密操作包括以下步骤，应用一选择的密钥导出函数KDF和一选择的基本加密策略，
+以在口令P的作用下加密消息M以产生密文C：
+1．	如第4节所述，选择一盐S和一迭代次数c。
+2．	为基本加密方法的导出密钥选择字节长度dkLen。
+3．	应用选择的密钥导出函数于口令P、盐S和迭代次数c，以产生长度dkLen字节的导出
+密钥。
+4．	在导出密钥K的作用下用基本加密方法加密消息M以产生密文C(依赖于基本策略，这一
+步可能包括诸如初始向量和填充等参数的选择)。
+5．	输出密文C。
+6．	盐S和迭代次数、密钥长度dkLen、密钥导出函数的标识符和基本的加密策略可以一
+AlgorithmIdentifier值传给执行解密的一方(见附录A.4)。
+
+6.2.2 解密操作
+PBES2的解密操作包括以下步骤，在口令的作用解密密文C以恢复消息M：
+1．	获取该操作所用的盐S。
+2．	为密钥导出函数获取迭代次数。
+3．	获取基本加密方法的导出密钥的字节长度dkLen。
+4．	应用选择的密钥导出函数于口令P、盐S和迭代次数以产生长度为dkLen字节的导出密
+钥DK：
+DK = KDF (P, S, c, dkLen)。
+5．	用基本加密方法在导出密钥DK的作用下解密密文C以恢复消息M。如果解密函数输出“解
+密错”，那么输出“解密错”并停止。
+6．	输出恢复的消息M。
+7．消息验证方式
+消息验证策略包括一个MAC(消息验证码)产生操作和一个MAC验证函数操作，其中MAC产生
+操作在一个密钥作用下从一个消息产生一个消息验证码，MAC验证操作在同一个密钥下验证
+MAC。在基于口令和消息验证策略中，密钥就是口令。
+该节详述的一个策略是：PBMAC1。
+7.1 PBMAC1
+PBMAC1结合了一个基于口令的密钥导出函数，对于PKCS#5的本版本中应为PBKDF2(5.2节)，
+和基本的消息验证策略(例子见附录B.3)。基本消息验证策略的密钥长度和任何其它参数都
+依赖于策略。
+7.1.1 MAC生成
+PBMAC1的MAC生成操作应用一选择的密钥导出函数KDF和一选择的基本消息验证策略，在
+口令P下处理消息M以产生一消息验证码T，包括以下步骤：
+1．	如第4节所述，选择一盐S和一迭代次数c。
+2．	为基本消息验证函数的导出密钥选择字节长度dkLen。
+3．	应用选择的密钥导出函数于口令P、盐S和迭代次数c，以产生一长度为dkLen字节的
+导出密钥DK：
+DK = KDF (P, S, c, dkLen)。
+4．	在导出密钥DK作用下，用基本消息验证策略处理消息M，以产生一消息验证码T。
+5．	输出消息验证码T。
+盐S、迭代次数c、密钥长度L、密钥导出函数的标识符，和基本消息验证策略可以一
+AlgorithmIdentifier值传递给执行验证的另一方。
+7.1.2 MAC验证
+PBMAC1的MAC验证操作在口令P的作用下处理消息M以验证一消息验证码T，包括以下步骤：
+1．	获取盐S和迭代次数c。
+2．	为基本消息验证方式的导出密钥获取密钥的字节长度dkLen.
+3．	应用选择的密钥导出函数于口令P、盐S和迭代次数c，以产生长度为dkLen字节的导
+出密钥DK：
+DK = KDF (P, S, c, dkLen) .
+4．	在导出密钥DK下用基本消息验证方式处理消息M以产生一消息验证码T。
+5．	如果消息验证码证实，输出“correct”，否则输出“incorrect”。
+
+8．安全考虑
+基于口令密码术在它能提供的安全上通常受限，特别在本文档定义的那些方法，离线口令搜
+索是可能的情况。在盐和迭代次数的使用能增加攻击的复杂度的同时，很好地选择口令是基
+本的，应把相应的指导原则考虑进去。如果口令存储的话，口令被很好地保护也是重要的。
+
+通常，从不同用户的一个口令导出的密钥也应不同，以减少意料之外的干扰的可能性。对于
+使用同一算法的基于口令的加密方法，随机盐已足够确保产生不同的密钥。在某些其它情况
+正如第4节所述的，结构化的盐是必须的。当选择盐值时第4节中的建议就加以考虑。
+9．作者地址
+	Burt Kaliski
+   RSA Laboratories
+   20 Crosby Drive
+   Bedford, MA 01730 USA
+
+   EMail: bkaliski@rsasecurity.com
+附录A  ASN.1语法
+该节定义密钥导出函数的ASN.1语法，加密方法、消息认证方法和支撑技术。这些定义的意
+定应用包括PKCS#8和密钥管理、加密数据和集成保护数据的其它语法。
+对象标识符pkcs-5标识OID树的弧，本节中PKCS#5特有的OID从中导出：
+rsadsi OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840) 113549}
+pkcs OBJECT IDENTIFIER   ::= {rsadsi 1}
+pkcs-5 OBJECT IDENTIFIER ::= {pkcs 5}
+A.1 PBKDF1
+PBKDF1没有给出对象标识符，PBES1的对象标识符对已有应用已足够，对新的应用推荐使用
+PBKDF2。
+A.2 PBKDF2
+对象标识符id-PBKDF2标识PBKDF2密钥导出函数(5.2节)。
+id-PBKDF2 OBJECT IDENTIFIER ::= {pkcs-5 12}
+在AlgorithmIdentifier中，同该OID相关联的参数域应有类型PBKDF2-params：
+PBKDF2-params ::= SEQUENCE {
+       salt CHOICE {
+           specified OCTET STRING,
+           otherSource AlgorithmIdentifier {{PBKDF2-SaltSources}}
+       },
+       iterationCount INTEGER (1..MAX),
+       keyLength INTEGER (1..MAX) OPTIONAL,
+       prf AlgorithmIdentifier {{PBKDF2-PRFs}} DEFAULT algid-hmacWithSHA1 }
+类型PKDF2-params域有以下含义：
+-	salt指定盐值，或盐值的来源。它应是一字节串，或是其OID在集合PBKDF2-SaltSources
+的一算法ID，被PKCS#5保留给将来的版本。
+	Salt-Source方法被设计用于指示如何产生盐值，作为算法ID中的参数和应用数据，或两者
+皆有。例如，它可能指示盐值产生于从指定有关导出密钥的详细信息的结构的编码，如第4节所
+建议的。有些信息可能被带到别处，比如在加密算法ID。但是，这些功能被延迟到PKCS#5的将
+来版本。
+在该节中，一应用可能通过在指定的选择中选择盐值的特殊解释，达到节4.1提到的好处。
+PBKDF2-SaltSources ALGORITHM-IDENTIFIER ::= { ... }
+-	iterationCount指定迭代次数。允许的最大迭代次数依赖于实现。期待实现轮廓(profile)
+进一步约束范围。
+-	keyLength，可选项，是导出密钥的字节长度。允许的最大密钥长度依赖于实现；期待实现
+轮廓(profile)进一步约束范围。提供该域只为了方便使用。如果顾虑一盐值用不同密钥长
+度的操作的相互干扰 ？？？
+-	prf标识下层的伪随机函数。它应是一算法ID，其OID在集合PBKDF2-PRFs，在PKCS#5的
+该版本应包括id-hmacWithSHA1(见附录B.1.1)和其它任何由应用定义的OID。
+	PBKDF2-PRFs ALGORITHM-IDENTIFIER ::=
+          { {NULL IDENTIFIED BY id-hmacWithSHA1}, ... }
+缺省的伪随机函数是HMAC-SHA-1：
+	algid-hmacWithSHA1 AlgorithmIdentifier {{PBKDF2-PRFs}} ::=
+          {algorithm id-hmacWithSHA1, parameters NULL : NULL}
+A.3 PBES1
+依据密钥导出函数有下层散列函数和下层的块密码算法，使用不同的对象标识符标识
+PBES1加密方法（6.1节），总结在下表：
+
+散列函数	块密码算法		OID
+             MD2           DES         pkcs-5.1
+             MD2           RC2         pkcs-5.4
+             MD5           DES         pkcs-5.3
+             MD5           RC2         pkcs-5.6
+            SHA-1          DES         pkcs-5.10
+            SHA-1          RC2         pkcs-5.11
+
+   pbeWithMD2AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 1}
+   pbeWithMD2AndRC2-CBC OBJECT IDENTIFIER ::= {pkcs-5 4}
+   pbeWithMD5AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 3}
+   pbeWithMD5AndRC2-CBC OBJECT IDENTIFIER ::= {pkcs-5 6}
+   pbeWithSHA1AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 10}
+   pbeWithSHA1AndRC2-CBC OBJECT IDENTIFIER ::= {pkcs-5 11}
+
+对每一个OID，在AlgorithmIdentifier中同该OID相关联的参数域应具有类型
+PBEParameter：
+
+   PBEParameter ::= SEQUENCE {
+       salt OCTET STRING (SIZE(8)),
+       iterationCount INTEGER }
+类型PBEParameter的域有以下含义：
+－　salt指定盐值，一八字节串。
+－　iterationCount指定迭代次数。
+
+A.4　PBES2
+对象标识符id-PBES2标识PBES2加密方法（6.2节）。
+   id-PBES2 OBJECT IDENTIFIER ::= {pkcs-5 13}
+对每一个OID，在AlgorithmIdentifier中同该OID相关联的参数域应具有类型PBES2-params：
+   PBES2-params ::= SEQUENCE {
+       keyDerivationFunc AlgorithmIdentifier {{PBES2-KDFs}},
+       encryptionScheme AlgorithmIdentifier {{PBES2-Encs}} }
+类型 PBES2-params的域有以下含义：
+-  keyDerivationFunc标识下层的密钥导出函数。它应是一算法ID，其OID在集合PBES2-KDFs
+中，对本版本的PKCS＃5应包括id-PBKDF2（附录A.2）。
+   PBES2-KDFs ALGORITHM-IDENTIFIER ::=
+       { {PBKDF2-params IDENTIFIED BY id-PBKDF2}, ... }
+-  encryptionScheme标识下层的加密方法。它应是一算法ID，其OID在集合PBES2-Encs，它
+的定义留给应用程序。例示的下层加密方法在附录B.2中给出。
+   PBES2-Encs ALGORITHM-IDENTIFIER ::= { ... }
+A.5　PBMAC1
+对象标识符id-PBMAC1标识PBMAC1消息认证方法（节7.1）。
+	id-PBMAC1 OBJECT IDENTIFIER ::= {pkcs-5 14}
+在AlgorithmIdentifier中同该OID相关联的参数域应具有类型PBMAC1-params：
+PBMAC1-params ::=  SEQUENCE {
+       keyDerivationFunc AlgorithmIdentifier {{PBMAC1-KDFs}},
+       messageAuthScheme AlgorithmIdentifier {{PBMAC1-MACs}} }
+keyDerivationFunc域同PBES2-params（附录A.4）的相应域有同样的含义，除了OID
+集合是PBMAC1-KDFs。
+	PBMAC1-KDFs ALGORITHM-IDENTIFIER ::=
+       { {PBKDF2-params IDENTIFIED BY id-PBKDF2}, ... }
+messageAuthScheme域标识下层的消息认证方法。它应是一算法ID，其OID在集合
+PBMAC1-MACs中，它的定义留给应用程序。例示的下层加密方法在附录B.3中给出。
+	PBMAC1-MACs ALGORITHM-IDENTIFIER ::= { ... }
+B．支撑技术
+本节给出支持5、6和7节中的基于口令的策略的下层函数和方法的几个例子。
+尽管这些支撑技术适于应用实现，但都非强制的。期待将来开发PKCS＃5的profile以指定
+特定和支撑技术。
+本节也给出支撑技术的对象标识符。对象标识符digestAlgorithm和encryptionAlgorithm标识
+本节引用的某些算法OID都从其中导出。
+
+   digestAlgorithm OBJECT IDENTIFIER ::= {rsadsi 2}
+   encryptionAlgorithm OBJECT IDENTIFIER ::= {rsadsi 3}
+
+B.1　伪随机函数
+用于PBKDF2（5.2节）的一个例子伪随机函数是HMAC-SHA-1。
+B.1.1 HMAC-SHA-1
+HMAC-SHA-1是同基于SHA－1散列函数的HMAC消息认证码相对应的伪随机函数。伪随
+机函数同计算消息认证码的函数相同，只是输出是全长度的。(伪随机函数PRF的第一个变
+量作为HMAC的“密钥”，第二个作为HMAC的“文本。在PBKDF2的情况下，“密钥”
+就是口令，“文本”就是盐。) HMAC-SHA-1有一个可变的密钥长度和20-字节(160位)输出
+值。
+尽管HMAC-SHA-1的密钥的长度本质上是没有限制的，但伪随机函数输出的有效搜索空间
+可能受限于函数的结构。特别是，当密钥长于512位时，HMAC-SHA-1将首先杂凑到160
+位。这样，即使从一个密钥产生一个包括几个伪随机函数输出的长导出密钥，导出密钥的有
+效搜索空间将最多160位。尽管对其它密钥大小的特殊限制依赖于HMAC构造的细节，可以
+保守地假设，对其它的密钥大小，有效搜索空间仍限制到160位。
+（在基于口令的密码系统，160位的限制通常不应造成实际的限制，因为对口令的搜索空间
+不可能大于160位。）
+对象标识符id-hmacWithSHA1标识HMAC-SHA-1伪随机函数：
+id-hmacWithSHA1 OBJECT IDENTIFIER ::= {digestAlgorithm 7}
+在AlgorithmIdentifier同该OID相关联的参数域应有类型NULL。该对象标识符使用在对象集
+合PBKDF2-PRFs（见附录A.2）。
+注意，尽管HMAC-SHA-1作为消息认证码设计的，但在较强的假定下，它的安全验证（？）
+很容易被修改以满足对一伪随机函数的需要。
+一散列函数也可能在某些假定下满足伪随机函数的需要。例如，直接应用一散列函数到“密
+钥”和“文本”的串联可能是合适的，只要“文本”有合适的结构以预防某些攻击。但
+HMAC-SHA-1更可取，因为它把“密钥”和“文本”看作单独的变量，不需要“文本”有
+任何结构。
+B.2　加密方法
+PBES2（6.2节）的伪随机函数的例子有DES-CBC-Pad, DES-EDE2-CBC-Pad, RC2-CBC-Pad,
+和RC5-CBC-Pad。
+在本节给出的对象标识符预期在对象集合PBES2-Encs中应用（附录A.4）。
+B.2.1　DES-CBC-Pad
+DES-CBC-Pad是CBC模式下的单密钥DES，并使用RFC　1423的填充操作（见6.1.1节）。
+DES-CBC-Pad有一个八字节的加密密钥和一个八字节的初始向量。密钥被看作是56位DES
+密钥的64位编码，忽略奇偶校验位。
+对象标识符desCBC（在NIST/OSI Implementors'Workshop协定中定义）标识DES-CBC-Pad
+加密方法。
+	desCBC OBJECT IDENTIFIER ::=
+       		{iso(1) identified-organization(3) oiw(14) secsig(3)algorithms(2) 7}
+在AlgorithmIdentifier中同该OID相关联的参数域应有类型OCTET STRING (SIZE(8)),指定
+CBC模式的初始向量。
+B.2.2 DES-EDE3-CBC-Pad
+DES-EDE3-CBC-Pad是CBC模式下的三密钥的三重DES，用RFC1423的填充操作。
+DES-EDE3-CBC-Pad有一个24字节的加密密钥和一个八字节初始向量。密钥被看作是三个
+八字节密钥的串联，每一个是一56位DES密钥的64位编码，忽略奇偶校验位。
+对象标识符des-EDE3-CBC标识DES-EDE3-CBC-Pad加密方法：
+   des-EDE3-CBC OBJECT IDENTIFIER ::= {encryptionAlgorithm 7}
+在AlgorithmIdentifier中同该OID相关联的参数域应有类型OCTET STRING (SIZE(8)),指定
+CBC模式的初始向量。
+注意：没有填充的DES-EDE3-CBC的OID在ANSI X9.52[1]给出;这里给出的OID由于指明
+了填充而更可取。
+B.2.3 RC2-CBC-Pad
+RC2-CBC-Pad是CBC模式下的RC2(tm)加密方法[21]，使用RFC1423填充操作。
+RC2-CBC-Pad
+有一个从1到128字节的可变的密钥长度；一个从1到1024位的单独的“有效密钥位”参
+数，它不依赖于密钥长度限制有效搜索空间；和一个八字节的初始向量。
+对象标识符rc2CBC标识RC2-CBC-Pad加密方法：
+rc2CBC OBJECT IDENTIFIER ::= {encryptionAlgorithm 2}
+在AlgorithmIdentifier中同该OID相关联的参数域应具有类型RC2-CBC-Parameter：
+RC2-CBC-Parameter ::= SEQUENCE {
+       rc2ParameterVersion INTEGER OPTIONAL,
+       iv OCTET STRING (SIZE(8)) }
+类型RC2-CBCParameter的域有以下含义：
+-	rc2ParameterVersion是RC2的“有效密钥位”的一个RSA Security Inc.所有的编码。定
+义了以下编码：
+			Effective Key Bits         Encoding
+                 40                    160
+                 64                    120
+                128                     58
+               b >= 256                  b
+如果rc2ParameterVersion域被忽略，缺省的“有效密钥位”是32。(这是为了同某些很老的
+实现向后兼容。)
+-	iv 是八字节的初始向量
+B.2.4 RC5-CBC-Pad
+RC5-CBC-Pad是CBC模式下的RC5(tm)加密算法[20]，并使用RFC1423填充操作的推广。
+该方法完整的定义在[2]. RC5-CBC-Pad有一个从0到256字节的可变的密钥长度，支持64
+位和128位的块大小。对于前者，它有一个8字节的初始向量；对于后者，有一个16字节
+的初始向量。RC5-CBC-Pad在加密操作中也有一个从8 到127的可变数目的“轮次”。
+
+注意，填充操作的推广是这样的。对64位块大小的RC5，填充串在RFC1423中定义。对
+128位块大小的RC5，填充串由16-(||M|| mod 16)个字节组成，每个字节的值是16-(||M|| mod 
+16)。
+
+对象标识符rc5-CBC-PAD [2]标识RC5-CBC-Pad加密方法：
+rc5-CBC-PAD OBJECT IDENTIFIER ::= {encryptionAlgorithm 9}
+在AlgorithmIdentifier中同该OID相关联的参数域应有类型RC5-CBC-Parameters：
+RC5-CBC-Parameters ::= SEQUENCE {
+       version INTEGER {v1-0(16)} (v1-0),
+       rounds INTEGER (8..127),
+       blockSizeInBits INTEGER (64 | 128),
+       iv OCTET STRING OPTIONAL }
+类型RC5-CBC-Parameters的域有以下含义：
+version是算法的版本，应为v1-0。
+rounds是加密操作的轮次数，应在8与127之间。
+blockSizeInBits是块大小的位数，应为64或128。
+iv是初始向量，对64位RC5是一个8字节串，对128位RC5是一个16字节串。缺省是一
+包含内容为0长度适当的字节串。
+B.3 消息认证方法
+PBMAC1（7.1节）的消息认证方法的一个例子是HMAC-SHA-1。
+B.3.1 HMAC-SHA-1
+HMAC-SHA-1是基于SHA－1散列函数[18]的HMAC消息消息认证方法[7]。HMAC-SHA-1
+有可变的密钥长度和一20字节（160位）消息认证码。
+对象标识符id-hmacWithSHA1（见附录B.1.1）标识HMAC-SHA-1消息认证方法。（伪随机
+函数和消息认证方法的对象标识符是相同的，可通过上下文区分。）该标识符预期在对象集
+合PBMAC1-Macs中应用（附录A.5）。
+C. ASN.1模块
+为了参考的目的，在以前各节中的ASN.1语法在这里作为ASN.1模块给出。
+-- PKCS #5 v2.0 ASN.1 Module
+   -- Revised March 25, 1999
+
+   -- This module has been checked for conformance with the
+   -- ASN.1 standard by the OSS ASN.1 Tools
+
+   PKCS5v2-0 {iso(1) member-body(2) us(840) rsadsi(113549)
+       pkcs(1) pkcs-5(5) modules(16) pkcs5v2-0(1)}
+
+   DEFINITIONS ::= BEGIN
+
+   -- Basic object identifiers
+
+   rsadsi OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840) 113549}
+   pkcs OBJECT IDENTIFIER ::= {rsadsi 1}
+
+   pkcs-5 OBJECT IDENTIFIER ::= {pkcs 5}
+
+   -- Basic types and classes
+
+   AlgorithmIdentifier { ALGORITHM-IDENTIFIER:InfoObjectSet } ::=
+     SEQUENCE {
+       algorithm ALGORITHM-IDENTIFIER.&id({InfoObjectSet}),
+       parameters ALGORITHM-IDENTIFIER.&Type({InfoObjectSet}
+       {@algorithm}) OPTIONAL
+   }
+
+   ALGORITHM-IDENTIFIER ::= TYPE-IDENTIFIER
+
+   -- PBKDF2
+
+   PBKDF2Algorithms ALGORITHM-IDENTIFIER ::=
+       { {PBKDF2-params IDENTIFIED BY id-PBKDF2}, ...}
+
+   id-PBKDF2 OBJECT IDENTIFIER ::= {pkcs-5 12}
+
+   algid-hmacWithSHA1 AlgorithmIdentifier {{PBKDF2-PRFs}} ::=
+       {algorithm id-hmacWithSHA1, parameters NULL : NULL}
+
+   PBKDF2-params ::= SEQUENCE {
+       salt CHOICE {
+         specified OCTET STRING,
+         otherSource AlgorithmIdentifier {{PBKDF2-SaltSources}}
+       },
+       iterationCount INTEGER (1..MAX),
+       keyLength INTEGER (1..MAX) OPTIONAL,
+       prf AlgorithmIdentifier {{PBKDF2-PRFs}} DEFAULT
+       algid-hmacWithSHA1
+   }
+
+   PBKDF2-SaltSources ALGORITHM-IDENTIFIER ::= { ... }
+
+   PBKDF2-PRFs ALGORITHM-IDENTIFIER ::=
+       { {NULL IDENTIFIED BY id-hmacWithSHA1}, ... }
+
+   -- PBES1
+
+   PBES1Algorithms ALGORITHM-IDENTIFIER ::= {
+
+       {PBEParameter IDENTIFIED BY pbeWithMD2AndDES-CBC}  |
+       {PBEParameter IDENTIFIED BY pbeWithMD2AndRC2-CBC}  |
+       {PBEParameter IDENTIFIED BY pbeWithMD5AndDES-CBC}  |
+       {PBEParameter IDENTIFIED BY pbeWithMD5AndRC2-CBC}  |
+       {PBEParameter IDENTIFIED BY pbeWithSHA1AndDES-CBC} |
+       {PBEParameter IDENTIFIED BY pbeWithSHA1AndRC2-CBC},
+       ...
+   }
+
+   pbeWithMD2AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 1}
+   pbeWithMD2AndRC2-CBC OBJECT IDENTIFIER ::= {pkcs-5 4}
+   pbeWithMD5AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 3}
+   pbeWithMD5AndRC2-CBC OBJECT IDENTIFIER ::= {pkcs-5 6}
+   pbeWithSHA1AndDES-CBC OBJECT IDENTIFIER ::= {pkcs-5 10}
+   pbeWithSHA1AndRC2-CBC OBJECT IDENTIFIER ::= {pkcs-5 11}
+
+   PBEParameter ::= SEQUENCE {
+       salt OCTET STRING (SIZE(8)),
+       iterationCount INTEGER
+   }
+
+   -- PBES2
+
+   PBES2Algorithms ALGORITHM-IDENTIFIER ::=
+       { {PBES2-params IDENTIFIED BY id-PBES2}, ...}
+
+   id-PBES2 OBJECT IDENTIFIER ::= {pkcs-5 13}
+
+   PBES2-params ::= SEQUENCE {
+       keyDerivationFunc AlgorithmIdentifier {{PBES2-KDFs}},
+       encryptionScheme AlgorithmIdentifier {{PBES2-Encs}}
+   }
+
+   PBES2-KDFs ALGORITHM-IDENTIFIER ::=
+       { {PBKDF2-params IDENTIFIED BY id-PBKDF2}, ... }
+
+   PBES2-Encs ALGORITHM-IDENTIFIER ::= { ... }
+
+   -- PBMAC1
+
+   PBMAC1Algorithms ALGORITHM-IDENTIFIER ::=
+       { {PBMAC1-params IDENTIFIED BY id-PBMAC1}, ...}
+
+   id-PBMAC1 OBJECT IDENTIFIER ::= {pkcs-5 14}
+
+   PBMAC1-params ::=  SEQUENCE {
+       keyDerivationFunc AlgorithmIdentifier {{PBMAC1-KDFs}},
+       messageAuthScheme AlgorithmIdentifier {{PBMAC1-MACs}}
+
+   }
+
+   PBMAC1-KDFs ALGORITHM-IDENTIFIER ::=
+       { {PBKDF2-params IDENTIFIED BY id-PBKDF2}, ... }
+
+   PBMAC1-MACs ALGORITHM-IDENTIFIER ::= { ... }
+
+   -- Supporting techniques
+
+   digestAlgorithm OBJECT IDENTIFIER     ::= {rsadsi 2}
+   encryptionAlgorithm OBJECT IDENTIFIER ::= {rsadsi 3}
+
+   SupportingAlgorithms ALGORITHM-IDENTIFIER ::= {
+       {NULL IDENTIFIED BY id-hmacWithSHA1} |
+       {OCTET STRING (SIZE(8)) IDENTIFIED BY desCBC} |
+       {OCTET STRING (SIZE(8)) IDENTIFIED BY des-EDE3-CBC} |
+       {RC2-CBC-Parameter IDENTIFIED BY rc2CBC} |
+       {RC5-CBC-Parameters IDENTIFIED BY rc5-CBC-PAD},
+       ...
+   }
+
+   id-hmacWithSHA1 OBJECT IDENTIFIER ::= {digestAlgorithm 7}
+
+   desCBC OBJECT IDENTIFIER ::=
+       {iso(1) identified-organization(3) oiw(14) secsig(3)
+        algorithms(2) 7} -- from OIW
+
+   des-EDE3-CBC OBJECT IDENTIFIER ::= {encryptionAlgorithm 7}
+
+   rc2CBC OBJECT IDENTIFIER ::= {encryptionAlgorithm 2}
+
+   RC2-CBC-Parameter ::= SEQUENCE {
+       rc2ParameterVersion INTEGER OPTIONAL,
+       iv OCTET STRING (SIZE(8))
+   }
+
+   rc5-CBC-PAD OBJECT IDENTIFIER ::= {encryptionAlgorithm 9}
+
+   RC5-CBC-Parameters ::= SEQUENCE {
+       version INTEGER {v1-0(16)} (v1-0),
+       rounds INTEGER (8..127),
+       blockSizeInBits INTEGER (64 | 128),
+       iv OCTET STRING OPTIONAL
+   }
+   END
+知识产权考虑
+   RSA Security makes no patent claims on the general constructions
+   described in this document, although specific underlying techniques
+   may be covered. Among the underlying techniques, the RC5 encryption
+   algorithm (Appendix B.2.4) is protected by U.S. Patents 5,724,428
+   [22] and 5,835,600 [23].
+
+   RC2 and RC5 are trademarks of RSA Security.
+
+   License to copy this document is granted provided that it is
+   identified as RSA Security Inc. Public-Key Cryptography Standards
+   (PKCS) in all material mentioning or referencing this document.
+
+   RSA Security makes no representations regarding intellectual property
+   claims by other parties. Such determination is the responsibility of
+   the user.
+修订记录
+   Versions 1.0-1.3
+
+      Versions 1.0-1.3 被分发给在1991年1月和3月参加RSA Data
+      Security Inc.的公钥密码系统标准会议的与会者。
+
+   Version 1.4
+
+      Version 1.4是1991年6月3日PKCS的首次发行的一部分。该版本作为NIST/OSI 
+Implementors' Workshop 文档SEC-SIG-91-20出版。.
+
+   Version 1.5
+
+      Version 1.5 综合了几处编辑更正，包括对参考书目的修改和修订记录的增加。
+
+   Version 2.0
+
+Version 2.0 综合了文档结构方面的主要编辑更正，并引入了PBES2加密方法，PBMAC1消
+息认证方法，和独立的基于口令的密钥导出函数。该版本继续支持版本1.5中的加密过程。
+
+参考书目
+   [1]  American National Standard X9.52 - 1998, Triple Data Encryption
+        Algorithm Modes of Operation. Working draft, Accredited
+        Standards Committee X9, July 27, 1998.
+
+   [2]  Baldwin, R. and R. Rivest, "The RC5, RC5-CBC, RC5-CBC-Pad, and
+        RC5-CTS Algorithms", RFC 2040, October 1996.
+
+   [3]  Balenson, D., "Privacy Enhancement for Internet Electronic Mail:
+        Part III: Algorithms, Modes, and Identifiers", RFC 1423,
+        February 1993.
+
+   [4]  S.M. Bellovin and M. Merritt. Encrypted key exchange:
+        Password-based protocols secure against dictionary attacks. In
+        Proceedings of the 1992 IEEE Computer Society Conference on
+        Research in Security and Privacy, pages 72-84, IEEE Computer
+        Society, 1992.
+
+   [5]  D. Jablon. Strong password-only authenticated key exchange. ACM
+        Computer Communications Review, October 1996.
+
+   [6]  Kaliski, B., "The MD2 Message-Digest Algorithm", RFC 1319, April
+        1992.
+
+   [7]  Krawczyk, H., Bellare, M. and R. Canetti, "HMAC: Keyed-Hashing
+        for Message Authentication", RFC 2104, February 1997.
+
+   [8]  Robert Morris and Ken Thompson. Password security: A case
+        history.  Communications of the ACM, 22(11):594-597, November
+        1979.
+
+   [9]  ISO/IEC 8824-1:1995: Information technology - Abstract Syntax
+        Notation One (ASN.1) - Specification of basic notation. 1995.
+
+   [10] ISO/IEC 8824-1:1995/Amd.1:1995 Information technology - Abstract
+        Syntax Notation One (ASN.1) - Specification of basic notation -
+        Amendment 1 - Rules of extensibility. 1995.
+
+   [11] ISO/IEC 8824-2:1995 Information technology - Abstract Syntax
+        Notation One (ASN.1) - Information object specification. 1995.
+
+   [12] ISO/IEC 8824-2:1995/Amd.1:1995 Information technology - Abstract
+        Syntax Notation One (ASN.1) - Information object specification -
+        Amendment 1 - Rules of extensibility. 1995.
+
+   [13] ISO/IEC 8824-3:1995 Information technology - Abstract Syntax
+        Notation One (ASN.1) - Constraint specification. 1995.
+
+   [14] ISO/IEC 8824-4:1995 Information technology - Abstract Syntax
+        Notation One (ASN.1) - Parameterization of ASN.1 specifications.
+        1995.
+
+   [15] National Institute of Standards and Technology (NIST). FIPS PUB
+        46-2: Data Encryption Standard. December 30, 1993.
+
+   [16] National Institute of Standards and Technology (NIST). FIPS PUB
+        81: DES Modes of Operation. December 2, 1980.
+
+   [17] National Institute of Standards and Technology (NIST). FIPS PUB
+        112: Password Usage. May 30, 1985.
+
+   [18] National Institute of Standards and Technology (NIST). FIPS PUB
+        180-1: Secure Hash Standard. April 1994.
+
+   [19] Rivest, R., "The MD5 Message-Digest Algorithm", RFC 1321, April
+        1992.
+
+   [20] R.L. Rivest. The RC5 encryption algorithm. In Proceedings of the
+        Second International Workshop on Fast Software Encryption, pages
+        86-96, Springer-Verlag, 1994.
+
+   [21] Rivest, R., "A Description of the RC2(r) Encryption Algorithm",
+        RFC 2268, March 1998.
+
+   [22] R.L. Rivest. Block-Encryption Algorithm with Data-Dependent
+        Rotations. U.S. Patent No. 5,724,428, March 3, 1998.
+
+   [23] R.L. Rivest. Block Encryption Algorithm with Data-Dependent
+        Rotations. U.S. Patent No. 5,835,600, November 10, 1998.
+
+   [24] RSA Laboratories. PKCS #5: Password-Based Encryption Standard.
+        Version 1.5, November 1993.
+
+   [25] RSA Laboratories. PKCS #8: Private-Key Information Syntax
+        Standard.  Version 1.2, November 1993.
+
+   [26] T. Wu. The Secure Remote Password protocol. In Proceedings of
+        the 1998 Internet Society Network and Distributed System
+        Security Symposium, pages 97-111, Internet Society, 1998.
+
+   [27] Yergeau, F., "UTF-8, a transformation format of ISO 10646", RFC
+        2279, January 1998.
+
+Contact Information & About PKCS
+
+   The Public-Key Cryptography Standards are specifications produced by
+   RSA Laboratories in cooperation with secure systems developers
+   worldwide for the purpose of accelerating the deployment of public-
+   key cryptography. First published in 1991 as a result of meetings
+   with a small group of early adopters of public-key technology, the
+   PKCS documents have become widely referenced and implemented.
+   Contributions from the PKCS series have become part of many formal
+   and de facto standards, including ANSI X9 documents, PKIX, SET,
+   S/MIME, and SSL.
+
+   Further development of PKCS occurs through mailing list discussions
+   and occasional workshops, and suggestions for improvement are
+   welcome. For more information, contact:
+
+        PKCS Editor
+        RSA Laboratories
+        20 Crosby Drive
+        Bedford, MA  01730  USA
+        pkcs-editor@rsasecurity.com
+        http://www.rsalabs.com/pkcs/
+
+全部版权声明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC2898――PKCS #5: Password-Based Cryptography Specification Version 2.0
+PKCS #5: 基于口令的密码系统规范 版本2.0
+
+
+1
+RFC文档中文翻译计划

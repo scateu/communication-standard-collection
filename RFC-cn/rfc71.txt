@@ -1,0 +1,60 @@
+组织：中国互动出版网（<http://www.china-pub.com/>）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm <http://www.china-pub.com/>）
+E-mail：ouyang@china-pub.com <mailto:ouyang@china-pub.com>
+译者：董苛（cnchris    duke913@163.com）
+译文发布时间：2001-10-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                   Tjaart Schipper
+Request for Comments #71                                25 September 1970
+                                                        UCLA-CCN
+
+           输入错误时的重新定位(Reallocation in Case of Input Error)
+
+当从IMP读取信息的时候，如果有输入错误发生，接收NCP就有可能去计算信息的长度。下面的协议可以在CCN-HOST的UCLA用来重新同步流量控制。
+
+如果发现输入错误，而且这时NCP知道预期链接号码，NCP将会发送一个frac=0的GVB给发送主机并不再理予那条链路上的任何流入信息。当RET已经被接收到，一个新的ALL信息
+将被发送。
+
+当GVB到达时,如果发送主机不是在等RFNM,发送主机将马上发送一个RET。如果发送主机
+是在等待一个与错误信息一致的RFNM或是与接下来信息一致RFNM，他将在收到RFNM后发送RET。
+
+这样一来，接收主机将在他发布一个新的ALL前确知链路是空闲的。
+
+TS/rb.
+
+      [ This RFC was put into machine readable form for entry ]
+      [ into the online RFC archives by Alexandra Weikert 7/97]
+
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.

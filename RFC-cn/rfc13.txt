@@ -1,0 +1,38 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王华伟(wanghuawei  huaweiw@pub.xaonline.com) 
+译文发布时间：2001-5-23
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                          Vint Cerf
+Request for Comments: 13                                       UCLA
+20 August 1969
+
+
+                     零文本长度的EOF信息
+RFC1 Zero Text Length EOF Message
+
+
+引用自NWG/RFC：11，在辅助联接之上的文件传输需要一些规定以详细说明"END-OF-FILE."
+信息。
+为此目的，建议使用一条长度为0的消息。图1表明了消息的格式：
+
+
+|<---32   位--->|<---32   位--->|<----16   位---->|<------?------>|
++---------------+---------------+-----------------+---------------+
+|    前导字段   |      记号     |      检验和     |    填充字段   |
++---------------+---------------+-----------------+---------------+
+
+                                图 1
+
+                           
+
+[ 本RFC文档是由Michael Brunnbauer以计算机文件格式输入RFC文档库，1/97 ]
+
+
+RFC13    Zero Text Length EOF Message		零文本长度的EOF信息
+RFC文档中文翻译计划		1

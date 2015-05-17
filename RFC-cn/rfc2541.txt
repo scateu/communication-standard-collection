@@ -1,0 +1,197 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：boniter（boniter@etang.com）
+译文发布时间：2001-11-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          D. Eastlake
+Request for Comments: 2541                                             IBM
+Category: Informational                                         March 1999
+
+                              DNS安全操作考虑
+本备忘录的状态
+    本备忘录为Internet社会提供了信息。它并没有详细说明任何一种Internet标准。发
+布此备忘录是无约束的。
+
+版权公告
+Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+目录
+概要	2
+感谢	2
+1. 导论	2
+2. 公共/私有密钥产生	2
+3. 公共/私有密钥寿命	2
+4. 公共/私有密钥长度的考虑	3
+4.1 RSA 密钥长度	3
+4.2  DSS密钥长度	3
+5. 私有密钥存储	3
+6. 高级别区域,根区域和Meta-Root密钥	4
+7. 安全考虑	4
+参考书目	4
+作者地址	5
+全部版权陈述	5
+
+概要
+    安全的DNS是基于密码技术的。这些技术必须的一部分就是对密钥和签名的产生，寿命，
+长度和存储的操作方面的仔细关注。额外的，对高级别区域和独特的源区域的安全性必须更
+加关注。这篇文档讨论了带有KEY和SIG DNS资源记录连接中使用密钥和签名的操作方面的
+问题。
+
+感谢
+    以下人的贡献和建议是公认的应受到感谢的（按照字母顺序排列）
+        John Gilmore
+         Olafur Gudmundsson
+         Charlie Kaufman
+1. 导论
+    这篇文档描述了在KEY和SIG资源使用中的DNS密钥和签名的产生，寿命，长度和存储
+的操作考虑[RFC 2535]。特别注意高级别区域和源区域。
+
+2. 公共/私有密钥产生
+    所有密钥的精心产生有时会被忽视，但在任何密码安全系统中绝对是必不可少的元素。
+如果对手能够缩短可能的密钥空间而使得它能被用尽一切手段破解，那么在足够长的密钥中
+使用的强大的运算法则仍然派不上用场。在[RFC 1750]中有针对产生随机密钥的技术建议。
+    长期限的密钥有独特的敏锐性，它将会扮演一个更重要的角色，而且被攻击时比短期限
+的密钥需要更长的时间。强烈推荐长期限的密钥必须通过间隙以独立于网络的掉线方式在最
+小的高级别的可靠硬件上产生。
+
+3. 公共/私有密钥寿命
+    没有永久性的密钥。使用中的密钥时间越长，它由于疏忽，意外，侦测或密码破译而被
+破解的可能性就越大。此外，如果密钥的变更几乎没有，就会存在一个很大的风险，当要改
+变密钥时，在场没有人知道怎样做，或是在密钥变更程序中的操作问题已经发展了。
+    如果公共密钥寿命是本地策略中的事件，这些考虑意味着，除非有特殊的情况，长期限
+密钥不应该有比4年更长的寿命。实际上，对于长期限秘要的一个更合理的策略就是在预期
+的13个月寿命中保持离机状态并谨慎监督，而且每一年必须替换。对于在贸易安全或是同
+类事物中使用的密钥的最长寿命预期是在线的36天，它们每个月都要被更换或是更频繁。
+在许多情况下，密钥的寿命稍微超过一天可能更加合理。
+    另一方面，寿命太短的公共密钥可能会导致在重新标记数据和回收最新的消息方面造成
+严重的资源消耗，因为缓存的信息变得很陈旧。在Internet环境中，几乎所有的公共密钥
+寿命都不得短于3分钟，这是在特殊情况下最大信息包延时的合理估计。
+
+4. 公共/私有密钥长度的考虑
+    在DNS安全扩展中公共密钥长度的选择有一定的要素。不幸的是，这些要素常常不在同
+一说明书中指出。区域密钥长度的选择通常是由域管理员依靠本地的条件制定的。
+    在大多数方案中，长的密钥更安全但是速度更慢。另外，长的密钥增加了KEY和SIG RRs
+的长度。这就增加了DNS UDP包的溢出可能在响应中使用更高花费的TCP的可能。
+
+4.1 RSA 密钥长度
+    给出一个小的公共典型，MD5/RSA运算法则中的确认（最普通的操作）将会被模长的平
+方粗略地改变，标记会被模长的立方改变，而且密钥的产生（最小的普通操作）将会被模长
+的四次方所改变。提取模的公因子常用的最好和打破RSA安全的运算法则是粗略地改变模本
+身的1.6次方。因此，从640bit的模到1280bit的模只通过4个要素增加了确认时间，但
+是也可能增加了超过2^900的打破密钥的工作要素。
+    建议的最小RSA运算法则模的长度是704bit，在此时被创造者认为是安全可靠的。但
+在DNS树中的高级别区域可能为了安全考虑，需要设置一个更大的最小长度，也许是
+1000bit。（自从United States National Security Agency允许使用高于512bitRSA模的
+编密码系统的输出，使用小的模数，i.e.n，必须认为是不可靠的。）
+    只用于安全数据而不对于其它安全密钥的RSA密钥，704bit在此时显得更合适。
+
+4.2  DSS密钥长度
+    DSS密钥在相同的长度下可能与RSA密钥有相同的安全性，但是DSS运算法制更小。
+
+5. 私有密钥存储
+    建议那里可能的话，区域私有密钥和区域原版拷贝文件必须只在脱机，无网络连接，本
+身绝对可靠的机器上保留和使用。周期性的，一个应用程序可以通过对分区/运算法则增加
+SIG与NXT RRs并增加无密钥类型的KEY RR用来增强验证，在这些地方带有这种运算法则
+的分区的确切的KEY RR并不被提供。那样扩展文件就能被传输，也许通过暗网，到达初级
+服务机的网络区域。
+    这个想法对于网络来说是避免来自网络的损害的一种信息流。在网络上在线保留区域原
+版文件并简单地通过立宪的签名人回收并不像以上所说的那样。如果主机寄居的环境是是危
+险的话，这种再现的译本仍然会被损害。为了最大的安全考虑，区域的原版拷贝文件应该离
+线并不应该在基于以通信为媒介的不可靠网络上被升级。
+    区域的动态安全更新是不可能的[RFC 2137]。在这种情况下，私有密钥的更新SOA和
+NXT系列至少必须是在线的。
+    安全问题的解决者必须用一些可信的在线公共密钥信息（或是对解决者来说的一个安全
+路径）来完成配置，否则他们不能进行鉴别。尽管在线，这种公共密钥信息必须被保护，否
+则它就能被改变，以致骗取DNS数据成为可信的。
+    无区域私有密钥，例如主机或者用户的密钥，一般必须保持在线，用于像DNS事务安全
+方面的实际目的。
+
+6. 高级别区域,根区域和Meta-Root密钥
+    高级别区域通常比的级别区域更敏感。任何控制或是破坏一个区域安全的人能获取它的
+子域的所有权力（除非解决问题的人在本地配置了子域的公共密钥）。因此，对于高级别区
+域必须特别地小心并使用强大的密钥。
+    根区域是所有区域中最危急的。某个控制或危机根区域安全的人将控制使用根区域的所
+有用户的完全DNS名称空间（除非解决问题的人在本地配置了子域的公共密钥）。因此，根
+区域必须尽最大可能的小心。必须使用最强大和最小心的密钥。根区域私有密钥应该一直处
+于离线状态。
+    许多问题的解决者将会在原服务器开始使用和验证DNS数据。全世界庞大的问题解决人
+员的安全升级将会变得相当的困难。尽管在上面第3节的指导政策暗示根区域密钥一年改变
+一次或是更频繁，如果它在所有问题解决这种实行静态配置，它将会在改变的时候被更新。
+    允许根区域密钥的相关频繁改变使得DNS树的最终密钥的暴露减为最小，将会有一个使
+用很少的“meta-root”密钥，只用来标记带有重叠时间有效性的滚动周期的常规根密钥RR
+的次序。根区域包含meta-root和通用常规的根KEY RR(s)，在meta-root和其它根私有密
+钥自身下被SIG RRs标记。
+    在存储和使用meta-root密钥中使用尽可能强的安全机制是很有必要的。用于防范的精
+确技术的使用不在这篇文章的讨论范围。由于它的特殊地位，它也许最好是由对于扩展时段，
+例如5到10年，的相同meta-root密钥来延续。
+
+7. 安全考虑
+    整篇文章是出于公共/私有密钥这一对DNS安全性的可操作考虑的。
+
+参考书目
+   [RFC 1034]   Mockapetris, P., "Domain Names - Concepts and
+                Facilities", STD 13, RFC 1034, November 1987.
+
+   [RFC 1035]   Mockapetris, P., "Domain Names - Implementation and
+                Specifications", STD 13, RFC 1035, November 1987.
+
+   [RFC 1750]   Eastlake, D., Crocker, S. and J. Schiller, "Randomness
+                Requirements for Security", RFC 1750, December 1994.
+
+   [RFC 2065]   Eastlake, D. and C. Kaufman, "Domain Name System
+                Security Extensions", RFC 2065, January 1997.
+
+   [RFC 2137]   Eastlake, D., "Secure Domain Name System Dynamic
+                Update", RFC 2137, April 1997.
+
+   [RFC 2535]   Eastlake, D., "Domain Name System Security Extensions",
+                RFC 2535, March 1999.
+
+   [RSA FAQ]    RSADSI Frequently Asked Questions periodic posting.
+
+作者地址
+   Donald E. Eastlake 3rd
+   IBM
+   65 Shindegan Hill Road, RR #1
+   Carmel, NY 10512
+
+   Phone:   +1-914-276-2668(h)
+            +1-914-784-7913(w)
+   Fax:     +1-914-784-3833(w)
+   EMail:   dee3@us.ibm.com
+
+全部版权陈述
+  Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+RFC2541――DNS Security Operational Consideration                          DNS安全操作考虑
+
+
+2
+RFC文档中文翻译计划

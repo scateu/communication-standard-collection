@@ -1,0 +1,255 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：piex（piex    jintao@bigfoot.com）
+译文发布时间：2002-01-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                        R. Atkinson
+Request for Comments: 1827                     Naval Research Laboratory
+Category: Standards Track                                    August 1995
+
+IP封装安全载荷（ESP）
+
+本备忘录的状态
+这篇文档详述了Internet community中的一个internet标准栈协议，并且请求对于这个标准栈协议的讨论和建议。标准化的状态和协议的状态请参考internet官方协议标准（std1）. 发布本备忘录的发放不受限制。
+
+
+摘要
+此篇文档描述了IP封装安全载荷（ESP）。ESP是为IP数据包提供完整性和机密性的一种机制。在某些情况下也可用于IP数据包的安全认证。此机制可用于IPv4和IPv6。
+
+1 介绍
+  ESP是为IP数据包提供完整性和机密性的一种机制。它也能在特定的认证算法和算法模型的基础上提供身份认证。ESP不提供流量分析的不可否认性和保护性服务。IP认证头（AH）使用一定的认证算法[Atk95b]可以实现不可否认性服务。IP认证头可以和ESP结合起来使用以提供身份认证的服务。用户如果只想实现信息完整性和身份认证服务而不想实现机密性服务，则可以选择IP认证头（AH）协议来取代ESP。本文假设读者已经熟悉相关文档“IP安全架构”，它定义了用于IPv4和IPv6的总的INTERNET层的安全架构，并且提供了对于这篇描述文档的重要背景。[Atk95a]
+
+1． 1综述
+IP封装安全载荷（ESP）试图提供信息的机密性和完整性服务，方法是将被保护的数据加密并把被加密的数据放入IP封装安全载荷（ESP）的数据部分。根据用户的安全需求，此机制可以被用于加密传输层段（例如：TCP,UDP,ICMP,IGMP）,也可用来加密一个完整的IP数据包。为了保证完整原始数据包的机密性，封装被保护的数据是必须的。
+
+在共享系统中使用此规范会增长IP协议处理的代价。使用此规范也会增长信息通讯的延迟时间。延迟时间的增长主要是由包含在一个ESP中的每个IP数据包都需要的加密和解密过程引起的。
+
+在隧道模式的ESP中，原始的IP数据包被放置于ESP的被加密部分，然后将完整的ESP帧放入一个数据包内，此数据包有一个未加密的IP报头。未加密的IP数据报头中的信息被用来将安全数据包从源地址发送到目的地址。一个未加密的IP路由报头可以被包括在IP报头和ESP之间。
+
+在传输模式的ESP中，ESP头被插入到IP数据包中传输层协议报头（例如，TCP,UDP,或者	ICMP）的前面。在此模式下，因为没有加密的IP报头或者IP选项所以带宽被保护。
+
+在IP中，一个IP认证头可以用来作为一个未加密信息报的头部或者在一个传输模式的ESP信息报中位于IP报头和ESP报头之间，也可以作为一个报头位于一个隧道模式的ESP信息报的加密部分。当一个AH同时出现在纯文本的IP报头和单个信息包的隧道模式ESP头之内时，未加密的IPv6认证主要被用于向未加密的IP头的内容提供保护，加密的认证头被用于向加密的IP信息包提供报头验证。本文稍后详述。
+
+IP封装安全载荷的组织结构与别的IP有效载荷有很大不同。ESP有效载荷的第一个成分是有效载荷的未加密域。第二个部分是加密的数据。未加密ESP报头的域通知预期的接收者怎样合适的解密和处理加密的数据。被加密的数据部分包括用于安全协议的受保护域以及加密封装的IP数据包。
+
+安全联合的概念是ESP的重要的基础部分。它在相关文档“Security Architecture for the Internet Protocol” 被详细的描述。执行者应该在读此篇文档之前读那篇文档。
+
+1．2 需求的术语定义
+    在本文档中，通常被大写的单词用来定义一个特定的要求（REQUIREMENT）的重要程度。这些单词是：
+
+－MUST（必须）
+这个单词和近意词"REQUIRED"意谓它们所指的项在规范中是绝对必须,不可缺少的。
+
+  －SHOULD(应该)
+    此单词和近意词“RECOMMENDED"修饰的条款，在特定的环境下，由于某些合理原因存在，是可以忽略的。但是此条款的完整含义必须被理解，在采取不同的方针之前，应该特别重视所处的场合。
+
+     －MAY（可以）
+    这个单词和它的近意词“OPTIONAL"意谓着它们所指的特定项确实是可选的。一个产品提供商（vendor）可能为了一个特别的商务用途的需要或者增强它的产品（例如：别的商家可能忽略此项目）而将此项条目包括进来。
+
+2 密钥管理
+  密钥管理是IP安全架构的一个重要部分。然而，一个特定的密钥管理协议并没有包括在本篇说明文档中，这是因为长期以来，在各种公开的著作中，涉及到密钥管理的算法和协议存在很多细微的错误。IP尽量分离密钥管理机制和安全协议机制之间的关联。在密钥管理机制和安全协议机制之间的唯一联系是安全参数索引（SPI），SPI在后面将更详尽的描述。这种分离允许几种不同的密钥管理机制被使用。更重要的是，它允许在密钥管理协议被更换或者修正的时候，安全协议机制不会受到过度的影响。因此，一个IP的密钥管理协议不会在本文档中详述。在IP安全架构中将会更详尽的描述密钥管理并且详述用于IP的密钥管理需求。参考文献[Atk95a]包容了这些密钥管理需求。
+  
+密钥管理机制被用于协商每个安全关联中的参数。这些参数不仅包括密钥本身而且还包括其他的信息（例如：加密算法和加密模型，安全分类的级别，等等），所有的这些都将被通信的双方所使用。密钥管理协议的实现通常创造和维护一个逻辑表，此表中包含了每个当前安全关联中的参数。一个ESP的实现通常需要通过读安全参数表来决定如何处理每一个包含ESP的数据包（例如：采取哪个算法或模型以及何种密钥）。
+
+3 封装安全有效载荷的语法
+
+封装安全有效载荷（ESP）可能出现在IP头之后和最后传输层协议之前的任何地方。IANA（Internet Assigned Numbers Authority，负责全球Internet的IP地址编号分配的机构）已经分配了协议号50给ESP[STD-2]。ESP 头前的那个报头总是在它的NEXT Header（IPV6）或者协议（IPV4）域中写入值50。ESP由一个未加密的报头和加密的数据部分组成。加密的数据既包括被保护的ESP 头也包括被保护的用户数据。而用户数据或者是一个完整的IP 数据包，也可能仅仅是一个上层协议部分（例如： TCP 或者 UDP）。一个安全数据包的高层图表如下所示：
+
+
+  |<--        Unencrypted              -->|<----    Encrypted   ------>|
+  +-------------+--------------------+------------+---------------------+
+  | IP Header   | Other IP Headers   | ESP Header | encrypted data      |
+  +-------------+--------------------+------------+---------------------+
+
+  ESP报头的更详细的图表如下所示
+
+  +-------------+--------------------+------------+---------------------+
+  |             Security Association Identifier (SPI), 32 bits          |
+  +=============+====================+============+=====================+
+  |             Opaque Transform Data, variable length                  |
+  +-------------+--------------------+------------+---------------------+
+
+
+加密和认证算法以及与它们相关联的不透明变换数据的精确格式被称作变换（“transform”）。ESP格式被设计成为支持新的变换，从而可以在将来支持新的或者额外的加密算法。变换被自身详细说明，而不是在此篇文档的主体部分被详述。用于与IP一起使用的强制转换被定义在一个独立文档中[KMS95]。别的可选变换存在于别的说明文档中，附加的变换可能在将来定义。
+
+3．1 封装安全有效载荷的域
+
+SPI 是一个32位的伪随机值，它用来确定数据包的安全关联。如果不建立安全关联，SPI 域的值就应该是0x00000000。一个SPI 类似于别的安全协议中的SAID。因为 在此处SPI 的语意和别的安全协议中的SAID不是完全相同，所以名字不一样。
+
+SPI的值的集合中，从0x00000001到 0x000000FF 是被保留给 IANA 的，以用于将来的使用。除非在一篇 RFC 中公开的说明一个特定的被保留的 SPI 值已经被分配，否则保留的 SPI 值通常不能被分配。
+SPI 是唯一的强制的不受约束的变换域。特定的变换可能有别的对于变换来说是独有的域。变换在此篇文档中不会被详述。
+
+3．2  ESP 的安全标记
+加密的 IP 数据包不必要并且通常也不包含任何明确的安全标签因为 SPI 指明了敏感级别。这是对当前 IPv4 实施方案的一个改进，当前的实施方案通常在分割模式工作站以及别的需要安全标签的系统中使用一个明确的敏感标签[Ken91] [DIA]。在一些情况下，用户可以选择在使用 ESP 提供的不明确的标签的同时添加一个明确的标签（例如： RFC1108 中定义的IPSO 标签，可以在IPv4中被使用）。明确标签的选项能够被定义与 IPv6 一起使用（例如，使用 IPv6 端到端的选项报头或者IPv6 的逐跳路由的可选报头）。ESP 的执行可以同时支持非明确的标签和明确的标签，但是不是必须要求支持明确标签。ESP 在要求提供多级安全的系统中实施的时候必须支持不明确的标签。
+
+4 封装安全协议的处理过程
+
+此节描述了当 ESP 在两个互连的实体间使用时实施的步骤。多播与单播的仅在密钥管理上不同（细节请看看上面的 SPI定义）。ESP 有两种使用模式。第一种被称做隧道模式，在ESP内封装一个完整的 IP数据包。第二个模式称为传输模式，在ESP内封装一个传输层的帧（如UDP,TCP）。术语传输模式一定不能被误解仅限于TCP 和UDP。例如，一个IMCP 消息在不同环境下既可以通过传输模式发送也可以通过隧道模式发送。ESP 的处理过程发生在发送时的 IP 分割之前以及接受时的IP重新组合之后。此节描述了两种模式的协议处理过程。
+
+4．1 隧道模式下的 ESP
+
+隧道模式下的 ESP报头跟随在所有的端到端的报头之后（例如，认证头，如果在明文中呈现的话），在它后面就紧接着一个被隧道化的 IP数据包。发送方将原始的IP数据包封装进ESP，至少使用发送方的用户ID以及目的地址来定位正确的安全关联，然后运用合适的加密变换。如果使用基于主机的密钥产生机制，那么对于一个特定的目的地址来说，一个给定系统上所有的发送用户拥有相同的安全关联。如果没有任何一个密钥已经被建立，那么密钥管理机制要为这个连接会话产生一个加密密钥，此过程要在ESP被使用之前发生。此后，（加密的）ESP作为最终的有效载荷被封装入一个未加密的IP数据包。如果执行严格的红黑分割，那么可选的载荷和明文IP数据报头中的地址以及其他的信息可能会和包含在原始数据包（现在已经被加密和封装了）中的值有所不同。
+
+接收方剥去明文IP报头以及明文的可选IP载荷（如果有）并且丢弃它们。接下来，接受方结合使用目的地址和SPI值来定位这个信息包的正确的会话密钥，然后使用这个密钥来解密这个ESP。
+
+如果对于此会话不存在一个合法的安全关联（例如，接受方没有密钥），接受方必须丢弃这个加密的ESP 并且这个错误必须被记录在系统日志或者审核日志当中。这个系统日志或审核日志应该包括SPI的值，时间，明文的发送地址，明文的目的地址，以及明文的信息流的ID。日志条目也可以包括别的认证数据。接受方可能不想立即通知发送方有错，因为这样极有可能被拒绝服务攻击模式所利用。
+
+如果解密成功，原始的IP数据包被从ESP（已被解密）移出。然后，这个原始的数据包就按照通常的IP协议规范来处理。在要求提供多级安全安全的系统中（例如，一个B1级或分割模式的工作站）,基于接受进程的安全级别以及与安全关联相关的安全级别，附加的合适强制访问控制必须被实施。如果这些强制访问控制失败了，那么这个信息包应该被丢弃，同时应该使用特定的实施过程将错误录入日志。
+
+4．2 传输模式下的ESP
+在传输模式下，ESP 头被放置在端到端的头部之后（例如，认证头），它后面紧接着的是一个传输层的头（例如：UDP ,TCP, ICMP）。
+
+发送者将原始的传输层（例如：UDP,TCP,ICMP）帧封装入ESP，至少使用发送的用户ID和目的地址来定位合适的安全关联，然后运用合适的加密变换。如果使用基于主机的密钥产生机制，那么对于一个特定的目的地址来说，一个给定系统上所有的发送用户拥有相同的安全关联。如果没有任何一个密钥已经被建立，那么密钥管理机制要为这个连接会话产生一个加密密钥，此过程要在ESP被使用之前发生。此后，（加密的）ESP作为最终的有效载荷被封装入一个未加密的IP数据包。
+
+接收方的处理明文IP头和明文的可选IP 头（如果有）并且暂时存储相关信息（例如，源地址和目的地址，信息流ID，路由选项头），接受方结合使用目的地址和SPI值来定位这个信息包的正确的会话密钥，然后使用已为此次通信而建立的会话密钥将ESP 解密。 
+
+如果没有用于此会话的密钥或者解密的尝试失败，接受方必须丢弃这个加密的ESP 并且这个错误必须被记录在系统日志或者审核日志当中。如果如此的一个失败发生，这个系统日志或审核日志应该包括SPI的值，接受时间，明文的发送地址，明文的目的地址，以及明文的信息流的ID。日志条目也可以包括别的关于失败的信息包的信息。如果某些原因的存在而导致解密无法正常工作，那么由此而来的数据就无法被实施中的协议引擎所分析。因此，失败的机密通常是可以被检测到的。
+
+如果解密成功，原来的传输层（例如，UDP,TCP,ICMP）帧从ESP （已被解密）中移出。明文IP 头信息和传输层头被结合起来判别数据一个被送往哪一个应用程序。然后数据就象按照一般的IP 协议规范那样被送给合适的应用程序。在要求提供多级安全安全的系统中（例如，一个B1级或分割模式的工作站）,基于接受进程的安全级别以及与安全关联相关的安全级别，附加的合适强制访问控制必须被实施。
+
+4．3 认证
+一些变换在提供机密性和信息完整性功能的同时也提供认证功能。当这些变换不被使用时，认证报头可能与封装安全载荷一起使用。将认证报头与ESP结合使用有两种不同的方法，依赖这两种方法数据被认证。认证头的位置阐明了哪一个数据集合正在被认证。
+
+在第一种方法中，被接受的数据包整个被认证，包括它的加密部分和未加密部分。而只有ESP报头之后的数据是机密的。在此方法中，，发送方首先运用ESP 封装被保护的数据，然后将明文的IP报头置于ESP报头和加密的数据之前。最后，按照通常的方法利用已得出的数据包计算出IP 认证报头。接收时，接收者首先使用通常的IP 认证头处理过程对整个数据包进行身份认证。然后，如果身份认证成功，那么就使用通常的IP ESP 处理过程来进行解密。如果解密成功，那么得到的数据就被传递给上一层。
+
+
+如果认证过程仅被应用于隧道模式ESP保护下的数据，那么此IP 认证头通常会被放置在被保护的数据报之内。然而，如果是使用传输模式ESP，IP 认证报头被放在ESP报头的前面并且根据整个IP 数据报来计算它。
+
+如果认证报头被封装在一个隧道模式的 ESP报头之内并且两个报头都有与它们相关联的安全分类级别，而这两个安全分类级别不是相同的，那么一个错误就会发生。这个错误应该被上面描述的程序过程记录在系统日志或者审核日志中。一个认证报头定位在ESP报头之外的时候，如果它们有不同的安全分类级别并不一定是个错误。这可能是合理的因为在数据被ESP加密之后，明文的IP 报头可能有一个不同的分类级别。
+
+5 一致性要求
+符合或与此篇说明文档相一致的具体实现必须完全执行本篇文章描述的报头，必须支持伴随此报头的手工密钥发布，必须满足“Internet协议安全架构”[Atk95]的所有需求,必须支持DES CBC（在伴随文档中被详述，题目是：The ESP DES-CBC Transform[KMS95]）的使用。实施者也可以实现别的ESP变换。实施者应该查询最近版本的“IAB Official Standards”RFC作为对于本篇文档状态的更深层的指导。
+
+6 安全考虑
+此篇文档讨论了一个随IP 使用的安全机制。此机制不是一个万能的良方，但在创建一个安全的互联网的时候它确实提供了一个重要而有用的部分。
+
+对于一个使用分组链接算法并且缺乏一个健壮的完整性机制的ESP来说，它的加密变换在受到cut-and-paste攻击（见Bellovin的描述文章）时是脆弱的，除非认证报头总是出现在使用ESP变换的信息包之内，否则不应该被使用。[Bel95]
+
+使用者需要明白此规格提供的安全品质完全依赖于所采用的加密算法的强度和实现时的正确性，以及密钥管理机制的安全性和它实现时的安全性，还依赖于密钥自身的强度以及在所有相关系统中ESP 和IP实施的正确性。
+
+如果这些假定的条件有一些不满足，就不会有真正的安全可言。在IP 封装安全有效载荷中推荐使用高可靠性的的开发技术。
+
+如果用户想在受到流量分析时保护数据，他可能用到一个恰当的链接加密方法。链接加密的描述和规格不在此篇文章的论述范围之内。
+
+即使不使用面向用户的密钥，当前使用的算法对于所有的选择明文攻击方法来说都应该是牢固的。对DES的选择明文攻击在[BS93]和[Mat94]中被描述。面向用户的密钥的被推荐使用，因为它可以排除各种选择明文攻击并且使解密更困难。就像在IP Security Architecture[AtK95a]描述的那样，在实现的时候应该使用面向用户的密钥。
+
+
+
+承谢
+此文档极大的受益于Bill Simpson,Perry Metzger ,Phil Karn做的工作，他们将SIP,SIPP,IPv6 的作者最初定义的方法普遍化。
+
+本文的许多概念源于美国政府的SP3安全协议规格，ISO/IEC的NLSP规格，以及提议中的swIPe安全协议[SDNS89,ISO92a,IB93,IBK93,ISO92b]或是受到它们的影响。用于保密的DES的使用在论述SNMPv2的文章中已经被严整的建模[GM93]。Steve Deering,Dave Michelcic,Hilarie Orman提供了对此篇备忘录早期版本的可靠的评论。
+
+
+参考文献
+
+[Atk95a] Atkinson, R., "Security Architecture for the Internet
+            Protocol", RFC 1825, NRL, August 1995.
+
+   [Atk95b] Atkinson, R., "IP Authentication Header", RFC 1826, NRL,
+            August 1995.
+
+   [Bel89]  Steven M. Bellovin, "Security Problems in the TCP/IP
+            Protocol Suite", ACM Computer Communications Review, Vol. 19,
+            No. 2, March 1989.
+
+   [Bel95]  Steven M. Bellovin, Presentation at IP Security Working
+            Group Meeting, Proceedings of the 32nd Internet Engineering
+            Task Force, March 1995, Internet Engineering Task Force,
+            Danvers, MA.
+
+   [BS93]   Eli Biham and Adi Shamir, "Differential Cryptanalysis of the
+            Data Encryption Standard", Springer-Verlag, New York, NY,
+            1993.
+
+   [CN94]   John M. Carroll & Sri Nudiati, "On Weak Keys and Weak Data:
+            Foiling the Two Nemeses", Cryptologia, Vol. 18, No. 23,
+            July 1994. pp. 253-280
+
+   [CERT95] Computer Emergency Response Team (CERT), "IP Spoofing Attacks
+            and Hijacked Terminal Connections", CA-95:01, January 1995.
+            Available via anonymous ftp from info.cert.org.
+
+   [DIA]    US Defense Intelligence Agency (DIA), "Compartmented Mode
+            Workstation Specification", Technical Report
+            DDS-2600-6243-87.
+
+   [GM93]   Galvin J., and K. McCloghrie, "Security Protocols for
+            version 2 of the Simple Network Management Protocol
+            (SNMPv2)", RFC 1446, Trusted Information Systems, Hughes LAN
+            Systems, April 1993.
+
+   [Hin94]  Bob Hinden (Editor), Internet Protocol version 6 (IPv6)
+            Specification, Work in Progress, October 1994.
+
+   [IB93]   John Ioannidis & Matt Blaze, "Architecture and Implementation
+            of Network-layer Security Under Unix", Proceedings of the USENIX
+            Security Symposium, Santa Clara, CA, October 1993.
+
+   [IBK93]  John Ioannidis, Matt Blaze, & Phil Karn, "swIPe:
+            Network-Layer Security for IP", presentation at the Spring
+            1993 IETF Meeting, Columbus, Ohio.
+
+   [ISO92a] ISO/IEC JTC1/SC6, Network Layer Security Protocol, ISO-IEC
+            DIS 11577, International Standards Organisation, Geneva,
+            Switzerland, 29 November 1992.
+
+   [ISO92b] ISO/IEC JTC1/SC6, Network Layer Security Protocol, ISO-IEC
+            DIS 11577, Section 13.4.1, page 33, International Standards
+            Organisation, Geneva, Switzerland, 29 November 1992.
+
+   [Ken91]  Kent, S., "US DoD Security Options for the Internet
+            Protocol", RFC 1108, BBN Communications, November 1991.
+
+   [KMS95]  Karn, P., Metzger, P., and W. Simpson, "The ESP DES-CBC
+            Transform", RFC 1829, Qualcomm, Inc., Piermont, Daydreamer,
+            August 1995.
+
+   [Mat94]  Matsui, M., "Linear Cryptanalysis method for DES Cipher",
+            Proceedings of Eurocrypt '93, Berlin, Springer-Verlag, 1994.
+
+   [NIST77] US National Bureau of Standards, "Data Encryption Standard",
+            Federal Information Processing Standard (FIPS) Publication
+            46, January 1977.
+
+   [NIST80] US National Bureau of Standards, "DES Modes of Operation"
+            Federal Information Processing Standard (FIPS) Publication
+            81, December 1980.
+
+   [NIST81] US National Bureau of Standards, "Guidelines for Implementing
+            and Using the Data Encryption Standard", Federal Information
+            Processing Standard (FIPS) Publication 74, April 1981.
+
+   [NIST88] US National Bureau of Standards, "Data Encryption Standard",
+            Federal Information Processing Standard (FIPS) Publication
+            46-1, January 1988.
+
+   [STD-2]  Reynolds, J., and J. Postel, "Assigned Numbers", STD 2,
+            RFC 1700, USC/Information Sciences Institute, October 1994.
+
+   [Sch94]  Bruce Schneier, Applied Cryptography, John Wiley & Sons,
+            New York, NY, 1994.  ISBN 0-471-59756-2
+
+   [SDNS89] SDNS Secure Data Network System, Security Protocol 3, SP3,
+            Document SDN.301, Revision 1.5, 15 May 1989, as published
+            in NIST Publication NIST-IR-90-4250, February 1990.
+
+
+作者声明
+
+本文的观点和规格代表作者本人，海军研究实验室还没有对本文的价值（如果有的话）作出判断。本文作者以及作者的雇主对于由于正确或者错误的实施使用此规格而引起的问题不负任何责任。
+
+作者地址
+  
+  Randall Atkinson
+   Information Technology Division
+   Naval Research Laboratory
+   Washington, DC 20375-5320
+   USA
+
+   Phone:  (202) 404-7090
+   Fax:    (202) 404-7942
+   EMail:  atkinson@itd.nrl.navy.mil
+

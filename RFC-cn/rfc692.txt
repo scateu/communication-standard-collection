@@ -1,0 +1,63 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：李敬（watercloud    watercloud@263.net）
+译文发布时间：2001-7-16
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                      Stephen Wolfe
+RFC # 692                                                  UCLA CCN
+NIC # 32734                                                June 20, 1975
+
+
+对于IMP/HOST 协议的改动的注释 (RFCS 687 AND 690)
+(COMMENTS ON IMP/HOST PROTOCOL CHANGES, (RFCS 687 AND 690))
+
+本篇RFC主要的是对于RFC 687进行似乎有道理的改动的意见集合，同时也可以作为对
+RFC 690的注释。
+
+现在的主要的问题，就好象Postel所指出的那样，在于改动后的IMP和HOST传输的前
+导字符的总长度刚好为120位，这个数字并不是8或者36的整数倍。
+
+一个可以想到的解决方案是将HOST到HOST协议的前导字符的长度增加24位，使得它的
+总长度达到144位。但是这里依旧存在一个问题，就是在进行这样的改动之后，IMP方必须
+能够插入或者删除这多出来的24个位，来进行144位前导字符和120位前导字符之间的转化。
+上述解决方案中存在的这个问题，是相当明显的。
+
+更好的解决方案是改变IMP方前导字符的长度，我提议用104位长度代替原来的80位长
+度。不过104位长度并不是一个IMP的字的长度的整数倍，这确实是一个问题。但是如果我
+们使用以下的法则的话，解决这个问题并不是很难的事情。
+
+    1.  决不用最后的8位传递信息。
+
+    2.  网络没有被要求将它们从数据源传递到目的地，或者将它们返回到数据源
+
+    3.  当发送不同于零的类型的消息（即不规则消息）的时候，IMP被允许发送96位，104
+位，112位的数据，具体的选择看当时IMP的便利而定。
+
+    4.  同样的，如果需要的话，96位和112位也可以作为不规则消息的前导字符的长度。
+
+这样，比较起强制所有的HOST进行修改以适应新的标准协议，修改IMP程序，使他们能
+够处理104位的前导字符就是一种更快，同时也是更便宜的选择了。
+  
+另外一个建议是定义一种新的IMP到HOST的消息的类型。这个消息应当拥有一个包括了
+HOST的名字（人类型的字符串（people type character string））和HOST的网络地址的表。
+这个消息应当在每一次接口重置的时候进行发送，或者当HOST对IMP发送了一个新的请求，
+以要求得到上述信息的时候，这个消息可以作为响应被发送
+
+
+
+       [ This RFC was put into machine readable form for entry ]
+       [ into the online RFC archives by Alex McKenzie with    ]
+       [ support from GTE, formerly BBN Corp.            10/99 ]
+
+RFC692―COMMENTS ON IMP/HOST PROTOCOL CHANGES, (RFCS 687 AND 690)
+	对于IMP/HOST 协议的改动的注释 (RFCS 687 AND 690)
+
+
+1
+RFC文档中文翻译计划

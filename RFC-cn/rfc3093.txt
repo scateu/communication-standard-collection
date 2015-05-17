@@ -1,0 +1,354 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：prince1680（prince1680  prince1680@163.com）
+译文发布时间：2001-5-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          M. Gaynor
+Request for Comments: 3093                                    S. Bradner
+Category: Informational                               Harvard University
+                                                            1 April 2001
+
+
+
+防火墙增强协议
+（RFC3093 Firewall Enhancement Protocol (FEP)）
+
+
+本备忘录的状态
+
+   本备忘录提供了 Internet community 的信息，但不说明任何一种类型的 Internet 标
+准。发布本备忘录不受限制。
+
+版权声明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+概要
+
+   Internet 端到端体系结构的透明性允许对其进行新技术和服务的创新 [1]，但是，近来
+防火墙技术的发展改变了这种模式，制约了创新。我们提议了允许创新且不违反防火墙安全
+模型的防火墙增强协议（FEP）。在没有防火墙管理员的协助下，FEP 允许任何应用程序通过
+防火墙。我们的方法是，将任何应用程序的传输控制协议/用户数据报协议 (TCP/UDP) 包置
+于超文本传输协议 (HTTP) 之上，因为 HTTP 包具有可通过防火墙的代表性。 由于防火墙被
+设计用来阻止外部攻击和忽略内部威胁，故该方案并不违反实际防火墙的安全有效性。FEP 的
+使用需要从防火墙内部的主机上进行协同操作，所以它与当前防火墙的安全模型相兼容。FEP 
+在防火墙的安全性和防火墙的透明传输通道两个方面达到最好。
+
+1.0 术语
+
+   本文档中的关键字 "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", 和 "OPTIONAL" 在 RFC 2119 中已解
+释。
+
+2.0 简介
+
+   Internet 现在已做得很好了，考虑过去的 10 年间，telco's 宣称 Internet 甚至不能
+在社团环境下工作。这有许多原因，其中最主要的一点就是由 Reed, Seltzer, 和 Clark 讨
+论的端到端的论点 [2]。最后的创新是提出了动手比构思更有价值的有力方法。但是，世界
+正象 Clark 所指出的那样已在改变 [6]。 社团世界接入 Internet，安全性尤为重要，甚至
+付出阻断端到端模式的代价。
+   一个这样的例子就是防火墙 - 一种阻止外来者未经授权访问社团内部的设备。我们的新
+协议，防火墙增强协议 (FEP)，就是为在保持防火墙建立的安全层次上恢复端到端模式而设
+计的。
+
+   要看到端到端模型多么强大，请考虑以下例子。如果 Scott 和 Mark 有个好主意和实现
+才能，他们可以制造一个物品，使用它，并可以送给朋友，若朋友们要保留它，把它做得更
+好也许是个好主意。现在加入防火墙：如果 Mark 正好在一家安装了防火墙的公司工作，他
+将不能与他的朋友 Scott 进行试验，创新将更困难，也许不可能实现。要使 Scott 和 Mark 
+能够做试验，IT 管理员应该做什么，以便于更好地服务于他们的用户呢？这就是 web 如何
+建立的：一个有才能的人，某些好主意和创新的能力。
+
+   防火墙很重要，并且我们尊重每个人无论怎样保护他们自己的权利 (在其他人不麻烦的时
+候)。 防火墙在工作，并在 Internet 中有一席之地。无论如何，防火墙是为阻止外部的威
+胁而提供保护的，不是为内部的。我们提议的协议不违反防火墙的安全模型；它仍能阻止外
+部危险，特别是防火墙能提供保护的危险。因为对防火墙内部的人来说，我们的协议必须运
+行在可以访问 TCP 端口 80 的应用层。我们的概念是在绕过防火墙 IT 管理员的看管下而与
+安全级一致。我们的自主提议是没有额外的对外部安全妥协的创新，并且最好的，是不需要
+浪费包括任何管理员赞同的时间。
+
+   我们的主意来源于日益增多的使用 HTTP 的应用程序，因为它们可以通过防火墙的阻拦。
+这种特定应用程序的零碎配置不足以与防火墙的创新相提并论，我们决定开发一个基于 HTTP 
+的 TCP/IP 的过程。使用这种创新，任何人都可以立即使用任何新的 TCP/IP 应用程序，而
+不必使用艰苦的 过程通过防火墙来访问特定的应用程序。该提议的一个计划外副产品是，对
+已存在的 TCP/IP 应用程序来说，也可更好地服务于用户。  用户通过 FEP 可以决定他们可
+以运行哪些应用程序。
+
+   我们的提议比较简单，部分基于 Eastlake [3] 提议中的 IP 包的 MIME 编码。我们使用
+随处可见的 HTTP 协议格式。IP 数据包携带于 HTTP 消息的消息体内，TCP 包的头信息编码
+进消息的 HTTP 头内。这种头字段的 ASCII 编码方式有很多优点，包括易读性，增加新应用
+程序的可调试性，包信息的记录容易性。如果该协议被广泛采纳，象 tcpdump 之类的工具将
+变得过时。
+
+3.0 FEP 协议
+
+   图 1 表示了协议的高层视图。主机 A 的应用程序 (1) (位于防火墙外) 发送一个 
+TCP/IP 数据包到主机 B (位于防火墙内)。通过通道接口，TCP/IP 数据包路由到我们的 FEP 
+软件 (2)，并将数据包编码进一个 HTTP 消息，然后，该消息通过 HTTP/TCP/IP (3) 通道发
+送到主机 B 的正常 HTTP 端口 (4)。当它到达主机 B 后，该包通过通道被路由到 FEP (5)，
+包被解码，并生成 TCP/IP 数据包，插入到主机 B 的协议堆栈 (6)。该包就被路由到主机 B 
+(7) 的应用程序，就好象不存在防火墙 (8) 一样。
+
+            主机 A                                       主机 B
+          ----------                                   ----------
+         |    App   | (1)                             |    App   | (7)
+         |----------|                                 |----------|
+         |    TCP   |                                 |    TCP   |
+         |----------|                                 |----------|
+         |     IP   |                                 |    IP    | (6)
+         |----------|                                 |----------|
+         | FEP dvr  | (2)                             |  FEP dvr | (5)
+         |----------|                                 |----------|
+         |    TCP   |                                 |    TCP   |
+         |----------|                                 |----------|
+         |    IP    |         防火墙 (8)              |    IP    |
+          ----------              ---                  -----------
+                |       (3)       | |                       ^ (4)
+                +---------------->| |-----------------------+
+                                  | |
+                                  | |
+                                  ---
+                                图 1
+
+3.1 HTTP 方法
+
+   FEP 允许任一方看起来象客户端或服务器端，每个 TCP/IP 包都可作为 HTTP GET 请求或 
+GET 请求应答被发送。这种灵活性在下述方面与防火墙工作得很好：试图验证通过防火墙有
+效的 HTTP 命令，阻止对 FEP 包不必要的捕获。
+
+3.2 TCP 头封装：
+
+   将 TCP/IP 包编码进 HTTP 命令有两个步骤 (或可选三个）。第一步，IP 包按 [3] 中所
+指定的 MIME 格式编码进消息体内；第二步，TCP [4] 包头进行解析并编码进新的 HTTP 头
+中。最后，作为可选项，IP 头也被编码进新的可选的 HTTP 头中。TCP 和可选的 IP 头编码
+确实具有易读性，因为整个 IP 数据包被编码进 HTTP 命令体的部分。
+
+   该提议定义了下列描述 TCP 头信息的新 HTTP 头。
+
+   TCP_value_opt - 该 ASCII 字串表示 TCP 字段的编码类型，这里不指定强制编码类型。
+      合法值是：
+
+   TCP_binary - 字段值二进制表示值的 ASCII 表示。
+
+   TCP_hexed - 字段值十六进制表示值的 ASCII 表示。
+
+   TCP_Sport - 16-bit TCP 源端口号，以 ASCII 字串编码，表示端口号的值。
+
+   TCP_Dport - 16-bit TCP 目的端口号，以 ASCII 字串编码，表示端口号的值。
+
+   TCP_SeqNum - 32-bit 序列号，以 ASCII 字串编码，表示序列号的十六进制值。该字段
+必须（MUST）按小写字符发送，因为它不紧急。
+
+   TCP_Ackl - 32-bit 确认号，以 ASCII 字串编码，表示确认号的值。
+
+   TCP_DODO - 4-bit 数据偏移值，以 ASCII 字串编码，表示以比特为单位的 TCP 头的实
+际长度的低 32 位值。(通常这是数据值乘以 32。)
+
+   TCP_6Os -  6-bit 保留位，编码为 6 个 ASCII 字符的字串。 "O" ("Oh") 表示 "Off" 
+位，"O" ("Oh") 表示 "On" 位。  (注意，这些字符发送时必须（MUST）为 "off"，在接收
+时必须（MUST）忽略。)
+
+   TCP_FlgBts - TCP 标志位，编码为 5 个逗号分隔的 ASCII 字串：[{URG|urg}，{ACK|ack}，
+{PSH|psh}，{RST|rst}，{SYN|syn}，{FIN|fin}]。大写字母表示该标志位被置位，小写字母
+表示该标志位被复位。
+
+   TCP_Windex - 16-bit TCP 窗口大小，以 ASCII 字串编码，表示窗口中的字节数的值。
+
+   TCP_Checkit - 16-bit TCP 检查和字段，以 ASCII 字串编码，表示检查和字段纠正一位
+的十进制值。
+
+   TCP_UP - 16-bit TCP 紧急指针，以十六进制编码表示字段的值。该十六进制字串必须
+（MUST）大写，因为它表示紧急。
+
+   TCP_Opp_Lst - 以逗号分隔的可能存在的 TCP 选项列表。每个选项以 ASCII 字串编码，
+表示选项名，后接括在方括号内的选项指定信息。作为有代表性的选项和它们后续的编码，
+其他 IP 选项有如下格式：
+
+      End of Options: ["End of Options"]
+
+      Window scale option: ["Window scale", shift_count], 这里
+         shift_count 是窗口尺寸因子，以十进制 ASCII 字串表示。
+
+3.2 IPv4 头封装：
+
+   本提议定义了下列新 HTTP 头，以表示 IPv4 头信息：
+
+   这些可选的头使用编码 IPv4 [5] 头以获得更好的易读性。这些字段的编码与上述 TCP 
+头字段具有相同的格式。
+
+   由于基本 IP 包已存在于 HTTP 头内，下列头是可选的。它们不使用，使用某些或全部使
+用依赖于程序员的奇想。
+
+   IP_value_opt - 该 ASCII 字串表示了下列字段的编码类型，，这里不指定强制编码类型。
+其合法值与 TCP_value_opt 相同。
+
+   IP_Ver - IP 版本号，以 UTF-8 字串编码。字串的合法值是 "four"，"five"，和 "six"。
+      在本节中如果值是 'four"，或在 3.3 节中如果值是 "six"，IP 头中该字段的封装将
+被定义。如果接收到适当的命令，IP_Ver 的值是 "five" 的封装也将被处理。IP_Ver 的值
+为 "eight" 的封装是空的。这些字串必须（MUST）能够支持任意本地语言。
+
+   IP4_Hlen - IP Internet 头长度字段，它与 TCP_DODO 编码方式相同。
+
+   IP4_Type_of_Service (该名称大小写敏感) - 在 IPv4 头中，该字段名已废除，而以 
+IP_$$ 和 IP_CU 代替。
+
+   IP_$$ - 6-bit 区分服务字段，以 UTF-8 字串封装，表示字段是 DS 代码指针名。
+
+   IP_CU - 2-bit 字段，为 TOS 字段的低二位比特。因为该字段当前用于各种试验，已被
+编码为各种可能的方式，所以，它被编码为两个 ASCII 字串，格式为 "bit0=X" 和 "bit1=X"，
+这里 "X" 是 "on" 或 "off."  注意，比特 0 是 MSB.
+
+   IP4_Total - 16-bit 总长度字段，以 ASCII 字串编码表示字段的值。
+
+   IP4_SSN - IP 标识字段，以 ASCII 字串编码表示字段的值。
+
+   IP4_Flags - IP 标志位，编码为由 3 个逗号分隔的 ASCII 字串：[{"Must Be Zero"}, 
+{"May Fragment"|"Don't Fragment"}, {"Last Fragment"|"More Fragments"}]
+
+   IP4_Frager - 13-bit 片段偏移字段，以 ASCII 字串编码表示字段的值。
+
+   IP4_TTL - 8-bit 存活时间字段(Time_To_Live)，以 UTF-8 字串编码，表示形式为 "X" 的
+跳步次数。 这里 "X" 是字段的十进制数 -1。 该字串必须（MUST）能够支持任意本地语言。
+
+   IP4_Proto - 8-bit 协议字段，以 UTF-8 字串编码，表示协议名，该协议的头跟着 IP 头。
+
+   IP4_Checkit - 16-bit 检查和字段，编码方式与 TCP_Checkit 相同。
+
+   IP4_Apparent_Source - 32-bit 源地址字段。为表示用户友好，该字段以 UTF-8 字串编
+码，表示包的发送者的域名。作为一种备份的形式使用，可以在防火墙将域名本身阻塞后用
+于保护社团用户的使用，它是一个 ASCII 字串，表示 IPv4 的由句号分隔的小于 255 的四
+位数地址。
+
+   IP4_Dest_Addr - 32-bit 目的地址字段，编码方式与 IP4_Apparent_Source 相同。
+
+   IP4_Opp_Lst - 以逗号分隔的可能存在的 IPv4 选项列表。每个选项以 ASCII 字串编码，
+表示
+      表示选项名，后接括在方括号内的选项指定信息。作为有代表性的选项和它们后续的
+编码，其他 IP 选项有如下格式：
+
+      End of Options option: ["End of Options"]
+
+      Loose Source Routing option: ["Loose Source Routing", length,
+         pointer, IP4_addr1, IP4_addr2, ...], 这里 length 和 pointer
+         是 ASCII 字串，表示那些字段的值。
+
+3.3 IPv6 头封装:
+
+   本建议定义了下列新的 HTTP 头，以描绘 IPv6 头信息:
+
+   这些可选的对 IPv6 [5] 头的编码提供了更好的可读性。这些字段的编码与上述 TCP 头
+字段的编码格式很相似。
+
+   因为基本的 IP 包已包含在 HTTP 头中，下述头是可选的。它们不使用，使用某些或全部
+使用依赖于程序员的奇想。现在只支持基本的 IPv6 头。如果对此有足够的兴趣，我们将继
+续开发对 IPv6 扩展头的支持。
+
+   IP_$$ - 6-bit 区分服务字段 - 见上
+
+   IP_CU - 2-bit 未用字段 - 见上
+
+   IP6_Go_with_the_Flow - 20-bit 流标签字段。由于该字段当前未使用，故应编码为 UTF-8 
+字串“do not care”。
+
+   IP6_PayLd - 16-bit 有效载荷长度字段，编码为描述字段值的 ASCII 字串。不推荐使用 
+IPv6 的 FEP。
+
+   IP6_NxtHdr - 8-bit 下一个头字段，与 IP4_Proto 编码相同。
+
+   IP6_Hopping - 8-bit 跳跃限制字段，与 IP4_TTL 编码相同。
+
+   IP6_Apparent_Source - 128-bit 源地址字段。该字段编码为用户友好的 UTF-8 字串，
+表示包发送者的域名。作为一种备份的形式使用，可以在防火墙将域名本身阻塞后用于保护
+合法用户的使用，它是一个 ASCII 字串，用于描述任何一种表述一个 IPv6 地址的合法形式。
+
+   IP6_Dest_Addr - 128-bit 目的地址字段，与 IP6_Apparent_Source 编码相同。
+
+3.4 TCP 头压缩
+
+   面对象本文这样增加包大小的协议，压缩 TCP 头是愚蠢的，所以我们忽略它。
+
+4.0 安全考虑
+
+   因为该协议涉及到防火墙，所以没有实际的安全考虑。
+
+5.0 感谢
+
+   We wish to thank the many Firewall vendors who have supported our
+   work to re-enable the innovation that made the Internet great,
+   without giving up the cellophane fig leaf of security that a Firewall
+   provides.
+
+6.0 作者地址
+
+   Mark Gaynor
+   Harvard University
+   Cambridge MA 02138
+
+   EMail gaynor@eecs.harvard.edu
+
+
+   Scott Bradner
+   Harvard University
+   Cambridge MA 02138
+
+   Phone +1 617 495 3864
+   EMail sob@harvard.edu
+
+参考书目
+
+   [1] Carpenter, B., "Internet Transparency", RFC 2775, February 2000.
+
+   [2] Saltzer, J., Reed, D., and D. Clark, "End-to-End Arguments in
+       System Design".  2nd International Conference on Distributed
+       Systems, Paris, France, April 1981.
+
+   [3] Eastlake, D., "IP over MIME", Work in Progress.
+
+   [4] Postel, J., "Transmission Control Protocol", STD 7, RFC 793,
+       September 1981.
+
+   [5] Postel, J., "Internet Protocol", STD 5, RFC 791, September 1981.
+
+   [6] Clark, D. and M. Blumenthal, "Rethinking the Design of the
+       Internet: The end-to-end argument vs. the brave new world". 2000.
+
+完整的版权声明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+感谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+RFC3093 Firewall Enhancement Protocol (FEP)                     防火墙增强协议
+
+
+1
+RFC文档中文翻译计划

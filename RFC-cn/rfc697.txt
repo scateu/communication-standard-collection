@@ -1,0 +1,53 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@163.net）
+译文发布时间：2002-1-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group
+Jim Lieb
+RFC # 697
+SUMEX-AIM
+NIC # 32963
+July 14，1975
+FTP的CWD命令
+（RFC697――CWD Command of FTP）
+介绍
+Tenex文件系统支持“纯文件”目录。这种目录类型是不能“登录(log in)”的，但可
+以“连接(connect to)”到。注册后，这个目录的“所有者”能访问由系统产生的作业和用
+户执行程序的地址空间了。连接允许一个已存在的作业以及其相关用户，即“所有者(owner)”
+访问一个目录，但是不能创建地址空间。“所有者(owner)”、“组(group)”和“通用的
+(universal)”或者“公用的(public)”这些词决定了在检查一个文件访问请求的合法性时
+使用此保护规范的哪个字段。
+问题
+Tenex FTP服务器不允许FTP登录到一个“files only”目录。目前的协议包括了变更
+工作目录(Change Working Directory，缩写为CWD)的命令，通过这个命令可以获得部分“连
+接（connect）”功能，但是不会把“所有者(owner)”权限完全授予用户。因此，没有方法
+可以使用户作为“所有者（owner）” (即能够提供口令的)来访问某个“files only”目录。
+对于这种类型的个人目录，这是很不方便的，因为对于很样少的目录，定义一个用户目录“组
+（group）”是很浪费的，而且不受约束的“公用的(public)”权限会带来很多不方便。
+解决方法
+可以采用两种方法。或者删除在FTP登录“files only”目录时的限制，或者创建一个
+具有“连接(connect)”功能的命令。对“files only”目录的限制是基于对服务器如何定
+义一个FTP用户。如果我们说任何知道某个目录口令的网络用户都拥有这个目录的所有权直
+到连接上FTP，那么我们就采用第一种方案。如果我们想把某个FTP登录限制为用户登录的
+话，我们就需要第二种方案。
+建议
+用下列两种方法来改变协议：
+1.  删除在FTP登录“files only”目录时的限制
+2.  为CWD (Change Working Directory)命令增加了一个可选项参数来指定目录的口
+令字符串。如果口令检查成功，用户就会获得这个目录的所有权。如果口令不存在或者检查
+失败的话，这个命令当前的权限和操作功能就会受到当前保护机制的控制。匿名用户不允许
+使用这种机制来改变他们访问文件系统的权限。
+[在1999年10月，最早由BBN公司已经把这篇RFC转换成机器可以识别的模式了，由
+GTE的Alex McKenzie来支持逐条的在线RFC查询]
+RFC697――CWD Command of FTP                                           FTP的CWD命令
+
+
+2
+RFC文档中文翻译计划

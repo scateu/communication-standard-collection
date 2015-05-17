@@ -1,0 +1,46 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang   mcsewang@21cn.com）
+译文发布时间：2001.6.27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                                 S. Crocker
+Request for Comments #53                                                    UCLA
+                                                                       9 June 70
+
+
+正式协议的构建原则
+（An Official Protocol Mechanism）
+
+
+在Atlantic City的春季计算机联合研讨会上，Larry Roberts, Barry Wessler, Cordell 
+Green, Jon Postel和我（S.Crocker）探讨了关于如何设定和修改一份正式的Host-Host协
+议的章程。
+
+下面是我们作出的决定
+
+1.	要给出一套新的文档。这套文档将详细说明这份正式的Host-Host协议。在适当的
+时候，这些文档将在SRI的网络信息中心得到维护。
+2.	我将分发关于该正式协议的初始版本及后续的所有更改（作为NWG/RFC）的提议。
+这些提议将是参照由任何有兴趣的组织给出的建议来阐释的。
+3.	一条关于修正正式协议的提议被当作一份NWG的RFC文档发布后，需要得到网络使用
+者的认可或批评等。每条试用的协议都将有一个终止日期。
+4.	当终止日期到来后，将可能有两种情况：一种是该协议得到了网络社会的广泛接受；
+另一种是遭到大部分人的批判。在后一种情况下，我们将终止该测试协议的推广，
+不会对正式的协议作任何的修改。
+5.	如果该提议被广泛的接受了，它会和它的修正版本一起被送到ARPA网办公室。Barry 
+Wessler或他的继任者将会做出决定，是否通过全部的提议。他随后会发信给我，
+告知结果。
+6.	ARPA网办公室通过该提议后，我会发布这条新协议（正如上述第一条提到的那样）。
+
+本月的首要任务就是给出一份正式协议的第一版。
+
+
+[ This RFC was put into machine readable form for entry ]
+[ into the online RFC archives by Kathy de Graaf 2/98 ]
+RFC53――An Official Protocol Mechanism		正式协议的构建原则
+
+
+1
+RFC文档中文翻译计划

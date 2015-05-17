@@ -1,0 +1,67 @@
+组织：中国互动出版网（<http://www.china-pub.com/>）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm <http://www.china-pub.com/>）
+E-mail：ouyang@china-pub.com <mailto:ouyang@china-pub.com>
+译者：董苛（cnchris    duke913@163.com）
+译文发布时间：2001-10-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                      Steve Crocker
+Request for Comments:  85                                       U.C.L.A.
+NIC 5624                                                28 December 1970
+
+                           网络工作小组会议
+                     NETWORK WORKING GROUP MEETING.
+                     ------------------------------
+
+按照十一月在的网络工作小组会议上的一致意见，我们将大概每三个月召开一次全体大会。春季和秋季会议将结合计算机联合大会同时召开。其他的会议将提前或推后以暴光各个站点及平摊大家的负担。
+
+下次的会议将于二月17，18，19日在Illinois大学的Illini联盟召开。预期要来的与会者需要在二月底前和Mike Sher的秘书Phyllis Ewing联系。与她的联系方式是：217-333-0799或：
+
+                       Center for Advanced Computation
+                       162 Engineering Research Laboratory
+                       University of Illinois
+                       Urbana, Illinois  61801
+
+与会者须做好准备于17日到达。
+
+这次会议组织得将比以前的有条理一些，而且还将有几份准备好的报告。
+
+       [ This RFC was put into machine readable form for entry ]
+        [ into the online RFC archives by Rune Skaarsmoen 4/97 ]
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+   
+
+
+
+
+

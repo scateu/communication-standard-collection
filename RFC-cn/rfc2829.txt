@@ -1,0 +1,585 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：张海斌（netdebug    internetdebug@elong.com ）
+译文发布时间：2001-12-14
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                            M. Wahl
+Request for Comments: 2829                        Sun Microsystems, Inc.
+Category: Standards Track                                  H. Alvestrand
+                                                             EDB Maxware
+                                                               J. Hodges
+                                                             Oblix, Inc.
+                                                               R. Morgan
+                                                University of Washington
+                                                                May 2000
+
+针对LDAP的验证方法
+（RFC2829――Authentication Methods for LDAP）
+
+备忘录状况
+这份文档为Internet社区指定为Internet标准（轨迹）协议，并且为进一步改进需要讨论
+和建议。这份协议的标准化状态和状况请参阅"Internet官方协议标准（Internet Official Protocol 
+Standards ）"(STD 1)的当前版。这份备忘录的分发不受限制。
+
+版权声明
+   Copyright (C) The Internet Society (2000)。版权所有。
+
+摘要
+   	这篇文档针对在LDAP [1]实现工具（implementations）中被需求和推荐的安全机制
+（security mechanisms）的特定结合。
+
+
+
+目录
+0.译者的话	2
+1. 引论	3
+2.  样例展开脚本（Example deployment scenarios）	4
+3.  认证和授权：定义和概念	5
+3.1.  存取控制策略Access Control Policy	5
+3.2.  存取控制因素Access Control Factors	5
+3.3.  认证（Authentication）、证明（Credentials）、身份标识（Identity）	5
+3.4.  授权身份标识（Authorization Identity）	6
+4. 必须的安全机制	6
+5. 匿名认证	7
+5.1. 匿名认证过程	8
+5.2. 匿名认证和TLS	8
+6. 基于口令的认证	8
+6.1. 文摘认证	8
+6.2. TLS加密下的简单认证选择（"simple" authentication choice）	9
+6.3. 随TLS的其它认证选择	9
+7. 基于证书的认证（Certificate-based authentication）	10
+7.1. 随TLS基于证书的认证	10
+8. 其他机制	10
+9. 授权标识	11
+10. TLS 密码适配组	12
+11. 对于LDAP的SASL服务名字	13
+12. 安全考虑	13
+13. 确认	13
+14. 文献	13
+15. 作者的地址	14
+16．完整版权声明	15
+确认	16
+
+0.译者的话
+	译者在翻译这份文档的时候，采取直译的方式，尽量保证原文的原意。同时也尽量考虑
+了中文的语义顺畅，便于中文读者阅读，译者在译文中加入了一些修饰语和译注，修饰语一
+般在括号中写明，而译注均有“译者注”字样。由于译者翻译本篇文挡时间有限，译文中一
+定会存在许多理解有误、用词不当之处，欢迎读者来信指正，共同学习。
+
+1. 引论
+   	LDAP版本3是针对目录（服务）功能强大的访问协议。
+
+   	它提供了搜索（searching）、获取（fetching）和操作（manipulating）目录内容的方
+法，以及丰富的安全函数集合的访问方法。
+
+   	为了Internet 运转的更好，这些安全功能能够很好的交互是至关重要的（vital）；因
+此应该存在一个对所有需求LDAPv3 一致性的工具（LDAPv3）通用的最小安全功能子集。
+
+   	对LDAP目录服务基本的威胁包括：
+
+      (1)   通过数据获取（data-fetching）操作非特许存取数据，
+ 
+      (2)   通过监听（monitoring）其他的访问（通道）非特许存取可再用的客户（身份）
+证明信息，
+
+      (3)   通过监听其他的访问（通道）非特许存取数据，
+
+      (4)   未经授权的数据修改，
+
+      (5)   未经授权的配置修改，
+
+      (6)   未经授权的或者过分的资源使用（拒绝服务），以及
+
+      (7)   目录的电子欺骗：欺骗客户（client）相信信息来自目录（directory）而实际
+上没有，或者在转接中修改数据或者错误指引客户的连接。
+
+   	威胁(1), (4), (5)和(6)针对恶意的（hostile）客户（clients）。威胁(2), (3)和(7)
+针对恶意的在客户端和服务端（传输）路径上的代理，或者冒充服务端。 
+
+   	LDAP协议组（protocol suite）能通过下面的安全机制得到保护：
+
+      (1)  客户（身份）证明利用SASL [2]机制设置，或者依靠（backed by）TLS证明扩
+展机制，
+
+      (2)  客户授权利用依靠于请求者证明的身份（标识）存取控制，
+
+      (3)  数据完整性保护（Data integrity）利用TLS协议或者数据完整（data-integrity）
+SASL机制，
+
+      (4)  避免窥探者（snooping）损害的保护利用TLS协议或者数据加密
+（data-encrypting）SASL机制，
+
+      (5)   资源限制利用基于服务控制（service controls）的管理限制，以及
+
+      (6)   服务（身份）证明利用TLS协议或者SASL机制。
+
+译者注：SASL：Simple Authentication and Security Layer
+
+   	同时，存取控制的强制（执行）（imposition）利用LDAP协议范围以外的（机制）完成。 
+
+   	在本文中，术语"user"代表其是使用目录获取或者存储信息的LDAP客户的任何应用
+（application）。
+
+   	在本文中的关键字"MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT","SHOULD", 
+"SHOULD NOT", "RECOMMENDED",  "MAY",和"OPTIONAL"在RFC 2119 [3]中的描述来作解释。 
+
+2.  样例展开脚本（Example deployment 
+scenarios）
+   	下面的脚本是在Internet上针对LDAP目录服务的典型的有不同安全需求的样例。(在下
+面的样例中，"sensitive"（敏感的）意味着数据如果暴露（revealed）将对拥有者带来真正
+的损害；也有受保护的数据但不是敏感的)。这里不是为了列举广泛的综合的脚本为目的，其
+他脚本是可能的，特别是在物理保护的网络上。
+
+      (1)   只读目录（服务），不包含敏感数据，对任何人（"anyone"）访问公开，并且
+TCP连接拦截或者IP欺骗不是问题。这个目录不需要安全功能，除非管理服务
+的限制。
+
+      (2)   只读目录（服务）不包含敏感数据；读访问基于身份（标识）授权。TCP连接
+拦截在当前不是问题。这个脚本需要安全认证（authentication）功能。
+
+      (3)   只读目录（服务）不包含敏感数据；并且客户（程序）需要确保目录数据是经
+过服务（程序）验证的和在从服务（程序）返回中没有修改。
+
+      (4)   读写目录（服务），不包含敏感数据；读访问对任何人（"anyone"）有效，更新
+访问只针对适当授权的人。TCP连接拦截当前不是问题。这个脚本需要安全认
+证功能。
+
+      (5)   目录包含敏感数据。这个脚本需要会话（session）秘密性保护和（AND）安全
+认证。
+
+3.  认证和授权：定义和概念
+   	这部分定义基本的术语，概念，和认证（authentication）、授权（authorization）、证
+明（credentials）及身份（标识）（identity）相关状态（interrelationships）。这些概念
+被使用在描述客户（程序）认证和授权中利用的多少种不同的安全进路（approaches）。
+
+3.1.  存取控制策略Access Control Policy
+   	存取控制策略是定义资源的保护、个人或者其他实体（entities）存取这些资源能力的
+术语通常规则。存取控制策略的公用表达式（common expression）是存取控制表（access 
+control list）。安全的对象和机制，就像这里描述的那些能够存取控制策略表达和实施
+（enforcement）。  存取控制策略是在下文描述的存取控制属性术语的典型表示。
+
+3.2.  存取控制因素Access Control Factors
+   	一个请求，当被服务（程序）处理过的时候，可以和各种各样的安全相关
+（security-related）因素关联（参见[1]中部分4.2）。服务（程序）使用这些因素决定是
+否或者如何处理请求。这些被称作存取控制因素（ACFs）。他们将包括源IP地址、加密强度
+（encryption strength）、被请求操作的类型、时间日期等等。一些因素可以针对请求自身
+所有，其他可以是通过请求被传送的连接关联、另一些（例如，时间日期）可以是环境
+（"environmental"）（相关的）。
+   
+   	存取控制策略是存取控制因素术语的表示。例如，请求有ACFs （存取控制因素）i,j,k 
+能够执行在资源Z 上的Y操作。这套术语其服务（程序）使这样的表达可用（available）
+是工具相关的（implementation-specific）。
+
+3.3.  认证（Authentication）、证明（Credentials）、身份
+标识（Identity）
+   	认证证明是通过一方提供给另一方的证据（evidence），断言提供者一方（例如，一用户）
+的身份标识，其试图与另一方（典型为一服务器）建立关联。认证是产生（generating）、传
+递（transmitting）和核实（verifying）这些证明的过程，这样（它们）断言了身份标识。
+认证身份标识是存在于证明中的名字（name）。
+
+   	存在许多认证证明的形式――使用的形式依赖于通过双方协商的特定认证机制。例如：
+X.509证书、Kerberos tickets、简单身份标识和口令对（password pairs）。注意认证机制
+可以强制随着它使用的认证身份标识的形式。
+
+3.4.  授权身份标识（Authorization Identity）
+   	授权身份标识是存取控制因素的一种。它是用户或者其他实体的名字（name），其请求操
+作被执行。存取控制策略经常表达在授权身份标识术语中；例如，实体X能够在资源Z上执
+行操作Y。
+
+   	授权身份标识属于一协会（bound to an association），其经常与通过客户提出的认证
+身份标识完全地相同，但是它可以是不同的。SASL允许客户具体指定在客户证明中区别于认
+证身份标识的授权身份标识。这个许可主体（permits agents）正如使用它们自己的证明认
+证的代理服务器（proxy servers），然而（要求）赋予它们的代理[2]请求身份标识的存取特
+权（privileges）。另外，通过像TLS服务提供的认证身份标识的形式可以不相对于应用于明
+确的服务存取控制协议的授权身份标识，需要服务特指映射（server-specific mapping）被
+做。从客户提供的认证证明中通过服务组成和生效的授权身份标识的方法是工具相关的
+（implementation-specific）。
+
+4. 必须的安全机制
+   	允许任何工具，面对上面的需求，在可以选择的（安全机制）中选择是不策略的
+（strategy），很可能导致互操作性问题是很明显的。在缺少授权（mandates）的情况下，客
+户（程序）将被记述（written）不支持任何服务（程序）支持的安全功能（function），或
+者更坏，仅仅支持类似明文口令的机制其提供明显不够的（inadequate）安全。
+
+   	主动中间攻击（Active intermediary attacks）对攻击者的（攻击）执行是很困难的，
+同时采用工具防止危害也是很困难的。在基于认识到（perceived）主动中间攻击的危险下去
+避免主动中间攻击的危害所付出的代价的情况下，采取方法（Methods）仅仅避免敌对客户
+（hostile client）和被动监听攻击（passive eavesdropping attacks）所带来的危害是有
+效的（useful）。
+
+   	给定已存在的目录，强烈要求看到获得甄别名（Distinguished Name）的形式和能够存
+储在目录中的认证数据的身份（标识）机制；这意味着或者这个数据为了虚假的认证是无用
+的（就像过去Unix使用的"/etc/passwd"文件格式），或者它的内容从来没有通过无保护的线
+路中――也就是说它或者更新（updated）协议的外面（outside）或者仅在会话中更新以很
+好地避免了窥探者的危害。它也希望允许认证方法基于存在的用户身份（标识）形式携带授
+权身份标识，目的为了与non-LDAP-based 认证服务向后兼容（backwards compatibility）。
+
+   	因此，下列工具的一致性需求（conformance requirements）如下：
+
+      (1)   对于只读、公开目录、匿名认证在部分5中描述，能被使用。
+
+      (2)   工具提供基于口令（password-based）的认证访问必须（MUST）支持使用
+DIGEST-MD5 SASL 机制[4]的认证，在部分6.1中描述。这提供了客户避免被动
+监听攻击（passive eavesdropping attacks）的认证，但是没有提供避免主动
+中间攻击。
+
+      (3)   对于需要会话保护和认证的目录，启动TLS扩展操作[5]，和或者简单认证选择
+或者SASL EXTERNAL 机制，被一起使用。工具应该（SHOULD）支持在部分6.2
+中描述的口令认证，和应该（SHOULD）支持在部分7.1中描述的证书认证。同
+时，这些能提供完整性和传输数据的泄露保护，和客户及服务的认证，包括避
+免主动中间攻击。
+
+   	如果TLS是被协商的，客户（程序）必须（MUST）丢弃所有先前TLS协商中获得的关于
+服务（程序）的信息。特别是，supportedSASLMechanisms 的值可以（MAY）在TLS已经协商
+之后不同（特别地，扩展（EXTERNAL）机制或者提出的明文（PLAIN）机制很可能仅在TLS
+协商执行之后被列举出来）。
+
+   	如果SASL安全层（security layer）被协商，客户（程序）必须（MUST）丢弃所有先前
+SASL中获得的关于服务（程序）的信息。特别是，如果客户（程序）被配置为支持多（multiple）
+SASL机制，它应该（SHOULD）在SASL安全层被协商之前和之后获得supportedSASLMechanisms
+并且验证其值在SASL安全层协商之后没有改变。这个探测从supportedSASLMechanisms列表
+中移去支持的SASL机制的主动攻击，并且允许客户确保它使用的由客户和服务都支持的最好
+的机制（另外，这个应该（SHOULD）允许支持SASL机制列表的环境对客户提供通过不同的信
+任源（trusted source），例如，数字签名对象（digitally signed object）的一部分）。 
+
+5. 匿名认证
+   	其修改实体或者存取受保护的属性或实体通常需要客户的认证。没有打算执行任何这些
+操作的客户典型的使用匿名认证。
+
+   	LDAP工具必须（MUST）支持匿名认证，在部分5.1中定义。
+
+   	LDAP工具可以（MAY）支持同TLS的匿名认证，在部分5.2中定义。
+
+   	当可能（MAY）有存取控制限制（access control restrictions）阻碍目录实体的存取
+时，LDAP服务应该（SHOULD）允许匿名绑定（anonymously-bound）的客户检索（retrieve）
+根（root）DSE的supportedSASLMechanisms属性。
+
+   	LDAP服务可以（MAY）使用关于客户通过低层（lower layers）（网络协议）或者扩展的
+授权（grant）或拒绝（deny）存取完全（控制）给匿名认证的客户的其他信息。
+
+5.1. 匿名认证过程
+   	一LDAP客户其还没有成功完成在连接之上的绑定操作是匿名地认证。
+
+   	一LDAP客户也可以（MAY）具体通过使用简单的认证选择的零长度（zero-length）OCTET 
+STRING 绑定需求中指定匿名认证。
+
+5.2. 匿名认证和TLS
+   	LDAP客户（程序）可以（MAY）使用启动TLS操作[5]去协商TLS安全的使用[6]。如果
+客户还没有预先绑定，那么直到客户使用EXTERNAL SASL机制去协商客户证书的识别
+（recognition），客户是匿名地认证。
+
+   	推荐的TLS密码组在部分10中给出。
+
+   	LDAP服务在TLS协商过程中要求客户提供它们的证书，如果客户还没有一个有效证书时，
+可以（MAY）使用本地安全策略去决定是否成功地完成TLS协商。
+
+6. 基于口令的认证
+   	LDAP工具必须（MUST）支持使用文摘MD5（DIGEST-MD5）SASL机制（保护口令）的口令
+认证，在部分6.1中定义。
+
+   	当使用TLS保护连接防止被监听时，LDAP工具应该（SHOULD）支持"simple"口令选择认
+证 ，在部分6.2中定义。
+
+6.1. 文摘认证
+   	LDAP客户可以通过在根DSE之上执行搜索请求、请求supportedSASLMechanisms属性、
+以及检查是否字符串"DIGEST-MD5"作为值存在于这个属性中来判定是否服务支持这个机制。
+
+   	在认证的第一阶段，当客户正在执行在[4]部分2.1中定义的"initial authentication"
+（初始化认证）时，客户发送请求绑定，其版本数字是3、认证选择（authentication choice）
+是sasl、sasl机制名字是"DIGEST-MD5"、以及证明（credentials）不在场。客户然后等待
+服务对这个请求做出的回答。 
+
+   	服务将以resultCode 是saslBindInProgress 、以及serverSaslCreds字段存在的绑定
+回答做出回答。这个字段的内容是在[4]部分2.1.1中定义的字符串。服务应该（SHOULD）包
+括域指示（MUST）和必须指明支持UTF-8。
+
+   	客户将发送有区别报文id（distinct message id）的绑定请求，其版本数字是3、认证
+选择是sasl 、sasl机制名字是"DIGEST-MD5"，以及证明包含在[4]部分2.1.2中
+"digest-response" 定义的字符串。serv-type是"ldap"。
+
+   	服务将回答其resultCode 或者是成功，或者是错误指示（error indication）的回答
+绑定。如果认证是成功的和服务不支持随后的（subsequent）认证，那么证明字段中包含[4]
+部分2.1.3 中"response-auth"定义的字符串。在客户和服务之间支持随后的认证是可选的
+（OPTIONAL）。
+
+6.2. TLS加密下的简单认证选择（"simple" authentication 
+choice）
+   	一个拥有包含用户口令（userPassword）属性的目录实体可以（MAY）通过执行简单口令
+绑定序列验证到目录，其随着TLS密码适配组（ciphersuite）提供的机密连接[6]的协商进
+行。
+
+   	客户将使用启动TLS操作[5]去协商在连接到LDAP服务之上的TLS安全[6]的使用。客户
+不需要事先已绑定到目录。
+
+   	对于这个认证过程的成功进行，客户和服务必须（MUST）协商其包含大量适当强度的加
+密算法的密码适配组。在部分10中描述推荐的密码适配组。
+
+   	随着TLS协商的成功的完成，客户必须（MUST）发送其版本数字是3、名字字段包含用
+户的实体名字，和简单（"simple"）认证选择、包含口令的LDAP绑定的请求。
+
+   	服务将对每一个在用户的实体命名中的用户口令（userPassword）属性的值和客户提出
+的口令按照大小写敏感相等比较。如果比配，那么服务将发送resultCode 为成功的回答，
+否则服务将发送resultCode 为invalidCredentials 的回答。
+
+6.3. 随TLS的其它认证选择
+   	随着TLS的协商，执行其没有涉及明文可再用口令的交换的SASL认证也是可能的。在这
+种情况下，客户和服务不需要协商其提供机密性的密码适配组，如果仅当服务必需是数据完
+整性的。
+
+7. 基于证书的认证（Certificate-based 
+authentication）
+   	LDAP工具应该（SHOULD）支持在TLS中通过客户证书的认证，在部分7.1中定义。 
+
+7.1. 随TLS基于证书的认证
+   	一个拥有公/私密钥对的用户，其公钥已经被证书认证中心（Certification Authority）
+签发，可以使用这个密钥对验证到目录服务，如果用户的证书被服务需求。用户的证书的主
+题字段应该（SHOULD）是用户的目录实体的名字，并且证书认证中心必须被目录服务充分信
+任以便（目录）服务能够处理被签发的证书（译者注：目录服务通过证书认证中心验证证书
+的有效性）。关于服务（验证）有效证书路径的方法不在本文档讨论范围之内。
+
+   	服务可以（MAY）支持其主题字段名不同于用户的目录实体名的证书映射。支持名字映射
+的服务必须（MUST）有能力被配置为支持无映射证书。 
+
+   	在连接LDAP服务之上的客户将使用启动TLS操作[5]去协商TLS安全的使用。在这之前
+客户不需要已经绑定到目录。
+
+   	在TLS协商中，服务必须（MUST）请求证书。客户将提供它的证书给服务，并且必须（MUST）
+执行与提供证书相关的私有密钥的加密。
+
+   	作为（上述身份验证的）展开将需求在传输中敏感数据的保护，客户和服务必须协商其
+包含大量适当强度的加密算法的密码适配组。推荐的密码适配组在部分10中给出。
+
+   	服务必须（MUST）验证客户的证书是有效的。服务将通常检查证书是被已知的CA签发的，
+以及在客户的证书链中没有哪个证书是无效的（invalid）和被撤销（revoked）。服务做这些
+检查存在几个过程。 
+
+   	随着TLS协商的成功完成，客户将发送SASL "EXTERNAL"机制的LDAP绑定请求。
+
+8. 其他机制
+   	LDAP简单（"simple"）认证选择不适合没有网络或者传输层机密性（安全）的Internet
+认证。
+
+   	当LDAP包括本机匿名（native anonymous）和明文认证机制，"ANONYMOUS"和 "PLAIN" 
+SASL机制不能同LDAP使用。如果不同于DN的形式的授权标识被客户需求，在传输中保护口
+令的机制应该（SHOULD）被使用。
+
+   	在本文档中下列基于SASL（SASL-based）的机制没有被考虑：
+ 	KERBEROS_V4, GSSAPI 和 SKEY.
+
+   	扩展（"EXTERNAL"）SASL机制能够通过低层（lower layer）安全证明交换的使用用于
+请求LDAP服务。如果TLS会话在制造（making）SASL扩展绑定（SASL EXTERNAL Bind）请
+求之前还没有在客户和服务之间建立以及没有其他外部认证证明源（例如，IP-level 
+security [8]），或者如果TLS会话建立处理期间，服务没有请求客户的认证证明，那么SASL
+扩展绑定必须（MUST）以inappropriateAuthentication结果码失败。任何客户的认证和LDAP
+关联的授权状态将丢失，所以LDAP关联在失败之后是在匿名状态。
+
+9. 授权标识
+   	授权标识作为在LDAP绑定请求和回答中SASL证明字段的一部分被携带。
+
+   	当扩展（"EXTERNAL"）机制被协商时，如果证明字段存在，它包含的authzId形式的授
+权标识在下面描述。
+
+   	其他机制定义在证明字段中的授权标识的单元（location）。
+
+   	授权标识是一个UTF-8字符集的字符串，相当于下面的ABNF [7]：
+
+; 特有的预先定义授权（Specific predefined authorization）(authz) id模式定义
+; 如下――新的模式在将来可能被定义。 
+
+   authzId    = dnAuthzId / uAuthzId
+
+   ; distinguished-name-based authz id.
+   dnAuthzId  = "dn:" dn
+   dn         = utf8string    ; 句法在RFC 2253中定义
+
+   ; unspecified userid, UTF-8 encoded.
+   uAuthzId   = "u:" userid
+   userid     = utf8string    ; 非特指的句法（syntax unspecified）
+
+   	utf8string被定义为一个或者多个ISO 10646字符的UTF-8编码。
+
+   	所有支持认真证明存储的服务，例如口令或者证书，在目录中必须（MUST）支持dnAuthzId 
+选择。
+
+   	uAuthzId选择允许兼容客户应用程序希望认证本地目录，但是不知道它们自己的甄别名
+（Distinguished Name）或者有一个目录实体。字符串的格式被定义仅作为UTF-8编码的ISO 
+10646字符集的序列，进一步的解释需要在客户和服务之间优先协定的。
+
+   	例如，userid（用户ID）能标识目录服务的明确的用户，或者是一个登录名或者RFC 822
+电子邮件地址的local-part。通常uAuthzId必须不能（MUST NOT）被假定为全局唯一。
+
+   	附加的授权标识方案可以（MAY）定义在本文档的将来版本中。
+
+10. TLS 密码适配组
+   	下面定义在[6]中的密码适配组一定不能（MUST NOT）用于口令或者数据的机密性保护:
+
+         TLS_NULL_WITH_NULL_NULL
+         TLS_RSA_WITH_NULL_MD5
+         TLS_RSA_WITH_NULL_SHA
+
+   	下面定义在[6]中的密码适配组能被轻易破解（在1997年标准CPU上少于一周的CPU（计
+算）时间）。客户和服务应该（SHOULD）在使用这些密码适配组保护的口令或者数据的值之前
+小心考虑：
+
+         TLS_RSA_EXPORT_WITH_RC4_40_MD5
+         TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5
+         TLS_RSA_EXPORT_WITH_DES40_CBC_SHA
+         TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA
+         TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA
+         TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA
+         TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA
+         TLS_DH_anon_EXPORT_WITH_RC4_40_MD5
+         TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA
+
+   	下面的密码适配组易受手动之间攻击（man-in-the-middle attacks）,而且不应该
+（SHOULD NOT）用于保护口令或者敏感数据，除非网络配置上对这样的手动中间攻击的危险
+是可容忍的：
+
+         TLS_DH_anon_EXPORT_WITH_RC4_40_MD5
+         TLS_DH_anon_WITH_RC4_128_MD5
+         TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA
+         TLS_DH_anon_WITH_DES_CBC_SHA
+         TLS_DH_anon_WITH_3DES_EDE_CBC_SHA
+
+   	支持TLS的客户或者服务必须（MUST）至少支持TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA。
+
+11. 对于LDAP的SASL服务名字
+   	对于SASL[2]的使用，协议必须制定各种不同SASL机制使用的服务名字，例如GSSAPI。
+对于LDAP，服务名字是"ldap"，其已经在IANA注册作为GSSAPI服务名字。
+
+12. 安全考虑
+   	安全问题在这份备忘录（memo）中全篇被讨论；结论（令人惊奇的）是强制（mandatory）
+安全是重要的，并且当窥探是一个问题的时候会话加密是需要的。
+
+   	服务（程序）被促进去防止被匿名用户修改。服务（程序）也可以通过超时无效连接希
+望最小化服务否定攻击，并且返回unwillingToPerform 结果代码而不执行被未授权客户（程
+序）请求的昂贵计算操作。
+
+   	在客户（程序）还没有执行启动TLS操作或者为连接完整性和加密服务协商一套SASL
+机制之上的连接是在传输中手动之间攻击（man-in-the-middle attacks）查看和修改信息方
+面的主题。
+
+   	相关于协商TLS扩展（EXTERNAL）机制的安全考虑能在[2]，[5]和[6]中找到。
+
+13. 确认
+   	这篇文档是IETF的LDAPEXT Working Group 的产物。其成员的贡献是非常值得欣赏的。
+
+14. 文献
+
+   [1] Wahl, M., Howes, T. and S. Kille, "Lightweight Directory Access
+       Protocol (v3)", RFC 2251, December 1997.
+
+   [2] Myers, J., "Simple Authentication and Security Layer (SASL)", RFC
+       2222, October 1997.
+
+   [3] Bradner, S., "Key words for use in RFCs to Indicate Requirement
+       Levels", BCP 14, RFC 2119, March 1997.
+
+   [4] Leach, P. and C. Newman, "Using Digest Authentication as a SASL
+       Mechanism", RFC 2831, May 2000.
+
+   [5] Hodges, J., Morgan, R. and M. Wahl, "Lightweight Directory Access
+       Protocol (v3): Extension for Transport Layer Security", RFC 2830,
+       May 2000.
+
+   [6] Dierks, T. and C. Allen, "The TLS Protocol Version 1.0", RFC
+       2246, January 1999.
+
+   [7] Crocker, D., Ed. and P. Overell, "Augmented BNF for Syntax
+       Specifications: ABNF", RFC 2234, November 1997.
+
+   [8] Kent, S. and R. Atkinson, "Security Architecture for the Internet
+       Protocol", RFC 2401, November 1998.
+
+15. 作者的地址
+   Mark Wahl
+   Sun Microsystems, Inc.
+   8911 Capital of Texas Hwy #4140
+   Austin TX 78759
+   USA
+
+   EMail: M.Wahl@innosoft.com
+
+
+   Harald Tveit Alvestrand
+   EDB Maxware
+   Pirsenteret
+   N-7462 Trondheim, Norway
+
+   Phone: +47 73 54 57 97
+   EMail: Harald@Alvestrand.no
+
+
+   Jeff Hodges
+   Oblix, Inc.
+   18922 Forge Drive
+   Cupertino, CA 95014
+   USA
+
+   Phone: +1-408-861-6656
+   EMail: JHodges@oblix.com
+
+
+   RL "Bob" Morgan
+   Computing and Communications
+   University of Washington
+   Seattle, WA 98105
+   USA
+
+   Phone: +1-206-221-3307
+   EMail: rlmorgan@washington.edu
+
+16．完整版权声明
+   	版权（C）因特网协会（2001）。版权所有。
+
+   	这个文档和它的翻译可以拷贝和分配给其他人，以及有关评论或者别样的解释或者其应
+用的帮助等派生工作可以被准备、拷贝、发表和发布，其整体或者部分没有受到任何限制，
+提供上述版权通知以及本段落应被包含在所有这样的拷贝和派生工作中。然而，这个文档本
+身不可以以任何方式修改，例如移走版权通知或者Internet协会或其他Internet组织的参考，
+除非为了发展Internet标准（其版权程序定义在Internet Standards进程如下），或者需要翻译
+成除英语以外的其他语言。
+
+   上述限制允许授权是持久的并且将不被Internet协会或者它的继承人隐藏或者转让。
+
+译者注：对于本文档的完整版权声明原文如下：
+
+16.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+确认
+   	为RFC编辑功能资助现在由因特网协会（Internet Society）提供。
+
+RFC2829――Authentication Methods for LDAP                         针对LDAP的验证方法
+
+
+15
+RFC文档中文翻译计划

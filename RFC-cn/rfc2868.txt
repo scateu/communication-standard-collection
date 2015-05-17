@@ -1,0 +1,657 @@
+
+Network Working Group                                            G. Zorn
+Request for Comments: 2868                           Cisco Systems, Inc.
+Updates: RFC 2865                                              D. Leifer
+Category: Informational                                        A. Rubens
+                                                   Ascend Communications
+                                                              J. Shriver
+                                                       Intel Corporation
+                                                             M. Holdrege
+                                                                 ipVerse
+                                                               I. Goyret
+                                                     Lucent Technologies
+                                                               June 2000
+
+             		支持隧道协议的RADIUS属性
+             (RFC2868-RADIUS Attributes for Tunnel Protocol Support)
+             
+摘要
+	该文档定义了一组Radius属性，用于支持拨号网络中的强制隧道。
+	
+1、目的（Motivation）
+	许多隧道协议的应用，例如L2TP, 都包括拨号网络接入。一部分被定义为非强制隧道，例如通过
+	Internet提供安全接入到企业网：只有用户申请后才被创建。另外一部分是强制隧道：
+	隧道直接被创建，不用用户的任何动作，也不用用户做任何选择。为了提供这种功能，
+	需要定义一些用于从RADIUS服务器传送隧道信息到隧道另一端的新的RADIUS属性。
+	该文档定义了这些属性。有关这些用于L2TP属性的更详细的描述请参考RFC 2809。
+	
+2、要求规范	
+   In this document, the key words "MAY", "MUST, "MUST NOT", "optional",
+   "recommended", "SHOULD", and "SHOULD NOT", are to be interpreted as
+   described in [14].
+
+3、属性
+	下面定义的每个属性有可能在同一个RADIUS报文中被包含多次。在这种情况下，它们各自属性
+	中Tag域的值必需相同。否则，就不要使用Tag域。
+	如果RADIUS服务器返回的属性中描述了多条隧道，则隧道的创建者会把它解释成可选择的。
+	服务器应该在每组隧道属性集合中包含一个Tunnel-Preference属性。	同样，如果客户端
+	在Access-Request报文中包含了多组隧道属性集合，则所有属于同一隧道的属性的Tag域
+	的值应该相同，并且每组属性集合应该包含一个带有合适值的Tunnel-Preference属性。
+	
+3.1.  Tunnel-Type
+
+      描述	
+	该属性描述了将被使用的隧道协议（隧道创建者[tunnel initiator]）或者是已经被使用的
+	隧道协议（隧道终结者[tunnel terminator]）。该属性可以被包含在Access-Request, 
+	Access-Accept 和 Accounting-Request报文中。如果该属性是被包含在隧道创建者发送
+	的Access-Request报文中，则是暗示RADIUS服务器隧道终点（the tunnel end-point)
+	所能支持的隧道协议；但是，RADIUS服务器可以忽视这个。隧道创建者并不要求实现所有的隧
+	道类型。如果隧道创建者收到的一个Access-Accept报文中包含了不知道或者是不支持的隧道
+	类型，则它按照收到一个Access-Reject报文处理。
+	
+	如果一个隧道终结者发送的Access-Request报文中包含了Tunnel-Type属性，则该属性应该
+	是表示当前正在使用的隧道协议。这中情况下，如果RADIUS服务器认为该协议没有被授权，
+	它会返回一个Access-Reject报。如果一个隧道终结者收到包含有一个或者是多个
+	Tunnel-Type属性的Access-Accept报文，但是其中任何一种类型都没有被使用，则隧道
+	终结者必需按照收到一个Access-Reject报文处理。
+      
+      该报文的结构如下：
+	          0                   1                   2                   3
+	    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	   |     Type      |    Length     |     Tag       |     Value
+	   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	               Value (cont)        |
+	   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+	Type
+		64
+	
+	Length
+		6
+	
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性，其取值范围从0x01
+		到0x1f，包括0x01和0x1f。如果没有使用该域，则必需填0。
+	
+	Value
+		该域长度是三个字节，用于指定隧道类型，其取值如下：
+		   1      Point-to-Point Tunneling Protocol (PPTP) [1]
+		   2      Layer Two Forwarding (L2F) [2]
+		   3      Layer Two Tunneling Protocol (L2TP) [3]
+		   4      Ascend Tunnel Management Protocol (ATMP) [4]
+		   5      Virtual Tunneling Protocol (VTP)
+		   6      IP Authentication Header in the Tunnel-mode (AH) [5]
+		   7      IP-in-IP Encapsulation (IP-IP) [6]
+		   8      Minimal IP-in-IP Encapsulation (MIN-IP-IP) [7]
+		   9      IP Encapsulating Security Payload in the Tunnel-mode (ESP) [8]
+		   10     Generic Route Encapsulation (GRE) [9]
+		   11     Bay Dial Virtual Services (DVS)
+		   12     IP-in-IP Tunneling [10]
+		
+		
+3.2.  Tunnel-Medium-Type
+
+	描述
+		隧道协议（例如L2TP）能运行在多种传输媒体（transport medium）上，
+		Tunnel-Medium-Type属性指示创建隧道时用的是哪一种传输媒体。该属性可以
+		包含在Access-Request或者是Access-Accept报文中。如果它出现在
+		Access-Request报文中，则用于提示RADIUS 服务器隧道终点所支持的
+		隧道媒体类型。RADIUS服务器也可以忽略这个提示。
+	
+	该属性的报文结构如下：
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |     Type      |    Length     |      Tag      |    Value      |
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		              Value (cont)         |
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	
+	Type
+		65
+	
+	Length
+		6
+		
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性，其取值范围从0x01
+		到0x1f，包括0x01和0x1f。如果没有使用该域，则必需填0。
+		
+	Value
+		该域长度是3个字节，其取值范围在参考文档[14]中的 "Address Family Number"
+		列表下。下面是关于该列表的一个摘要：
+		   1      IPv4 (IP version 4)
+		   2      IPv6 (IP version 6)
+		   3      NSAP
+		   4      HDLC (8-bit multidrop)
+		   5      BBN 1822
+		   6      802 (includes all 802 media plus Ethernet "canonical format")
+		   7      E.163 (POTS)
+		   8      E.164 (SMDS, Frame Relay, ATM)
+		   9      F.69 (Telex)
+		   10     X.121 (X.25, Frame Relay)
+		   11     IPX
+		   12     Appletalk
+		   13     Decnet IV
+		   14     Banyan Vines
+		   15     E.164 with NSAP format subaddress
+			
+3.3.  Tunnel-Client-Endpoint
+
+	描述
+		该属性包含了创建端的地址。它可以被包含在Access-Request和Access-Accept报文中，
+		用于指示要创建隧道的对端的地址。如果Tunnel-Client-Endpoint属性如果出现在
+		Access-Request报文中，RADIUS服务器可以将它看做一个暗示，但是也可以忽略它。
+		该属性应该被包含在一个带有Acct-Status-Type属性的Accounting-Request的报文中，
+		其中，Acct-Status-Type的取值可以是Start或者是Stop。这种情况下，Tunnel-Client-Endpoint
+		属性要创建隧道的对端地址。Tunnel-Client-Endpoint、Tunnel-Server-Endpoint和
+		Acct-Tunnel-Connection-ID能提供一种唯一的用于标识隧道的方法，可用于记费和查账。
+		
+	该属性的报文结构如下：
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |     Type      |    Length     |       Tag     |    String ...
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	
+		Type:
+			66
+		
+		Length	
+			>=3
+			
+		Tag
+			该域长度是一个字节，用于组织属于同一隧道的一组属性，如果该域的值大于0x00，
+			且小于或者等于0x1F，则被解释成指示该属性所属的隧道。如果该域的值大于0x1F，
+			则被解释成String域的第一个字节。
+			
+		String
+			该域的值的格式决定于Tunnel-Medium-Type属性的取值。
+			
+			如果Tunnel-Medius-Type的值是IPv4 (1),该域可以是隧道客户端机器的完整域名
+			（FQDN），或者是IP地址（点分十进制形式）。实现要求一定要（MUST）实现点分十进制形式，
+			建议（SHOULD）也实现FQDN格式。
+			
+			如果Tunnel-Medius-Type的值是IPv6 (2)，该域可以是FQDN格式，或者是用字符串形式表现
+			的优先的或者是可选的地址〔17〕。实现要求一定要（MUST）支持优先格式的地址，建议（SHOULE）
+			实现可选格式的或者是FQDN格式的地址。、
+			
+			如果Tunnel-Medium-Type既不是IPv4，也不是IPv6，该域指出本地RADIUS客户端的关于接口
+			和媒体特有的地址的配置数据。
+			
+3.4.  Tunnel-Server-Endpoint
+
+	描述
+		该属性描述的是隧道服务器端的地址。该属性可以被包含在Access-Request报文中。如果希望建立一个
+		隧道，则在Access-Request报文中一定要包含该属性。如果一个Accounting-Request报文带有值是
+		Start或者是Stop的Acct-Status-Type的属性，且该报文属于一个隧道会话(tunnel session)，则
+		该报文也应该包含Tunnel-Server-Endpoint属性。Tunnel-Client-Endpoint、Tunnel-Server-Endpoint
+		和Acct-Tunnel-Connection-ID能提供一种唯一的用于标识隧道的方法，可用于记费和查账。
+		
+	该属性的报文结构如下：
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |     Type      |    Length     |     Tag       |   String ...
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   
+	Type
+		67
+					
+	Length
+		>=3
+		
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性，如果该域的值大于0x00，
+		且小于或者等于0x1F，则被解释成指示该属性所属的隧道。如果该域的值大于0x1F，
+		则被解释成String域的第一个字节。
+	
+	String
+		该域的值的格式决定于Tunnel-Medium-Type属性的取值。
+		
+		如果Tunnel-Medius-Type的值是IPv4 (1),该域可以是隧道客户端机器的完整域名
+		（FQDN），或者是IP地址（点分十进制形式）。实现要求一定要（MUST）实现点分十进制形式，
+		建议（SHOULD）也实现FQDN格式。
+		
+		如果Tunnel-Medius-Type的值是IPv6 (2)，该域可以是FQDN格式，或者是用字符串形式表现
+		的优先的或者是可选的地址〔17〕。实现要求一定要（MUST）支持优先格式的地址，建议（SHOULE）
+		实现可选格式的或者是FQDN格式的地址。、
+		
+		如果Tunnel-Medium-Type既不是IPv4，也不是IPv6，该域指出本地RADIUS客户端的关于接口
+		和媒体特有的地址的配置数据。
+		
+3.5.  Tunnel-Password
+
+	描述
+		该属性包含一个用于到远端服务器上去认证的密码。它可以被包含在Access-Accept报文中。
+		
+	该属性的报文结构如下：
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |     Type      |    Length     |     Tag       |   Salt
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		      Salt (cont)  |   String ...
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	Type
+		69
+		
+	Length
+		>=5
+		
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性。其有效值范围从0x01
+		到0x0f,包含0x01和0x0F。如果该域的值是0x00到0x0F之间，包含0x0F，它
+		应该被解释成指示该属性所属的隧道，否则，该域被忽略。
+	
+	Salt
+		Salt域是两个字节长度，用于确保在一个Access-Accept报文中用于给Tunnel-Password
+		加密的密钥的唯一性。该域最重要的一位（最左边的）必需被设置（1）。在一个
+		Access-Accept报文中，每个salt域的内容必需是唯一的。
+		
+	String
+		该明文字符串由三个逻辑子域组成：Data-Length子域、Password子域（这两个是必需的），
+		以及一个可选的Padding子域。Data-Length子域的长度是一个自己，包含Password
+		子域的长度。Password子域包含实际的隧道密码。如果Data-Length域和Password域的
+		总长度不是16的整数倍，就在后面添加Padding子域。该域的长度是可变的，从1到15（字节）。
+		String必需按照如下方式加密，优先传输：
+		
+			通过连接Data-Length和Password子域，给String域构造一个明文，如果需要的
+			话，用填充字符给该明文加长到16的整数倍。推荐用ox00作为填充字符。我们
+			把该明文叫做P。
+			报共享密钥叫做S，随机产生的128－bit的Request-Authenticator(在对应的
+			Access-Request报文中)叫做R，Salt域的内容叫做A。 将P按照16个字节划分
+			成p(1), p(2), ... p(i)(i= p的长度/16)。把密码块叫做c(1)、c(2)...c(i),
+			最终的密码叫做C。还需要中间值b(1)、b(2)... c(i)。按照如下方式加密（'+'
+			表示串联）
+			            b(1) = MD5(S + R + A)    c(1) = p(1) xor b(1)   C = c(1)
+			            b(2) = MD5(S + c(1))     c(2) = p(2) xor b(2)   C = C + c(2)
+			                        .                      .
+			                        .                      .
+			                        .                      .
+			            b(i) = MD5(S + c(i-1))   c(i) = p(i) xor b(i)   C = C + c(i)
+			最终的密码包括c(1)+c(2)+...+c(i)。
+			
+			接收端按照相反的过程处理得到明文。
+			
+3.6.  Tunnel-Private-Group-ID
+
+	描述
+		该属性指示一个特定的隧道会话的group-ID。如果一个隧道创建者能从一个特定
+		的连接中确定组的结果(the group resulting),则该属性可以包含在Access-Request报文中，
+		如果这个将被创建的隧道会话属于一个特定的私有组，则Access-Accept报文中应该包含
+		该属性。	使用组可以用来将一个隧道会话和一组特定用户相关联。例如，它会用于通过一个特定的
+		接口路由一个没有注册的IP地址。如果一个Accounting-Request报文包含Acct-Status-Type
+		属性（该属性的值是Start或者Stop)，且属于一个隧道会话，则该报文应该包含
+		Tunnel-Private-Group-ID属性。
+		
+	该报文的结果如下：
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |      Type     |    Length     |     Tag       |   String ...
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   
+	Type
+		81
+		
+	Length
+		3
+	
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性，如果该域的值大于0x00，
+		且小于或者等于0x1F，则被解释成指示该属性所属的隧道。如果该域的值大于0x1F，
+		则被解释成String域的第一个字节。
+	
+	String
+		该域是必需的，代表特定的组。关于它的格式没有特定的限制。
+		
+3.7.  Tunnel-Assignment-ID
+
+	描述				
+		该属性用来将一个将被分配会话的特定隧道告诉隧道创建者。一些隧道协议，象L2TP、
+		PPTP，允许会话通过相同的隧道在两个相同的隧道终端之间被复用。该属性给RADIUS
+		提供了一种可以用于通知隧道创建者（e.g. PAC、LAC）将会话分配给可复用隧道还是
+		专用隧道（a separate tunnel）的方法。而且，也允许将共享复用隧道的会话分配
+		给不同的复用隧道。	一个特定的实现可以将不同的特性分配给特定的隧道。例如，不同
+		的隧道被赋予不同的	QOS参数。这样的隧道可以用来承载单个或者是多个会话。
+		Tunnel-Assignment-ID属性还允许RADIUS服务器指示一个特定的会话被分配给一个
+		提供合适等级服务的隧道。希望将来定义的用于隧道的且与QOS相关的RADIUS属性都能
+		通过该属性给出的ID相关联。同时，任何有关特定ID串的含义留给隧道创建者的本地
+		配置处理。
+		
+		该属性可以被包含在Access-Accept报文中。隧道创建者收到该属性后，可以忽视它，
+		将会话安排到两者之间的任意一个复用或者是专用隧道。如果一个Accounting-Request
+		报文包含Acct-Status-Type	属性（该属性的值是Start或者Stop)，且属于一个隧道会
+		话，则该报文应该包含该属性。
+		
+		如果一个隧道创建者支持Tunnel-Assignment-ID属性，那他需要按照如下的方式将
+		一个会话分配给隧道：
+		
+			如果在与一个ID指定的终端之间，该属性和隧道都已经存在，那么这个会话被
+			分配给该隧道。
+			如果在与一个ID指定的终端之间，该属性已经存在，但是没有隧道，那么将会为
+			该会话建立一个隧道，并且一个ID被分配给该隧道。
+			如果该属性不存在，这该会话被分配到一个未命名的隧道。如果该隧道还没有建立，
+			那么建立该隧道，并且用于该会话以及后面没有Tunnel-Assignment-ID属性的
+			会话。一个隧道创建者不能将一个没有Tunnel-Assignment-ID属性的会话分配
+			给一个命名隧道（例如一个由具有该属性的会话创建的隧道）。
+			注意不同的终端之间的隧道可能具有相同的ID。
+			
+	该报文的结构如下：
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |      Type     |    Length     |      Tag      |   String ...
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	Type
+		82
+	
+	Length
+		>=3
+	
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性，如果该域的值大于0x00，
+		且小于或者等于0x1F，则被解释成指示该属性所属的隧道。如果该域的值大于0x1F，
+		则被解释成String域的第一个字节。
+	String
+		该域是必需的，代表隧道ID。对于该ID的格式没有任何限制。
+			
+3.8.  Tunnel-Preference
+
+	描述
+		如果RADIUS服务器返回多组隧道属性，则应当在每组属性中包含该属性，用于指示
+		分配给每个隧道的相对参数（relative preference）。例如，假设服务器返回
+		两条隧道的属性，其中一条隧道是PPTP类型的，另一种是L2TP类型的。如果隧道
+		创建者只支持其中的一种，那么它就只创建该种类型的隧道。如果这两种类型的隧道
+		它都支持，那么它根据Tunnel-Preference属性来决定创建哪种类型的隧道。
+		如果该属性的取值越低，那么其被创建的优先级越高。如果在某个Access-Accept
+		报文中几个Tunnel-Preference的取值相等，那么隧道的创建者要根据本地的配置
+		来决定该使用哪组属性来创建隧道。该属性也可以被包含在Access-Request报文中，
+		用于给服务器一个提示，但是服务器可以忽略这个提示。
+		
+	该属性的报文结构如下：
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |     Type      |    Length     |     Tag       |     Value
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		              Value (cont)         |
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	
+	Type
+		83
+	
+	Length
+		6
+		
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性，其取值范围从0x01
+		到0x1f，包括0x01和0x1f。如果没有使用该域，则必需填0。
+		
+	Value	
+		该属性长度是三个字节，用于指示该属性所属的隧道的优先级，优先级越高，
+		则该属性的取值越低。0x000000具有最高优先级，0xFFFFFF具有最低优先级。
+		
+3.9.  Tunnel-Client-Auth-ID		
+
+	描述
+		建立隧道时，在认证阶段，该属性代表隧道创建者的名字。Tunnel-Client-Auth-ID
+		可以作为给服务其一个提示而被包含在Access-Request报文中，如果希望得到
+		一个不同于缺省的认证名，则该属性必需被包含在Access-Accept报文中。如果
+		一个Accounting-Request报文包含Acct-Status-Type属性（该属性的值是
+		Start或者Stop)，且属于一个隧道会话，则该报文应该包含该属性。
+	
+	该属性的报文结构如下：
+	
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |      Type     |    Length     |      Tag      |   String ...
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+	Type
+		90
+		
+	Length
+		>=3
+		
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性，如果该域的值大于0x00，
+		且小于或者等于0x1F，则被解释成指示该属性所属的隧道。如果该域的值大于0x1F，
+		则被解释成String域的第一个字节。
+	
+	String
+		该域是必需的。它包含了隧道创建者用于认证的认证名。建议该认证名的格式用UTF-8。		
+		
+3.10.  Tunnel-Server-Auth-ID
+
+	描述		
+		建立隧道时，在认证阶段，该属性代表隧道终结者的名字。Tunnel-Client-Auth-ID
+		可以作为给服务其一个提示而被包含在Access-Request报文中，如果希望得到
+		一个不同于缺省的认证名，则该属性必需被包含在Access-Accept报文中。如果
+		一个Accounting-Request报文包含Acct-Status-Type属性（该属性的值是
+		Start或者Stop)，且属于一个隧道会话，则该报文应该包含该属性。
+		
+	该报文的结构如下：
+		    0                   1                   2                   3
+		    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |      Type     |    Length     |      Tag      |   String ...
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   
+	Type
+		91
+	
+	Length
+		>=3
+		
+	Tag
+		该域长度是一个字节，用于组织属于同一隧道的一组属性，如果该域的值大于0x00，
+		且小于或者等于0x1F，则被解释成指示该属性所属的隧道。如果该域的值大于0x1F，
+		则被解释成String域的第一个字节。
+
+	String
+		该域是必需的。它包含了隧道终结者用于认证的认证名。建议该认证名的格式用UTF-8。
+		
+4.  属性列表
+	下面的列表表示了上面的属性能被包含在那些属性中，以及在该报文中能出现的次数。
+		Request Accept Reject Challenge Acct-Request #  Attribute
+		0+      0+     0      0         0-1          64 Tunnel-Type
+		0+      0+     0      0         0-1          65 Tunnel-Medium-Type
+		0+      0+     0      0         0-1          66 Tunnel-Client-Endpoint
+		0+      0+     0      0         0-1          67 Tunnel-Server-Endpoint
+		0       0+     0      0         0            69 Tunnel-Password
+		0+      0+     0      0         0-1          81 Tunnel-Private-Group-ID
+		0       0+     0      0         0-1          82 Tunnel-Assignment-ID
+		0+      0+     0      0         0            83 Tunnel-Preference
+		0+      0+     0      0         0-1          90 Tunnel-Client-Auth-ID
+		0+      0+     0      0         0-1          91 Tunnel-Server-Auth-ID
+		
+5.  安全因素
+	Tunnel-Password属性有可能包含一些只有隧道端点才能知道的信息，但是现在用于隐藏该属性的值
+	的方法会使得中间的RADIUS代理也知道其中的内容。由于这个原因，Tunne-Password属性不应该
+	被包含在Access-Accept报文中，因为该报文有可能通过一个不可信任的RADIUS代理。另外，
+	Tunnel-Password属性不应该被返回到一个没有认证的终端；如果对应的Access-Request报文没有
+	包含一个能被证实的签名属性[15],则Access-Accept报文中就不应该包含Tunnel-Password属性。
+
+	隧道协议提供从没有安全保护（如PPTP）到最强的安全保护（如IPSec）等不同的安全等级。但是，
+	需要注意的是，在强制隧道中，任何安全措施只应用于隧道端点之间的传输。特别是终端用户不应该依
+	赖隧道的安全性来保护它们自己的数据。隧道传输的加密保护不能替代点到点之间的安全。
+	
+6.  IANA考虑事项
+	该文档定义了一系列有IANA维护的魔术数（magic number）。这一节解释了IANA分配这些数字的标准。
+	下面的每个子节解释了关于在本文档其它地方定义的名字空间的分配原则。
+
+6.1.  Tunnel-Type 属性值
+	Tunnel-Type属性的的取值1-12已经在5.1节定义。剩下的值有IANA根据IETF的意见分配[16]。
+
+6.2.  Tunnel-Medium-Type属性值
+	Tunnel-Medium-Type属性的取值1-15已经在5.2定义。剩下的值有IANA根据IETF的意见分配[16]。
+	
+7.  参考
+
+   [1]  Hamzeh, K., Pall, G., Verthein, W., Taarud, J., Little, W. and
+        G. Zorn, "Point-to-Point Tunneling Protocol (PPTP)", RFC 2637,
+        July 1999.
+        
+   [2]  Valencia, A., Littlewood, M. and T. Kolar, T., "Cisco Layer Two
+        Forwarding (Protocol) 'L2F'", RFC 2341, May 1998.
+
+   [3]  Townsley, W., Valencia, A., Rubens, A., Pall, G., Zorn, G. and
+        B. Palter, "Layer Two Tunnelling Protocol (L2TP)", RFC 2661,
+        August 1999.
+
+   [4]  Hamzeh, K., "Ascend Tunnel Management Protocol - ATMP", RFC
+        2107, February 1997.
+
+   [5]  Kent, S. and R. Atkinson, "Security Architecture for the
+        Internet Protocol", RFC 2401, November 1998.
+
+   [6]  Perkins, C., "IP Encapsulation within IP", RFC 2003, October
+        1996.
+
+   [7]  Perkins, C., "Minimal Encapsulation within IP", RFC 2004,
+        October 1996.
+
+   [8]  Atkinson, R., "IP Encapsulating Security Payload (ESP)", RFC
+        1827, August 1995.
+
+   [9]  Hanks, S., Li, T., Farinacci, D. and P. Traina, "Generic Routing
+        Encapsulation (GRE)", RFC 1701, October 1994.
+
+   [10] Simpson, W., "IP in IP Tunneling", RFC 1853, October 1995.
+
+   [11] Zorn, G. and D. Mitton, "RADIUS Accounting Modifications for
+        Tunnel Protocol Support", RFC 2867, June 2000.
+
+   [12] Rigney, C., Willens, S., Rubens, A. and W. Simpson, "Remote
+        Authentication Dial in User Service (RADIUS)", RFC 2865, June
+        2000.
+
+   [13] Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+
+   [14] Reynolds, J. and J. Postel, "Assigned Numbers", STD 2, RFC 1700,
+        October 1994.
+
+   [15] Rigney, C., Willats, W. and P. Calhoun, "RADIUS Extensions", RFC
+        2869, June 2000.
+
+   [16] Narten, T. and H. Alvestrand, "Guidelines for writing an IANA
+        Considerations Section in RFCs", BCP 26, RFC 2434, October 1998.
+
+   [17] Hinden, R. and S. Deering, "IP Version 6 Addressing
+        Architecture", RFC 2373, July 1998.
+
+8.  Acknowledgements
+
+   Thanks to Dave Mitton for pointing out a nasty circular dependency in
+   the original Tunnel-Password attribute definition and (in no
+   particular order) to Kory Hamzeh, Bertrand Buclin, Andy Valencia,
+   Bill Westfield, Kris Michielsen, Gurdeep Singh Pall, Ran Atkinson,
+   Aydin Edguer, and Bernard Aboba for useful input and review.
+
+9.  Chair's Address
+
+   The RADIUS Working Group can be contacted via the current chair:
+
+   Carl Rigney
+   Livingston Enterprises
+   4464 Willow Road
+   Pleasanton, California  94588
+
+   Phone: +1 510 426 0770
+   EMail: cdr@livingston.com
+
+10.  Authors' Addresses
+
+   Questions about this memo can also be directed to:
+
+   Glen Zorn
+   Cisco Systems, Inc.
+   500 108th Avenue N.E., Suite 500
+   Bellevue, Washington 98004
+   USA
+
+   Phone: +1 425 438 8218
+   FAX:   +1 425 438 1848
+   EMail: gwz@cisco.com
+
+
+   Dory Leifer
+   Ascend Communications
+   1678 Broadway
+   Ann Arbor, MI 48105
+
+   Phone:  +1 734 747 6152
+   EMail: leifer@del.com
+
+   John Shriver
+   Intel Corporation
+   28 Crosby Drive
+   Bedford, MA  01730
+
+   Phone:  +1 781 687 1329
+   EMail: John.Shriver@intel.com
+
+
+   Allan Rubens
+   Ascend Communications
+   1678 Broadway
+   Ann Arbor, MI 48105
+
+   Phone:  +1 313 761 6025
+   EMail: acr@del.com
+
+
+   Matt Holdrege
+   ipVerse
+   223 Ximeno Ave.
+   Long Beach, CA 90803
+
+   EMail: matt@ipverse.com
+
+
+   Ignacio Goyret
+   Lucent Technologies
+   One Ascend Plaza
+   1701 Harbor Bay Parkway
+   Alameda, CA 94502
+
+   Phone:  +1 510 769 6001
+   EMail: igoyret@lucent.com
+
+11.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.

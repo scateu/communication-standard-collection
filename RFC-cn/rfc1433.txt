@@ -1,0 +1,331 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：董士婵（董士婵 dsc_0522@sina.com）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                        J. Garrett
+Request for Comments: 1433                       AT&T Bell Laboratories
+                                                               J. Hagan
+                                             University of Pennsylvania
+                                                                J. Wong
+                                                 AT&T Bell Laboratories
+                                                             March 1993
+直接ARP
+（Directed ARP）
+本备忘录状态
+这个备忘录为internet通信定义了一个实验的协议。为需求的增长提出讨论、建议。标准的说明和协议的状态请参照“IAB Official Protocol Standards”当前的版本。这个备忘录的表述是不受限制的。
+摘要
+路由器的一个接口通过同一个链路层接口到达两个IP网络时可以观察到那两个IP网络共享了那个链路层网络， 并且能通告信息到主机（via ICMP Redirects）和路由器（via dynamic routing protocols）。然而一个主机或路由器如果在“foreign”IP 网络到他们的响应链路地址不能够解析IP地址则不能用来与其他主机和路由器在仅仅一个IP网络上直接通信。直接ARP是一个动态地址解析过程可以使主机和路由器在外部IP网络到他们的链路地址上解决可能的通告到next-hop IP地址。
+鸣谢  
+作者感激Network Ssystems Corporation的Joel Halpern和David O'Leary，他给作者提供了宝贵的评论和见解，而且给予了精神上的支持并通过草稿给予了物质上的支援。IPLPDN工作组的成员通过IPLPDN邮件列表和介绍也提供了有价值的观点。Rutgers University 的Chuck Hedrick，Bell Communications Research的PaulTsuchiya，AT&T Bell Laboratories的Doris Tillman提供了早期的洞察作为早期的草稿。
+1 术语  
+链路层网络是时常参照子网（e.g.OSIparlance）以上的那层例如IP以下的那层。术语“链路层”被用来区别与“IP子网”可能引起的混乱，并传输IP数据报识别网络组地址。
+从主机路由器的远景， 如果主机或路由器没有IP网络地址，IP网络是外部的。
+2 介绍
+多个IP网络可以在同一个链路层被管理（例如：在大的公共数据网络）。在两个IP网络上的单独接口的路由器用现行的路由更新过程去通告那两个IP网络共享那个链路层网络。Cost/performance的益处是可以实现如果主机和路由器不在同一个IP网络上也可以通告信息，直接交换数据，不如通过双重路由地址。但是如果不首先解决IP地址到数据链路层地址的映射，主机或路由器不能直接通讯。
+控制ARP烘泛的蔓延。路由器执行的直接ARP过程能限制同一ARP请求的数量（例如：同一源IP地址和同一目的IP地址）则他将每隔一小段时间转发（例如：每秒不超过一个ARP请求）。在[5]中一贯建议的阻止ARP洪泛的过程。  
+为每一个IP网络独立的建立IP地址解决过程。例如：在SMDS网络，解决地址可以用ARP实现，独立的SMDS ARP请求地址与每个IP网络映射。如果主机或路由器没有配置ARP请求地址，无法知道每个IP网络的ARP请求地址，不能给正确的ARP请求地址发送ARP请求。以太网的主机或路由器通过发送ARP请求到广播地址解析IP地址去猜测链路层地址。但是如果IP网络用不同的解析过程（例如：实施地址解析表），ARP回应不回应。 
+直接ARP是能使路由器在共享的链路层网络能通告一个IP地址也能帮助解决IP地址到链路层地址的映射的过程
+在解除地址解析的限制，直接ARP能通告和应用动态的路由协议如BGP、OSPF的路由信息中的外部网络的下一跳地址。另外，直接ARP能使路由器通告（通过ICMP   ）外部主机的下一跳地址，主机能用直接ARP去解决外部的下一跳地址。
+3 直接ARP
+直接ARP用正常的ARP包格式，并用ARP过程的协助，在[1]，[2]中定义，路由器和主机运行这些过程。
+3.1 ARP求助地址
+ARP求助地址主机路由器维护路由信息，定位路由表。每个路由表登记一个或多个到目的IP地址的下一跳IP地址和物理接口用来传输包到下一跳IP地址。如果目的地址是本地的（例如；没有路由器的协助可以到达），下一跳IP地址是NULL（或本地设备，如IP地址映射到物理接口）。否则，下一跳IP地址是下一个路由器的地址。主机或路由器贯彻直接ARP过程映射ARP求助地址到路由表的每个记录。如果主机或路由器已经配置了到链路层地址的下一跳IP地址的解析（或如果下一跳IP地址为空，解析目的IP地址），则ARP求助地址的映射为空。否则，ARP求助地址是提供路由信息、指导下一跳地址的路由器的IP地址，是同一链路层网络作为映射的物理接口第四张提供动态路由过程决定ARP求助地址的详细范例
+3.2地址解析过程
+传输一个IP包，主机路由器搜索路由表的记录，最优路径依靠目的IP地址和其他的因素（例如：服务类型）。选择路由表记录包括：下一跳路由器的IP地址（可能为空），转发IP包的物理接口，ARP求助地址（可能为空）和其他信息。路由功能通过下一跳IP地址、物理接口、ARP协助地址完成地址解析功能。地址解析功能必须能解析下一跳IP地址（或目的IP地址，如果下一跳IP地址为空）到链路层地址的映射。IP包被转发的链路层地址，及应该被转发的链路层帧地址映射的链路层地址封装IP包，并且转发帧通过正确的物理接口。此功能的详细描述通过以下C语言源代码。
+此过程被两个函数组织。Route（）和Resolve（）各是路由和地址解决。另外，以下各层函数被应用：
+Get_Route(IP_Add,Other) returns a pointer to the routing table
+      entry with the destination field that best matches IP_Add.  If no
+      matching entry is found, NULL is returned.  Other information such
+      as Type of Service may be considered in selecting the best route.
+     Forward(Packet,Link_Level_Add,Phys_Int) fragments Packet (if
+      needed), and encapsulates Packet in one or more Link Level Frames
+      addressed to Link_Level_Add, and forwards the frame(s) through
+      interface, Phys_Int.
+
+     Look_Up_Add_Res_Table(IP_Add,Phys_Int) returns a pointer to the
+      link level address associated with IP_Add in the address
+      resolution table associated with interface, Phys_Int.  If IP_Add
+      is not found in the address resolution table, NULL is returned.
+
+     Local_Add_Res(IP_Add,Phys_Int) returns a pointer to the Link Level
+      address associated with IP_Add, using address resolution
+      procedures associated with address, IP_Add, and interface,
+      Phys_Int.  If address resolution is unsuccessful, NULL is
+      returned.  Note that different address resolution procedures may
+      be used for different IP networks.
+
+     Receive_ARP_Response(IP_Add,Phys_Int) returns a pointer to an ARP
+      Response received through interface, Phys_Int, that resolves
+      IP_Add.  If no ARP response is received, NULL is returned.
+
+     Dest_IP_Add(IP_Packet) returns the IP destination address from
+      IP_Packet.
+
+     Next_Hop(Entry) returns the IP address in the next-hop field of
+      (routing table) Entry.
+
+     Interface(Entry) returns the physical interface field of (routing
+      table) Entry.
+
+     ARP_Helper_Add(Entry) returns the IP address in the ARP Helper
+      Address field of (routing table) Entry.
+
+     ARP_Request(IP_Add) returns an ARP Request packet with IP_Add as
+      the Target IP address.
+
+     Source_Link_Level(ARP_Response) returns the link level address of
+      the sender of ARP_Response.
+
+   ROUTE(IP_Packet)
+   {
+   Entry = Get_Route(Dest_IP_Add(IP_Packet),Other(IP_Packet));
+   If (Entry == NULL)  /* No matching entry in routing table */
+     Return;  /*  Discard IP_Packet */
+   else
+     {  /* Resolve next-hop IP address to link level address */
+     If (Next_Hop(Entry) != NULL) /* Route packet via next-hop router */
+       Next_IP = Next_Hop(Entry);
+     else  /* Destination is local */
+       Next_IP = Dest_IP_Add(IP_Packet);
+     L_L_Add = Resolve(Next_IP,Interface(Entry),ARP_Helper_Add(Entry));
+     If (L_L_Add != NULL)
+       Forward(IP_Packet,L_L_Add,Interface(Entry));
+     else  /* Couldn't resolve next-hop IP address */
+       Return;  /* Discard IP_Packet */
+     Return;
+     }
+   }
+
+  路由功能的C语言源代码.
+
+   Resolve(IP_Add,Interface,ARP_Help_Add)
+   {
+   If ((L_L_Add = Look_Up_Add_Res_Table(IP_Add,Interface)) != NULL)
+     {   /* Found it in Address Resolution Table */
+     Return L_L_Add;
+     }
+   else
+     {
+     If (ARP_Help_Add == NULL)
+       {  /* Do local Address Resolution Procedure */
+       Return Local_Add_Res(IP_Add,Interface);
+       }
+     else  /* ARP_Help_Add != NULL */
+       {
+       L_L_ARP_Help_Add = Look_Up_Add_Res_Table(ARP_Help_Add,Interface);
+       If (L_L_ARP_Help_Add == NULL)
+                              /* Not in Address Resolution Table */
+         L_L_ARP_Help_Add = Local_Add_Res(ARP_Help_Add,Interface);
+       If (L_L_ARP_Help_Add == NULL)  /* Can't Resolve ARP Helper Add */
+         Return NULL;  /*  Address Resolution Failed */
+       else
+         {  /* ARP for IP_Add */
+         Forward(ARP_Request(IP_Add),L_L_ARP_Help_Add,Interface);
+         ARP_Resp = Receive_ARP_Response(IP_Add,Interface);
+         If (ARP_Resp == NULL) /* No ARP Response (after persistence) */
+           Return NULL;  /* Address Resolution Failed */
+         else
+           Return Source_Link_Level(ARP_Resp);
+           }
+         }
+       }
+     }
+   }
+地址解析功能的C语言源代码。
+3.3转发ARP请求
+主机执行直接ARP过程用标准过程去处理收到的ARP回应。就是说，如果目标IP地址是主机的地址，主机用标准过程响应ARP请求；如果目标IP地址不是主机地址，主机立刻抛弃ARP请求。
+如果被路由器收到目标ARP请求的IP地址是路由器的地址，路由器用标准过程响应ARP请求。但是如果目标IP地址不是路由器的地址，路由器可以转发回ARP请求通过接收的那个接口，到路由表中与链路层地址相符的ARP求助地址。以下C语言源代码描述的过程用来处理ARP请求。函数Receive()描述跟随主机路由器的过程，函数Direct()描述跟随路由器的其他过程。另外，以下函数也被用到：
+Is_Local_IP_Add(IP_Add,Phys_Int) returns TRUE if Phys_Int has been
+      assigned IP address, IP_Add.  Otherwise, returns FALSE.
+
+     Do_ARP_Processing(ARP_Request,Interface) processes ARP_Request
+      using ARP procedures described in [2].
+
+     I_Am_Router returns TRUE if device is a router and False if device
+      is a host.
+
+     Target_IP(ARP_Request) returns the Target IP address from
+      ARP_Request.
+
+     Filter(ARP_Request,Phys_Int) returns TRUE if ARP_Request passes
+      filtering constraints, and FALSE if filtering constraints are not
+      passed.  See section 3.4.
+
+     Forward(Packet,Link_Level_Add,Phys_Int) fragments Packet (if
+      needed), and encapsulates Packet in one or more Link Level Frames
+      addressed to Link_Level_Add, and forwards the frame(s) through
+      interface, Phys_Int.
+
+     Look_Up_Next_Hop_Route_Table(IP_Add) returns a pointer to the
+      routing table entry with the next-hop field that matches IP_Add.
+      If no matching entry is found, NULL is returned.
+
+     Look_Up_Dest_Route_Table(IP_Add) returns a pointer to the routing
+      table entry with the destination field that best matches IP_Add.
+      If no matching entry is found, NULL is returned.
+
+     Link_Level_ARP_Req_Add(IP_Add,Phys_Int) returns the link level
+      address to which an ARP Request to resolve IP_Add should be
+      forwarded.  If ARP is not used to perform local address resolution
+      of IP_Add, NULL is returned.
+
+     Local_Add_Res(IP_Add,Phys_Int) returns a pointer to the Link Level
+      address associated with IP_Add, using address resolution
+      procedures associated with address, IP_Add, and interface,
+      Phys_Int.  If address resolution is unsuccessful, NULL is
+
+      returned.  Note that different address resolution procedures may
+      be used for different IP networks.
+
+     Next_Hop(Entry) returns the IP address in the next-hop field of
+      (routing table) Entry.
+
+     Interface(Entry) returns the physical interface field of (routing
+      table) Entry.
+
+     ARP_Helper_Add(Entry) returns the IP address in the ARP Helper
+      Address field of (routing table) Entry.
+
+     Source_Link_Level(ARP_Request) returns the link level address of
+      the sender of ARP_Request.
+
+   Receive(ARP_Request,Interface)
+   {
+   If (Is_Local_IP_Add(Target_IP(ARP_Request),Interface))
+     Do_ARP_Processing(ARP_Request,Interface);
+   else  /*  Not my IP Address  */
+     If (I_Am_Router)  /*  Hosts don't Direct ARP Requests  */
+       If (Filter(ARP_Request,Interface))  /*  Passes Filter Test  */
+                                           /*  See Section 3.4  */
+         Direct(ARP_Request,Interface);  /*  Directed ARP Procedures  */
+   Return;
+   }
+
+   Figure 3:  C Pseudo-Code for Receiving ARP Requests.
+
+   Direct(ARP_Request,Phys_Int)
+   {
+   Entry = Look_Up_Next_Hop_Route_Table(Target_IP(ARP_Request));
+   If (Entry == NULL)  /* Target_IP Address is not a next-hop */
+     {                 /*  in Routing Table */
+     Entry = Look_Up_Dest_Route_Table(Target_IP(ARP_Request));
+       If (Entry == NULL)  /* Not a destination either */
+         Return;  /* Discard ARP Request */
+       else
+         If (Next_Hop(Entry) != NULL) /* Not a next-hop and Not local */
+           Return;  /* Discard ARP Request */
+     }
+   If (Interface(Entry) != Phys_Int)
+                            /* Must be same physical interface */
+     Return;  /* Discard ARP Request */
+   If (ARP_Helper_Add(Entry) != NULL)
+     {
+     L_L_ARP_Helper_Add = Resolve(ARP_Helper_Add(Entry),Phys_Int,NULL);
+     If (L_L_ARP_Helper_Add != NULL)
+       Forward(ARP_Request,L_L_ARP_Helper_Add,Phys_Int);
+         /*  Forward ARP_Request to ARP Helper Address  */
+     Return;
+     }
+   else  /*  Do local address resolution.  */
+     {
+     L_L_ARP_Req_Add =
+                Link_Level_ARP_Req_Add(Target_IP(ARP_Request),Phys_Int);
+     If (L_L_ARP_Req_Add != NULL)
+       {  /*  Local address resolution procedure is ARP. */
+          /*  Forward ARP_Request. */
+       Forward(ARP_Request,L_L_ARP_Req_Add,Phys_Int);
+       Return;
+       }
+     else
+       {  /*  Local address resolution procedure is not ARP.  */
+          /*  Do "published ARP" on behalf of Target IP Address  */
+       Target_Link_Level =
+                      Local_Add_Res(Target_IP(ARP_Request),Phys_Int);
+       If (Target_Link_Level != NULL)  /*  Resolved Address  */
+         {
+         Forward(ARP_Response,Source_Link_Level(ARP_Request),Phys_Int);
+         }
+       Return;
+       }
+     }
+   }
+直接ARP回应的C语言源代码。
+3.4 过滤过程
+路由器执行的直接ARP过程必须能过滤ARP请求包的蔓延 强制ARP洪泛的范围不侵扰主机或路由器，并终止在路由协议不稳定或错误的人为配置引起的可能发生潜在的ARP环。具体过滤ARP请求包的过程超出了本文档的范围。下述过程建议应当被充分的执行。其他过程更好的被其他指定的过程执行。
+ARP请求包的转发introduces可能的ARP环。这个过程用来控制潜在的ARP洪泛的范围并终止一些ARP环，但是需要那些必须横越环时间比用来控制ARP洪泛的要长的过程。路由器能拒绝转发每T分钟同一ARP请求超过N，N和T是管理的数量。如果T和N被选择，则T/N分钟是大于需要横越环的最大时间，如一个过滤可以终止环。主机一些情况下可以发送不止一个有相同源IP地址、目的IP地址对的ARP请求（例如：N应该大于1）。例如：第一个ARP请求应该丢弃。然而，一旦ARP响应被公认，主机通常保留映射信息，因此在连续的一段时间内不发生相同的ARP请求。所以，T应该大到可以保证T/N大于横越环的时间。在实行链路层帧的目的地址用来给路由器传输ARP请求时，可以利用路由器的直接ARP过滤过程。如果路由器不转发ARP请求到同一个收到ARP请求的链路层地址，一类重要的ARP环从开始将被阻止。当然，其他过程也是需要的例如上一段的描述将阻止所有的环，纵使过滤被执行从开始就阻止环。主机要求[5]指定“在IP层和链路收到包的接口必须寻址到链路层广播地址”。如果路由器不转发寻址到链路层广播地址的ARP请求，则一类简单的重要的ARP烘泛能被限制。
+4.路由直接ARP的用途
+路由信息的交换和用途被通用地址解析过程所强制。如果主机或路由器不能解析下一跳IP地址到链路层地址的映射，则不能通过动态路由信息获取下一跳IP地址。没有一致的动态地址解析过程，路由器不能通告收到的不在同一IP网络的主机、路由器通告的下一跳地址。直接ARP是能使路由器通告使路又有效的路由信息、提供辅助解析下一跳IP地址映射的过程。
+以下小节描述扩大的直接ARP应用范围：ICMP的重定向，距离向量路由协议（如：BGP[3]），链路状态路由协议（如：OSPF[4]）。
+4.1 ICMP的重定向
+如果路由器在同一链路层网络转发主机创建的原始包到下一跳地址，路由器可以发送ICMP重定向给主机。但是如果主机没有下一跳地址到他映射的链路层地址的解析，不能用下一跳地址通过ICMP重定向通告。
+主机执行直接ARP过程包括每条路由记录的ARP求助地址。如果映射的下一跳地址是一条空的下一跳和空的ARP求助地址（例如：主机已经知道如何解析下一跳地址）的路由记录，则通过ICMP重定向映射的记录的ARP协助地址是空的。否则，ARP的求助地址是发送直接ICMP重定向路由器的IP地址。因此在主机的地址解析表中应该有一条关于新的ARP求助地址的记录。如果主机在ICMP重定向中不能解析下一跳IP地址通告（例如：因为ARP协助地址是外部IP网络；通过老的ICMP重定向得知的，ARP求助地址的地址解析记录超时），主机必须flush路由表记录的解析。直接ARP过程不能用直接ARP解析ARP求助地址。
+运行直接ARP过程的路由器可以给没有运行直接ARP的主机通告下一跳。下述已有的过程主机将立刻丢弃ICMP重定向。不执行直接ARP的路由器在外部IP网络上不能通告，作为现行过程的说明。如果照作，ICMP重定向将被运行直接ARP过程的主机收到，主机将给外部IP地址发送一个ARP请求给通告将立刻抛弃ARP请求的路由器。当地址解决失败，主机将更新路由表记录的映射。
+基于不同的理由主机可以忽略ICMP重定向并继续转发包到发送ICMP重定向的同一个路由器。例如，在外部网络上主机不执行直接ARP过程并立刻丢弃到下一跳地址的ICMP重定向通告。路由器强制执行去控制发送到主机的ICMP重定向的数量。例如，路由器可以限制重复的每T分钟不超过N条ICMP重定向的数量，T、N是建议的变量。
+4.2距离矢量路由协议
+距离矢量路由协议是路由器通告目的地址的过程（例如；IP网络），下一跳地址的映射，及其他信息（例如：距离的映射）。如果路由器没有通告的下一跳地址到链路层地址映射的解析的过程，则不能通告路由。直接ARP是路由器能用来解析通告下一条地址的过程，纵使当路由器在同一IP网络通告下一跳没有地址。
+下述过程假设如果知道更新发送者的IP地址并能解析发送者的IP地址到它的映射的链路层地址，当发送者有相同的链路层网络，则路由器仅仅能接受路由更新，。
+路由器执行包括每个路由器记录的ARP求助地址的直接ARP过程如果映射的下一跳地址对应的路由表记录是他的下一跳和他的ARP求助地址（例如：路由器已经知道如何解析下一跳地址），记录映射的ARP求助地址的学习通过的路由更新。否则，ARP求助地址是那个发送路由更新的路由器的IP地址。
+有些距离矢量路由协议（例如：BGP[3]）提供方法，从而允许路由器可以在外部IP网络通告下一跳的地址。如果运行直接ARP协议过程的路由器通告一个外部的下一跳的IP地址给第二个没有运行直接ARP协议过程的路由器，第二个路由器不能用通告的外部的下一跳。依靠路由协议的详细执行，他可以正确的提供给第一个路由器，也可以通告不在外部IP网络的下一跳（例如：他自己），也许是更大的花费。或者，如果路由方案是可管理的的链接（例如：BGP方案是可管理的TCP/IP连接），那些管理过程能决定是否通告外部的下一跳IP地址。
+距离矢量路由协议能通告目的地是可直接到达的，通过具体的路由器收到的公告信息、他本身、下一跳到目的地。另外，路由的通告花费可以为0。如果路由器没有一条通告目的地对应的路由记录是本地的（例如：他的下一跳地址），路由器将添加新的空的下一跳路由，并且发送更新的路由器的IP地址作为ARP求助地址。
+4.3链路状态路由协议
+链路状态路由协议为路由器提供通过标识链路到达其他记录（例如：其他路由器和网络），取决于在路由区域内链路的状态和花费，可靠的描述链路状态信息给其他路由器，从其他路由器收到的链路状态信息，计算路由。一个路由器接口通过同一链路层接口连接到两个（或更多）IP网络，被连接到IP网络通过一个单独的链路，象上面的描述。如果用相同链路连接到两个（或更多）IP网络上，并且能提供直接ARP过程的路由器，在任何IP网络上都能直接转发包给任何IP网上的用直接ARP过程在外部IP网络解析地址的主机和路由器。直接ARP，直接到达外部IP网络的路径花费比通过所有IP网络上路由器地址的路径花费更小。
+直接ARP过程带来的好处，链路状态路由协议必须包含为路由器去通告通过同一链路连接到多IP网络的过程，并且路由表的计算处理必须包括计算ARP求助地址的过程和正确计算直接通过直接ARP过程到外部IP网络减少路径花费的过程的过程。
+为计算最少花路由最短路径优先算法是基于Dijkstra[7]工作的，首先被ARPANET应用路由协议，由McQuillan[8]所描述。路由器通过构造自己为根的最短路径树构造路由表。此过程是迭代的，开始时最短路径树没有任何记录，在候选表上路由器本身作为唯一的候选人。路由器重下述两个步骤：
+1. 从候选表删除最靠近根的记录，把他添加最短路径树。
+2. 检查从第一步中添加到最短路径树的链路状态通告。对每个邻居（例如连接的路由器或IP网络）：
+――如果邻居已经在最短路径树上，不作任何改变。
+――如果邻居在候选表里，重新计算根到邻居的距离。也重新计算下一跳到邻居的距离。
+――如果邻居不在候选表里，计算从根到邻居和从根到下一跳的距离并添加邻居到候选表。
+当没有记录在候选表的时候，终止此处理。
+运行直接ARP过程的优点，链路状态协议必须提路由器通过同一链路访问两个或多个IP网络的通告的过程。另外，最短路径优先路由协议的计算被改变去计算ARP求助地址和识别通过直接ARP减少的到达路径花费。
+1. 如果考虑的邻居是IP网络，他的父节点（例如：在上述第一步添加到最短路径树中的记录）已经通告邻居通过网络中已经在最短路径树上的同一条链路可到达。从根和下一跳的距离――从根到邻居的距离是相同的当距离和下一跳已经对应的网络在最短路径树上。如果ARP求助地址对网络的映射已经在最短路径树上，并不为空，邻居也从已经在最短路径树上的网络继承那个ARP求助地址。    
+2. 如果计算的下一跳到邻居为空，则邻居从他的父节点继承ARP求助地址。否则，除非在第一条中描述过，ARP求助地址是到邻居父节点的下一跳的IP地址。注意下一跳到根是空的。
+对于在最短路径树上的每个路由器或IP网络，最短路径优先算法必须发现一个或更多能用来访问路由器或IP网络的下一跳。路由器通告一条链路给IP网络必须包括在IP网络上能被别的路由器使用的下一跳路由器的IP地址。路由器可以通过被通告的从两个IP网络访问的同一个下一跳IP地址的同一条链路连接到两个IP网络。路由器可以通过被通告的从两个IP网络访问的同一个下一跳IP地址的同一条链路连接到两个IP网络。作为对从两个IP网络访问的下一跳IP地址  容纳在两个IP网络上强制的路由器的地址解析  路由器可以通告两个IP地址（每个IP网络一个）。
+主机路由器能用直接ARP解析三组下一跳地址；例如从路由协议或对等的通用的下一跳路由器知道的。不删除失败的第三组下一跳会导致路由黑洞。避免路由黑洞，主机需要[5]指定主机“...MUST能发现失败的下一跳网关并在路由缓存的列表中选择一个代替的网关”。主机能从IP层的协议（例如：TCP）收到反馈  指定下一跳路由器的状态，并且用别的过程（例如：ICMP echo）去检测下一跳路由器的状态。路由器产生路由的复杂性，路由信息必须和对等知道他们信息的一致。如BGP[3]，OSPF[4]和其他的路由协议需要路由器必须保持他们通告后面的路由信息。通告路由器的IP地址作为附加路由信息。如果路由信息是无效的，路由器将通告必须通告旧的信息不再有效。如果源路由信息变为无效，则从源路由器收到的所有信息必须被标记为无效的。从过程得到的复杂的动态路由协议项使路由器确信能收到对等的路由更新，或能决定他们不能收到路由更新（例如：因为对等的连接不再有效）。
+如果下面链路层的连接不能传输则第三组的下一跳也能在路由黑洞解析。例如：SMDS过滤能够被管理去允许在R1的SMDS地址和R2之间通讯，在R2的SMDS地址和R3之间通讯，可以锁定在R1的SMDS地址和R3之间的通讯。R2能把R3作为下一跳通告给R1，但是SMDS过滤将阻止在R1和R3之间的直接通讯。不对称的过滤可以允许R3发送包到R1，但是琐定从R1地址到R3的包。
+主机或路由器能验证链路层和被发送ICMP echo到下一跳路由器链路层地址的下一跳的路由器的连接。（注意ICMP echo被直接发送给下一跳路由器的链路层地址，如果ICMP echo是可路由的，他可以跟随没有被证实的链路层连接的路径。）这种检测能在添加路由表记录的映射之前被执行，或者在首先应用路由表记录之前。随后发现链路层连接的改变是动态路由协议的问题并且超越了本文本的范围。
+参考：
+[1] Piscitello, D., and J. Lawrence, "The Transmission of IP Datagrams over the SMDS Service", RFC 1209, Bell Communications Research, March 1991.
+[2] Plummer, D., "An Ethernet Address Resolution Protocol - or - Converting Network Protocol Addresses to 48.bit Ethernet Address for Transmission on Ethernet Hardware", RFC 826, Symbolics, Inc., ovember 1982.
+[3] Lougheed, K. and Y. Rekhter, "A Border Gateway Protocol 3 (BGP-3)", RFC 1267, cisco Systems and IBM T. J. Watson Research Center, October 1991.
+[4] Moy, J., "OSPF Version 2", RFC 1247, Proteon, Inc., July 1991.
+[5] Braden, R., editor, "Requirements for Internet Hosts --Communication Layers", STD 3, RFC 1122, USC/Information Sciences Institute, October 1989.
+[6] Postel, J., "Internet Control Message Protocol - DARPA Internet Program Protocol Specification", STD 5, RFC 792, USC/Information Sciences Institute, September 1981.
+[7] Dijkstra, E. W., "A Note on Two Problems in Connection with Graphs", Numerische Mathematik, Vol. 1, pp. 269-271, 1959.
+[8] McQuillan, J. M., I. Richer, and E. C. Rosen, "The New Routing Algorithm for the ARPANET", IEEE Transactions on Communications, Vol. COM-28, May 1980.
+[9] "Generic System Requirements In Support of Switched Multi-megabit Data Service", Technical Reference TR-TSV-000772, Bell Communications Research Technical Reference, Issue 1, May 1991.
+安全考虑：
+安全问题不在本文档讨论的范围内。
+作者地址：
+   John Garrett
+   AT&T Bell Laboratories
+   184 Liberty Corner Road
+   Warren, N.J. 07060-0906
+   Phone: (908) 580-4719
+   EMail: jwg@garage.att.com
+
+   John Dotts Hagan
+   University of Pennsylvania
+   Suite 221A
+   3401 Walnut Street
+   Philadelphia, PA 19104-6228
+   Phone: (215) 898-9192
+   EMail: Hagan@UPENN.EDU
+
+   Jeffrey A. Wong
+   AT&T Bell Laboratories
+   184 Liberty Corner Road
+   Warren, N.J. 07060-0906
+   Phone: (908) 580-5361
+   EMail: jwong@garage.att.com
+
+RFC1433――Directed ARP                                                      直接ARP
+
+
+
+
+1
+RFC文档中文翻译计划
+

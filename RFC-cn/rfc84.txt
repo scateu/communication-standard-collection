@@ -1,0 +1,389 @@
+组织：中国互动出版网（<http://www.china-pub.com/>）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm <http://www.china-pub.com/>）
+E-mail：ouyang@china-pub.com <mailto:ouyang@china-pub.com>
+译者：董苛（cnchris    duke913@163.com）
+译文发布时间：2001-10-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                        J. B. North
+Request for Comments: 84                                23 December 1970
+NIC 5620
+
+                     NWG/RFC第1-80列表(LIST OF NWG/RFC's 1-80)
+
+  NWG/RFC 1                 1969年4月7日                  NIC 4687
+     主机软件
+     S. Crocker (UCLA)
+
+  NWG/RFC 2                 1969年4月9日                  NIC 4688
+     主机软件
+     B. Duvall (SRI)
+
+  NWG/RFC 3                 1969年4月9日                  NIC 4689
+     文档规范
+     S. Crocker (UCLA)
+
+  NWG/RFC 4                 1969年3月24日                 NIC 4690
+     网络时间表
+     E. Shapiro (SRI)
+
+  NWG/RFC 5                 1969年6月2日                  NIC 4691
+     解码编码语言(DEL)
+     J. Rulifson (SRI)
+
+  NWG/RFC 6                 1969年4月10日                 NIC 4692
+     与Bob Kahn会谈
+     S. Crocker (UCLA)
+
+  NWG/RFC 7                 1969年5月5日                  NIC 4693
+     主机/IMP接口
+     G. Deloche (UCLA)
+
+  NWG/RFC 8                 1969年5月5日                  NIC 4694
+     ARPA网功能详述
+     G. Deloche (UCLA)
+
+  NWG/RFC 9                 1969年5月1日                  NIC 4695
+     主机软件
+     G. Deloche (UCLA)
+
+  NWG/RFC 10                1969年7月29日                 NIC 4696
+     文档规范
+     S. Crocker (UCLA)
+
+  NWG/RFC 11                1969年8月1日                  NIC 4718
+     在GORDO中主机-主机软件程序的实施
+     G. Deloche (UCLA)
+  NWG/RFC 12                1969年8月26日                 NIC 4697
+      IMP/主机接口流量图表
+      M. Wingfield (UCLA)
+
+   NWG/RFC 13               1969年8月20日                 NIC 4698
+      对NWG/RFC11的参照
+      Vint Cerf (UCLA)
+
+   NWG/RFC 14    (未发表)
+
+   NWG/RFC 15               1969年9月25日                 NIC 4754
+      时分主机的网络子系统
+      C. Stephen Carr (UTAH)
+
+   NWG/RFC 16               1969年8月27日                 NIC 4719
+      MIT (address)
+      Steve Crocker (UCLA)
+
+   NWG/RFC 17               1969年8月27日                 NIC 4699
+      对一些问题的回复: 主机-IMP 协议
+      John E. Kreznar (SDC)
+
+   NWG/RFC 18               1969年9月                     NIC 4720
+      (第一第二链路的使用)
+      Vint Cerf (UCLA)
+
+   NWG/RFC 19               1969年10月7日                 NIC 4721
+      减小界定交换接点拥塞的两个有关协议的建议
+      John E. Kreznar (SDC)
+
+   NWG/RFC 20               1969年10月10日                NIC 4722
+      用于网络交换的ASCII格式
+      Vint Cerf (UCLA)
+
+   NWG/RFC 21               1969年10月17日                NIC 4723
+      (网络会议报告)
+      Vint Cerf (UCLA)
+
+   NWG/RFC 22               1969年10月17日                NIC 4724
+      主机-主机控制信息格式
+      Vint Cerf (UCLA)
+
+   NWG/RFC 23               1969年10月16日                NIC 4725
+      多重控制信息的传输
+      G. Gregg (UCSB)
+
+   NWG/RFC 24               1969年11月21日                NIC 4726
+      文档规范
+      Steve Crocker (UCLA)
+
+   NWG/RFC 25               1969年10月30日                NIC 4727
+      无高链接号
+      Steve Crocker (UCLA)
+
+   NWG/RFC 26               未发表
+
+   NWG/RFC 27               1969年12月6日                 NIC 4729
+      文档规范
+      Steve Crocker (UCLA)
+
+   NWG/RFC 28               1970年1月13日                 NIC 4730
+      时间标准
+      Bill English (ARC)
+
+   NWG/RFC 29               1970年1月19日                 NIC 4731
+      对Bill English的RFC的响应
+      Robert Kahn (BBN)
+
+   NWG/RFC 30               1970年2月4日                  NIC 4732
+      文档规范
+      Steve Crocker (UCLA)
+
+   NWG/RFC 31               1968年2月                     NIC 4733
+      计算机网络中的二进制信息形式
+      Daniel  Borrow (BBN)
+      William R. Sutherland (LINC)
+
+   NWG/RFC 32               1969年1月31日                 NIC 4734
+      连接M.I.T.计算机到ARPA的计算机-计算机通信网络
+      Dietrich Vedder (MAC)
+
+   NWG/RFC 33               1970年2月12日                 NIC 4735
+      新主机-主机协议
+      Steve Crocker (UCLA)
+
+   NWG/RFC 34               1970年2月26日                 NIC 4736
+      关于ARC时钟的一些简要初步记录
+      Bill English (ARC)
+
+   NWG/RFC 35               1970年3月3日                  NIC 4737
+      网络会议
+      Steve Crocker (UCLA)
+
+   NWG/RFC 36               1970年3月16日                 NIC 4738
+      协议注解
+      Steve Crocker (UCLA)
+
+   NWG/RFC 37               1970年3月20日                 NIC 4739
+      网络会议结尾等
+      Steve Crocker (UCLA)
+
+   NWG/RFC 38               1970年3月20日                 NIC 4740
+      对NWG/RFC 36中网络协议的评注
+      Stephen M. Wolfe (UCLA)
+
+   NWG/RFC 39               1970年3月25日                 NIC 4741
+      对NWG/RFC 36协议评注的回复
+      E. Harslem (RAND)
+      J. Heafner (RAND)
+
+   NWG/RFC 40               1970年3月27日                 NIC 4742
+      关于未来协议的更多评注
+      E. Harslem (RAND)
+      J. Heafner (RAND)
+
+   NWG/RFC 41               1970年3月30日                 NIC 4743
+      IMP-IMP电传打字机通信
+      John Melvin (ARC)
+
+   NWG/RFC 42               1970年3月31日                 NIC 4744
+      信息数据类型
+      E. I. Ancona (LINC)
+
+   NWG/RFC 43               1970年4月8日                  NIC 4745
+      被提议的会议
+      A. G. Nemeth (LINC)
+
+   NWG/RFC 44               1970年4月10日                 NIC 4746
+      对NWG/RFC33和36评注
+      A. Shohani (SDC)
+      R. Long (SDC)
+      A. Kandsberg (SDC)
+
+   NWG/RFC 45               1970年4月14日                 NIC 4747
+      新的协议将要到来
+      J. Postel (UCLA)
+      S. Crocker (UCLA)
+
+   NWG/RFC 46               1970年4月17日                 NIC 4748
+      ARPA网络协议注解
+      Edwin W. Meyer Jr. (MAC)
+
+   NWG/RFC 47               1970年4月20日                 NIC 4749
+      BBN对NWG/RFC 33的评注
+      J. Postel (UCLA)
+      S. Crocker (UCLA)
+
+   NWG/RFC 48               1970年4月21日                 NIC 4750
+      一个可能的协议高峰
+      J. Postel (UCLA)
+      S. Crocker (UCLA)
+
+   NWG/RFC 49               1970年4月25日                 NIC 4728
+      与Steve Crocker的对话
+      E. W. Meyer Jr. (MAC)
+
+   NWG/RFC 50               1970年4月30日                 NIC 4751
+      对Meyer协议的评注
+      E. Harslem (RAND)
+      J. Heafner (RAND)
+
+   NWG/RFC 51               1970年5月4日                  NIC 4752
+      对网络交换语言的提议
+      M. Elie (UCLA)
+
+   NWG/RFC 52               1970年7月1日                  NIC 4753
+      更新的分布列表
+      S. Crocker (UCLA)
+      J. Postel (UCLA)
+
+   NWG/RFC 53               1970年6月9日                  NIC 4755
+      一个官方协议机构
+      S. Crocker (UCLA)
+
+   NWG/RFC 54               1970年6月18日                 NIC 4756
+      一个官方协议建议
+      Steve Crocker (UCLA)
+      Jon Postel (UCLA)
+      John Newkirk (HARV)
+      Mike Kraley (HARV)
+
+   NWG/RFC 55               1970年6月19日                 NIC 4757
+      对NCP的典型的实施
+      J. Newkirk (HARV)
+      M. Kraley (HARV)
+      J. Postel (UCLA)
+      S. Crocker (UCLA)
+
+   NWG/RFC 56               1970年6月19日                 NIC 4758
+      第三层协议
+      Ed Belove (HARV)
+      Dave Black (HARV)
+      Bob Flegal (UTAH)
+      Lamar G. Farquar (UTAH)
+
+   NWG/RFC 57               1970年6月19日                 NIC 4759
+      对NWG/RFC54的想法和考虑
+      Mike Kraley (HARV)
+      John Newkirk (HARV)
+
+   NWG/RFC 58               1970年6月26日                 NIC 4760
+      逻辑信息的同步
+      T. P. Skinner (MAC)
+
+   NWG/RFC 59               1970年6月27日                 NIC 4761
+      流量控制-固定的与需要分配的对立
+      Edwin W. Meyer Jr.
+
+   NWG/RFC 60               1970年7月13日                 NIC 4762
+      一个简化的NCP协议
+      Richard Kalin (LINC)
+
+   NWG/RFC 61               1970年7月17日                 NIC 4961
+      有关对资源公享计算机网络通信过程的注解
+      Dave Walden (BBN)
+
+   NWG/RFC 62               1970年8月3日                  NIC 4962
+      有关对资源公享计算机网络通信过程的注解
+      Dave Walden (BBN)
+
+   NWG/RFC 63               1970年7月31日                 NIC 4963
+      误期的网络会议报告
+      V. Cerf (UCLA)
+
+   NWG/RFC 64               (未标日期)                    NIC 4964
+      处理印记
+      M. Elie (UCLA)
+
+   NWG/RFC 65               1970年8月29日                 NIC 4965
+      对主机主机协议一号文献的评注
+         (S. Crocker 1970年8月3日发表)
+      Dave Walden (BBN)
+
+   NWG/RFC 66               1970年8月26日                 NIC 5409
+      第三级别的想法和其他噪音
+      S. Crocker (UCLA)
+
+   NWG/RFC 67               (未标日期)                    NIC 5410
+      建议性的对主机/IMP投机的改变以消除印记
+      W. Crowther (BBN)
+
+   NWG/RFC 68               1970年8月31日                 NIC 5411
+      对内存分配控制命令的评注
+           (CEASE, ALL, GVB, RET) 和 RFNM
+      M. Elie (UCLA)
+
+   NWG/RFC 69               1970年9月22日                 NIC 5412
+      MIT的分布式列表变化
+      A. Bhushan (MAC)
+
+   NWG/RFC 70               1970年10月15日                NIC 5413
+      对Padding的注解
+      S. Crocker (UCLA)
+
+   NWG/RFC 71               1970年9月25日                 NIC 5414
+      输入错误时的重定位
+      Tjaart Schipper (UCLA)
+
+   NWG/RFC 72               1970年9月28日                 NIC 5415
+      建议性的对网络协议改动的禁止
+      R.D. Bressler (MAC)
+
+   NWG/RFC 73               1970年9月25日                 NIC 5416
+      对NWG/RFC 67的回复
+      S. Crocker (UCLA)
+
+   NWG/RFC 74               1970年10月16日                NIC 5417
+      对网络使用UCSB在线系统的祥述
+      J. White (UCSB)
+
+   NWG/RFC 75               1970年10月14日                NIC 5418
+      网络会议
+      S. Crocker (UCLA)
+
+   NWG/RFC 76               1970年10月28日                NIC 5180
+      联名: 用户适应协议
+      J. Bouknight (ILL)
+      J. Madden (ILL)
+      G. Grossman (ILL)
+
+   NWG/RFC 77               1970年11月20日                NIC 5604
+      网络会议报告
+      J. Postel (UCLA)
+
+   NWG/RFC 78               (未标日期)                    NIC 5199
+      NCP状态报告:  UCSB/RAND
+      E. Harslem (RAND)
+      J. Heafner (RAND)
+      J. White  (UCSB)
+
+   NWG/RFC 79               1970年11月16日                NIC 5601
+      日志协议错误
+      Edwin W. Meyer, Jr. (MAC
+
+   NWG/RFC 80               1970年12月1日                 NIC 5608
+      协议和数据格式
+      E. Harslem (RAND)
+      J. Heafner (RAND)
+
+          [ This RFC was put into machine readable form for entry ]
+            [ into the online RFC archives by Paul Hethmon 02/98 ]
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+   

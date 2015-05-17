@@ -1,0 +1,125 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         S. Harris
+Request for Comments: 3005                               Merit Network 
+BCP: 45                                                    November 2000
+Category: Best Current Practice                
+
+IETF 讨论列表许可证
+（IETF Discussion List Charter）
+
+
+本备忘录的状态
+
+   This document specifies an Internet Best Current Practices for the
+   Internet Community, and requests discussion and suggestions for
+   improvements.  Distribution of this memo is unlimited.
+
+版权声明
+Copyright (C) The Internet Society (2001).
+
+  
+摘要
+Internet工程任务编组讨论邮件列表通过技术问题的讨论促进了Internet技术的发展
+以及其详细说明，它还确定IETF讨论的方向、政策、会议以及进程。由于这是最通用IETF
+邮件列表，所以留有很大的扩展空间。不论是拉生意，还是提供就业机会的广告，它们像诸
+如人之本性的讨论话题一样，都不在被讨论的话题的范围之内。。
+   
+
+IETF 讨论列表许可证
+
+IETF 讨论列表，ietf@ietf.org，它有两个目的。它通过技术问题的讨论促进了
+Internet技术的发展和其详细说明。它还确定IETF讨论的方向、政策、会议以及进程。由
+于这是最通用IETF邮件列表，所以留有很大的扩展空间。不论是拉生意，还是提供就业机
+会的广告，它们像诸如人之本性的讨论话题一样，都不在被讨论的话题的范围之内。
+
+    此列表仅仅作为初步的讨论。那些在任何工作组领域内的讨论或者是完成良好的列表，
+它们只要被指出，就会被立刻移交更具体的讨论会，除非是工作组需要对它们进一步的投入
+或者定位。
+
+
+除了上面提到的外，合适的邮件还包括：
+   
+    - 提议草案处理的最近一次讨论
+    - IETF工程的候选技术问题的讨论，但是还没有合适的e-mail地址
+    - IETF行政管理政策的讨论   
+- 关于IETF会议的问题和说明  
+    - 由Internet社区或者是IETF发起、认可的会议、事件或活动通告。
+
+
+不合适的邮件包括：   
+
+    - 未经请求的大批的E-mail         
+- 与IETF政策、会议、活动或技术事宜不相干的讨论话题
+    - 与主题不相干的非专业评论     
+- 由非Internet社区或者非IETF发起、认可的会议、事件或活动通告。
+
+
+        当邮件的内容不合法并且代表一种滥用模式时，由主席任命的IETF主席，执行长官，
+或者是其它官员，他们有权力限制某个人，以至于某个主题的邮件。这些官员被鼓励单独
+去考虑邮件的总体的性质，以检查是否有个别邮件不符合要求或者是具有典型性。对他们
+所下的结论如果有抗议的话，应当提交工业咨询委员会处理。
+
+
+鸣谢
+
+   非常感谢Donald E. Eastlake 3rd 和其他IETF POISSON工作组成员的评论。
+
+作者地址：
+
+   Susan R. Harris
+   Merit Network, Inc.
+   4251 Plymouth Rd., Suite C
+   Ann Arbor, MI 48105-2785
+
+   Phone: (734) 936-2100
+   Fax:   (734) 647-3185
+   EMail: srh@merit.edu
+
+版权说明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet 
+Society.
+
+
+RFC3005――IETF Discussion List Charter                               IETF 讨论列表许可证
+
+
+1
+RFC文档中文翻译计划

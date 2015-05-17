@@ -1,0 +1,283 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：牛韬（NT  niuniu50@bz-public.sd.cninfo.net）
+译文发布时间：2001-5-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                            K. Moore
+Request for Comments: 2964                        University of Tennessee
+BCP: 44                                                          N. Freed
+Category: Best Current Practice                                  Innosoft
+                                                             October 2000
+
+
+超文本传输协议(HTTP)状态管理的应用
+(RFC 2964  Use of HTTP State Management)
+
+本备忘录的状态
+
+   本文档描述了Internet社区的最通用的实践（惯例），需要进一步探讨和建议
+进行完善。本备忘录的发布没有限制。
+
+
+版权公告
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+IESG 注解
+
+   The IESG 注解这种机制应用于包含.local 顶级域名 (TLD)在内，在处理主机名称不含任
+何点在内的情况下，如果没有注册一个真正的.local顶级域的话，这种机制可能无法动作。
+
+摘要
+
+  这种机制在“HTTP状态管理体制”（RFC-2965）中已经描述了，其原描述文档（RFC-2109），
+能用于许多不同的目标。然而，许多当前的和潜在的对于这个协议的应用存在争议，因为它
+们有重要的用户隐私和在安全上的牵连。这个备忘录识别了那些既不被IETF所推荐，或被认
+为是有害的和不安全的超文本协议（HTTP）在某些细节上的应用。本备忘录也附加了一个HTTP
+状态管理协议中未曾包含的考虑安全方面的详细的文档。
+
+1、介绍
+   HTTP状态管理机制非常有用，但也存在着很大的争议。它的实用性缘于众多的HTTP应用
+程序可以得益于它能保存HTTP传输状态的能力，而不需对这种状态在统一资源定位器（URL）
+中进行编码。而对它存在争议是因为它在成完成任务时的不确定性和较差的兼容性。由于这
+些应用导致了大量的公众的批评因为他们的存在，导致了网上隐私的保密造成了的威胁。
+   用户，确实通过漏洞将一些敏感的信息泄漏给第三方，例如一个用户访问了某个网站。而
+通过漏洞，将该用户的信息记录了下来。那儿同时也有其它的HTTP状态管理的用户在，这是
+不适当的，即使他们没有对用户隐私的威胁。
+
+在RFC-2965文档中已被详细说明的的HTTP状态管理协议IETF并不推荐使用，本备忘录正是
+为此对其应用进行识别，HTTP状态管理协议被认为存在一定的危害性，因此并不被人看好。
+
+本文档偶尔使用一些用黑体字表示的术语，当下面这些术语如"必须", "不必", "应当", "
+不会", 和 "可以"以黑体出现时，说明使用它们在说明书中有特定的要求，有关这些术语含
+义的讨论，如"必须", "应当", 和 "可以"，请参阅[RFC-1123]；术语"不必" 和 "不会"是在
+用法上进行了逻辑的扩展。
+
+2、HTTP状态管理的应用
+  HTTP状态管理的目标是基于HTTP的服务建立一个有状态的可以持续穿过多重HTTP来处理
+事务的“对话”。一个单独的对话可以包括与多重服务器主机进行事务处理。多个客户在对于
+一个特定的用户的对话数据被其它客户共享（例如，通过一个文件系统）时，同样可以被一
+个对话所包括。换句话说，对话保留了用户与一个服务之间的状态，面不是两个特定客户端
+之间的状态。
+
+  使用“无屏蔽”的HTTP协议也同样以相似的性能完成任务，认识这一点很重要。并且/或
+者动态的产生HTML，而没有状态管理的扩展。例如，状态信息能够从服务到用户通过嵌入到
+一个或在HTTP的重定向中显现的多个统一资源定位器的对话的标示符中，或动态的产生
+HTML；并且状态信息可以从用户返回到这个服务当这URL出现一个GET或POST请求时。HTML
+表格也能用于传递从服务到客户的状态信息并返回，而不必要让用户知道发生了什么。
+
+不管怎样，HTTP状态管理工具提供功能的确是比普通的HTTP和HTML增加了更多。在实践中
+这些附加的功能包括：
+
+  （1）在两个用户之间互换URL，在有状态的会话中资源的存取，而没有与其它会话关联的
+状态信息的泄漏。（例如，“这儿有FooCorp的网络目录入口的URL，而你正想要从这家公司
+买拖鞋”）
+(2)	不用“缓冲猝发”维持会话状态的能力。那就是，从URL中隔离出会话状态允许一
+个页面缓冲来维护唯一的一个已命名的资源的副本。如果此状态在会话细节URL
+中维持，缓冲很有可能不得不维持几个同样的拷贝。
+
+(3)与其它的维持会话状态的技术相比，它具有使用最低的服务器配置和最小限度的费用
+的优点。
+
+  （4）不管是否用户已经通过一个特定的“主页”或“入口”进入,都可以在用户对服务进
+行存取的任何时间联系用户与会话。
+
+
+   (5)   能够将会话信息保存在一个稳定的存储容器中，因此一个“会话”能够穿过客户的
+干扰，以及系统的重新起动和客户端或系统的崩溃。.
+
+2.1.  推荐的应用
+
+   当需要穿过多重HTTP处理事务，此时维持用户与服务之间的状态使用HTTP状态的管理是
+很合适的。假如：
+（1）	用户知道会话正在维持并且用户对其表示赞成,
+
+（2）	用户可以在任何时间删除与这样一个会话相关联的状态信息，
+
+（3）	通过跟踪用户的使用该服务的方法获取的信息，如果未经用户的直接允许，是不会透
+露给其它的人员的。
+
+（4）	会话信息无法自己获取敏感信息并且也不能被用于获取敏感信息，要偷听者无法从中
+得到任何可用信息。
+
+（5）	最后一点很重要因为cookies 通常是明文发送的，因此，很容易被偷听者窃取。
+
+ 一个推荐的应用的例子就是“购物车”，购物车的存在对于用户来说是非常清楚和明白的，
+用户可以明确的“清空”他或她的购物车（或者通过请求来清空或购买货物），因此将导致对
+共享状态的放弃，这项服务不会不经用户允许，而向第三方公开用户的购物习惯和浏览习惯。
+  注意HTTP状态管理协议有效的允许一个服务提供者拒供应服务，或提供一个限制级别的服
+务，如果说某个用户或一个用户的客户的维持会话状态的请求无法兑现。相反的，缺少合法
+的禁止，服务也许会拒绝提供服务，或者提供一个限制级的服务，在这些条件下。从一个纯
+实践的角度考虑，如果说客户端不提供此项服务，那么利用HTTP状态管理设计的服务也许无
+法完全的运作。这样的服务器应当能够轻松的处理这种情形并向用户解释为什么无法享用全
+部的服务。
+  
+
+2.2.  存在问题的应用
+
+   下面有关HTTP状态管理的应用被认为是不适当的,从反面进行了阐述：
+
+2.2.1.  向第三方泄漏的信息
+
+   不经用户的正式同意，HTTP 状态管理一定不要应用于泄漏用户或有关用户浏览习惯的信
+息给第三方，除了该用户和服务外。
+这种用法是禁止的，即使是把用户的名字或其它的可对其进行标识的标识符泄漏给第三方，
+因为此状态管理机制自己提供了一个可用于编译有关用户信息的标识符。
+
+   因为这些实际情况使得HTTP状态管理机制倍受人们的指责，他们倾向于限制HTTP状态管
+理的效果，因此它被认为对于网络的操作是有害的。
+
+2.2.2.  作为鉴定机制使用Use as an Authentication Mechanism
+
+   通常认为HTTP状态管理机制作为鉴定机制使用是不合适的。HTTP状态管理并不是专门为
+这种应用而设计的，因此它在鉴定认证的保护上的安全措施是缺乏的，不论是协议的说明书
+还是对于普遍配置HTTP的客户或服务器。绝大多数HTTP会话是不加密的，因此“cookies"
+可能会因此被泄漏给偷听者。此外HTTP客户端和服务器又有这个特点：仅仅经过简单的甚至
+是根本没有保护就对"cookies"进行明文存储来防止信息的泄漏。HTTP状态管理因此应当不
+用于鉴定机制来保护信息避免其泄漏给未经授权的第三方，即使是HTTP会话是经过加密的。  
+
+对禁止的用于鉴定的HTTP状态管理既包括使用于保护服务提供的信息又包括有关用户
+交给服务托管的潜在和敏感的信息。例如，如果泄漏一个用户的名字、地址、电话号码或账
+单信息给一个拥有先前与该用户有关系的“cookies”的客户是不合适的。
+
+   同样的，HTTP状态管理不应该用于鉴别用户的请求对于用户可能会有令人不快的副作用，
+除非用户知道潜在的副作用并明确同意这样使用。例如，一项允许用户通过简单的“点击”
+定购货物的服务，完全基于用户存储的"cookied"， 如果“cookies”会泄漏给第三方的话，
+可能会导致一系列的麻烦，如用户对信用卡上的花费产生怀疑的麻烦，并且/或者发来的不是
+自己想要的货物， 
+
+一些HTTP状态管理在用户鉴定上的应用可能会导致相关的危害，例如，如果唯一的信息可能
+是暴露在服务中，那么服务也会因这些信息的暴露，而受到一些小小的危害
+
+3.  用户对于HTTP状态管理需要考虑的事项
+
+  HTTP状态管理丰存在很大的争议，这是因为它有潜在危险，不经过用户的承认和允许，将
+用户浏览习惯的信息泄漏给第三方。虽然这只是一种可能，这种协议本身存在问题相对于在
+HTTP客户端的执行出现错误而言是一种较小的错误（对于基于HTTP服务的提供者而言）来
+保护用户的兴趣。
+
+
+  正如上面所暗示的一样，还有其它的方法来维持会话状态而可以不用HTTP状态管理来实
+现， 因此其它的方法也可以跟踪到用户的浏览习惯。确实，很难设想HTTP协议或一个HTTP
+客户怎么做才能够真正的防止服务泄漏用户的“点击轨迹”给其它人，如果服务选择了这么
+做的话。必须保护这些信息不被泄漏，这是这类服务的职责。HTTP客户端的执行存在不能被
+保护的特性，尽管他们能够采取对策使得HTTP状态管理更难以应用作此类信息泄漏的机制。
+
+
+
+
+
+
+
+
+   不管通过HTTP状态管理的使用或其它方法的使用能否更容易导致泄漏，通常HTTP客户都
+可以提供更多的保护来防止不适当的跟踪信息的泄漏，这是一个值的论证的问题。然而，然
+然而，有关其它相关的机制就不属于本备忘录讨论的范围了。
+
+3.1.  HTTP客户所必需的性能
+
+   用户自己同意使用HTTP状态管理很可能不同于对于另一方的的服务，依照是否用户信任
+这项服务来适当地使用这些信息并且限制把它泄漏给它方。用户因此应当能够在每一服务的
+基础上，对它的客户能否使用HTTP状态管理服务的要求进行控制。特别是：
+
+   (1)   客户端一定不要响应HTTP状态管理的请求，除非确实是被客户激活。
+
+   (2)  在客户提供任何状态信息给服器前，客户端应该提供一个允许用户回顾的有效的界
+面，并且批准或者拒绝来自服务的任何特定请求以维护状态信息。
+
+   (3)  在每一服务的基础上， 一但响应任何特定的来自服务器的请求，在客户提供任何状
+态信息给服务器之前，客户端就应当立即提供一个有效的界面，这个界面允许用户通知他们
+的客户端忽略所有以维持状态信息的来自特定服务的请求。
+
+   (4)   客户应当提供一个有效的界面允许用户禁止未来对服务进行任何状信息的传输。
+或者放弃任何已经保存的对于服务的状态信息，即使是用户先前认可的维持状态信息的服务
+请求。
+
+   (5)   客户应当提供一个有效的界面，允许用户去中断一个先前的请求，而不为已经给
+予的服务保持状态管理信息
+
+3.2.  域匹配算法的局限性。
+
+   域匹配算法 在 RFC-2965 中第2段中企发性的允许用户去“猜”是否两个域是同一个服
+务的一部分。关于如何域能被使用的规则很少，并且域名结构和它们如何被从顶级域转换为
+其它域名（也就是客户不能说出域名的哪一部分被分配给了服务。因此，没有字符串比较算
+法（包括域名匹配算法）可以从一个属于其他部分的域名中用来区分属于特别服务的域名。
+
+作为上面的说明，每一项服务最终应负责的是负保证用户的信息不会不适当的泄露给第三方。
+通过仔细地选择域名，或第三方通过维持给主机指定域名，利用状态管理泄露信息给第三方，
+至少通过使用其他方法在信息的泄漏上是一样的不合适的。
+
+4.  安全考虑
+
+整篇备忘录都是有关安全考虑的。
+
+5.  作者的地址
+
+   Keith Moore
+   University of Tennessee Computer Science Department
+   1122 Volunteer Blvd, Suite 203
+   Knoxville TN, 37996-3450
+
+   EMail: moore@cs.utk.edu
+
+
+   Ned Freed
+   Innosoft International, Inc.
+   1050 Lakes Drive
+   West Covina, CA 81790
+
+   EMail: ned.freed@innosoft.com
+
+6. 参考文献
+
+   [RFC 1123] Braden, R., "Requirements for Internet Hosts --
+              Application and Support", STD 3, RFC 1123, October 1989.
+
+   [RFC 2965] Kristol, D. and L. Montulli, "HTTP State Management
+              Mechanism", RFC 2965, October 2000.
+
+   [RFC 2109] Kristol, D. and L. Montulli, "HTTP State Management
+              Mechanism", RFC 2109, February 1997.
+
+7.  版权声明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC 2964  Use of HTTP State Management          超文本传输协议(HTTP)状态管理的应用
+
+
+1
+RFC文档中文翻译计划

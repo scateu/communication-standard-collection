@@ -1,0 +1,159 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：小树（douglas   gyang@goldentech.com.）
+译文发布时间：2001-5-23
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+
+Network Working Group                                         R. Wormley
+Request for Comments: 1298                                    S. Bostock
+                                                                 Novell, Inc.
+                                                                 February 1992
+
+基于IPX协议的SNMP 
+（RFC1298 ――SNMP over IPX） 
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+
+摘要
+本文档建议了简单网络管理协议SNMP包如何在网际包交换协议IPX封装的传输
+机制。
+
+1.  介绍
+SNMP协议已经被指定为Internet上使用的正式的网络管理协议。它已经在Internet
+上和非Internet网络中被开发者广泛接受和使用。由此已产生了相关的协议和平台。
+本节定位于在IPX上使用SNMP，其主要因为Novell NetWare的流行而广泛普及。
+大略的等同UDP的功能，IPX也提供了基于不同物理介质和协议上的无连接的、非确
+认的数据包服务。
+尽管NetWare协议族已经做了修改，IPX因其来源于Xerox的网际数据报协议IDP，
+其套接字地址空间的授权仍由Novell管理。
+在UDP上使用SNMP是目前Internet最普通的方式。本描述应最适合于那些UDP
+传输服务不可用的环境。SNMP执行者应该意识到下层的传输方式会对Internet管理能
+力的互操作性和普遍性产生重要影响。选择适当SNMP传输方式的描述在[5]。
+2. 详细描述
+SNMP通常会把IPX包头的包类型域Packet Tyep Field的值设为4（也就是包交
+换包Packet Exchange Packet）。   
+2.1. 套接字指定
+SNMP实体在端口号36879接收GetRequest-PDU, GetNextRequest-PDU, and 
+SetRequest-PDU消息（目标套接字设为十六进制的值900F），在端口36880接收Trap-PDU 
+消息（目标套接字设为十六进制的值9010F）。
+GetResponse-PDU 消息的IPX地址和套接字是根据相应的GetRequest-PDU、
+GetNextRequest-PDU、or SetRequest-PDU消息的发起点确定的。
+2.2. 最大数据包长度
+    尽管SNMP没有统一要求执行接收超过484字节的消息，建议支持执行最大SNMP消
+息的长度为546字节（IPX下允许的最大尺寸）。此外这个限制也是担保的数据通过IPX路
+由器不分段的最大包长度。执行者如果知道最大值，应该选择使用较大的数据包。这个最大
+值是由中间的路由器或者中间的链路层协议决定的。
+
+2.3. Trap-PDU的agent-addr 域
+由SNMP代理所发出的Trap-PDU其中的agent-addr 域应当包含IP地址0.0.0.0。
+SNMP管理器可能会通过查询传输层来确定陷阱来源。
+ 
+2.4. IPX传输地址的表示
+有时有必要在MIB中表示IPX传输服务地址。比如说SNMP MIB中使用OBJECT 
+IDENTIFIER定义传输域（IP，IPX等等）。用OCTET STRING表示该域的地址。下面用图
+解提供如下定义。
+
+RFC1298-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+      enterprises         FROM RFC1155-SMI;
+
+      novell              OBJECT IDENTIFIER ::= { enterprises 23 }
+      transportDomains    OBJECT IDENTIFIER ::= { novell 7 }
+
+      ipxTransportDomain  OBJECT IDENTIFIER ::= { transportDomains 1 }
+
+    -- IPX 传输域的权威命名
+
+    IpxTransportAddress ::= OCTET STRING (SIZE (12))
+
+   
+    -- IpxTransportDomain中表示传输服务地址的原文协定。
+    -- IpxTransportAddress长12字节包含三个域，顺序为网络字节（高-低）。
+    -- 第一个域长4字节包含网络号。
+    -- 接下来的域长6字节包含该节点的物理地址。既然IPX可以运行在各种子网结
+    -- 构上，节点物理地址也许并不使用所有的6字节。正如在[2]中的指定，节点物
+    -- 理地址将占用该域中最小的有效部分而大部分有效字节应当为0。
+    -- 最后的域长2字节包含套接字号。
+
+ END
+
+3. 文档获取
+本节提供获取选择文档的联系信息。
+IPX的完整描述可经由以下地址获得：
+       Novell, Inc.
+       122 East 1700 South
+       P. O. Box 5900
+       Provo, Utah 84601 USA
+       800 526 5463
+       Novell Part # 883-000780-001
+
+  IDP ( XNS的一部分) 的定义可以从以下地址订购：
+
+       Xerox System Institute
+       475 Oakmead Parkway
+       Sunnyvale, CA 94086
+       Attn: Fonda Pallone
+       (415) 813-7164
+
+4． 参考文献
+   [1] Case J., Fedor M., Schoffstall M., and J. Davin, "A Simple
+       Network Management Protocol (SNMP)", RFC 1157, SNMP Research,
+       Performance Systems International, Performance Systems
+       International, and MIT Laboratory for Computer Science, May 1990.
+
+   [2] Novell, Inc., "NetWare System Technical Interface Overview", June
+       1989.
+
+   [3] Xerox System Integration Standard, "Internet Transport
+       Protocols", XSIS 028112, Xerox Corporation, December 1981.
+
+   [4] Postel, J., "User Datagram Protocol," RFC 768, USC/Information
+       Sciences Institute, 28 August 1980.
+
+   [5] Kastenholz, F., "SNMP Communications Services," RFC 1270,
+       Clearpoint Research Corporation, October 1991.
+
+   [6] McCloghrie, K., Davin, J., and J. Galvin, "Definitions of Managed
+       Objects for Administration of SNMP Parties", RFC in preparation.
+
+5.  安全考虑
+
+   安全问题在本章不讨论。
+6.  作者地址
+   Raymond Brett Wormley
+   Novell, Inc.
+   2180 Fortune Drive
+   Mail Stop F5-91-2
+   San Jose, CA 95131
+
+   Phone: 408 473 8208
+   EMail: bwormley@novell.com
+
+
+   Steve Bostock
+   Novell, Inc.
+   2180 Fortune Drive
+   Mail Stop F5-91-2
+   San Jose, CA 95131
+
+   Phone: 408 473 8203
+   EMail: steveb@novell.com
+
+RFC1298――SNMP over IPX                   基于IPX协议的SNMP
+
+
+1
+RFC文档中文翻译计划

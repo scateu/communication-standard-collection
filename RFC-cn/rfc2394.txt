@@ -1,0 +1,173 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者： 徐标（xbxiaoer  xub@mail.ndsc.com.cn）
+译文发布时间：2002-3-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                       R. Pereira
+Request for Comments: 2394                        TimeStep Corporation
+Category: Informational                                  December 1998
+
+                  
+               使用DEFLATE的IP有效载荷压缩
+（IP Payload Compression Using DEFLATE）
+
+.本备忘录的状态
+    本备忘录为Internet团体提供信息。不在任何形式上规定一个Internet标准。发布本备忘录不受任何限制。
+
+.版权声明
+    Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+.摘要
+    本文档一种基于DEFLATE压缩算法的压缩方法。本文档描述了DEFLATE算法对IP有效载荷压缩协议的应用。
+
+.目录
+   1. 介绍.....................................................................2
+     1.1 DEFLATE 压缩算法......................................................2
+     1.2 使用许可..............................................................2
+     1.3 需求说明..............................................................3
+   2. DEFLATE 算法执行.........................................................3
+     2.1 压缩..................................................................3
+     2.2 解压..................................................................4
+   3. 限度.....................................................................4
+   4. IP安全传输标志符.........................................................4
+   5. 安全考虑.................................................................4
+   6. 参考资料.................................................................5
+   7. 致谢.....................................................................5
+   8. 编辑的地址...............................................................5
+   9.完全版本声明..............................................................6
+
+1. 介绍
+   IP有效载荷压缩协议允许通过支持不同的压缩算法对IP数据报的压缩。本文档描述了怎样把DEFLATE压缩算法[Deutsch96]集成到IPCOMP[IPCOMP]。
+   本文档SHOULD和[IPCOMP]结合阅读并且MUST通过上下文来理解。
+
+1.1 DEFLATE 压缩算法
+  
+被PKZIP和gzib压缩机制使用，并且被收录到自由和广泛发布的zlib库源代码，“deflate”压缩格式[3]有以下特点；
+       ―一个明显的不受限制的编码和压缩算法，和开放的公共可用的规范。
+
+       ―对不可压缩数据的低开支的避开机制。PPP Deflate 规范提供更大程度上减少开支的选项。
+      
+       ―很广泛的使用在网络、调制解调器和别的点到点链路上为个人计算机和工作站传输文件。
+       
+      ―对压缩方和解压缩方来说，使用少于64K的内存，可以在Calgary corpus[5]上很容易的达到2：1的压缩率。
+
+1.2 Licensing
+1.2 使用许可
+
+    zlib源代码是广泛的和自由的使用，服从以下版权：
+    
+  (C) 1995 Jean-Loup Gailly and Mark Adler
+
+提供本软件完全随意，不需要任何表示或者隐含的保证。软件的作者不对因为使用本软件而带来的损害负有任何责任。
+
+    授权给为任何目的使用本软件的任何人，包括商用程序，可以自由的改变和重新发布本软件。服从以下限制：
+       
+       1.本软件的原始资料不能被歪曲，不能声明你写的最原始的软件。如果你在你的产品里使用了本软件，应该在爱产品文档里面表示致谢，但不是要求。
+ 
+       2. 对源版本的任何改变必须明白的标出，而且绝对不允许不如实的反映源软件。
+      
+       3. 本提示可以从任何发布的源文件中移出或改变。
+
+       Jean-Loup Gailly        Mark Adler
+       gzip@prep.ai.mit.edu    madler@alumni.caltech.edu
+
+      如果你在你的产品中使用了zlib库，我们很不情愿收到冗长的要签署的法律文件。源代码是免费提供，不需要任何形式的授权。这个库是完全由Jean-Loup Gailly 和 Mark Adler写成，不包含第三方的代码。
+  
+   Deflate格式和压缩算法是基于Lempel-Ziv LZ77压缩。为了支持其专利免费状态，GNU计划和小型网络图形（Portable Network Graphics）工作组做了更广泛的研究。
+
+1.3 需求说明
+
+在本文档中出现的关键字‘MUST’、‘MUST NOT’、‘REQUIRED’、‘SHOULD’、‘SHOULD NOT’和‘MAY’的解释在[Bradner97]中描述。
+
+2. DEFLATE 算法的执行
+    DEFLATE压缩算法是Phil Katz设计的，其实现细节在[Deutsch96]中可以公开得到的。所以它是一个可以在IPCOMP中实现的自由可用的算法。
+   压缩和解压的细节遵循[Deutsch96]中概述的，或者使用软件库更好一些。因为IPComp是一个无状态协议，不论在压缩或者解压过程不同报文之间压缩历史MUST被清空。
+
+2.1 压缩
+   
+   在[IPCOMP]中定义的，压缩过程是通过IP压缩联合（IPCA）决定的。IPCA在本文档内MUST为压缩过程定义DEFLATE算法。
+   
+   压缩过程需要从IP数据报中压缩数据然后把压缩结果放在IPComp头的后面。如下例，压缩一个TCP数据报：
+
+   压缩前:  IP TCP ...
+   压缩后:   IP IPCOMP (TCP ...)
+  
+   请注意在IPCOMP头之后的数据是怎样压缩的。
+  
+   DELATE允许一个压缩等级数从最好的压缩率但比较慢到比较快压缩之间变化。一个压缩等级数是压缩执行必须依赖的，因为要与解压保持一致。
+
+2.2 解压
+   
+   在压缩过程中，IPCA为解压过程定义了参数和算法。按照在[IPCOMP]中的定义，IPComp头后的数据被解压然后在IP头中取代IPComp头。
+   使用DEFLATE的解压过程按照[Deutsch96]中定义的解压过程。
+3. 限度   
+   按照[IPCOMP]中的说明，如果在一个比较小的缓冲区里面执行压缩即使链路比较快也不会工作的很好，因为压缩花费的时间比传输花费的时间要少。非正式的测试显示能够产生最好结果的平均缓冲大小是90字节。所以执行一种压缩算法的缓冲区SHOULD NOT小于90字节。
+   
+   除了缓冲大小的限制， [IPCOMP]中没有定义可压缩性的测试，本文档也没有概述。
+4. IPSec 传输标志符
+   [IPDOI]声明：DEFLATE压缩算法的ISAKMP IPCOMP传输ID是IPCOMP_DEFLATE。IPCOMP_DEFLATE不需要别的ISAKMP参数。
+
+5. 安全考虑
+   本文档没有更深层次的增加在[IPCOMP] 和 [Deutsch96]中已经说明的安全方面的考虑。
+6. 参考资料
+   [IPCOMP]    Shacham, A., Monsour, R., Pereira, R., and M. Thomas, "IP
+               Payload Compression Protocol (IPComp)", RFC 2393,
+               December 1998.
+
+   [Deutsch96] Deutsch, P., "DEFLATE Compressed Data Format
+               Specification version 1.3", RFC 1951, May 1996.
+
+   [IPDOI]     Piper, D., "The Internet IP Security Domain of
+               Interpretation for ISAKMP", RFC 2407, November 1998.
+
+   [Corpus90]  Bell, T.C., Cleary, G. G. and Witten, I.H., "Text
+               Compression", Prentice_Hall, Englewood Cliffs NJ, 1990.
+               The compression corpus itself can be found in
+               ftp://ftp.uu.net/pub/archiving/zip/
+
+   [Gailly95]  Gailly, J.-L., "Zlib 0.95 beta"
+
+7.致谢
+   作者感谢IPPPCP工作组的所有成员，特别是Abraham Shacham 和 Naganand Doraswamy。
+8. 编辑地址
+   Roy Pereira
+   TimeStep Corporation
+
+   Phone: +1 (613) 599-3610 x 4808
+   EMail: rpereira@timestep.com
+
+   可以通过Email：ippcp@cisco.com 联系工作组，或者通过他的主席：
+   Naganand Dorswamy
+   Bay Networks
+
+   EMail: naganand@baynetworks.com
+
+9.  全部版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+

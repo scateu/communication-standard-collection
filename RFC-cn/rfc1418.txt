@@ -1,0 +1,107 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang   guodagang@tyut.edu.cn）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                                   M. Rose  
+Request for Comments: 1418                             Dover Beach Consulting，Inc. 
+Obsoletes: 1161，1283                                                 March 1993 
+
+OSI上的SNMP
+(RFC1418――SNMP over OSI)
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+目录
+1. 背景	1
+2. 在CLTS上的映射	2
+2.1.  周知地址	2
+2.2.  中断	2
+2.3.  最大消息尺寸	2
+3. 鸣谢	3
+4.参考文献	3
+5. 需要考虑的安全问题	3
+6. 作者地址：	3
+
+1. 背景
+现在，对于基于TCP/IP的internet，在[1]中定义的简单网络管理协议(Simple Network 
+Management Protocol，缩写为SNMP)用作一个网络管理构架的完整部分。在它的相关标准
+中，定义了管理信息结构(Structure of Management Information，缩写为SMI)[2，3]和管理
+信息数据库(Management Information Base，缩写为MIB)[4]，SNMP已经被广泛地部署在
+许多运行Internet协议族的运营的网络中。
+不必惊讶于这些站点中的许多可以获得OSI性能，并且希望支持他们在 SNMP技术上
+的投资来有助于管理那些OSI网元。通过在支持OSI面向无连接的传输服务的环境中定义一
+个运行SNMP的构架，本备忘录陈述了这些关系。
+然而，正如[5]中提示的那样，SNMP首先会映射到UDP[6]上。该规范计划用于不能使
+用UDP传输的环境中。这个规范更应该理解为一种建议：在异构传输环境中，一个被管理
+代理应该支持多于一种的映射方式。
+2. 在CLTS上的映射
+在CLTS[7，8]上的SNMP映射是直通方式的。步骤原理和UDP采用的相同。注意CLTS 
+和服务都是通过包含了全部地址信息的UDP信息传输包来提供的。因此，[1]中的“传输地
+址”，映射在CLTS上的SNMP仅仅是一个传输选项和网络地址。
+应该注意到，正如[1，5]中描述的那样，映射在面向非连接的传输服务上的SNMP和
+SNMP的结构原理是完全一致的。然而，CLTS本身既可以采用一个面向无连接方式，又可
+以采用面向连接的网络服务方式实现。在这种映射中描述的映射支持任意实现方式。(当提供
+所有网络服务时，应该以CLNS为实现基础。)
+2.1.  周知地址
+不象Internet协议组，OSI没有使用周知口。当然，多路分解技术基于“选择器” 发生，
+“选择器”是具有局部重要意义的不透明八位字串。为了照顾基于CLTS的可互操作的SNMP
+实现，定义四个选择器是必要的。
+当CLTS采用无连接模式的网络服务来提供反向SNMP传输时，应该采用由6个ASCII
+字符组成的“snmp-l”传输选择器；按照约定，会发送一个SNMP中断给一个正在监听由7
+个 ASCII字符组成的“snmp-l”传输选择器的SNMP管理器。
+当CLTS采用面向连接的网络服务来提供反向SNMP传输时，应该采用由6个ASCII
+字符组成“snmp-o”传输选择器；按照约定，会发送一个SNMP中断给一个正在监听由7
+个 ASCII字符组成的“snmp-o”传输选择器的SNMP管理器。
+2.2.  中断
+当SNMP中断在CLTS上发送时，Trap-PDU中的代理地址字段包含了IP地址“0.0.0.0”。
+SNMP管理器可以基于由传输服务提供的信息(也就是源自T-UNIT-DATA.INDICATION基本
+数据单元的)探知陷阱的来源。
+2.3.  最大消息尺寸
+一个在OSI上运行SNMP的实体应该准备好接收大小至少484个字节的消息。鼓励应
+用随时可能发生的更大的数值。
+3. 鸣谢
+本规范源自RFC 1298，基于在IETF中有关“SNMP over a Multiprotocol Internet”工
+作组的讨论。
+4.参考文献
+[1] Case，J.，Fedor，M.，Schoffstall，M.，and J. Davin，"Simple Network Management 
+Protocol"，STD 15，RFC 1157，SNMP Research，Performance Systems International，
+Performance Systems International，MIT Laboratory for Computer Science，May 1990.
+[2] Rose M.，and K. McCloghrie，"Structure and Identification of Management 
+Information for TCP/IP-based internets"，STD 16，RFC 1155，Performance Systems 
+International，Hughes LAN Systems，May 1990.
+[3] Rose，M.，and K. McCloghrie，Editors，"Concise MIB Definitions"，STD 16，RFC 
+1212，Performance Systems International，Hughes LAN Systems，March 1991.
+[4] Rose M.，and K. McCloghrie，Editors，"Management Information Base for Network 
+Management of TCP/IP-based Internets"，STD 17，RFC 1213，Hughes LAN Systems，
+Inc.，Performance Systems International，March 1991.
+[5] Kastenholz，F.，“SNMP Communications Services”，RFC 1270，Clearpoint 
+Research Corporation，October 1991.
+[6] Postel J.，"User Datagram Protocol"，STD 6，RFC 768，USC/Information Sciences 
+Institute，August 1980.
+[7] Information processing systems - Open Systems Interconnection - Transport 
+Service Definition - Addendum 1: Connectionless-mode Transmission，International 
+Organization for Standardization. International Standard 8072/AD 1，June 1986.
+[8] Information processing systems - Open Systems Interconnection - Protocol 
+Specification for Providing the Connectionless-mode Transport Service，International 
+Organization for Standardization.  International Standard 8602，December 1987.
+5. 需要考虑的安全问题
+本备忘录不讨论有关安全问题。
+6. 作者地址：
+Marshall T. Rose
+Dover Beach Consulting，Inc.
+420 Whisman Court
+Mountain View，CA 94043-2112
+Phone: (415) 968-1052
+EMail: mrose@dbc.mtview.ca.us
+RFC1418――SNMP over OSI                                                       OSI上的SNMP
+
+
+1
+RFC文档中文翻译计划                                                            

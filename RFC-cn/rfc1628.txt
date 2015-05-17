@@ -1,0 +1,1646 @@
+组织：中国互动出版网（http：//www.china-pub.com/）
+RFC文档中文翻译计划（http：//www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-10-25
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                         J. Case，Editor
+Request for Comments：1628                           SNMP Research，Incorporated
+Category：Standards Track                                       May 1994  
+UPS管理信息数据库( MIB)
+(RFC1628----UPS Management Information Base)
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+目录
+1.介绍	1
+2.  SNMPV2网络管理框架	1
+2.1.对象定义	2
+3.概述	2
+4.定义	2
+5.致谢	37
+6.参考文献	37
+7.需要考虑的安全问题	38
+8.作者地址	38
+
+1.介绍
+本备忘录定以了管理信息数据库(Management Information Base，缩写为MIB)的一部
+分 ，在Internet社团中用作网络管理协议。尤其是，它定义了对象来管理不间断电源 
+(uninterruptible power supply，缩写为UPS)系统。
+2.  SNMPv2网络管理框架
+SNMPv2网络管理框架由四个主要部分组成。它们是：
+o RFC1442定义的SMI，为管理目的而描述与命名对象的机制。
+o STD 17，RFC 1213定义的MIB-II，Internet协议族的核心管理对相集。
+o RFC 1445定义的该框架下管理及体系结构方面的内容。
+o RFC 1448定义的用于对管理对象进行网络访问的协议。
+该框架允许为实验与评估定义新的对象。
+2.1.对象定义
+管理对象通过一个称作管理信息库(MIB)的虚拟信息存储来访问。MIB中的对象用SMI
+中定义的抽象语法标注1(ASN.1)的子集来定义。尤其，每一个对象类型由一个管理方分配
+的对象标识符来命名。对象类型与一个对象实例用于唯一标识该对象的一次具体实例化。为
+人们方便，我们经常用一个叫做描述符的文本串来引用该对象类型。
+3.概述
+本文档定义了针对不间断电源的通过简单网络管理协议(Simple Network Management 
+Protocol，缩写为SNMP)可以管理的管理对象。
+4.定义
+UPS-MIB定义：：= BEGIN
+
+IMPORTS
+ MODULE-IDENTITY，OBJECT-TYPE，通告类型，OBJECT-IDENTITY，Counter32，
+Gauge32，Integer32
+FROM SNMPv2-SMI
+ DisplayString，TimeStamp，TimeInterval，TestAndIncr，AutonomousType
+FROM SNMPv2-TC
+ MODULE-COMPLIANCE，对象集合
+FROM SNMPv2-CONF;
+
+UpsMIB模块定义
+ 最新更新“9402230000Z”
+ 组织：“IETF UPS MIB工作组”
+ 联系方法
+“Jeffrey D. Case
+ Postal：SNMP Research，Incorporated
+3001 Kimberlin Heights Road
+Knoxville，TN37920
+US
+ Tel：+1 615 573 1434
+ Fax：+1 615 573 9197
+ E-mail：case@snmp.com”
+ 描述
+“描述了不间断电源的MIB模块。”
+ ：：= { mib-2 33 }
+
+PositiveInteger ：：= TEXTUAL-CONVENTION
+提示显示：“d”
+当前状态
+描述
+“本数据类型是非零和非负的数值。”
+语法：整数(1..2147483647)
+
+非负 ：：= TEXTUAL-CONVENTION
+提示显示： "d"
+当前状态
+描述
+“本数据类型是非负数值。”
+语法：整数(0..2147483647)
+
+upsObjects对象标识符：：= { upsMIB 1 }
+
+-- 设备标识组。除了upsIdentName和upsIdentAttachedDevices，本组中的所有对象
+在设备初始化时设置并保持不变。
+
+upsIdent对象标识符 ：：= { upsObjects 1 }
+
+upsIdentManufacturer 对象类型
+语法：DisplayString (SIZE (0..31))
+最大权限：只读
+当前状态
+描述
+“UPS厂商名称。”
+：：= { upsIdent 1 }
+
+upsIdentModel 对象类型
+语法：DisplayString (SIZE (0..63))
+最大权限：只读
+当前状态
+描述
+“UPS模型标号。”
+：：= { upsIdent 2 }
+
+upsIdentUPSSoftwareVersion 对象类型
+语法：DisplayString (SIZE (0..63))
+最大权限：只读
+当前状态
+描述
+“UPS固件/软件版本。在一些设备中，该变量可以或不可以和
+upsIdentAgentSoftwareVersion有相同的数值。”
+：：= { upsIdent 3 }
+
+upsIdentAgentSoftwareVersion 对象类型
+语法：DisplayString (SIZE (0..63))
+最大权限：只读
+当前状态
+描述
+“UPS代理软件版本。在一些设备中，该变量可以或不可以和
+upsIdentUPSSoftwareVersion有相同的数值。”
+：：= { upsIdent 4 }
+
+upsIdentName 对象类型
+语法：DisplayString (SIZE(0..63))
+最大权限：读写
+当前状态
+描述
+“标识UPS的一个字符串。本对象应该管理员设置。”
+：：= { upsIdent 5 }
+
+upsIdentAttachedDevices 对象类型
+ SYNTAXDisplayString (SIZE(0..63))
+ 最大权限：读写
+ 当前状态
+ 描述
+“标识附属于UPS输出设备的一个字符串。本对象应该由管理员设置。”
+ ：：= { upsIdent 6 }
+
+-- 电池集合
+
+upsBattery对象标识符：：= { upsObjects 2 }
+
+upsBatteryStatus 对象类型
+语法：整数{
+unknown(1)，
+batteryNormal(2)，
+batteryLow(3)，
+batteryDepleted(4)
+ }
+最大权限：只读
+当前状态
+描述
+“UPS系统的电池保留的容量指示。BatteryNormal的值显示了剩余的运行时间大于
+upsConfigLowBattTime。BatteryLow的值显示了剩余的电池运行时间小于等于 
+upsConfigLowBattTime。BatteryDepleted的值显示了，当失去有效动力时(包括当前有效
+动力中断和UPS不能支撑输出的可能性)，UPS不能支撑当前载荷。”
+：：= { upsBattery 1 }
+
+upsSecondsOnBattery 对象类型
+语法：非负
+单位“秒”
+最大权限：只读
+当前状态
+描述
+“如果该单位有电池电源，从UPS最近的一次切换到电池电源，或者从网络管理子系
+统最近的一次重启所经历的时间，都要最少。如果该单位没有电池电源的话会返回数值0。”
+：：= { upsBattery 2 }
+
+upsEstimatedMinutesRemaining 对象类型
+语法：PositiveInteger
+单位“分钟”
+最大权限：只读
+当前状态
+描述
+“在当前负荷情况下，如果市电中断，电池电量耗尽经历时间的估计值。”
+ ：：= { upsBattery 3 }
+
+upsEstimatedChargeRemaining 对象类型
+语法：整数(0..100)
+单位“百分比”
+最大权限：只读
+当前状态
+描述
+“以全部电量的百分比的形式表示电池剩余电量的估计值。”
+：：= { upsBattery 4 }
+
+upsBatteryVoltage 对象类型
+语法：非负
+单位“0.1直流伏特”
+最大权限：只读
+当前状态
+描述
+“当前电池电压值。”
+：：= { upsBattery 5 }
+
+upsBatteryCurrent 对象类型
+语法：32位整形
+单位“0.1直流安培”
+最大权限：只读
+当前状态
+描述
+“当前电池电流。”
+：：= { upsBattery 6 }
+
+upsBatteryTemperature 对象类型
+语法：32位整形
+单位“摄氏度”
+最大权限：只读
+当前状态
+描述
+“UPS电池外壳的环境温度。”
+：：= { upsBattery 7 }
+
+--输入集合
+
+upsInput对象标识符 ：：= { upsObjects 3 }
+
+upsInputLineBads 对象类型
+语法：32位计数器
+最大权限：只读
+当前状态
+描述
+“厂家定义的输入超差情况的次数。输入从0公差变到一次或更多的输入链路超差1
+次，该数值每次增加1。”
+：：= { upsInput 1 }
+
+upsInputNumLines 对象类型
+语法：非负
+最大权限：只读
+当前状态
+描述
+“该设备使用的输入链路编号。该变量显示了在输出列表中行号。”
+：：= { upsInput 2 }
+
+upsInputTable 对象类型
+语法：UpsInputEntry的序列
+最大权限：无权访问
+当前状态
+描述
+“输出列表引线队列。由upsInputNumLines值给定的条目编号。”
+：：= { upsInput 3 }
+
+upsInputEntry 对象类型
+语法：UpsInputEntry
+最大权限：无权访问
+当前状态
+描述
+“包含应用于一条实际输入链路信息的条目。”
+索引{ upsInputLineIndex }
+：：= { upsInputTable 1 }
+
+UpsInputEntry ：：=序列{
+upsInputLineIndexPositiveInteger，
+upsInputFrequency非负，
+upsInputVoltage非负，
+upsInputCurrent非负，
+upsInputTruePower非负
+}
+
+upsInputLineIndex 对象类型
+语法：PositiveInteger
+最大权限：无权访问
+当前状态
+描述
+“输入链路标识符。”
+：：= { upsInputEntry 1 }
+
+upsInputFrequency 对象类型
+语法：非负
+单位“0.1Hz”
+最大权限：只读
+当前状态
+描述
+“当前输入频率。”
+：：= { upsInputEntry 2 }
+
+upsInputVoltage 对象类型
+语法：非负
+单位“均方根伏特”
+最大权限：只读
+当前状态
+描述
+“当前输入电压值。”
+：：= { upsInputEntry 3 }
+
+upsInputCurrent 对象类型
+语法：非负
+单位“0.1均方根安培”
+最大权限：只读
+当前状态
+描述
+“当前输入电流值。”
+：：= { upsInputEntry 4 }
+
+upsInputTruePower 对象类型
+语法：非负
+单位“瓦”
+最大权限：只读
+当前状态
+描述
+“当前实际输入电力大小。”
+：：= { upsInputEntry 5 }
+
+--输出集合
+
+upsOutput对象标识符 ：：= { upsObjects 4 }
+
+upsOutputSource 对象类型
+语法：整数{
+other(1)，
+none(2)，
+normal(3)，
+bypass(4)，
+battery(5)，
+booster(6)，
+reducer(7)
+ }
+最大权限：只读
+当前状态
+描述
+“当前输出动力源。没有计数显示没有输出动力源(因此没有输出动力)，例如，系统的
+输出开关已经打开。”
+ ：：= { upsOutput 1 }
+
+upsOutputFrequency 对象类型
+语法：非负
+单位“0.1Hz”
+最大权限：只读
+当前状态
+描述
+“当前输出频率。”
+ ：：= { upsOutput 2 }
+
+upsOutputNumLines 对象类型
+语法：非负
+最大权限：只读
+当前状态
+描述
+“再改设备中启用的输出链路编号。该变量显示了在输出列表中的行号。”
+ ：：= { upsOutput 3 }
+
+upsOutputTable 对象类型
+语法：UpsOutputEntry的序列
+最大权限：无权访问
+当前状态
+描述
+“输出列表表示值的序列。表示值的序号由upsOutputNumLines的值给定。”
+：：= { upsOutput 4 }
+
+upsOutputEntry 对象类型
+语法：UpsOutputEntry
+最大权限：无权访问
+当前状态
+描述
+“包含着实际输出链路信息的表示值。”
+索引{ upsOutputLineIndex }
+：：= { upsOutputTable 1 }
+
+UpsOutputEntry ：：= 序列{
+UpsOutputLineIndexPositive：整数，
+UpsOutputVoltage：非负，
+UpsOutputCurrent：非负，
+UpsOutputPower：非负，
+UpsOutputPercentLoad：整数
+}
+
+upsOutputLineIndex 对象类型
+语法：PositiveInteger
+最大权限：无权访问
+当前状态
+描述
+“输出链路标识符。”
+ ：：= { upsOutputEntry 1 }
+
+upsOutputVoltage 对象类型
+语法：非负
+单位“均方根伏特”
+最大权限：只读
+当前状态
+描述
+“当前输出电压。”
+：：= { upsOutputEntry 2 }
+
+upsOutputCurrent 对象类型
+语法：非负
+单位“0.1均方根安培”
+最大权限：只读
+当前状态
+描述
+“当前输出电流。”
+：：= { upsOutputEntry 3 }
+
+upsOutputPower 对象类型
+语法：非负
+单位“瓦”
+最大权限：只读
+当前状态
+描述
+“当前输出功率。”
+：：= { upsOutputEntry 4 }
+
+upsOutputPercentLoad 对象类型
+语法：整数(0..200)
+单位“百分比”
+最大权限：只读
+当前状态
+描述
+“在输出链路上，目前已经占用的UPS功率容量百分比，也就是，实际功率容量/负荷
+的百分比和VA/负载的百分比两者中较大的那个。”
+：：= { upsOutputEntry 5 }
+
+-- 旁路集合
+
+upsBypass对象标识符 ：：= { upsObjects 5 }
+
+upsBypassFrequency 对象类型
+语法：非负
+单位“0.1Hz”
+最大权限：只读
+当前状态
+描述
+“当前旁路频率。”
+ ：：= { upsBypass 1 }
+
+upsBypassNumLines 对象类型
+语法：非负
+最大权限：只读
+当前状态
+描述
+“在该设备中启用的旁路链路编号。该表示值显示了在旁路列表中的行号。”
+ ：：= { upsBypass 2 }
+
+upsBypassTable 对象类型
+语法：UpsBypassEntry的序列
+最大权限：无权访问
+当前状态
+描述
+“旁路列表表示值的队列。由upsBypassNumLines的值给定的表示值编号。”
+ ：：= { upsBypass 3 }
+
+upsBypassEntry 对象类型
+语法：UpsBypassEntry
+最大权限：无权访问
+当前状态
+描述
+“包含了应用于实际旁路输出信息的表示值。”
+索引{ upsBypassLineIndex }
+ ：：= { upsBypassTable 1 }
+
+UpsBypassEntry ：：= 序列{
+UpsBypassLineIndexPositive：整数，
+upsBypassVoltage：非负，
+upsBypassCurrent：非负，
+upsBypassPower：非负
+}
+
+upsBypassLineIndex 对象类型
+语法：PositiveInteger
+最大权限：无权访问
+当前状态
+描述
+“旁路链路标识符。”
+ ：：= { upsBypassEntry 1 }
+
+upsBypassVoltage 对象类型
+语法：非负
+单位“均方根伏特”
+最大权限：只读
+当前状态
+描述
+“当前旁路电压。”
+ ：：= { upsBypassEntry 2 }
+
+upsBypassCurrent 对象类型
+语法：非负
+单位“0.1均方根安培”
+最大权限：只读
+当前状态
+描述
+“当前旁路电流。”
+ ：：= { upsBypassEntry 3 }
+
+upsBypassPower 对象类型
+语法：非负
+单位“瓦”
+最大权限：只读
+当前状态
+描述
+“当前由旁路输入的实际动力。”
+ ：：= { upsBypassEntry 4 }
+
+--报警类。
+
+UpsAlarm对象标识符 ：：= { upsObjects 6 }
+
+upsAlarmsPresent 对象类型
+语法：32位量规
+最大权限：只读
+当前状态
+描述
+“当前激活的报警情况编号。”
+ ：：= { upsAlarm 1 }
+
+upsAlarmTable 对象类型
+语法：UpsAlarmEntry的序列
+最大权限：无权访问
+当前状态
+描述
+“报警列表表示值队列。在某一时刻，根据起作用的报警条件数量的不同，表中可能包
+含零行、一行或多行。最初，在代理启动时，本列表是空的。当代理检测到一种情况后就会
+在表中增加一行，当此种情况消失后就删掉此行。代理创建第一行时，将upsAlarmId的值
+设为1，然后每增加一行就把此值加1。当要超过upsAlarmId的最大值时，就返回到1或
+是比1大的首个未使用的值。因此经过多次操作，此表可能变的很松散，比如只包含95、
+100、101和203行条目，且这些条目不一定是按照时间顺序排列的，因为 upsAlarmId可
+能已经循环回来了。
+用AutonomousType(对象标识符)命名为upsAlarmDescr的报警，允许单个表反映那些
+众所周知的报警还有那些由特殊实现定义的报警，例如，记录于文档中企业为设备定义的
+MIB。没有两行的upsAlarmDescr值是相同的，因为每一种报警定义一种情况。为了满足
+这些需求，应当特别注意报警情况的定义，以确保系统不会同时进入同一种情况多次。
+UpsAlarmsPresent的值反映了在任意给定时刻的列表中的行号。”
+ ：：= { upsAlarm 2 }
+
+upsAlarmEntry 对象类型
+语法：UpsAlarmEntry
+最大权限：无权访问
+当前状态
+描述
+“包含了应用于实际报警的信息的表示值。”
+索引{ upsAlarmId }
+ ：：= { upsAlarmTable 1 }
+
+UpsAlarmEntry ：：=序列{
+upsAlarmId PositiveInteger，
+upsAlarmDescr AutonomousType，
+upsAlarmTimeTimeStamp
+}
+
+upsAlarmId 对象类型
+语法：PositiveInteger
+最大权限：无权访问
+当前状态
+描述
+“各种报警情况的唯一标识符。该值必须保持恒定不变。”
+：：= { upsAlarmEntry 1 }
+
+upsAlarmDescr 对象类型
+语法：AutonomousType
+最大权限：只读
+当前状态
+描述
+“报警描述对象参照系。参照的对象不应该容易受到外界影响，但更多的时候是用于提
+供报警情况的唯一描述。”
+ ：：= { upsAlarmEntry 2 }
+
+upsAlarmTime 对象类型
+语法：TimeStamp
+最大权限：只读
+当前状态
+描述
+“当检测到报警时，sysUpTime的值。如果在代理启动时检测到报警，并且推测在代
+理启动之前就已经存在，upsAlarmTime的值就等于0。”
+ ：：= { upsAlarmEntry 3 }
+
+--周知报警情况
+
+upsWellKnownAlarms对象标识符 ：：= { upsAlarm 3 }
+
+upsAlarmBatteryBad对象标识符
+当前状态
+描述
+“已经检测到有1块或多块电池需要更换。”
+ ：：= { upsWellKnownAlarms1 }
+
+upsAlarmOnBattery对象标识符
+当前状态
+描述
+“UPS由电池供电。”
+ ：：= { upsWellKnownAlarms2 }
+
+upsAlarmLowBattery对象标识符
+当前状态
+描述
+“电池剩余运行时间小于等于upsConfigLowBattTime。”
+ ：：= { upsWellKnownAlarms3 }
+
+upsAlarmDepletedBattery对象标识符
+当前状态
+描述
+“如果市电中断，UPS将不能支持当前负荷。”
+ ：：= { upsWellKnownAlarms4 }
+
+upsAlarmTempBad对象标识符
+当前状态
+描述
+“温度超标。”
+ ：：= { upsWellKnownAlarms5 }
+
+upsAlarmInputBad对象标识符
+当前状态
+描述
+“输入状态超标。”
+ ：：= { upsWellKnownAlarms6 }
+
+upsAlarmOutputBad对象标识符
+当前状态
+描述
+“输出状态超标(不同于OutputOverload)。”
+ ：：= { upsWellKnownAlarms7 }
+
+upsAlarmOutputOverload对象标识符
+当前状态
+描述
+“输出负荷超过UPS额定输出。”
+ ：：= { upsWellKnownAlarms8 }
+
+upsAlarmOnBypass对象标识符
+当前状态
+描述
+“当前，UPS正处于旁路状态。”
+ ：：= { upsWellKnownAlarms9 }
+
+upsAlarmBypassBad对象标识符
+当前状态
+描述
+“旁路超标。”
+ ：：= { upsWellKnownAlarms 10 }
+
+upsAlarmOutputOffAsRequested对象标识符
+当前状态
+描述
+“UPS按请求停机，也就是，输出中断。”
+ ：：= { upsWellKnownAlarms 11 }
+
+upsAlarmUpsOffAsRequested对象标识符
+当前状态
+描述
+“根据命令已经关闭整个UPS。”
+ ：：= { upsWellKnownAlarms 12 }
+
+upsAlarmChargerFailed对象标识符
+当前状态
+描述
+“在UPS充电器子系统中检测到未校正的问题。”
+ ：：= { upsWellKnownAlarms 13 }
+
+upsAlarmUpsOutputOff对象标识符
+当前状态
+描述
+“UPS输出处于中断状态。”
+ ：：= { upsWellKnownAlarms 14 }
+
+upsAlarmUpsSystemOff对象标识符
+当前状态
+描述
+“UPS系统出于中断状态。”
+ ：：= { upsWellKnownAlarms 15 }
+
+upsAlarmFanFailure对象标识符
+当前状态
+描述
+“已经检测到一个或更多的UPS中的风扇失效。”
+ ：：= { upsWellKnownAlarms 16 }
+
+upsAlarmFuseFailure对象标识符
+当前状态
+描述
+“已经检测到一个或更多的保险丝失效。”
+ ：：= { upsWellKnownAlarms 17 }
+
+upsAlarmGeneralFault对象标识符
+当前状态
+描述
+“已经检测到在UPS中的一个一般性失效。”
+ ：：= { upsWellKnownAlarms 18 }
+
+upsAlarmDiagnosticTestFailed对象标识符
+当前状态
+描述
+“最近诊断测试结果显示有失效。”
+ ：：= { upsWellKnownAlarms 19 }
+
+upsAlarmCommunicationsLost对象标识符
+ 当前状态
+ 描述
+“在代理和UPS之间的通讯中出现了问题。”
+ ：：= { upsWellKnownAlarms 20 }
+
+upsAlarmAwaitingPower对象标识符
+当前状态
+描述
+“UPS输出中断，UPS正等待输入动力的返回。”
+ ：：= { upsWellKnownAlarms 21 }
+
+upsAlarmShutdownPending对象标识符
+当前状态
+描述
+“正在进行upsShutdownAfterDelay脉冲分频。”
+ ：：= { upsWellKnownAlarms 22 }
+
+upsAlarmShutdownImminent对象标识符
+当前状态
+描述
+“在5秒钟内，UPS会关闭对负载的动力；它既可以用于定时关机，也可能由于电池
+电量太低而关机。”
+ ：：= { upsWellKnownAlarms 23 }
+
+upsAlarmTestInProgress对象标识符
+当前状态
+描述
+“由测试集合启动和表示的在线测试。通过其他特订的实现机制启动的测试能够在报警
+列表中表示测试的存在，如果愿意的话，通过在MIB文档说明中的对象标识符宏来实现，
+并且超出来该对象标识符的范围。”
+ ：：= { upsWellKnownAlarms 24 }
+
+-- 测试集合
+
+upsTest对象标识符 ：：= { upsObjects 7 }
+
+upsTestId 对象类型
+语法：对象标识符
+最大权限：读写
+当前状态
+描述
+“测试用对象标识符来命名，定义了一种初始化测试的标准机制，包括本文档种标识的
+众所周知的测试，以及那些特殊实现引入的测试，例如，企业为设备定义的MIB。
+设置此参数初始化那些命名的测试。设置此参数需要在同一SNMP消息中包括
+upsTestSpinLock 。
+如果不能执行测试，设置请求将被拒绝，同时提示一个适当的错误消息。这些错误消息
+可能是在一个测试已经在处理时，另一个测试又试图开始。当前或最近测试的状态值保留在
+upsTestResultsSummary中。如果把upsTestId 参数值设为upsTestAbortTestInProgress，
+则运行中的测试将会被放弃。
+如果一个测试正在进行，则读操作的返回值是此测试的名称。如果没有测试正在处理，
+则返回最近一次执行的测试名称。如果根本没有运行测试，则返回的是
+upsTestNoTestsInitiated 的值。”
+ ：：= { upsTest 1 }
+
+--在TestAndIncr的语法中对象的语义的更多信息见[6]
+
+upsTestSpinLock 对象类型
+语法：TestAndIncr
+最大权限：读写
+当前状态
+描述
+“测试子系统的自旋锁。自旋锁用途如下。
+在开始测试前，管理工作站应该采用如下方法确认没有测试在进行：
+ try_again：
+get (upsTestSpinLock)
+while (upsTestResultsSummary == inProgress) {
+/*循环，当其他管理器正在进行测试时*/
+short delay
+get (upsTestSpinLock)
+}
+lock_value = upsTestSpinLock
+/*如果没有测试进行，则开始测试*/
+set (upsTestSpinLock = lock_value，upsTestId = requested_test)
+if (error_index == 1) { /* (upsTestSpinLock failed) */
+/*如果控制权限没有问题，那么会在开始我们的测试之前终止和其他管理器的联系*/
+goto try_again
+}
+if (error_index == 2) { /* (upsTestId) */
+/*不能完成测试*/
+give up
+}
+/*测试成功开始*/
+/*通过轮训ups的TestResultsSummary，来等候测试完成*/
+get (upsTestSpinLock，upsTestResultsSummary，upsTestResultsDetail)
+while (upsTestResultsSummary == inProgress) {
+short delay
+get (upsTestSpinLock，upsTestResultsSummary，upsTestResultsDetail)
+}
+/*当测试完成时，取回所有的测试结果*/
+/*如果ups的TestSpinLock == lock_value + 1，那么就是我们的测试*/
+/*结果(和其他管理器不同的)*/
+在代理初始化时，ups的TestSpinLock的初始值应该是1。”
+ ：：= { upsTest 2 }
+
+upsTestResultsSummary 对象类型
+语法：整数{
+donePass(1)，
+doneWarning(2)，
+doneError(3)，
+aborted(4)，
+inProgress(5)，
+noTestsInitiated(6)
+ }
+ 最大权限：只读
+ 当前状态
+ 描述
+“当前或最近的UPS诊断测试结果。donePass(1)、doneWarning(2)和doneError(3)
+的值显示测试完成，或者是成功、有报警、或有差错。如果upsTestId的值为
+upsTestAbortTestInProgress，则测试返回值aborted (4)，表明此次测试放弃。没有得出结
+论的测试用inProgress(5)标明。值noTestsInitiated(6)说明没有以前的测试结果，例如从网
+络管理子系统上一次重新初始化后没有运行测试，以及系统的非易失性存储器中没有保存测
+试结果等情况。”
+ ：：= { upsTest 3 }
+
+upsTestResultsDetail 对象类型
+语法：DisplayString (SIZE (0..255))
+最大权限：只读
+当前状态
+描述
+“有关ups的TestResultsSummary附加信息。如果没有附加信息可用，返回长度为
+零的字符串。”
+ ：：= { upsTest 4 }
+
+upsTestStartTime 对象类型
+语法：TimeStamp
+最大权限：只读
+当前状态
+描述
+“在线测试时，启动sysUpTime的值，或者，如果测试是非在线的，可以设置测试时
+间。如果upsTestResultsSummary的值不是由时间激活的(6)，则upsTestStartTime的值是
+0。”
+ ：：= { upsTest 5 }
+
+upsTestElapsedTime 对象类型
+语法：TimeInterval
+最大权限：只读
+当前状态
+描述
+“以滴答数计时的时间表明正在处理的测试初始化后到目前的时间，或者在没有测试进
+行的情况下表明上一次测试完成所花费的时间。如果upsTestResultsSummary的值是 
+noTestsInitiated(6)，那么upsTestElapsedTime的值就是0。”
+ ：：= { upsTest 6 }
+
+-- 周知测试。
+
+UpsWellKnownTests对象标识 ：：= { upsTest 7 }
+
+upsTestNoTestsInitiated对象标识符
+当前状态
+描述
+“没有启动测试，而且没有在线测试。”
+ ：：= { upsWellKnownTests1 }
+
+upsTestAbortTestInProgress对象标识符
+当前状态
+描述
+“在线测试失败。”
+ ：：= { upsWellKnownTests2 }
+
+upsTestGeneralSystemsTest对象标识符
+当前状态
+描述
+“UPS设备系统的厂商标准测试。”
+ ：：= { upsWellKnownTests3 }
+
+upsTestQuickBatteryTest对象标识符
+当前状态
+描述
+“检测电池是否需要更换的测试。”
+ ：：= { upsWellKnownTests4 }
+
+upsTestDeepBatteryCalibration对象标识符
+当前状态
+描述
+“由厂商设置系统处于电池放电状态，只保留足够的电量决定电池的复位和满意的电池
+运行时间。警告：此测试将使电池处于低充电状态，需要时间重新充电至提供给保护负载足
+够电池的水平。”
+ ：：= { upsWellKnownTests5 }
+
+--控制集合。
+
+upsControl对象标识符 ：：= { upsObjects 8 }
+
+upsShutdownType 对象类型
+语法：整数{
+output(1)，
+system(2)
+ }
+ 最大权限：读写
+ 当前状态
+ 描述
+“这个对象决定了当upsShutdownAfterDelay和upsRebootWithDuration对象倒数记
+数至零时所要采取行动的特性。
+对象的值为output(1)表明关闭请求只会使UPS的输出关闭。对象的值为system(2)表
+明关闭请求将使整个UPS系统关闭。”
+ ：：= { upsControl 1 }
+
+upsShutdownAfterDelay 对象类型
+语法：整数(-1..2147483648)
+单位“秒”
+最大权限：读写
+当前状态
+描述
+“设置此对象将会在指定的秒数后或在UPS电池快耗尽时关闭UPS输出或UPS系统
+（由关闭时upsShutdownType的值决定关闭哪一个）。值为0会立刻执行关闭操作，值为
+-1将放弃倒记数。如果当倒记数到达0时系统已经处于我们想要的状态，那么不会执行任
+何操作。也就是说，如果 upsShutdownType = system 以及系统已经关闭，那么不会有额
+外的操作。同样地，如果upsShutdownType = output 且输出已经关闭，那么也不会有另外
+的操作。在读的时候，upsShutdownAfterDelay 会返回到关闭时还剩余的秒数，或如果没
+有关闭倒记数在起作用时，返回-1。一些系统中，如果代理在关闭倒记数起作用时重起，那
+么会放弃倒记数。这个对象的任何设置说明upsShutdownAfterDelay已经起作用。”
+ ：：= { upsControl 2 }
+
+upsStartupAfterDelay 对象类型
+语法：整数(-1..2147483648)
+单位“秒”
+最大权限：读写
+当前状态
+描述
+“设置此对象将在指定的秒数后启动输出，包括在必要时启动UPS。0值使启动过程
+立即开始，-1将放弃倒记数。如果在倒记数至0时，输出已经运行，那么不会进行任何操
+作。设置这个对象说明运行中的upsStartupAfterDelay 倒记数或upsRebootWithDuration 
+倒记数在起作用。读upsStartupAfterDelay时将返回至启动还有多少时间，或在没有启动倒
+记数时返回-1值。如果倒记数在使用失败后终止，启动将在市电恢复后发生。一些系统中，
+如果代理在启动倒记数起作用时重新启动，那么倒记数将放弃。”
+ ：：= { upsControl 3 }
+
+upsRebootWithDuration 对象类型
+语法：整数(-1..300)
+单位“秒”
+最大权限：读写
+当前状态
+描述
+““设置此对象将会在指定的秒数后立即关闭UPS输出或UPS系统（由关闭时
+upsShutdownType的值决定关闭哪一个），并在这段时间后启动输出，以及在必要时启动
+UPS。如果执行请求所需的时间大于被请求的时间间隔，那么关闭和启动将在尽可能最短
+的时间内完成，但是不管怎样，这个请求的时间不能多于被请求的时间间隔+60秒。在读的
+时候，upsRebootWithDuration 会返回倒记数剩余的秒数，或-1表明没有倒记数。如果在
+使用失败过程中重启，那么只有在市电恢复后启动过程才开始。”
+ ：：= { upsControl 4 }
+
+upsAutoRestart 对象类型
+语法：整数{
+on(1)，
+off(2)
+ }
+ 最大权限：读写
+ 当前状态
+ 描述
+“如果在掉电期间作为upsShutdownAfterDelay或内部电池耗尽的结果而发生停机，
+把该对象设置为‘on’会引起UPS系统在关闭后重启。把该对象设置为‘off’可以防止
+UPS系统在关闭后重启，直到操作员手动或远程重启它。如果UPS处于启动或重新启动时，
+UPS将不会重启，直到满足延时。”
+ ：：= { upsControl 5 }
+
+-- 配置集合。
+
+upsConfig对象标识符 ：：= { upsObjects 9 }
+
+upsConfigInputVoltage 对象类型
+语法：非负
+ 单位“均方根伏特”
+ 最大权限：读写
+ 当前状态
+ 描述
+“标称输入电压大小。在其他支持对该对象读写权限的系统中，如果试图将该变量设置
+为一个不支持的值时，请求会被拒绝，而且代理会发出适当的错误消息来响应，也就是， 
+SNMPv1的badValue，或者SNMPv2的inconsistentValue。”
+ ：：= { upsConfig 1 }
+
+upsConfigInputFreq 对象类型
+语法：非负
+ 单位“0.1Hz”
+ 最大权限：读写
+ 当前状态
+ 描述
+“标称输入频率。在其他支持对该对象读写权限的系统中，如果试图将该变量设置为一
+个不支持的值时，请求会被拒绝，而且代理会发出适当的错误消息来响应，也就是，SNMPv1
+的badValue，或者SNMPv2的inconsistentValue。”
+ ：：= { upsConfig 2 }
+
+upsConfigOutputVoltage 对象类型
+语法：非负
+单位“均方根伏特”
+最大权限：读写
+当前状态
+描述
+“输出电压的标称值。在其他支持对该对象读写权限的系统中，如果试图将该变量设置
+为一个不支持的值时，请求会被拒绝，而且代理会发出适当的错误消息来响应，也就是，
+SNMPv1的badValue，或者SNMPv2的inconsistentValue。”
+ ：：= { upsConfig 3 }
+
+upsConfigOutputFreq 对象类型
+语法：非负
+单位“0.1Hz”
+最大权限：读写
+ 当前状态
+ 描述
+“输出频率的标称值。在其他支持对该对象读写权限的系统中，如果试图将该变量设置
+为一个不支持的值时，请求会被拒绝，而且代理会发出适当的错误消息来响应，也就是，
+SNMPv1的badValue，或者SNMPv2的inconsistentValue。”
+ ：：= { upsConfig 4 }
+
+upsConfigOutputVA 对象类型
+语法：非负
+ UNITS"Volt-Amps"
+ 最大权限：只读
+ 当前状态
+ 描述
+“Volt-Amp标称值大小。”
+ ：：= { upsConfig 5 }
+
+upsConfigOutputPower 对象类型
+语法：非负
+ 单位“瓦”
+ 最大权限：只读
+ 当前状态
+ 描述
+“标称实际功率额定值的大小。”
+ ：：= { upsConfig 6 }
+
+upsConfigLowBattTime 对象类型
+SYNTAX非负
+ 单位“分钟”
+ 最大权限：读写
+ 当前状态
+ 描述
+“在lowBattery情况下，通报upsEstimatedMinutesRemaining的值。因为只支持离散
+(非连续)值的代理，那么代理将会向下一个支持的值靠拢。如果需要的值大于最大支持的值，
+那么将会选最大值。”
+ ：：= { upsConfig 7 }
+
+upsConfigAudibleStatus 对象类型
+语法：整数{
+disabled(1)，
+enabled(2)，
+muted(3)
+ }
+ 最大权限：读写
+ 当前状态
+ 描述
+“听得到的警报的被请求状态。处于禁止状态时，可听到的警报不发声。允许状态是自
+描述的。在可听到的警报发声时，设置对象值为muted(3)，将使警报暂时不发声。此值保
+持为静音，直到正常地停止发声，且返回用于读操作的值一直等于muted(3)。在最后时刻，
+该数值将转变为“enabled(2)”。在可听到的警报不发声时写入muted(3)值会被接受，但不
+会起任何作用。”
+ ：：= { upsConfig 8 }
+
+upsConfigLowVoltageTransferPoint 对象类型
+语法：非负
+ 单位“均方根伏特”
+ 最大权限：读写
+ 当前状态
+ 描述
+“在UPS系统切换到后备电池之前的允许的最小输出链路电压。”
+ ：：= { upsConfig 9 }
+
+upsConfigHighVoltageTransferPoint 对象类型
+语法：非负
+ 单位“均方根伏特”
+ 最大权限：读写
+ 当前状态
+ 描述
+“在UPS系统切换到后备电池之前的允许的最大输出链路电压。”
+ ：：= { upsConfig 10 }
+
+--通告，也就是陷阱
+
+upsTraps对象标识符 ：：= { upsMIB 2 }
+
+-- 本节定义了由UPS代理发出的周知通告。注意必须要确保不会以多于5秒一次的频
+率向一个接收实体发送特定通告。
+
+upsTrapOnBattery 通告类型
+对象{ upsEstimatedMinutesRemaining，upsSecondsOnBattery，
+upsConfigLowBattTime }
+ 当前状态
+ 描述
+“UPS正由蓄电池供电。该陷阱会持续，并且每隔1分钟重发一次，直到UPS关掉或
+不再靠电池运行。”
+：：= { upsTraps 1 }
+
+upsTrapTestCompleted 通告类型
+对象{ upsTestId，upsTestSpinLock，upsTestResultsSummary，upsTestResultsDetail，
+upsTestStartTime，upsTestElapsedTime }
+当前状态
+描述
+“在完成UPS诊断测试后发送该陷阱。”
+：：= { upsTraps 2 }
+
+upsTrapAlarmEntryAdded 通告类型
+对象{ upsAlarmId，upsAlarmDescr }
+ 当前状态
+ 描述
+“每个警报发送的陷阱会送入一个报警列表。除了upsAlarmOnBattery和
+upsAlarmTestInProgress之外，所有报警都会送入。”
+：：= { upsTraps 3 }
+
+upsTrapAlarmEntryRemoved 通告类型
+对象{ upsAlarmId，upsAlarmDescr }
+ 当前状态
+ 描述
+“每次一个报警发送的陷阱和报警列表无关。除了upsAlarmTestInProgress，在所有
+报警清除时都会发送它。”
+：：= { upsTraps 4 }
+
+-- 一致性信息
+
+upsConformance对象标识符 ：：= { upsMIB 3 }
+
+upsCompliances对象标识符 ：：= { upsConformance 1 }
+
+--一致性状态
+
+upsSubsetCompliance MODULE-COMPLIANCE
+ 当前状态
+ 描述
+“仅仅对两个有联系的通讯协议支持UPS的一致性状态。”
+ MODULE -- this module
+MANDATORY-GROUPS{ upsSubsetIdentGroup，upsSubsetBatteryGroup，
+upsSubsetInputGroup，upsSubsetOutputGroup，upsSubsetAlarmGroup，
+upsSubsetControlGroup，upsSubsetConfigGroup }
+
+ OBJECTupsBatteryStatus
+语法：整数{
+batteryNormal(2)，
+batteryLow(3)
+ }
+ 描述
+“不需要支持值unknown(1)和batteryDepleted(4)。”
+
+ OBJECTupsAlarmDescr
+描述
+“不需要支持所有的“well known”测试类型。必须支持的周知报警类型是：
+upsAlarmOnBattery、upsAlarmLowBattery、upsAlarmInputBad、upsAlarmUpsOutputOff、
+upsAlarmUpsSystemOff和upsAlarmTestInProgress。”
+
+ OBJECTupsOutputSource
+语法：整数{
+normal(2)，
+battery(4)
+ }
+ 描述
+“不需要支持值other(1)、none(2)、bypass(4)、booster(6)和reducer(7)。”
+
+ OBJECTupsShutdownType
+ 最小权限：只读
+ 描述
+“不需要读写权限，也就是，服从的系统不需要支持多于一种的关机类型。”
+
+ OBJECTupsAutoRestart
+ 最小权限：只读
+ 描述
+“不需要读写权限，也就是，服从的系统不需要支持多于一种的重启类型。”
+
+ OBJECTupsConfigInputVoltage
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigInputFreq
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigOutputVoltage
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigOutputFreq
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+：：= { upsCompliances 1 }
+
+upsBasicCompliance MODULE-COMPLIANCE
+ 当前状态
+ 描述
+“支持所有特征的功能的UPS的一致状态，就像控制。”
+ MODULE -- this module
+MANDATORY-GROUPS { upsBasicIdentGroup，upsBasicBatteryGroup，
+upsBasicInputGroup，upsBasicOutputGroup，upsBasicAlarmGroup，upsBasicTestGroup，
+upsBasicControlGroup，upsBasicConfigGroup }
+
+ OBJECTupsAlarmDescr
+ 描述
+“不需要支持所有的“well known”测试类型。必须支持的周知报警类型是：
+upsAlarmOnBattery、upsAlarmLowBattery、upsAlarmDepletedBattery、
+upsAlarmTempBad、upsAlarmInputBad、upsAlarmOutputOverload、upsAlarmOnBypass、
+upsAlarmBypassBad、upsAlarmOutputOffAsRequested、upsAlarmUpsOffAsRequested、
+upsAlarmUpsOutputOff、upsAlarmUpsSystemOff、upsAlarmGeneralFault、
+upsAlarmDiagnosticTestFailed、upsAlarmCommunicationsLost、
+upsAlarmShutdownPending和upsAlarmTestInProgress。”
+
+ OBJECTupsTestId
+ 描述
+“不需要支持所有的‘周知’测试类型。如果不支持测试，那么唯一必须支持的周知测
+试类型是upsTestNoTestsInitiated。”
+
+ OBJECTupsOutputSource
+语法：整数{
+normal(2)，
+battery(4)
+ }
+ 描述
+“不需要支持值other(1)、none(2)、bypass(4)、booster(6)和reducer(7)。”
+
+GROUP upsBasicBypassGroup
+描述
+“在旁路时，upsBasicBypassGroup只有UPS需要。”
+
+ OBJECTupsShutdownType
+ 最小权限：只读
+ 描述
+“不需要读写权限，也就是，服从的系统不需要支持多于一种的关机类型。”
+
+ OBJECTupsAutoRestart
+ 最小权限：只读
+ 描述
+“不需要读写权限，也就是，服从的系统不需要支持多于一种的重启类型。”
+
+ OBJECTupsConfigInputVoltage
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigInputFreq
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigOutputVoltage
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigOutputFreq
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigLowBattTime
+ 描述
+“对于一些系统实现所有可能的值会比较困难。因此，并不是必须支持所有可能的值。
+然而，最少支持两个不同选定厂商的值。”
+
+ ：：= { upsCompliances 2 }
+
+upsFullCompliance MODULE-COMPLIANCE
+ 当前状态
+ 描述
+“UPS依从支持完整的高级特征功能的声明。”
+ MODULE -- this module
+MANDATORY-GROUPS { upsFullIdentGroup，upsFullBatteryGroup，
+upsFullInputGroup，upsFullOutputGroup，upsFullAlarmGroup，upsFullTestGroup，
+upsFullControlGroup，upsFullConfigGroup }
+
+ OBJECTupsAlarmDescr
+ 描述
+“不需要支持所有的“well known”测试类型。必须支持的周知报警类型是：
+upsAlarmBatteryBa、upsAlarmOnBattery、upsAlarmLowBattery、
+upsAlarmDepletedBattery、upsAlarmTempBad、upsAlarmInputBad、upsAlarmOnBypass、
+upsAlarmBypassBad、upsAlarmOutputOffAsRequested、upsAlarmUpsOffAsRequested，
+upsAlarmUpsOutputOff、upsAlarmUpsSystemOff、upsAlarmGeneralFault、
+upsAlarmDiagnosticTestFailed、upsAlarmCommunicationsLost、
+upsAlarmShutdownPending和upsAlarmTestInProgress。”
+
+ OBJECTupsTestId
+ 描述
+“不需要支持所有的“well known”测试类型。必须支持的周知测试类型是：
+upsTestNoTestsInitiated、upsTestGeneralSystemsTest和upsTestQuickBatteryTest。”
+
+ OBJECTupsOutputSource
+语法：整数{
+normal(2)，
+battery(4)
+ }
+ 描述
+“不需要Support of the values other(1)、none(2)、bypass(4)、booster(6)和
+reducer(7)。”
+
+GROUP upsFullBypassGroup
+描述
+“处于旁路状态时，UPS只需要upsFullBypassGroup。”
+
+ OBJECTupsShutdownType
+ 最小权限：只读
+ 描述
+“不需要读写权限，也就是，服从的系统不需要支持多于一种的关机类型。”
+
+ OBJECTupsAutoRestart
+ 最小权限：只读
+ 描述
+“不需要读写权限，也就是，服从的系统不需要支持多于一种的重启类型。”
+
+ OBJECTupsConfigInputVoltage
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigInputFreq
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigOutputVoltage
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigOutputFreq
+ 最小权限：只读
+ 描述
+“不需要读写权限。”
+
+ OBJECTupsConfigLowBattTime
+ 描述
+“对于一些系统实现所有可能的值会比较困难。因此，并不是必须支持所有可能的值。
+然而，最少支持两个不同选定厂商的值。”
+ ：：= { upsCompliances 3 }
+
+-- 一致的单位
+
+-- 摘要：
+
+--subsetbasicadv
+--upsIdentManufacturerx x x
+--upsIdentModel x x x
+--upsIdentUPSSoftwareVersionx x
+--upsIdentAgentSoftwareVersion x x x
+--upsIdentNamex x x
+--upsIdentAttachedDevicesxx
+--upsBatteryStatus x x xnotes
+--upsSecondsOnBattery x x x
+--upsEstimatedMinutesRemainingx
+--upsEstimatedChargeRemainingx
+--upsBatteryVoltage
+--upsBatteryCurrent
+--upsBatteryTemperature
+--upsInputLineBads x x x
+--upsInputNumLinesx x
+--upsInputFrequencyx x
+--upsInputVoltage x x
+--upsInputCurrent
+--upsInputTruePower
+--upsOutputSourcex x xnotes
+--upsOutputFrequency x x
+--upsOutputNumLinesx x
+--upsOutputVoltagex x
+--upsOutputCurrentx
+--upsOutputPower x
+--upsOutputPercentLoad x
+--upsBypassFrequency x xnotes
+--upsBypassNumLinesx x
+--upsBypassVoltagex x
+--upsBypassCurrent
+--upsBypassPower
+--upsAlarmsPresent x x x
+--upsAlarmDescr x x xnotes
+--upsAlarmTimex x x
+--upsTestId x xnotes
+--upsTestSpinLock x x
+--upsTestResultsSummary x x
+--upsTestResultsDetailx x
+--upsTestStartTimex x
+--upsTestElapsedTime x x
+--upsShutdownTypex x xnotes
+--upsShutdownAfterDelayx x x
+--upsStartupAfterDelayx x
+--upsRebootWithDuration x x
+--upsAutoRestartx x xnotes
+--upsConfigInputVoltagex x xnotes
+--upsConfigInputFreqx x xnotes
+--upsConfigOutputVoltage x x xnotes
+--upsConfigOutputFreq x x xnotes
+--upsConfigOutputVAx x x
+--upsConfigOutputPowerx x x
+--upsConfigLowBattTimex xnotes
+--upsConfigAudibleStatusx x
+--upsConfigLowVoltageTransferPoint
+--upsConfigHighVoltageTransferPoint
+-- units of conformance
+
+upsGroups对象标识符 ：：= { upsConformance 2 }
+
+upsSubsetGroups对象标识符 ：：= { upsGroups 1 }
+
+upsSubsetIdentGroup 对象集合
+对象{ upsIdentManufacturer，upsIdentModel，upsIdentAgentSoftwareVersion，
+upsIdentName，upsIdentAttachedDevices }
+ 当前状态
+ 描述
+“upsSubsetIdentGroup定义了所有满足一致性的所有UPS对象。大多数符合
+upsSubsetIdentGroup 的设备都可通过一个代理提供到这些对象的访问。如果代理和多
+UPS类型兼容，则代理的配置就需要单个或按组（也许通过基于UPS模块号的表查询机制）
+指定这些值。”
+ ：：= { upsSubsetGroups 1 }
+
+upsSubsetBatteryGroup 对象集合
+对象{ upsBatteryStatus，upsSecondsOnBattery }
+当前状态
+描述
+“upsSubsetBatteryGroup定义了两个相连UPS的电池类共有的对象。”
+ ：：= { upsSubsetGroups 2 }
+
+upsSubsetInputGroup 对象集合
+对象{ upsInputLineBads }
+当前状态
+描述
+“upsSubsetInputGroup定义了两个相连的UPS的输入类共有的对象。”
+ ：：= { upsSubsetGroups 3 }
+
+upsSubsetOutputGroup 对象集合
+对象{ upsOutputSource }
+当前状态
+描述
+“upsSubsetOutputGroup定义了两个相连的UPS的输出类共有的对象。”
+ ：：= { upsSubsetGroups 4 }
+
+-- { upsSubsetGroups 5 } is reserved for future use (upsSubsetBypassGroup)
+
+upsSubsetAlarmGroup 对象集合
+对象{ upsAlarmsPresent，upsAlarmDescr，upsAlarmTime }
+当前状态
+描述
+“upsSubsetAlarmGroup定义了两个相连的UPS的报警类共有的对象。”
+ ：：= { upsSubsetGroups 6 }
+
+-- { upsSubsetGroups 7 }为未来的应用保留(upsSubsetTestGroup)
+
+upsSubsetControlGroup 对象集合
+对象{ upsShutdownType，upsShutdownAfterDelay，upsAutoRestart }
+当前状态
+描述
+“upsSubsetControlGroup定义了两个相连的UPS的控制类共有的对象。”
+ ：：= { upsSubsetGroups 8 }
+
+upsSubsetConfigGroup 对象集合
+对象{upsConfigInputVoltage，upsConfigInputFreq，upsConfigOutputVoltage，
+upsConfigOutputFreq，upsConfigOutputVA，upsConfigOutputPower }
+当前状态
+描述
+“upsSubsetConfigGroup定义了对象两个相连的UPS的配置类共有的对象。”
+ ：：= { upsSubsetGroups 9 }
+
+upsBasicGroups对象标识符 ：：= { upsGroups 2 }
+
+upsBasicIdentGroup 对象集合
+对象{ upsIdentManufacturer，upsIdentModel，upsIdentUPSSoftwareVersion，
+upsIdentAgentSoftwareVersion，upsIdentName }
+当前状态
+描述
+“upsBasicIdentGroup定义了支持基本功能的UPS的Ident类共有的对象”
+ ：：= { upsBasicGroups 1 }
+
+upsBasicBatteryGroup 对象集合
+对象{ upsBatteryStatus，upsSecondsOnBattery }
+当前状态
+描述
+“upsBasicBatteryGroup定义了支持基本功能的UPS的电池类共有的对象。”
+ ：：= { upsBasicGroups 2 }
+
+upsBasicInputGroup 对象集合
+对象{ upsInputLineBads，upsInputNumLines，upsInputFrequency，upsInputVoltage }
+当前状态
+描述
+“upsBasicInputGroup定义了支持基本功能的UPS的输入类共有的对象。”
+ ：：= { upsBasicGroups 3 }
+
+upsBasicOutputGroup 对象集合
+对象{upsOutputSource，upsOutputFrequency，upsOutputNumLines，
+upsOutputVoltage }
+当前状态
+描述
+“upsBasicOutputGroup定义了支持基本功能的UPS的输出类共有的对象。”
+ ：：= { upsBasicGroups 4 }
+
+upsBasicBypassGroup 对象集合
+对象{ upsBypassFrequency，upsBypassNumLines，upsBypassVoltage }
+当前状态
+描述
+“upsBasicBypassGroup定义了支持基本功能的UPS的旁路类共有的对象。”
+ ：：= { upsBasicGroups 5 }
+
+upsBasicAlarmGroup 对象集合
+对象{ upsAlarmsPresent，upsAlarmDescr，upsAlarmTime }
+当前状态
+描述
+“upsBasicAlarmGroup定义了支持基本功能的UPS的报警类共有的对象。”
+ ：：= { upsBasicGroups 6 }
+
+upsBasicTestGroup 对象集合
+对象{ upsTestId，upsTestSpinLock，upsTestResultsSummary，upsTestResultsDetail，
+upsTestStartTime，upsTestElapsedTime }
+当前状态
+描述
+“upsBasicTestGroup定义了支持基本功能的UPS的测试类共有的对象。”
+ ：：= { upsBasicGroups 7 }
+
+upsBasicControlGroup 对象集合
+对象{ upsShutdownType，upsShutdownAfterDelay，upsStartupAfterDelay，
+upsRebootWithDuration，upsAutoRestart }
+当前状态
+描述
+“upsBasicControlGroup定义了支持基本功能的UPS的控制类共有的对象。”
+ ：：= { upsBasicGroups 8 }
+
+upsBasicConfigGroup 对象集合
+对象{ upsConfigInputVoltage，upsConfigInputFreq，upsConfigOutputVoltage，
+upsConfigOutputFreq，upsConfigOutputVA，upsConfigOutputPower，
+upsConfigLowBattTime，upsConfigAudibleStatus }
+当前状态
+描述
+“upsBasicConfigGroup定义了支持基本功能的UPS的配置类共有的对象。”
+ ：：= { upsBasicGroups 9 }
+
+upsFullGroups对象标识符 ：：= { upsGroups 3 }
+
+upsFullIdentGroup 对象集合
+对象{ upsIdentManufacturer，upsIdentModel，upsIdentUPSSoftwareVersion，
+upsIdentAgentSoftwareVersion，upsIdentName，upsIdentAttachedDevices }
+当前状态
+描述
+“upsFullIdentGroup定义了完全依从UPS的Ident类共有的对象。”
+ ：：= { upsFullGroups 1 }
+
+upsFullBatteryGroup 对象集合
+对象{ upsBatteryStatus，upsSecondsOnBattery，upsEstimatedMinutesRemaining，
+upsEstimatedChargeRemaining }
+当前状态
+描述
+“upsFullBatteryGroup定义了完全依从UPS的电池类共有的对象。”
+ ：：= { upsFullGroups 2 }
+
+upsFullInputGroup 对象集合
+对象{ upsInputLineBads，upsInputNumLines，upsInputFrequency，upsInputVoltage }
+当前状态
+描述
+“upsFullInputGroup定义了完全依从UPS的输入置类共有的对象。”
+ ：：= { upsFullGroups 3 }
+
+upsFullOutputGroup 对象集合
+对象{upsOutputSource，upsOutputFrequency，upsOutputNumLines，
+upsOutputVoltage，upsOutputCurrent，upsOutputPower，upsOutputPercentLoad}
+当前状态
+描述
+“upsFullOutputGroup定义了完全依从UPS的输出类共有的对象。”
+ ：：= { upsFullGroups 4 }
+
+upsFullBypassGroup 对象集合
+对象{ upsBypassFrequency，upsBypassNumLines，upsBypassVoltage }
+当前状态
+描述
+“upsFullBypassGroup定义了完全依从UPS的旁路类共有的对象。”
+ ：：= { upsFullGroups 5 }
+
+upsFullAlarmGroup 对象集合
+对象{ upsAlarmsPresent，upsAlarmDescr，upsAlarmTime }
+当前状态
+描述
+“upsFullAlarmGroup定义了完全依从UPS的报警类共有的对象。”
+ ：：= { upsFullGroups 6 }
+
+upsFullTestGroup 对象集合
+对象{ upsTestId，upsTestSpinLock，upsTestResultsSummary，upsTestResultsDetail，
+upsTestStartTime，upsTestElapsedTime }
+当前状态
+描述
+“upsFullTestGroup定义了完全依从UPS的测试类共有的对象。”
+ ：：= { upsFullGroups 7 }
+
+upsFullControlGroup 对象集合
+对象{upsShutdownType，upsShutdownAfterDelay，upsStartupAfterDelay，
+upsRebootWithDuration，upsAutoRestart }
+当前状态
+描述
+“upsFullControlGroup定义了完全依从UPS的控制类共有的对象。”
+ ：：= { upsFullGroups 8 }
+
+upsFullConfigGroup 对象集合
+对象{upsConfigInputVoltage，upsConfigInputFreq，upsConfigOutputVoltage，
+psConfigOutputFreq，upsConfigOutputVA，upsConfigOutputPower，
+upsConfigLowBattTime，upsConfigAudibleStatus }
+当前状态
+描述
+“upsFullConfigGroup定义了完全依从UPS的配置类共有的对象。”
+ ：：= { upsFullGroups 9 }
+
+END
+5.致谢
+UPS MIB represents the combined work of the IETF UPS MIB工作组，with particular，
+substantial authorship contributions from：
+Mike Davison
+Fibercom，Inc.
+Ray Wasson
+Consultant
+Roger Draper
+Liebert Corporation
+Ken Key
+SNMP Research，Incorporated
+Pete Yoest
+American Power Conversion
+Doug Rademacher
+American Power Conversion
+Ron Pitt
+Network Security Systems，Inc
+Terry Zumwalt
+International Power Machines
+Lawren Markle
+Tripp Lite
+Bill Elliot
+ONEAC
+Tom Brennan
+Exide Electronics
+Brian Young
+Best Power Technology
+6.参考文献
+[1] Case，J.，Fedor，M.，Schoffstall，M.，and J. Davin，"Simple Network Management 
+Protocol"，STD 15，RFC 1157，SNMP Research，Inc.，Performance Systems International，
+Performance Systems International，MIT Laboratory for Computer Science，May 1990.
+[2] Case，J.，McCloghrie，K.，Rose，M.，and S. Waldbusser，"Protocol Operations 
+for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 1448，SNMP 
+Research，Inc.，Hughes LAN Systems，Dover Beach Consulting，Inc.，Carnegie Mellon 
+University，April 1993.
+[3] McCloghrie，K.，and M. Rose，Editors，"Management Information Base for Network 
+Management of TCP/IP-based internets：MIB-II"，STD 17，RFC 1213，Hughes LAN 
+Systems，Performance Systems International，March 1991.
+[4] Case，J.，McCloghrie，K.，Rose，M.，and S. Waldbusser，"Structure of Management 
+Information for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 
+1442，SNMP Research，Inc.，Hughes LAN Systems，Dover Beach Consulting，Inc.，
+Carnegie Mellon University，April 1993.
+[5] Case，J.，McCloghrie，K.，Rose，M.，and S. Waldbusser，"Conformance Statements 
+for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 1444，SNMP 
+Research，Inc.，Hughes LAN Systems，Dover Beach Consulting，Inc.，Carnegie Mellon 
+University，April，1993.
+[6] Case，J.，McCloghrie，K.，Rose，M.，and S. Waldbusser，"Textual Conventions 
+for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 1443，SNMP 
+Research，Inc.，Hughes LAN Systems，Dover Beach Consulting，Inc.，Carnegie Mellon 
+University，April 1993.
+7.需要考虑的安全问题
+本备忘录不考虑安全问题。
+8.作者地址
+Jeffrey D. Case，Ph.D.
+SNMP Research，Incorporated
+3001 Kimberlin Heights Road
+Knoxville，Tennessee 37920
+Phone：(615) 573-1434
+EMail：case@SNMP.COM
+
+RFC1628――UPS Management Information Base                             UPS管理信息数据库( MIB)
+
+
+1
+RFC文档中文翻译计划

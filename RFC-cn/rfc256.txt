@@ -1,0 +1,29 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                B. Cosell
+RFC #256                                             BBN
+NIC #7697                                            3 November 1971
+Categories:  B.1
+Updates:  None
+Obsoletes:  None
+
+IMPSYS 变更通知
+（IMPSYS Change Notification）
+我们马上就要安装(也可能已经安装了)新版本的IMP系统了（版本号：2513）。新的版本具体体现在对两个方面的更改上：
+1.在一台主机激活之后的40秒/1分钟或者一刻钟内，主机不能向网络发送任何消息 (原来是30秒到1分钟)。
+2. 在NCC控制下，已经赋予IMP检测本身主机接口的功能。在IMP主机通讯通路失效时，这将有助于隔离故障。
+[这个RFC文档是由BBN公司在Alex McKenzie指导下以计算机可读的文件格式归档到在线RFC文档库的。12/96]
+
+RFC256―IMPSYS Change Notification                                          IMPSYS 变更通知
+
+
+
+
+1
+RFC文档中文翻译计划
+

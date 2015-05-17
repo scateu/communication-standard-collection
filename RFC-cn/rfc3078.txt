@@ -1,0 +1,356 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：刘梓超（zichao   zi_chao@263.net）
+译文发布时间：2001-4-12
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+
+Network Working Group                                            G. Pall
+Request for Comments: 3078                         Microsoft Corporation
+Category: Informational                                          G. Zorn
+Updates: 2118                                              cisco Systems
+March 2001
+
+
+
+
+RFC3078微软点到点加密(MPPE)协议
+(RFC3078 Microsoft Point-To-Point Encryption (MPPE) Protocol)
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+点到点协议(PPP)提供一种在点到点链路上传送多协议数据报的标准方法。
+PPP压缩控制协议提供了一种在PPP封装链路上协商和运用压缩协议的方法。
+本文件描述的是利用微软点到点的加密法(MPPE)提高PPP封装包的保密性。
+
+要求说明书
+本文档中的关键字“或许”,“必须”，“必须不”，“可选的”，“建议”，“应该”和“不应该”在[5]中解释。
+
+
+
+
+
+目录
+1. 介绍	2
+2. 配置选项格式	2
+2.1. 选项协商	3
+3. MPPE包	3
+3.1.包格式	4
+4. 初始会话密钥	5
+5. 使用会话密钥初始化RC4	6
+6. 加密数据	6
+7. 改变密钥	6
+7.1.无状态方式密钥的改变	6
+7.2.状态方式密钥变化	6
+7.3. MPPE密钥更换算法	6
+8. 同步	7
+8.1.无状态同步	8
+8.2.状态同步	8
+9. 安全性考虑	8
+参考	9
+鸣谢	9
+作者地址	10
+版权声明	10
+致谢	11
+
+1. 介绍
+微软点到点加密方案是一种将点到点协议(PPP)包用加密形式表示的方法。
+MPPE运用RSA RC4 [3]算法提供数据的保密性。用于初始化密码表的会话密钥的长度可以协商。 MPPE目前支持40位和128位的会话密钥。
+MPPE会话密钥是经常变化的；变化的频率取决于任选项的协商，每个包都有可能不同。
+MPPE在压缩控制协议的选项18[4]中协商。
+2. 配置选项格式
+描述
+CCP配置选项在链路上对MPPE的使用进行协商。 缺省状态下(即，如果MPPE的协商没有进行)，不使用加密法。 如果，MPPE协商进行了并且失败，那么链接应该被中断。
+CCP配置选项格式如下所示。字段从左至右进行传输。
+
+0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      类型     |    长 度      |            支持的bit数         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |           支持的bit数         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+类型
+      18
+   
+长度
+６
+
+支持的Bit数
+      该字段有４个八位字节，最高八位字节在前。
+         3                   2                   1
+       1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |             |H|                               |M|S|L|D|     |C|
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   ‘C’bit位被MPPC[4]使用，在本备忘录不作进一步的讨论。‘D’bit位被舍弃；虽然一些旧的端子可能会对这个选项进行协商，但这是不应该接受的。如果‘L’bit位被设置(对应于最低位的八位字节值为0x20)，这表明发送端要求协商使用40位会话密钥。 如果‘S’bit位被设置(对应于最低位的八位字节值为0x40)，这表明发送端要求协商使用128位会话密钥。如果‘M’bit位被设置(对应于最低位的八位字节值为0x80)，这表明发送端要求协商使用56位会话密钥。如果‘H’bit位被设置(对应于最高八位字节的值为0x01)，这表明发送端希望协商使用无状态方式，在这种方式中会话密钥在每个包传输之后变化(参见下面的节10)。在下面的讨论中，‘S’，‘M’和‘L’bit位有时被共同地作为“加密选项”。
+
+所有其他的位保留并且必须设置为0。
+2.1. 选项协商
+MPPE选项如[2]的描述进行协商。特别地，协商发起端应该说明它所支持的所有的选项。
+应答端应该用一个单一的加密选项进行否认(应该注意无状态方式也许总是需要协商，它独立并附加于一个加密选项)。如果应答端支持超过一种发起端所要求设置的加密选项，则它选择的选项应该是所能提供的“最健壮”的选项。
+非正式的，MPPE加密选项的强度可以遵循如下表示方法：
+      最健壮的
+         128位加密(‘S’bit位被设置)
+         56位加密(‘M’bit位被设置)
+         40位加密(‘L’bit位被设置)
+最虚弱的
+
+这个描述考虑了大家公认的密码强度。
+发起端应该发送另一个含有与应答端的否定同样选项的请求报文或者取消协商，终止连接。
+3. MPPE包
+在任何MPPE包被发送前，PPP必须为网络层协议阶段并且CCP控制协议必须为开放状态。
+一个MPPE数据报被压缩在PPP信息域中。PPP协议字段注明所有加密的数据报类型为0x00FD。
+在PPP链路上传送的MPPE数据报最大长度同一个PPP压缩包的信息域的最大长度一样。
+仅PPP协议号在范围0x0021到0x00FA之间的包被加密。其他的包不通过MPPE处理程序并且同它们的原来的PPP协议号一同发送。
+
+    填料
+
+建议MPPE不使用填充字段。如果发送端使用填充字段，它必须在链路控制阶段进行自描述填充配置选择[10]协商并且使用自描述填充。
+
+    可靠性和顺序性
+
+    MPPE方案不需要可靠链路。它依靠每个包所含的一个12位计数值来保持与加密表的同步。如果无状态方式没有被协商而且附在所收到包的数与所期待的数不符合，则接收端必须发送一个CCP重置请求包使RC4表重新同步。
+    MPPE需要包被顺序发送。
+    MPPE可以被用在一个可靠链路上，如“PPP可靠传输”[6]中所述，但是由于仅仅需要附加的计数，这样就增加了不必要的开销。
+    
+数据扩展
+
+    MPPE方案不扩展或压缩数据。从MPPE处理程序输入和输出的八位字节数是相同的。
+
+3.1.包格式
+
+   MPPE包格式如下所示。字段从左至右进行传输。
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |          PPP 协议             |A|B|C|D|        附加计数       |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       加密的数据...
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    ppp协议
+
+    PPP协议字段在点到点协议封装[1]中描述。
+    当MPPE由PPP压缩控制协议成功协商后，该字段的值为0x00FD。当协议-字段-压缩协商后，这个值可以被压缩。
+
+    位A
+
+    该位表明加密表在包产生之前初始化。在解密包之前，接收端必须用当前的会话密钥再初始化它的表。在本文档中，该位被称为FLUSHED位。如果无状态选项已经被协商，该位必须在每个加密包中设置。要注意MPPC和MPPE都识别FLUSHED位；因此，如果无状态选项被协商，那么它同时适合与MPPC和MPPE。
+
+    位B
+
+    在MPPE中，该位没有任何意义。
+
+    位C
+
+    在MPPE中，该位没有任何意义。
+
+    位D
+
+    该位被设为1表明包被加密。该位被设为0表明这个包没有被加密。
+
+    附加计数
+
+    附加计数被用来保证包按正确次序发送，而且没有包被丢弃。它是一个单项增加的计数器，每发送一个包就增加1。当计数值到达4095(0x0FFF)时，被重置为0。
+
+    加密的数据
+
+    加密数据从协议字段开始。例如，一个IP信息包(0x0021后面是一个IP报头)，MPPE处理程序便会首先加密协议字段然后加密IP报头。
+    如果包包含头压缩，MPPE处理程序在头压缩完成之后被应用并且也必须被用于压缩的头部。例如，如果一个包包含协议类型0x002D(一个压缩的TCP/IP头)，MPPE处理程序便会首先加密0x002D然后加密压缩的Van-Jacobsen TCP/IP头。
+
+    实现注意事项
+
+    如果MPPE和MPPC在相同的链路进行协商，MPPE处理程序必须在MPPC处理程序之后由发送端激活，MPPE处理程序必须在MPPC处理程序以前由接收端激活。
+
+4. 初始会话密钥
+
+就当前的实现而言，初始会话密钥源自对等端的信任书；然而，其他的方法也是可能的。   例如，一些认证方法(如Kerberos[8]和TLS[9])作为认证的附加效果产生会话密钥；这些密钥在将来可能会被MPPE使用。为此，用来生成初始MPPE会话密钥的方法用分开的文档描述。
+
+5. 使用会话密钥初始化RC4
+
+    一旦初始会话密钥话生成，RC4环境将进行如下初始化∶
+  rc4_key ( RC4Key, Length_Of_Key, Initial_Session_Key)
+6. 加密数据
+
+初始化后，数据使用下列函数加密并且随CCP和MPPE头发送。
+    EncryptedData = rc4 ( RC4Key, Length_Of_Data, Data)
+7. 改变密钥
+7.1.无状态方式密钥的改变
+    如果无状态加密已经被协商，会话密钥随着附加计数的变化而变化；即，每个包都进行变化。在无状态方式下，发送端必须在加密和发送每个包以前变化它的密钥，接收端必须在收到每个包之后，在解密以前变化它的密钥(参见下面的“同步”)。
+
+7.2.状态方式密钥变化
+如果状态加密已经协商，发送端必须在加密和发送任何低八位字节的附加计数等于0xFF的包(“标记”包)以前变化它的密钥，接收端必须在收到一个“标记”包之后，在解密以前变化它的密钥(参见下面的“同步”)。
+
+7.3. MPPE密钥更换算法
+    下列方法被用来变化密钥∶
+
+/ * 
+* 40位密钥的SessionKeyLength为8，128位密钥为16。
+* 
+*在第一次要求进行会话时的StartKey与SessionKey相同。
+* /
+      
+void
+      GetNewKeyFromSHA(
+      IN  unsigned char *StartKey,
+      IN  unsigned char *SessionKey,
+      IN  unsigned long SessionKeyLength
+      OUT unsigned char *InterimKey )
+      {
+         unsigned char  Digest[20];
+
+         ZeroMemory(Digest, 20);
+
+/*
+*SHAInit(), SHAUpdate()和SHAFinal() 
+*是安全的散列算法[7]的一种实现
+*/
+
+         SHAInit(Context);
+         SHAUpdate(Context, StartKey, SessionKeyLength);
+         SHAUpdate(Context, SHApad1, 40);
+         SHAUpdate(Context, SessionKey, SessionKeyLength);
+         SHAUpdate(Context, SHApad2, 40);
+         SHAFinal(Context, Digest);
+
+         MoveMemory(InterimKey, Digest, SessionKeyLength);
+      }
+
+RC4表使用新创的临时的密钥再初始化∶
+    rc4_key(RC4Key, Length_Of_Key, InterimKey)
+
+最后，临时密钥使用新表加密产生一个新的会话密钥。
+    SessionKey = rc4( RC4Key, Length_Of_Key, InterimKey)
+
+40位会话密钥的最高位的3个八位字节的新的会话密钥分别被设为0xD1, 0x26和0x9E；56位密钥的最高的八位字节被设为0xD1。
+最后，RC4表使用新的话路密钥再初始化∶
+    rc4_key ( RC4Key, Length_Of_Key, SessionKey)
+8. 同步
+
+包可能在传输期间丢失。 以下节描述了无状态和状态方式下的同步情况。
+8.1.无状态同步
+
+如果无状态加密法已经协商并且在收到的包中的附加计数值(C1)大于上次收到的包中的附加计数(C2)，为了保证接收端的会话密钥与发送端的会话密钥同步，必须在解密包以前执行N=C1- C2密钥变化操作。正常地，N值应为1；然而，如果介于其间的包已经丢失，N值可能大于1。例如，如果C1=5而C2=2，那么N=3，就需要对密钥进行更改。
+如果无状态加密被协商，FLUSHED位在每个包中被设置，那么CCP重置-请求包的传输在同步方式下就不需要了。
+8.2.状态同步
+如果状态加密已经被协商，发送端必须在加密和发送任何低八位字节的附加计数等于0xFF的包(“标记”包)之前变化它的密钥，接收端必须在收到一个“标记”包之后，在解密以前变化它的密钥。然而，“标记”包可能丢失。 如果发生这种情况，在收到包的低八位字节的附加计数值小于在此前最后收到的包。在这种情况下，接收端在解密重新收到的包以前必须执行密钥变换(因为发送端将已经在发送包以前变化了它的密钥)，然后发送一个CCP重置-请求包(见下文)。有可能256个或以上的连续的包丢失；接收端应该发现这个情况并且执行以与发送端再同步所需要的相应数的密钥更换。
+如果在使用状态加密时包丢失，那么接收端必须丢弃包并且发送一个没有数据的CCP重置-请求包。在发送CCP重置-请求包之后,接收端应该静静地丢弃收到的全部的包直到一个具有FLUSHED位的包被收到。接收有FLUSHED位的包时，接收端必须设置它的附加计数值为接到的包的值以便使包和再初始化它的RC4表使用当前的会话密钥：
+    rc4_key( RC4Key, Length_Of_Key, SessionKey)
+
+当发送端接收到一个CCP重置-请求包时，它必须使用相同的方法再初始化自己的RC4表，并且在下一个发送的包中设置FLUSHED位。 这样就在没有CCP重置-确认包的情况下完成了同步。
+9. 安全性考虑
+因为采用RC4表在状态同步期间重新初始化的方法，有可能两个包使用相同的密钥加密。因此,状态方式不应该被用于有损耗的网络环境(例如,在Internet上的两个管道层)。
+由于MPPE协商不是被完全保护的,一个活动的攻击者可以通过变更CCP配置选择包支持的位数字段来改变使用的密钥的强度。然而，攻击的影响可以通过适当的对等配置减到最低程度。
+在MPPE协商完成前对等端不能传送用户数据。
+有可能一个活动的攻击者变更包的附加计数值，导致对端之间不同步。
+一个活动的denial-of-service攻击可以通过对MPPE包头中的‘D’位的值的转化来进行测定。
+参考
+   [1]  Simpson, W., Editor, "The Point-to-Point Protocol (PPP)", STD
+        51, RFC 1661, July 1994.
+
+   [2]  Rand, D., "The PPP Compression Control Protocol (CCP)", RFC
+        1962, June 1996.
+
+   [3]  RC4 is a proprietary encryption algorithm available under
+        license from RSA Data Security Inc.  For licensing information,
+        contact:
+
+                  RSA Data Security, Inc.
+                  100 Marine Parkway
+                  Redwood City, CA 94065-1031
+
+   [4]  Pall, G., "Microsoft Point-to-Point Compression (MPPC)
+        Protocol", RFC 2118, March 1997.
+
+   [5]  Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+
+   [6]  Rand, D., "PPP Reliable Transmission", RFC 1663, July 1994.
+
+   [7]  "Secure Hash Standard", Federal Information Processing Standards
+        Publication 180-1, National Institute of Standards and
+        Technology, April 1995.
+
+   [8]  Kohl, J. and C. Neuman "The Kerberos Network Authentication
+        System (V5)", RFC 1510, September 1993.
+
+   [9]  Dierks, T. and C. Allen, "The TLS Protocol Version 1.0", RFC
+        2246, January 1999.
+
+   [10] Simpson, W., Editor, "PPP LCP Extensions", RFC 1570, January
+        1994.
+鸣谢
+感谢Anthony Bell, Richard B. Ward, Terence Spies和Thomas Dimitri，以及全部微软公司员工对MPPE的设计和发展所作的重要地贡献。
+还要感谢Robert Friend, Joe Davies, Jody Terrill, Archie Cobbs, Mark Deuser,和Jeff Haag所提出的有益的意见。
+作者地址
+   对本备忘录提出的疑问可以写信到：
+
+   Gurdeep Singh Pall
+   Microsoft Corporation
+   One Microsoft Way
+   Redmond, Washington 98052
+   USA
+
+   Phone: +1 425 882 8080
+   Fax:   +1 425 936 7329
+   EMail: gurdeep@microsoft.com
+
+   Glen Zorn
+   cisco Systems
+   500 108th Avenue N.E.
+   Suite 500
+   Bellevue, Washington 98004
+   USA
+
+   Phone: +1 425 438 8218
+   Fax:   +1 425 438 1848
+   EMail: gwz@cisco.com
+版权声明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+   Funding for the RFC Editor function is currently provided by the Internet Society.
+RFC3078 Microsoft Point-To-Point Encryption (MPPE) Protocol  RFC3078微软点到点加密(MPPE)协议
+
+
+
+
+1
+RFC文档中文翻译计划
+

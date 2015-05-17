@@ -1,0 +1,32 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang   mcsewang@21cn.com）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group						S. Crocker
+RFC- 35								 UCLA
+Category: Informational												3 March 1970
+
+网络会议
+（RFC35 Network Meeting）
+
+ 我预期在RFC33文档中提出的新的网络协议的细节在两周内能够完成。某些重点的东
+西已经用一种新的表达方式表述，所以我们将于3月17日（星期二）上午9点在UCLA举行
+网络会议，为便于交流，每个站点只限一名程序员参加，而且最好预备18日继续参加讨论。
+ 会议的主题将是网络协议的细节阐释，该协议要易于实施，除非发现它有较大的缺陷，
+文档将在会议上生效，如果未被会议废止，它将在3月20日被当作NWG的RFC文档发布出
+来。
+如果你在做准备工作时需要帮助，请拨打电话（213）825─2543找Charlotte LaRoche
+夫人。
+
+
+[ This RFC was put into machine readable form for entry ]
+[ into the online RFC archives by Jochen Friedrich 4/97 ]
+RFC─35 Network Meeting		网络会议
+
+
+1
+RFC文档中文翻译计划

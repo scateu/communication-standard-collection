@@ -1,0 +1,32 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：lv_xinyang（lv_xinyang   lslslslsls@263.net）
+译文发布时间：2001-3-28
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+Network Working Group				              	G. Gregg
+RFC-23						        	            UCSB
+							                        16 October 1969
+
+
+
+多重控制消息传输  
+（ RFC23  TRANSMISSION OF MULTIPLE CONTROL MESSAGES）
+
+一个站点的网络规划必须能够实现在一个单一控制通信过程中发送或接收多于一条的控制消息。
+当控制连接被阻塞，进入等待RFNM（准备接受下一报文）状态后，将可能出现这样的情况：发给某一特定远程主机的控制消息大量增加。一旦连接阻塞状态结束，这些控制消息应被最高效率的发送出去。
+当接收消息时，有必要建立一个循环，它能够进行解码并对连续发送过来的控制消息进行处理直到此控制通信过程结束。
+                  
+                      									
+
+
+
+RFC23  TRANSMISSION OF MULTIPLE CONTROL MESSAGES       多重控制消息传输
+
+
+
+
+1
+RFC文档中文翻译计划
+

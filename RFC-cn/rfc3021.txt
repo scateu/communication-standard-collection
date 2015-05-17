@@ -1,0 +1,352 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-4-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必
+须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          A. Retana
+Request for Comments: 3021                                      R. White
+Category: Standards Track                                  Cisco Systems
+                                                               V. Fuller
+                                                     GTE Internetworking
+                                                            D. McPherson
+                                                          Amber Networks
+                                                           December 2000
+
+
+           
+在Ipv4点对点连接中使用31位前缀
+(RFC3021  Using 31-Bit Prefixes on IPv4 Point-to-Point Links)
+
+本备忘录的状态
+
+本文档描述了用于一种Internet社区的Internet标准跟踪协议，需要进一步探讨和建议
+进行完善。请查询“Internet正式协议标准”（STD1）的当前版本了解本协议的标准化进程和
+状态。本备忘录的发布没有限制。
+
+版权公告
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+
+随着节约Internet IP地址空间的压力的不断增加，实际运用相对较小的改进提高编号效率的
+看法越来越有意义。本文档提出的改进建议是把分配给点对点连接（普遍存在于Internet底层
+结构中）的地址空间平分成两部分，从而可以在非常有限的范围内使用31位字网掩码。
+
+目录
+1．简介与动机	2
+2.对31位前缀的深入思考	2
+2.1.地址（Addressing）	3
+2.2. 广播和网络地址	3
+2.3. 对当前路由协议的影响（Impact on Current Routing Protocols）	4
+3. 建议（Recommendations）	4
+3.1."对Internet主机的要求――通信层（Communication Layers）" [RFC1122]	4
+3.2. "分配号（Assigned Numbers）" [RFC1700]	4
+3.3. "对IPv4路由器的要求" [RFC1812]	5
+4. 操作试验（Operational Experience）	5
+5. 应用考虑	6
+6. 安全考虑	6
+7. 鸣谢	6
+8. 引用	6
+9. 作者地址	7
+版权声明	8
+
+1．简介与动机
+    认识到Internet地址短缺的问题，已经出现了几种对地址空间使用的改进和解决之一问题
+的不同办法：
+
+   -由IANA和地方的权威地址分配机构强制执行更加严格的地址空间分配政策[RFC2050]。
+
+   - [RFC1631].使用网络地址转移器（NATs），许多用户联合起来共用少量的符合IANA的地
+址，NAT内部没有全球性的拓扑发送地址[RFC1631]。
+
+
+   -发布新的Internet协议，增加地址空间。IPv6就是此类协议中的一个，已经通过IEIF程
+序，但是还没有出现相应的产品。及时发布了这样的产品，也还要面临着多年的转变过程。
+
+在可以使用更大的地址空间之前，有机会更加有效地利用现有的地址空间似乎是谨慎的看
+法。
+
+此类改进的一个（很小的）的机会是点对点连接编号已达到极限。一种选择是――目前在
+Internet的某些部分正是用着――简单地把路由器之间的连接不作为点对点编号。尽管初看起
+来这种方法很方便地解决了问题，但是本身也带来了几个问题，包括不能一致地处理未编号的
+连接或者经过这样的连接访问路由器、管理和调试这些连接的困难性，以及标准的缺乏
+[RFC1812]。
+
+当前的实际应用中，Internet子网编号（大多数情况下）使用不超过30位的子网掩码，
+每个连接需要4个地址――两个主机地址，一个全0的网络地址和一个全1的广播地址。不幸
+的是点对点连接只能有两个不同的端点，而且也不支持广播――一端发出的任何包只能由连接
+的另一端接收。
+
+第三种选择是使用点对点连接的两端地址。这种方法可以节约与使用31位子网掩码同样的
+地址空间，但是只能用于使用PPP包装的连接[RFC1332]。使用主机地址允许为连接的两端分配
+属于不同网络的IP地址，这样会造成连接和网络管理是间接的。
+
+本文基于这样一种观点，即在点对点连接中节约IP地址（使用超过30位的子网掩码），
+而同时保持可维护性和标准的交互是可能的。现存的文档[RFC950]已经暗示了使用1位宽的主
+机号码域的可能性。
+
+这种改进带来的地址空间的节约是显而易见的――大型网络中的每个点对点连接都是用2
+个地址而不是4个。比方说，在一个包含500个点对点连接的网络中，这种方法可以节约1000
+个地址（与C类地址空间相同）
+2.对31位前缀的深入思考
+本节讨论在点对点连接中使用31位前缀对Internet路由和操作可能带来的影响。这里的
+斟酌还会在第三节反映处来。
+
+   For the length of this document, an IP address will be interpreted
+   as:按照本文描述的长度，IP地址可以被认为是：
+
+        <网络号><主机号>
+
+   其中<主机号>是地址的非掩码部分，应至少有1位宽。 符号“-1”用来表示这个域的所有
+位均为1。根据这个讨论，路由系统可以被认为支持类型无关的路由CIDR [RFC1519]。
+
+2.1.地址（Addressing）
+    如果为点对点连接分配了31位字网掩码，就只剩下一位留给<主机号>，因此只能有两个地
+址：
+        {<网络号>, 0} 和 {<网络号>, -1}
+    这些地址在原来已经被用于网络和广播地址（见节2.2）。在应用31位字网掩码的点对点
+连接中，这两个地址必须被解释为主机地址。
+2.2. 广播和网络地址
+在IP地址段中原来有几个公认的广播地址：
+
+      (a) 直接广播
+           {<网络号>, -1}
+           {<网络号>, 0}
+
+         网络地址{<网络号>, 0}是直接广播的过时形式 ，但可能还用于老式主机。
+      (b)本地（或有限的）广播
+           {-1, -1}
+           {0, 0}
+
+         有限广播的{0，0}形式已经过时了，但还可以在网络上见到。
+
+    使用31位长度的前缀只留下两种编号的可能性（见节2.1），从而排除了连接中直接广播
+的使用（见节2.2.1）。分配了31位字网掩码的点对点连接必须使用有限广播进行所有的广播
+通信。
+
+   <网络号>由网络管理员分配，在本地路由域中是唯一的 。目标IP地址是否进行直接广播取
+决于与目标段直接相连的路由器。当前的转发方案和算法不会在远程路由器受到影响。
+
+   本文的目的在于探讨点对点连接31位前缀的实用性和操作。没有考虑对其它类型接口的影
+响（如果有的话）。
+
+2.2.1.直接广播（Directed Broadcast）
+
+如果一个设备需要访问某个给定子网（远程的，不是直接相连的）的所有主机，可能需要把包
+的目的地址设为连接子网的广播地址。这样的操作对于使用31位前缀的点对点连接是不可能
+的。
+
+正如第六节所讨论的，直接广播功能的损失可能事实上是一种有益的副效应，因为它稍微加强
+了网络对某些类型的DoS攻击的抵抗力[RFC2644, SMURF]。
+
+2.3. 对当前路由协议的影响（Impact on Current Routing 
+Protocols）
+
+31位前缀的网络对当前的路由协议没有影响。当前配置的大多数路由协议都支持无级寻路
+（classless routing）。况且对等通信是通过多点传送地址、有限广播地址或者单点传送地址
+实现的（都在局域网上），无论哪一种方式都不会受到使用31位字网掩码的影响。
+
+3. 建议（Recommendations）
+      第二节提出的建议对发布的其他文献有影响。本节详细说明对其他文档的改变。
+
+3.1.“对Internet主机的要求――通信层（Communication 
+Layers）” [RFC1122]
+
+   节3.2.1.3 (e)改为：
+
+      (e)  { <网络号>, <子网号>, -1 }
+对指定子网的直接广播。不可用作源地址，除非源端是使用31位掩码的点对点连接
+的一个端点。
+   增加一个新的小节（编号3.2.1.3 (h)）：
+
+      (h)  { <网络号>, <子网号>, 0 }
+         子网号。不得用作源地址，除非源端是使用31位掩码的点对点连接的一个端点。对
+于其它类型的连接，带有此种目的地址的包应简单的抛弃。如果没有简单的抛弃，必
+须视做IP广播[RFC1812]。
+
+3.2. “分配号（Assigned Numbers）” [RFC1700]
+
+   “简介”中“特殊地址”一节的(e)小节应该为：
+
+      (e)   {<网络号>, <子网号>, -1}
+对特定子网的直接广播。仅能用于目的地址，不过如果源端是使用31位掩码的点对
+点连接的一个端点，也可以用做源地址。
+
+3.3. “对IPv4路由器的要求” [RFC1812]
+
+   节4.2.2.11 (d)改为：
+
+      (d) { <网络前缀>, -1 }
+直接广播――直接对指定网络前缀的广播。不得用作源地址，除非源端是使用31
+位掩码的点对点连接的一个端点。路由器可以发生网络直接广播（Network 
+Directed Broadcast）包。路由器可以由一个接收直接广播包的配置选项，但必
+须关闭缺省值，这样除非最终用户专门设置路由器不得接收网络直接广播包。
+
+   上述文字包含[RFC2644]所作的更新。
+   增加一个新的小节（编号4.2.2.11 (f)）：
+      (f)  { <网络号>, <子网号>, 0 }
+子网号。不得用作源地址，除非源端是使用31位掩码的点对点连接的一个端
+点。对于其它类型的连接，带有此种目的地址的包应简单的抛弃。如果没有简单
+的抛弃，必须视做IP广播[RFC1812]。
+
+   节4.2.3.1 (1), (2)和(4) 改为：
+      (1)必须视做地址为255.255.255.255或{ <网络前缀>, -1 }的IP广播包。 
+在31位掩码的点对点连接中，对应其中一个端点的包地址{ <网络前缀>, 0 }必
+须视做直接针对地址使用的路由器。
+
+(2)一旦接收到地址为0.0.0.0或者{<网络前缀>，0}的包应直接抛弃（甚至无需传递给路
+由器程序）。如果没有直接抛弃，这些包必须视做IP广播（参见节[5.3.5]）。可以由
+一个接收此类包的配置选项，这个选项的缺省设置必须是抛弃此类包。
+在31位掩码的点对点连接中，对应其中一个端点的包地址{ <网络前缀>, 0 }必
+须视做直接针对地址使用的路由器。
+
+      (4)不得发生地址为0.0.0.0 or {<网络前缀>, 0 }的数据包。 可以由一个允许生成此
+类包的选项（而不是使用相应的全为1的广播）。该选项的缺省设置应该避免生成此
+类包。
+在31位掩码的点对点连接中，这种掩码的配置应允许生成地址为{ <网络前缀>, 
+0 }的数据包。
+
+   节4.3.3.9增加下述文字：
+
+在31位子网掩码的点对点连接中，255.255.255.255 IP广播地址必须用作广播地址
+掩码回复。
+
+4. 操作试验（Operational Experience）
+
+本文提出的建议已经在几个路由器提供商的beta版代码中使用。这些应用得到了至少3家
+ISP的测试，取得了肯定的结果（或者说没有发现问题）成功测试的路由协议包括OSPF, IS-IS, 
+BGP和EIGRP。
+
+这些实现有望在今后几个月内正式发布，其他供应商可以使用。
+
+5. 应用考虑
+本文的目的在于探讨点对点连接使用31位前缀的实用性和操作。没有考虑对其它类型接口
+的影响（如果有的话）。注意如果点对点连接中只有一端支持31位前缀，操作可能不会正确执
+行。
+
+6. 安全考虑
+根据Internet上不同网络的各异的拒绝服务攻击（Denial of Service，DoS），安全性
+成为一个重要的问题。在Internet的核心使用31位子网掩码可以减少物理连接的数量，而依
+赖于使用直接广播进行包复制的DoS攻击通过物理连接发起攻击[RFC2644, SMURF]。
+
+总而言之，应用本文所提的建议可以提高Internet对这些类型的DoS攻击的防御力。
+
+7. 鸣谢
+
+本文作者不就所述观点的窗已做任何声明。特别感谢Alex Zinin提出的建议，还有许多人在他
+们的实验室和网络上对31位子网掩码作了测试。
+
+8. 引用
+
+   [RFC950]  Mogul, J. and J. Postel, "Internet Standard Subnetting
+             Procedure", STD 5, RFC 950, August 1985.
+
+   [RFC1122] Braden, R., "Requirements for Internet Hosts --
+             Communication Layers", STD 3, RFC 1122, October 1989.
+
+   [RFC1332] McGregor, G., "The PPP Internet Protocol Control Protocol
+             (IPCP)", RFC 1332, May 1992.
+
+   [RFC1519] Fuller, V., Li, T., Yu, J. and K. Varadhan, "Classless
+             Inter-Domain Routing (CIDR): an Address Assignment and
+             Aggregation Strategy", RFC 1519, September 1993.
+
+   [RFC1631] Egevang, K. and P. Francis, "The IP Network Address
+             Translator (NAT)", RFC 1631, May 1994.
+
+   [RFC1700] Reynolds, J. and J. Postel, "Assigned Numbers", STD 2, RFC
+             1700, October 1994.
+
+   [RFC1812] Baker, F., "Requirements for IP Version 4 Routers", RFC
+             1812, June 1995.
+
+   [RFC2050] Hubbard, K., Kosters, M., Conrad, D., Karrenberg, D. and J.
+             Postel, "Internet Registry IP Allocation Guidelines", BCP
+             12, RFC 2050, November 1996.
+
+   [RFC2460] Deering, S. and R. Hinden, "Internet Protocol, Version 6
+             (IPv6) Specification", RFC 2460, December 1998.
+
+   [RFC2644] Senie, D., "Changing the Default for Directed Broadcasts in
+             Routers", BCP 34, RFC 2644, August 1999.
+
+   [SMURF]   Huegen, C., "The Latest in Denial of Service Attacks:
+             'Smurfing':  Description and Information to Minimize
+             Effects", URL:
+             http://users.quadrunner.com/chuegen/smurf.cgi
+9. 作者地址
+
+   Alvaro Retana
+   Cisco Systems, Inc.
+   7025 Kit Creek Rd.
+   Research Triangle Park, NC 27709
+
+   EMail: aretana@cisco.com
+
+
+   Russ White
+   Cisco Systems, Inc.
+   7025 Kit Creek Rd.
+   Research Triangle Park, NC 27709
+
+   EMail: riw@cisco.com
+
+
+   Vince Fuller
+   GTE Internetworking
+   3801 E. Bayshore Rd.
+   Palo Alto, CA, 94303
+
+   EMail: vaf@valinor.barrnet.net
+
+
+   Danny McPherson
+   Amber Networks
+   2465 Augustine Drive
+   Santa Clara, CA  95054
+
+   EMail: danny@ambernetworks.com
+
+版权声明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC 3021   在Ipv4点对点连接中使用31位前缀		Using 31-Bit Prefixes on IPv4 Point-to-Point Links
+
+
+2
+RFC 文档翻译计划

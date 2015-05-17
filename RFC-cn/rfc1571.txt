@@ -1,0 +1,137 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：boniter（boniter@etang.com）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                          D. Borman
+Request for Comments: 1571                           Cray Research, Inc.
+Updates: 1408                                               January 1994
+Category: Informational
+
+TELNET环境选项互用性问题
+（RFC1571――Telnet Environment Option Interoperability Issues）
+
+本备忘录的状态
+    本备忘录向Internet社会提供了信息。本备忘录并不详细说明任何一种Internet标准。
+此备忘录的发布是无限的。
+目录
+1、总观点	1
+2、客户端Telnet：解析SEND	2
+3、服务器Telnet:解析IS或INFO	2
+4、客户端总结	3
+5、服务器总结	3
+参考书目	4
+安全考虑	4
+作者地址	4
+
+1、总观点
+    RFC 1408 [1],Telnet环境选项的规范书，详细说明了与Telnet环境选项中BSD执行
+相反的VAR和VALUE。因为BSD是RFC对于文档假想的参考执行，并以许多已存在的执行为
+基础，所以在带有定义冲突的VAR和VALUE的执行之间就存在互用性问题。
+    这片文档描述了一个方法，它允许执行者确定它们的环境选项的执行能与尽可能多的执
+行共同操作，这是通过提供一种启发式的机制来实现的，而这种机制能用来帮助识别连接另
+一端正在使用的VAR和VALUE定义。
+
+2、客户端Telnet：解析SEND
+SEND潜在选项应该只包含VAR和USERVAR命令。它应该不包含VALUE。如果在解析SEND
+潜在选项时遇见了VALUE，客户端可以假定服务器已经颠倒了VAR和VALUE的值，在客
+户的观点应该翻转那些值，同样在解析剩下的SEND潜在选项和产生IS和INFO潜在选
+项时。如果VALUE和VAR命令都被遇见，SEND命令就不能很好的成形，并且它被执行依
+赖于将要发生什么。
+    如果在SEND潜在选项中没有VAR和VALUE命令，那么客户端就不知道服务器所期
+望的VAR和VALUE的值。在这种情况下，只需假定服务器有正确的定义，并使用VAR和
+VALUE的正确的值。
+
+3、服务器Telnet:解析IS或INFO
+在潜在选项中的IS或INFO只能被VAR或USERVAR合法地跟随。如果IS或INFO立即跟
+随了VAR，那么可以假定客户端有正确的VAR和VALUE定义。如果IS或INFO立即跟随
+了VALUE，那么可以假定客户端颠倒了VAR和VALUE的定义，在服务器的观点应该假定
+VALUE和VAR的定义被颠倒了。
+    如果IS或INFO立即跟随了USERVAR，进一步的启发必须被应用来确定什么是客户
+端对于VAR和VALUE的定义。这是因为只有跟随VAR或VALUE的USERVAR才是合法的。
+USERVAR后的VALUE给定了USERVAR的值。USERVAR后的VAR意味着USERVAR未被定义。
+    接下来要做的就是扫描全部的潜在选项，寻找两个VAR或VALUE连贯的情况，或是
+VAR或VALUE为空的情况。一个潜在选项包含两个并不介于VAR或USERVAR之间的值，
+这被认为是不合法的，同样的，一个潜在选项包含一个空VAR也是被认为是不合法。因
+此，如果两个连贯的VAR或是空的VAR被发现，就可以假定产生潜在选项的客户端使用
+了正确的VAR和VALUE定义。如果两个连贯的VALUE或是空的VAR被发现，就可以假定
+产生潜在选项的客户端颠倒了VAR和VALUE的定义，从服务器的观点应该假定VAR和
+VALUE的定义被颠倒了。
+    如果仍然有所疑问的话，接下来的测试可以被应用来把接收到多少VAR,USERVAR和
+VALUE加起来。（并不介于VALUE或VAR之间的连贯的USERVAR被加时应该只能算作一
+个。）因为一个VALUE只能跟随一个VAR或者一个USERVAR，而且如果所有的VAR和
+USERVAR都有值，那么将有与VAR和USERVAR同样多的VALUE是正确的。如果VAR和
+USERVAR的数量与VALUE的总数量相同，那么客户端对于VAR和VALUE有正确的定义。
+如果VAR和USERVAR的数量与VAR的总数量相同，那么客户端对于VAR和VALUE的定义
+颠倒了。
+    如果VALUE的数量比VAR和USERVAR的总和还要多，就可以假定客户端已经颠倒了
+VAR和VALUE的定义，并且如果有比USERVAR和VALUE更多的VAR，那么可以假定客户
+端对于VAR和VALUE有正确的定义。尽管如此，为了达到这一步，已经确定了没有连贯
+的VAR和VALUE。一些小的数学运算可以展示这意味着VALUE的数量将永远不会超过VAR
+和USERVAR的总和，而且VAR的数量也永远不会超过VALUE和USERVAR的总和。从此，
+这种核查就变成多余的，可以被跳过。
+    如果还是有疑惑的话，VAR命令的值能被用来检验他们确实定义了众所周知的变量。
+如果他们中任何人这样做了，那么客户端大概正在使用对于VAR和VALUE的正确定义。
+否则的话，如果任何VALUE包含了众所周知的变量名，那么客户端也许已经颠倒了对于
+VAR和VALUE的定义。
+    如果以上所有的启发失败了，那么服务器已经做了所有的来确定客户端的类型，并
+且它应该只须假定客户端正在使用VAR和VALUE的正确定义。
+
+4、客户端总结
+只包含VAR和USERVAR命令的SEND潜在选项。
+      服务器正常。
+包含VALUE命令的SEND潜在选项。
+      服务器被颠倒。
+找不到VAR或VALUE命令。
+      假定服务器正常。
+
+5、服务器总结
+    IS/INFO被VAR跟随。
+         客户端正常。
+    IS/INFO被VALUE跟随。
+       客户端被颠倒。
+    有连续两个VAR。
+       客户端正常。
+    有连续的VALUE。
+       客户端被颠倒。
+    有空的VALUE。
+       客户端正常。
+    有空的VAR。
+       客户端被颠倒。
+    USERVAR和VAR的数量与VALUE的数量相同。
+       假定客户端正常。
+    USERVAR和VALUE的数量与VAR的数量相同。
+       假定客户端被颠倒。
+    有包含众所周知的名称的VAR。
+       假定客户端正常。
+    有包含众所周知的名称的VALUE。
+       假定客户端被颠倒。
+    其他
+       假定客户端正常。
+
+参考书目
+[1] Borman, D., Editor, "Telnet Environment Option", RFC 1408, Cray
+       Research, Inc., January 1993.
+
+安全考虑
+    安全问题在此备忘录中不讨论。
+
+作者地址
+David A. Borman
+    Cray Research, Inc.
+    655F Lone Oak Drive
+    Eagan, MN 55123
+
+    Phone: (612) 452-6650
+    EMail: dab@CRAY.COM
+
+    Telnet Working Group Mailing List: telnet-ietf@CRAY.COM
+
+RFC1571――Telnet Environment Option Interoperability Issues             TELNET环境选项互用性问题
+
+
+1
+RFC文档中文翻译计划

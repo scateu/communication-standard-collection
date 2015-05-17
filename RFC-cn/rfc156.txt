@@ -1,0 +1,29 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                      J. Bouknight
+Request for Comments: 156                                 26 April 1971
+Category: G.5                                                  Illinois
+Obsoletes: None
+Updates: None
+
+伊利诺斯州站点的状态（对RFC116的响应）
+（Status of the Illinois Site (Response to RFC 0116)）
+自从4月26日报告发布之日起，伊利诺斯州站点已经完成了PDP-11系统到IMP的硬件连接工作。
+由于Burroughs B6500计算机有很多故障，最终对于PDP-11进行的操作系统和网络控制程序的检验已经被大大简化了。现在寄希望于：
+--用5月的最新版检验NCP
+--在Paoli安装PDP-11系统，PA(伊利诺斯州和Paoli的Burroughs之间开通的链路)，这样在6月就可以开通这个系统了
+[这个RFC文档是由Tom McGhan以计算机可读的文件格式归档到在线RFC文档库的。7/97]
+
+RFC156―Status of the Illinois Site                                   伊利诺斯州站点的状态
+
+
+
+
+1
+RFC文档中文翻译计划
+

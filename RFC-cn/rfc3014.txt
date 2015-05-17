@@ -1,0 +1,966 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：oyelel（oyelel     ）
+译文发布时间：2001-12-28
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                            Editor of this version:
+Request for Comments: 3014                                  R. Kavasseri
+Category: Standards Track                            Cisco Systems, Inc.
+                                             Author of previous version:
+                                                              B. Stewart
+                                                           November 2000
+
+提示日志管理信息库
+（RFC3014――Notification Log MIB）
+
+本备忘录的状态
+本文档为Internet社区提供了一个详细的Internet标准通道协议，欢迎大家讨论和提出
+建议。为使本协议的声明和状态符合标准化的要求，请参阅“Internet 官方协议标准”（STD 
+1）。此文档发布不受任何限制。
+版权声明
+ Copyright (C) The Internet Society (2001).
+
+摘要
+本备忘录定义了在Internet社区中与网络管理协议一起使用的管理信息库（MIB）的一
+部分。特别的，它对那些用于把简单网络管理协议（SNMP）的提示记入日志的管理对象进
+行了描述。
+本文档中的关键字“必须”，“禁止”，“要求”，“将要”，“将不会”，“应该”，“不应该”，“推
+荐”，“可能”，“可以选择”等均按照在RFC2119中描述的那样理解。
+
+
+目录
+1. SNMP管理框架	2
+2.概述	3
+2.1 环境	3
+2.2.结构	4
+2.3.举例	5
+3.定义	5
+4.知识产权	20
+5.参考	21
+6.安全考虑	22
+7.作者地址	22
+8.全部版权说明	23
+
+1. SNMP管理框架
+   SNMP管理框架现在主要有五个部分组成：
+     o总结构，在RFC 2571中描述。
+o描述和命名对象与事件的机制。这些对象与事件用于管理目的。管理信息结构（SMI）
+的原始版本被称为SMIv1,它在STD 16,RFC 1155,STD 16,RFC 1212和RFC 1215中作了描
+述。SMI的第二版被称为SMIv2,它在STD 58, RFC 2578 , STD 58, RFC 2579和STD 58, RFC 
+2580 中作了描述。.
+o用于传输管理信息的通信协议。SNMP通信协议的第一版本被称为SNMPv1,它在
+STD 15,RFC1157中作了描述。SNMP的第二版本SNMPv2c并不是一个Internet标
+准信道协议，它在RFC 1901与RFC 1906中作了描述。第三版本SNMPv3在
+RFC1906,RFC 2572与RFC2572中作了描述。
+o访问管理信息的协议操作。第一组协议操作以及相关的PDU格式在STD15,RFC1157
+中作了描述。第二组协议操作以及相关的PDU格式在RFC1905中作了描述。        
+o一组基本应用与基于观察的存取控制机制，他们分别在RFC2573和RFC2575中作
+了描述。        
+RFC2570对现在的SNMP管理框架作了更详细的介绍。
+管理对象的访问要通过一个叫“管理信息库”（MIB）的虚拟信息存储库才能进行。MIB
+中的对象按照SMI中的机制进行定义。
+本备忘录详细说明了一个遵守SMIv2的MIB模块。遵守SMIv1的MIB可以通过适当的
+翻译产生。通过翻译产生的MIB必须在语义上是等同的，只有对象和事件才能因为无法翻
+译（使用Counter64）而被省略。在翻译过程中SMIv1里某些机器可读信息应该转换成用文
+本描述。但是，这些机器可读信息的损失不能改变MIB的语义。
+2.概述
+  支持SNMP的系统通常需要一个记录提示信息的机制，这样可以防止丢失提示，不管
+这些信息是陷阱还是超过返送限制的通知（RFC1905）。因此，这种MIB以本地记录功能的
+形式作为其它的MIB的共同基础。它主要用于提示的发送者，但是也能为接收者所利用。
+  在有MIB提示日志的情况下，每个MIB承担的记录与事件相关的暂时信息的责任比较
+小，相比之下，承担丢失提示信息的责任还要大一些。而且，应用程序能够向日志核对是否
+丢失了重要的提示。
+2.1 环境
+   MIB的环境主要关注：
+          o SNMP引擎及其背景
+o安全
+2.1.1 SNMP引擎与背景
+ 一共有两种不同的信息流。这些信息流来源于可以产生多个提示的发生器，能
+够记入日志。第一种信息流被记录成SNMP通知和陷阱（从一个或者多个SNMP引擎），另
+一种信息流以不同于SNMP通知与陷阱的提示机制在提示发生器的接口被传送到SNMP引
+擎。后一种信息流在这里作为向自己发送提示的SNMP引擎模型。此部分的剩余部分将讨
+论第一种信息流（来自多个SNMP引擎的提示）的处理。
+正如在SNMP基础结构（RFC2571）中所描述的那样，一个给定的系统可以支
+持多个SNMP引擎，这些引擎能够独立地操作，并且都拥有自己的引擎标志。而且，在给
+定的引擎范围内，可以有多个已经命名的管理背景，这些背景可以支持由MIB对象和提示
+组成的有交集或者没有交集的集合。因此，理解一个特定的提示需要知道SNMP引擎以及
+这个提示从何而来的管理背景。
+为了给已经记入日志的提示提供必要的信息资源，MIB包含了记录提示的资源
+SNMP引擎号和管理背景名字的对象。
+2.1.2.安全
+  提示的安全比较笨拙，因为提示里的对象的访问控制只有在提示产生时才能被检测
+到。因而只有本地产生的提示才能被检测出来，也只有在这时候安全许可证才是可行的。
+就现在讨论的目的而言,，安全许可证是指抽象服务接口函数isAccessAllowed[RFC2571]
+的输入值，而使用这些许可证意味着概念地使用isAccessAllowed去观察这些许可证是否允
+许访问正在讨论的MIB对象，就像提示发生器（RFC2573）操作地那样。
+提示日志管理信息库是一种命名日志。通过使用日志名字和基于观察的访问控制
+(RFC2575)，网络管理源可以为不同的用户提供不同的访问路径。当应用程序产生一个命名
+日志时，产生者的安全许可证将与这个日志保持联系。
+只拥有少量资源的管理系统可能不允许产生新的命名日志，它只提供缺省的日
+志，即没有命名的日志。这样的日志没有隐含的安全许可证控制访问提示对象，提示也不会
+被进一步核对。
+如果把本地产生的提示记入命名日志，管理系统必须使用与这个日志相关的安全
+许可证，必须应用与描述提示发生器（RFC2573）相同的访问控制规则.
+不管把远程产生的提示加入命名日志还是加入缺省的没有命名的提示，管理系统
+都不应该申请访问控制。在这种情况下，日志里信息的安全应该交给日志本身的访问控制，
+这种访问控制是正常的，全面的。
+MIB提示日志允许应用程序用nlmConfigGlobalEntryLimit来设置日志里提示数
+量的最大值。类似地，应用程序可以用nlmConfigGlobalAgeOut来设置提示有效的最大时间，
+在这个时间以后的提示可能就会过时。请注意多个应用程序之间的竞争：这些应用程序会试
+着给对象赋不同的值。而这可能会影响单个程序运行时数据的可靠性和完整性。譬如说，一
+种可能的情况是应用程序可能改变在另一个程序里设置的对象的值，这将导致一些提示在其
+它应用程序访问之前就被删除。这可以被用来实施拒绝服务攻击。防止这种攻击还有待于进
+一步研究。
+
+2.2.结构
+MIB由下列几部分组成：
+o组成――控制日志的大小与提示的种类。
+o统计――日志活动性表示。
+o日志――提示本身。
+2.2.1.组成
+本部分包括MIB用来管理资源的对象。
+本部分也包括一个详细说明哪种日志存在和这些日志怎样运作的表格。哪种提示
+被记入日志决定于在标准SNMP提示MIB里snmpNotifyFilterTable定义的过滤
+器，MIB由表格里的初始索引确定。
+2.2.2.统计
+本部分包括用于记录提示记入和丢弃的计数器，这样就提供了一种方法去理解
+因为日志容量设置和资源问题而产生的问题。
+2.2.3.日志
+日志包括提示和来自提示变量捆绑列表的对象，当访问提示时会产生一个对应
+的整数型索引。如果一个应用程序想收集日志里所有的提示，或者想知道是否丢
+失了提示，它可以留意找回的最大索引，从这里开始再次查询，以检查因为已经
+重新设置索引而可能不能访问的sysUpTime的中断性。
+ 变量都保存在一个表格中，表格的索引是提示指针和提示里的变量指针。变量
+的值被保存为“区别对待的公用体”，每个变量都有一个值对象。哪一种值对象
+被例示决定于变量的SNMP数据类型，每一个不同的SNMP数据类型都有一个
+分离的具有合适类型的对象。
+因此，应用程序能够根据提示PDU(协议数据单元)和日志的记录重建信息。
+2.3.举例
+以下是只记录linkUp和linkDown提示的命名日志的典型结构：
+In nlmConfigLogTable:
+
+      nlmConfigLogFilterName.5."links"    = "link-status"
+      nlmConfigLogEntryLimit.5."links"    = 0
+      nlmConfigLogAdminStatus.5."links"   = enabled
+      nlmConfigLogOperStatus.5."links"    = operational
+      nlmConfigLogStorageType.5."links"   = nonVolatile
+      nlmConfigLogEntryStatus.5."links"   = active
+
+   Note that snmpTraps is:
+
+      iso.org.dod.internet.snmpV2.snmpModules.snmpMIB.snmpMIBObjects.5
+或者用数字表示：
+1.3.6.1.6.3.1.1.5
+linkDown 是 snmpTraps.3 ， linkUp 是 snmpTraps.4。
+snmpNotifyFilterTable允许的两个提示：
+snmpNotifyFilterMask.11."link-status".1.3.6.1.6.3.1.1.5.3 = ''H
+     snmpNotifyFilterType.11."link-status".1.3.6.1.6.3.1.1.5.3 = include
+     snmpNotifyFilterStorageType.11."link-status".1.3.6.1.6.3.1.1.5.3
+      = nonVolatile
+     snmpNotifyFilterRowStatus.11."link-status".1.3.6.1.6.3.1.1.5.3
+      = active
+
+     snmpNotifyFilterMask.11."link-status".1.3.6.1.6.3.1.1.5.4 = ''H
+     snmpNotifyFilterType.11."link-status".1.3.6.1.6.3.1.1.5.4 = include
+     snmpNotifyFilterStorageType.11."link-status".1.3.6.1.6.3.1.1.5.4
+      = nonVolatile
+     snmpNotifyFilterRowStatus.11."link-status".1.3.6.1.6.3.1.1.5.4
+      = active
+3.定义
+NOTIFICATION-LOG-MIB DEFINITIONS ::= BEGIN
+
+引入
+    MODULE-IDENTITY, OBJECT-TYPE,
+    Integer32, Unsigned32,
+    TimeTicks, Counter32, Counter64,
+    IpAddress, Opaque, mib-2       FROM SNMPv2-SMI
+    TimeStamp, DateAndTime,
+    StorageType, RowStatus,
+    TAddress, TDomain              FROM SNMPv2-TC
+    SnmpAdminString, SnmpEngineID  FROM SNMP-FRAMEWORK-MIB
+    MODULE-COMPLIANCE, OBJECT-GROUP     FROM SNMPv2-CONF;
+
+notificationLogMIB MODULE-IDENTITY
+    LAST-UPDATED "200011270000Z"            -- 27 November 2000
+    ORGANIZATION "IETF Distributed Management Working Group"
+    CONTACT-INFO "Ramanathan Kavasseri
+                  Cisco Systems, Inc.
+                  170 West Tasman Drive,
+                  San Jose CA 95134-1706.
+                  Phone: +1 408 527 2446
+                  Email: ramk@cisco.com"
+   描述
+“用于记录SNMP提示的MIB模块，也就是陷阱与通知。”
+--修改历史
+修改   "200011270000Z"     ――2000年11月27日
+描述   “这是MIB的第一版本，发表于RFC3014。”
+::= { mib-2 92 }
+
+notificationLogMIBObjects OBJECT IDENTIFIER ::= { notificationLogMIB 1 }
+
+nlmConfig OBJECT IDENTIFIER ::= { notificationLogMIBObjects 1 }
+nlmStats  OBJECT IDENTIFIER ::= { notificationLogMIBObjects 2 }
+nlmLog         OBJECT IDENTIFIER ::= { notificationLogMIBObjects 3 }
+
+--
+-- 设置部分
+--
+
+nlmConfigGlobalEntryLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+描述
+“在命名日志中nlmLogTable能容纳的最大提示数。特殊的设置并不能保证容纳
+更多的数据。
+如果应用程序在日志里有提示时改变了提示的限制，最早的提示必须删除以接受
+新设置的限制。因此nlmConfigGlobalEntryLimit的值必须优先于
+nlmConfigGlobalAgeOut 和 nlmConfigLogEntryLimit的值,即使正在删除的提示
+存在的时间没有超过nlmConfigGlobalAgeOut的值或者命名日志的条目比
+nlmConfigLogEntryLimit规定的数目要少也是如此。
+0值表示没有限制。
+请注意多个管理者之间的竞争：这些管理者会试着给对象赋不同的值。而这可能
+会影响单个管理者所见到的数据的可靠性和完整性。”
+DEFVAL { 0 }
+    ::= { nlmConfig 1 }
+
+nlmConfigGlobalAgeOut OBJECT-TYPE
+    SYNTAX      Unsigned32
+UNITS       "minutes"
+    MAX-ACCESS  read-write
+    STATUS      current
+描述
+“日志中提示应该保存的时间。如果超过这个时间，提示会自动删除。
+如果应用程序改变nlmConfigGlobalAgeOut的值，在新时间之前创建的提示可
+能被删除。
+0只表示没有提示过时。
+请注意多个管理者之间的竞争：这些管理者会试着给对象赋不同的值。而这可
+能会影响单个管理者所见到的数据的可靠性和完整性。”
+DEFVAL { 1440 }  -- 24 hours
+    ::= { nlmConfig 2 }
+
+
+--
+-- 基本日志提示表
+--
+
+nlmConfigLogTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF NlmConfigLogEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+描述
+“记入控制条目表格。”
+::= { nlmConfig 3 }
+
+nlmConfigLogEntry OBJECT-TYPE
+    SYNTAX      NlmConfigLogEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+描述
+“记入控制条目。根据存储类型的不同，条目可以由系统提供，也可以有应用
+程序使用nlmConfigLogEntryStatus创建和删除。”
+INDEX      { nlmLogName }
+    ::= { nlmConfigLogTable 1 }
+
+NlmConfigLogEntry ::= SEQUENCE {
+    nlmLogName           SnmpAdminString,
+    nlmConfigLogFilterName    SnmpAdminString,
+    nlmConfigLogEntryLimit    Unsigned32,
+    nlmConfigLogAdminStatus   INTEGER,
+nlmConfigLogOperStatus    INTEGER,
+    nlmConfigLogStorageType   StorageType,
+    nlmConfigLogEntryStatus   RowStatus
+    }
+
+nlmLogName OBJECT-TYPE
+    SYNTAX     SnmpAdminString (SIZE(0..32))
+    MAX-ACCESS not-accessible
+    STATUS     current
+描述
+“日志名。
+执行程序可以访问多个命名日志，命名日志的数目决定于具体的执行程序设置
+的极限（也可能没有）。零长度日志名保留给管理系统创建和删除日志时使用，不支持命名
+日志的系统必须把零长度日志名作为缺省的日志名。”
+::= { nlmConfigLogEntry 1 }
+
+nlmConfigLogFilterName OBJECT-TYPE
+    SYNTAX     SnmpAdminString (SIZE(0..32))
+    MAX-ACCESS read-create
+    STATUS     current
+描述
+“snmpNotifyFilterProfileName的值。SnmpNotifyFilterProfileName用作SNMP
+提示MIB里的snmpNotifyFilterTable的索引，它决定本地或者远程产生的提示中哪些被过滤
+不能记入日志中。
+如果snmpNotifyFilterProfileName的值为零长度，或者名字没有指向
+snmpNotifyFilterTable已经存在的条目，这就表明没有日志需要记入这个日志中。”
+DEFVAL { ''H }
+    ::= { nlmConfigLogEntry 2 }
+
+nlmConfigLogEntryLimit OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-create
+    STATUS     current
+描述
+“命名日志中nlmLogTable能容纳的提示条目的最大值。特殊的设置并不能
+保证容纳更多的数据。
+如果应用程序在日志里有提示时改变了提示的限制，最早的提示必须删除
+以接受新设置的限制。
+0值表示没有限制。
+请注意多个管理者之间的竞争：这些管理者会试着给对象赋不同的值。而
+这可能会影响单个管理者所见到的数据的可靠性和完整性。”
+DEFVAL { 0 }
+    ::= { nlmConfigLogEntry 3 }
+
+nlmConfigLogAdminStatus OBJECT-TYPE
+    SYNTAX     INTEGER { enabled(1), disabled(2) }
+    MAX-ACCESS read-create
+    STATUS     current
+描述
+“控制使日志有效或无效。如果没有这种控制，日志条目将会受到干扰。
+请注意多个管理者之间的竞争：这些管理者会试着给对象赋不同的值。而这
+可能会影响单个管理者所见到的数据的可靠性和完整性。”
+
+
+DEFVAL { enabled }
+    ::= { nlmConfigLogEntry 4 }
+
+nlmConfigLogOperStatus OBJECT-TYPE
+    SYNTAX     INTEGER { disabled(1), operational(2), noFilter(3) }
+    MAX-ACCESS read-only
+    STATUS     current
+描述 
+“本日志的操作状态：
+无效   管理无效
+操作   管理有效
+noFilter 管理有效，但是slmConfigLogFilterName为零长度，或者
+snmpNotifyFilterTable中存在的条目没有命名。”
+::= { nlmConfigLogEntry 5 }
+
+nlmConfigLogStorageType OBJECT-TYPE
+SYNTAX     StorageType
+    MAX-ACCESS read-create
+    STATUS     current
+描述
+“本概念行的存储方式。”
+::= { nlmConfigLogEntry 6 }
+
+nlmConfigLogEntryStatus OBJECT-TYPE
+
+SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+描述
+“控制创建和删除日志条目。当前日志条目可能得到修改。
+对于没有命名的日志来说，当有请求要设置nlmConfigLogStatus为激活状态，管
+理系统将根据请求记录安全许可证，并凭此许可证对提示的对象进行访问控制，进而决定提
+示是否需要记入日志。”
+::= { nlmConfigLogEntry 7 }
+
+--
+-- 统计部分
+--
+
+nlmStatsGlobalNotificationsLogged OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "notifications"
+    MAX-ACCESS  read-only
+    STATUS      current
+
+描述
+“放入nlmLogTable的提示的数目。每访问日志一次都会把提示计算一次，所以
+被多个日志使用的提示将被计算多次。”
+::= { nlmStats 1 }
+
+nlmStatsGlobalNotificationsBumped OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "notifications"
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“删除的日志条目的数目。当资源缺乏或者由于nlmConfigGlobalEntryLImit和
+nlmConfigEntryLimit的值的原因，一些日志条目将被删除，以便腾出空间创建新的条目。但
+是这并不包括由于nlmConfigGlobalAgeOut的值而删除的日志条目。”
+::= { nlmStats 2 }
+--
+-- 日志统计表格
+--
+
+nlmStatsLogTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF NlmStatsLogEntry
+MAX-ACCESS  not-accessible
+STATUS      current
+描述
+“关于提示日志统计条目的表格。”
+::= { nlmStats 3 }
+
+nlmStatsLogEntry OBJECT-TYPE
+    SYNTAX      NlmStatsLogEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+描述
+“提示日志统计条目。”
+AUGMENTS { nlmConfigLogEntry }
+    ::= { nlmStatsLogTable 1 }
+
+NlmStatsLogEntry ::= SEQUENCE {
+    nlmStatsLogNotificationsLogged Counter32,
+    nlmStatsLogNotificationsBumped Counter32
+}
+
+nlmStatsLogNotificationsLogged OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "notifications"
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“放入命名日志的提示的数目。”
+::= { nlmStatsLogEntry 1 }
+
+nlmStatsLogNotificationsBumped OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "notifications"
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+"删除的日志条的数目.当空间不足或者由于nlmConfigGlobalEntryLimit或
+nlmConfigLogEntryLimit值的原因,一些日志条将从此命名日志上删除以给新的条目腾出空
+间.但是这不包括因为nlmConfigGlobalAgeOut的值而删除的条目."
+::= { nlmStatsLogEntry 2 }
+--
+--日志部分
+--
+--
+-- 日志表格
+--
+nlmLogTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF NlmLogEntry
+    MAX-ACCESS  not-accessible
+STATUS      current
+描述
+"提示日志条表格.
+表格中的条目是否不按照管理系统的初始化保存需要视情况而定,但总的来说会按照管
+理系统的初始化保存.
+请注意,如果日志条目不按照管理的初始化保存,将给计数器和TimeStamps造成某种混
+淆,因为两者都基于sysUpTime,而sysUpTime根据管理系统设定的初值重新设置.在这种情况
+下,计数器只能在重新设置之后才能应用,重新设置之前产生的条目的nlmLogTime必须设置
+为0.
+::= { nlmLog 1 }
+
+nlmLogEntry OBJECT-TYPE
+    SYNTAX      NlmLogEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+描述
+"提示日志条.
+当提示产生并通过nlmConfigLogFilterName和访问控制的过滤时，日志条将在这个表
+格中产生。当空间不足或者由于nlmConfigGlobalEntryLimit, nlmConfigGlobalAgeOut,
+nlmConfigLogEntryLimit值的原因,这些条目将被删除以为新的条目腾出空间.
+如果总的日志条超过了nlmConfigGlobalEntryLimit或者总的系统资源的限制,日志最早
+的条目将被删除以为新条目腾出空间.
+如果总的条目超过了nlmConfigLogEntryLimit的限制,日志最早的条目将被删除以给新
+条目腾出空间.
+在管理系统把本地产生的提示记入未命名提示之前,管理系统需要确保日志的创立者有
+权使用提示的信息.如果创立者没有这个权力,管理系统不会把提示记入日志中."
+INDEX       { nlmLogName, nlmLogIndex }
+    ::= { nlmLogTable 1 }
+NlmLogEntry ::= SEQUENCE {
+    nlmLogIndex                Unsigned32,
+    nlmLogTime                 TimeStamp,
+    nlmLogDateAndTime          DateAndTime,
+    nlmLogEngineID             SnmpEngineID,
+    nlmLogEngineTAddress       TAddress,
+    nlmLogEngineTDomain        TDomain,
+    nlmLogContextEngineID      SnmpEngineID,
+    nlmLogContextName          SnmpAdminString,
+    nlmLogNotificationID       OBJECT IDENTIFIER
+}
+
+nlmLogIndex OBJECT-TYPE
+    SYNTAX     Unsigned32 (1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS     current
+描述
+"单调递增整数.这个整数的唯一目的是指向此命名日志的条目.当整数达到设定的最大值(不
+太可能发生)时,代理将把它的值降为1."
+::= { nlmLogEntry 1 }
+
+nlmLogTime OBJECT-TYPE
+    SYNTAX      TimeStamp
+    MAX-ACCESS  read-only
+STATUS      current
+描述
+“当条目记入日志时sysUpTime的值。如果条目在最近的管理系统初始化之前产生，
+此对象的值必须置为0。”
+::= { nlmLogEntry 2 }
+
+nlmLogDateAndTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“条目记入日志时的当地日期和时间。他只能被具备日期和时间的系统例示。”
+::= { nlmLogEntry 3 }
+
+nlmLogEngineID OBJECT-TYPE
+    SYNTAX      SnmpEngineID
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“产生提示的SNMP引擎的识别。
+如果日志只能包含一个引擎的提示，或者陷阱的格式是SNMPv1,这个对象就是一个零
+长度的字符串。“
+::= { nlmLogEntry 4 }
+
+nlmLogEngineTAddress OBJECT-TYPE
+    SYNTAX      TAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“SNMP引擎的传输服务地址。提示从SNMP引擎接收。此地址的格式根据
+nlmLogEngineTDomain的值设定。因为nlmLogEngineId不能从SNMPv1陷阱pdu(协议数据
+单元)得出，这就被用来确定SNMPv1陷阱的来源。
+即使日志只能包含一个引擎的提示，这个对象也必须总是被例示。
+请注意nlmLogEngineTAddress可能不能唯一确定发送提示的SNMP引擎。譬如说，如
+果SNMP引擎使用DHCP或NAT来获取IP地址，这个IP地址可能与其它的网络设备共享，
+因此不能唯一确定SNMP引擎。“
+::= { nlmLogEntry 5 }
+
+nlmLogEngineTDomain OBJECT-TYPE
+    SYNTAX      TDomain
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“表明传输服务的类型。SNMP引擎通过传输服务发送提示。NlmLogEngineTAddress
+包含SNMP引擎的传输服务地址。
+这个对象可能的值可以在最近的SNMPv2文档的传输映射中找到（RFC1906[8]）。"
+::= { nlmLogEntry 6 }
+
+nlmLogContextEngineID OBJECT-TYPE
+    SYNTAX      SnmpEngineID
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“如果提示按照含有contextEngineID元素的协议（如SNMPv3）接收，这个对象就含
+有此值。否则它的值就为一个零长度的字符串。”
+::= { nlmLogEntry 7 }
+
+nlmLogContextName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“SNMP MIB背景的名称。提示就是在这种背景中产生。对于SNMPv1陷阱来说，这
+是陷阱的共同体字符串。”
+::= { nlmLogEntry 8 }
+
+nlmLogNotificationID OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“所产生提示的NOTIFICATION-TYPE对象标志符。”
+:= { nlmLogEntry 9 }
+
+--
+--日志变量表
+--
+
+nlmLogVariableTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF NlmLogVariableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    描述
+“与提示日志条目配套的变量表。”
+    ::= { nlmLog 2 }
+
+nlmLogVariableEntry OBJECT-TYPE
+    SYNTAX      NlmLogVariableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+描述
+“提示日志条目变量。
+
+当nlmLogTable中的提示列表中有变量时，条目就会在这个表格产生。”
+INDEX       { nlmLogName, nlmLogIndex, nlmLogVariableIndex }
+    ::= { nlmLogVariableTable 1 }
+
+NlmLogVariableEntry ::= SEQUENCE {
+nlmLogVariableIndex              Unsigned32,
+    nlmLogVariableID                 OBJECT IDENTIFIER,
+    nlmLogVariableValueType          INTEGER,
+    nlmLogVariableCounter32Val       Counter32,
+    nlmLogVariableUnsigned32Val      Unsigned32,
+    nlmLogVariableTimeTicksVal       TimeTicks,
+    nlmLogVariableInteger32Val       Integer32,
+    nlmLogVariableOctetStringVal     OCTET STRING,
+    nlmLogVariableIpAddressVal       IpAddress,
+    nlmLogVariableOidVal             OBJECT IDENTIFIER,
+    nlmLogVariableCounter64Val       Counter64,
+    nlmLogVariableOpaqueVal          Opaque
+}
+
+nlmLogVariableIndex OBJECT-TYPE
+    SYNTAX     Unsigned32 (1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS     current
+描述
+“一个单调递增的整数。他对于给定的nlmLogIndex来说从1开始计数，并指向已记入
+日志的提示里的变量。”
+    ::= { nlmLogVariableEntry 1 }
+
+nlmLogVariableID OBJECT-TYPE
+    SYNTAX     OBJECT IDENTIFIER
+    MAX-ACCESS read-only
+    STATUS     current
+描述
+“变量的对象标志符。”
+    ::= { nlmLogVariableEntry 2 }
+
+nlmLogVariableValueType OBJECT-TYPE
+    SYNTAX      INTEGER { counter32(1), unsigned32(2), timeTicks(3),
+                 integer32(4), ipAddress(5), octetString(6),
+                 objectId(7), counter64(8), opaque(9) }
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“值类型。接下去的这种类型的值对象中，有且只有一个值对象必须例示。”
+VariableCounter32Val OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType 是'counter32'时的值。”
+::= { nlmLogVariableEntry 4 }
+
+nlmLogVariableUnsigned32Val OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType 是 'unsigned32'时的值。”
+::= { nlmLogVariableEntry 5 }
+
+nlmLogVariableTimeTicksVal OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType是'timeTicks'时的值。”
+    ::= { nlmLogVariableEntry 6 }
+
+nlmLogVariableInteger32Val OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType是'integer32'时的值。”
+LogVariableOctetStringVal OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType是'octetString'时的值。”
+::= { nlmLogVariableEntry 8 }
+
+nlmLogVariableIpAddressVal OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType是'ipAddress'时的值。虽然这看起来似乎使IPv6不友好，但
+是我们应该注意到，有很多的老的MIB包含有IPv4格式的地址（IpAddress）。
+IPv6地址使用TAddress或InetAddress来描述，因此隐含的数据类型是OCTET STRING,
+他们的值储存在nlmLogVariableOctetStringVal列中。”
+::= { nlmLogVariableEntry 9 }
+
+nlmLogVariableOidVal OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType是'objectld'时的值。”
+::= { nlmLogVariableEntry 10 }
+
+nlmLogVariableCounter64Val OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType是'counter64'时的值。”
+::= { nlmLogVariableEntry 11 }
+
+nlmLogVariableOpaqueVal OBJECT-TYPE
+    SYNTAX      Opaque
+    MAX-ACCESS  read-only
+    STATUS      current
+描述
+“当nlmLogVariableType是'opaque'时的值。”
+::= { nlmLogVariableEntry 12 }
+
+
+--
+-- 一致性
+--
+
+notificationLogMIBConformance OBJECT IDENTIFIER ::=
+    { notificationLogMIB 3 }
+notificationLogMIBCompliances OBJECT IDENTIFIER ::=
+    { notificationLogMIBConformance 1 }
+notificationLogMIBGroups      OBJECT IDENTIFIER ::=
+    { notificationLogMIBConformance 2 }
+
+-- 顺从性
+
+notificationLogMIBCompliance MODULE-COMPLIANCE
+     STATUS current
+描述
+“对实现提示日志MIB的实体的一致性声明。”
+     MODULE    -- this module
+
+          MANDATORY-GROUPS {
+               notificationLogConfigGroup,
+               notificationLogStatsGroup,
+               notificationLogLogGroup
+          }
+
+     OBJECT nlmConfigGlobalEntryLimit
+         SYNTAX Unsigned32 (0..4294967295)
+         MIN-ACCESS read-only
+描述
+“执行程序可以选择一个最大值，它可以设置这个值不能改变，也可以强迫使这个值
+增加或者减少。”
+OBJECT nlmConfigLogEntryLimit
+         SYNTAX Unsigned32 (0..4294967295)
+         MIN-ACCESS read-only
+描述
+“执行程序可以选择一个最大值，它可以设置这个值不能改变，也可以强迫使这个值
+增加或者减少。”
+OBJECT nlmConfigLogEntryStatus
+         MIN-ACCESS read-only
+描述
+“执行程序可能不允许命名日志的产生。”
+     GROUP notificationLogDateGroup
+描述
+“这个组在有时钟日期和时间的系统中强制产生，而对没有时钟日期的系统不能实
+现。”
+     ::= { notificationLogMIBCompliances 1 }
+
+-- 一致性单元
+notificationLogConfigGroup OBJECT-GROUP
+     OBJECTS {
+          nlmConfigGlobalEntryLimit,
+          nlmConfigGlobalAgeOut,
+          nlmConfigLogFilterName,
+          nlmConfigLogEntryLimit,
+          nlmConfigLogAdminStatus,
+          nlmConfigLogOperStatus,
+          nlmConfigLogStorageType,
+          nlmConfigLogEntryStatus
+     }
+     STATUS current
+描述
+“提示日志结构管理。”
+     ::= { notificationLogMIBGroups 1 }
+
+notificationLogStatsGroup OBJECT-GROUP
+     OBJECTS {
+          nlmStatsGlobalNotificationsLogged,
+          nlmStatsGlobalNotificationsBumped,
+          nlmStatsLogNotificationsLogged,
+          nlmStatsLogNotificationsBumped
+     }
+     STATUS current
+描述
+“提示日志统计。”
+     ::= { notificationLogMIBGroups 2 }
+
+notificationLogLogGroup OBJECT-GROUP
+     OBJECTS {
+          nlmLogTime,
+          nlmLogEngineID,
+          nlmLogEngineTAddress,
+          nlmLogEngineTDomain,
+          nlmLogContextEngineID,
+          nlmLogContextName,
+          nlmLogNotificationID,
+          nlmLogVariableID,
+          nlmLogVariableValueType,
+          nlmLogVariableCounter32Val,
+          nlmLogVariableUnsigned32Val,
+          nlmLogVariableTimeTicksVal,
+          nlmLogVariableInteger32Val,
+          nlmLogVariableOctetStringVal,
+          nlmLogVariableIpAddressVal,
+          nlmLogVariableOidVal,
+          nlmLogVariableCounter64Val,
+          nlmLogVariableOpaqueVal
+     }
+     STATUS current
+描述
+“提示日志数据。”
+     ::= { notificationLogMIBGroups 3 }
+
+notificationLogDateGroup OBJECT-GROUP
+     OBJECTS {
+          nlmLogDateAndTime
+     }
+     STATUS current
+描述
+“在一定条件下强制性的提示日志数据。这个组在有时钟日期和时间的系统中强制产
+生，而对没有时钟日期的系统不能实现。”
+     ::= { notificationLogMIBGroups 4 }
+4.知识产权
+
+   The IETF takes no position regarding the validity or scope of any
+   intellectual property or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; neither does it represent that it
+   has made any effort to identify any such rights.  Information on the
+   IETF's procedures with respect to rights in standards-track and
+   standards-related documentation can be found in BCP-11.  Copies of
+   claims of rights made available for publication and any assurances of
+   licenses to be made available, or the result of an attempt made to
+   obtain a general license or permission for the use of such
+   proprietary rights by implementors or users of this specification can
+   be obtained from the IETF Secretariat.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights which may cover technology that may be required to practice
+   this standard.  Please address the information to the IETF Executive
+   Director.
+
+5.参考
+
+   [RFC2571]   Harrington, D., Presuhn, R. and B. Wijnen, "An
+               Architecture for Describing SNMP Management Frameworks",
+               RFC 2571, April 1999.
+
+   [RFC1155]   Rose, M. and K. McCloghrie, "Structure and Identification
+               of Management Information for TCP/IP-based Internets",
+               STD 16, RFC 1155, May 1990.
+
+   [RFC1212]   Rose, M. and K. McCloghrie, "Concise MIB Definitions",
+               STD 16, RFC 1212, March 1991.
+
+   [RFC1215]   Rose, M., "A Convention for Defining Traps for use with
+               the SNMP", RFC 1215, March 1991.
+
+   [RFC2578]   McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J.,
+               Rose, M. and S. Waldbusser, "Structure of Management
+               Information Version 2 (SMIv2)", STD 58, RFC 2578, April
+               1999.
+
+   [RFC2579]   McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J.,
+               Rose, M. and S. Waldbusser, "Textual Conventions for
+               SMIv2", STD 58, RFC 2579, April 1999.
+
+   [RFC2580]   McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J.,
+               Rose, M. and S. Waldbusser, "Conformance Statements for
+               SMIv2", STD 58, RFC 2580, April 1999.
+
+   [RFC1157]   Case, J., Fedor, M., Schoffstall, M. and J. Davin,
+               "Simple Network Management Protocol", STD 15, RFC 1157,
+               May 1990.
+
+   [RFC1901]   Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+               "Introduction to Community-based SNMPv2", RFC 1901,
+               January 1996.
+
+   [RFC1906]   Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+               "Transport Mappings for Version 2 of the Simple Network
+               Management Protocol (SNMPv2)", RFC 1906, January 1996.
+
+   [RFC2572]   Case, J., Harrington D., Presuhn R. and B. Wijnen,
+               "Message Processing and Dispatching for the Simple
+               Network Management Protocol (SNMP)", RFC 2572, April
+               1999.
+
+   [RFC2574]   Blumenthal, U. and B. Wijnen, "User-based Security Model
+               (USM) for version 3 of the Simple Network Management
+               Protocol (SNMPv3)", RFC 2574, April 1999.
+
+   [RFC1905]   Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+               "Protocol Operations for Version 2 of the Simple Network
+               Management Protocol (SNMPv2)", RFC 1905, January 1996.
+
+   [RFC2573]   Levi, D., Meyer, P. and B. Stewart, "SNMPv3
+               Applications", RFC 2573, April 1999.
+
+   [RFC2575]   Wijnen, B., Presuhn, R. and K. McCloghrie, "View-based
+               Access Control Model (VACM) for the Simple Network
+               Management Protocol (SNMP)", RFC 2575, April 1999.
+
+   [RFC2570]   Case, J., Mundy, R., Partain, D. and B. Stewart,
+               "Introduction to Version 3 of the Internet-standard
+               Network Management Framework", RFC 2570, April 1999.
+6.安全考虑
+
+   Security issues are discussed in Section 3.1.2.
+
+7.作者地址
+
+   Bob Stewart
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA 95134-1706
+   U.S.A.
+
+
+   Ramanathan Kavasseri
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA 95134-1706
+   U.S.A.
+
+   Phone: +1 408 527 2446
+   EMail: ramk@cisco.com
+8.全部版权说明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+RFC3014――Notification Log MIB                                 提示日志管理信息库
+
+
+1
+RFC文档中文翻译计划

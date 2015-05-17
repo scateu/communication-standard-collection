@@ -1,0 +1,37 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-5
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                            P. Karp
+Request for Comments: 99                                           MITRE
+NIC 5758                                                22 February 1971
+
+               
+
+网络会议 
+（RFC99――Network Meeting） 
+
+下一次网络工作小组会议将在亚特兰大市举行。SJCC会议在新泽西州举行。Dennis旅
+馆的Wicker室从五月16日(星期六)下午8:00 一直到五月20日(星期四)下午6:00已经被
+预定了。
+既然已经不可能预定到一批足够的旅店房间，我们将通过MITRE来处理预定房间事宜，
+试着安排所有的出席者到同一个旅店。 预期的出席者可以联络我的秘书Marybelle Goodson
+太太, 703-893-3500 Ext. 2316。
+
+
+       [ This RFC was put into machine readable form for entry ]
+       [ into the online RFC archives by Markus Stumpf 4/97 ]
+
+
+RFC99――Network Meeting                                        网络会议  
+
+
+1
+RFC文档中文翻译计划

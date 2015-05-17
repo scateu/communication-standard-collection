@@ -1,0 +1,21 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+NWG/RFC #404                            AAM 5-OCT-72 13:51  12068
+涉及RAND和ISI的主机地址变更
+（Host Address Changes Involving RAND and ISI）
+本周从网上临时删除了RAND IMP，并且在ISI上建立了一个新的IMP。来自RAND的一些人和主机被迁移到了ISI，实际上RAND TENEX现在就是ISI TENEX。ISI IMP的地址是86(十进制)， ISI上TENEX的主机（Host）编号是1；因此ISI TENEX的“网络地址（Network Address）”是86。在下一周的某个时段，RAND IMP将进行重建。IMP的编号始终是7，RAND上的IBM 360/65的“网络地址（Network Address）”也将始终是7。
+[这个RFC文档是在Alex McKenzie指导下由BBN公司以计算机可读的文件格式归档到在线RFC文档库的，1/97]
+
+RFC404――Host Address Changes Involving RAND and ISI          涉及RAND和ISI的主机地址变更
+
+
+
+
+1
+RFC文档中文翻译计划
+

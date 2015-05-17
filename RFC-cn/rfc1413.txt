@@ -1,0 +1,236 @@
+组织：中国互动出版网（http://www.china-pub.com）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者: shenjianli (shenjianli shenjianli@263.net)
+译文发布时间：2001-7-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                       M. St. Johns
+Request for Comments: 1413                      US Department of Defense
+Obsoletes: 931                                             February 1993
+
+                        
+
+鉴定协议
+（Identification Protocol）
+
+此备忘录的状态:
+本标准为Internet网详细说明了架构委员会标准轨迹协议,以及需求大家讨论和建议
+来进一步提高.敬请关注最新版本标准化陈述和此协议的情况的文件"IAB Official 
+Protocol Standards".本备忘录的发行无任何限制.
+目录
+1、介绍	1
+2、概述	2
+3、约束条件	2
+4、询问/响应格式	2
+5、响应类型	2
+6、安全性考虑	5
+7、致谢	6
+参考资料	6
+作者地址	6
+
+1、介绍
+本鉴定协议提供了一种测定用户的特殊的TCP连接身份的手段. 提供了TCP端口对,它
+返回的字符串识别出连接在服务器系统上的用户.
+
+此协议以前叫”the Authentication  Server Protocol”(服务器鉴定协议).改名是为了更
+好的反映出其功能,本文件是因特网工程任务组的TCP身份协议工作组（TCP Identity Protocol 
+Working Group ）的产品,
+2、概述
+这是建立在TCP申请的连接,服务器在TCP的113(十进制)端口监测TCP连接,一旦连接建
+立,服务器在一线路上读取重要的数据,假如存在,系统重要连接可靠性用户标识符将被发送作为
+回答.然后服务器可以断开连接或者读取并回答更多的询问.
+     在推荐60―180秒内如没有接收到任何信息,那么服务器将断开连接.用户可以随时断开连
+接,但是,由于网络的延迟,用户必须等待至少30秒,他(她)的访问方被放弃并断开连接.
+3、约束条件
+询问仅仅限定在指定的连接.询问包括局部和国外端口对,他们用来详细说明连接是来自局
+部或外国的询问连接.这说明关于A与B之间的连接一个用户在A地只能询问B地的服务器.
+4、询问/响应格式
+服务器只接受如下方式的请求:
+           <port―on―server>,<port―on―client>
+<port―on―server>的内容是TCP端口目标,而<port―on―client>是TCP端口来源.
+     N.B―如果客户主机A在主机B申请局部连接为23, 6191的服务,客户必须访问23, 
+6191―也就是连接在主机B是如何被指定的.
+例:
+         6191, 23
+响应的形式为:
+<port-on-server> , <port-on-client> : <resp-type> : <add-info>
+其中<port-on-server>,<port-on-client>和上面一样, <resp-type>是响应时的身份关键
+字,而 <add-info>是由前后文所决定的.返回信息是被<server-address>, 
+<client-address>,
+<port-on-server>, <port-on-client>识别关联的详细的TCP连接. <server-address>和   
+<client-address>是局部和国外的询问连接(i.e)IP地址.TCP连接到鉴定协议服务器
+( <port-on-server> 和 <port-on-client>来自询问.
+        例:
+            6193, 23 : USERID : UNIX : stjohns
+            6195, 23 : ERROR : NO-USER
+
+
+5、响应类型
+响应有两种形式:
+
+ USERID
+       既然如此, <add-info>是由操作系统名字(有随意的字符串标识符)组成,随后是
+“:",最后是鉴定字符.
+       字符集 (如果被提出)与操作系统名字之间用"."格开, 字符集标识符是用来显示
+字符集的鉴定串. 字符集标识符,如果被忽略,将默认为"US-ASCII"(看下面).
+       许可的操作系统名字和字符集名字列在清单RFC 1340中, "Assigned Numbers"或它
+的继承.
+        总之, 操作系统和字符集名在"Assigned Numbers"中详细说明,有一专门共开系统
+标识符--"OTHER".
+         除非"OTHER"是被指定的操作系统类型,服务器将返回正常的连接业主的用户鉴定, 
+"Normal"在这里也许意味着字符串,它们唯一详细说明了连接用户,如这样的用户标识
+符,它们被管理人员分配并被用作邮件标识符,或作为用户/口令的一部分来访问系统资
+源.当系统资源被指定(e.g.除"OTHER"),此用户标识符将或早或迟被期待为有用的形式
+―e.g..某物可以作为论据用来感觉或作为邮件地址.
+         "OTHER"显示的无规定的字符串,是由列在表单中的可打印的字符集组成.如果用
+户字符串在以前的段落中没有受约束,"OTHER"可以被指定,发送加密代码,或另外返回
+无用的电子用户名信息,它们都是"OTHER"将被使用时的用户(如真实的姓名或来自于文
+件UNIX的口令)的例子,返回的用户字符串在指定的字符串集中将是可被打印的.
+         标识符是无格式的八进制串―所有第八位必须除了000 (NUL), 012 (LF)和 015 
+(CR).
+     N.B.―空格字符串(040)后紧跟的冒号分隔符是标识符串的一部分,不可以被忽略.响
+应字符串通常是被CR/LF终止, N.B.串可以是被打印但不是必须的.
+ ERROR
+
+         由于某些原因,端口的所有权并不是固定的. <add-info>指出了原因,下面是
+<add-info>的形式及其具体的含义:
+
+           INVALID-PORT
+                 不管是局部或外国的端口都是不可确定的,如果它们的端口号超出
+了范围(TCP端口号是1―65535)就必须返回,否则不管是整数,实数还
+是其他类型,都不能被验证而作为无用的数据.
+
+NO-USER
+   被端口对指定的连接,不能被使用或不能确切的实体所承认.
+
+HIDDEN-USER
+   服务器能够鉴定使用端口的用户,但是用户要求的信息不会被返回.
+
+UNKNOWN-ERROR
+   不能测定连接的用户:原因不明.如果错误不能在上面掩盖,将返回
+错误的代码值,通常,如果可能,此代码在别的场所以明确的代码反映
+出来.例如,服务器要求返回的错误信息被隐藏起来.或者由于别的原
+因,如果服务器执行这样的任务,它必须是规则的而且它必须认为返回
+的特有错误信息是默认的.
+         余下的值在本文献的最后将被详细的说明和定义,如果某工具有必要说明非规范
+的错误代码,那么代码以"X"开头.
+          另外,服务器可以在没有响应时自动结束询问,任何的突然中断(i.e.,客户没有
+接受到EOL),不管是正确或异常的,都必须认为同样的含义: "ERROR : 
+UNKNOWN-ERROR".
+
+FORMAL SYNTAX   
+      <request> ::= <port-pair> <EOL>
+
+      <port-pair> ::= <integer> "," <integer>
+
+      <reply> ::= <reply-text> <EOL>
+
+      <EOL> ::= "015 012"  ; CR-LF End of Line Indicator
+
+      <reply-text> ::= <error-reply> | <ident-reply>
+
+      <error-reply> ::= <port-pair> ":" "ERROR" ":" <error-type>
+
+      <ident-reply> ::= <port-pair> ":" "USERID" ":" <opsys-field>
+                         ":" <user-id>
+
+      <error-type> ::= "INVALID-PORT" | "NO-USER" | "UNKNOWN-ERROR"
+                    | "HIDDEN-USER" |  <error-token>
+
+      <opsys-field> ::= <opsys> [ "," <charset>]
+
+      <opsys> ::= "OTHER" | "UNIX" | <token> ...etc.
+               ;  (See "Assigned Numbers")
+
+      <charset> ::= "US-ASCII" | ...etc.
+                 ;  (See "Assigned Numbers")
+
+      <user-id> ::= <octet-string>
+
+       <token> ::= 1*64<token-characters> ; 1-64 characters
+
+       <error-token> ::= "X"1*63<token-characters>
+                     ; 2-64 chars beginning w/X
+
+       <integer> ::= 1*5<digit> ; 1-5 digits.
+
+       <digit> ::= "0" | "1" ... "8" | "9" ; 0-9
+
+        <token-characters> ::=
+                            <Any of these ASCII characters: a-z, A-Z,
+                            - (dash), .!@#$%^&*()_=+.,<>/?"'~`{}[]; >
+                                           ; upper and lowercase a-z plus
+                                           ; printables minus the colon ":"
+                                            ; character.
+
+        <octet-string> ::= 1*512<octet-characters>
+
+        <octet-characters> ::=
+                        <any octet from  00 to 377 (octal) except for
+                        ASCII NUL (000), CR (015) and LF (012)>
+
+对语法的注释：
+1)	 为了在不同的执行中促进协同工作,同时考虑到上文中语法空白被表
+达"保守发送自由接受"的规则所了解,客户和服务器不能产生不必要的
+空白,但是除了没有标志的地方都能够任意的接受空白字符.在分析响应
+时,空白可以出现在任何地方,但除了没有标志.通常一些空白出现在行头
+或行尾是允许的,它们用来询问或响应.但这不申请容纳用户ID的响应,
+因为在操作系统类型之后的冒号之后的直到中止符CR/LF间内容都看作
+用户ID的部分. 中止符CR/LF不是用户ID的部分.
+2)	上面的无关紧要,服务器会将发送的空白字符限制在最有效的最合理的
+范围内.客户在收到1000个字符而每收到<EOL>时可以自由的中断连接.
+3)	用户IDs限制在512字节而标志限制在64字节应理解为如下:a)没有
+ 新标志(i.e., OPSYS or ERROR-TYPE)的定义可以超过64字节.b)服务器
+不能发送超过512字节用户ID,一客户必须接受最少512字节的用户ID.
+由于这局限,服务器必须在开头的512字节返回重要的部分.
+4)	字符集和字符集标识符必须直接指向定义的,被RFC 1340引用的, 
+"Assigned Numbers"或它的继承. 字符集标识符只能适用于使用者辨认
+的范围―别的区域只能以US-ASCII定义和发送.
+5)	虽然在上面<user-id>被定义为<octet-string>,它必须跟随<opsys-field>
+  约束的格式和字符集:见上面的讨论.
+6)	字符集为客户提供上下文的联系来打印或存储返回的鉴定字符.如果客
+户还没有实现或承认返回的字符集,它必须把返回的鉴定字符作为OCTET
+来处理,但必须增加存储或汇报字符集. OCTET串必须以16进制(0―9a-f)
+被打印,存储或索引,以用来陈述客户的工具―这在不同的执行中提供了
+标准的陈述.
+6、安全性考虑
+           协议返回的信息像主人提供的一样的可信或像组织操作着主机.例如,
+在研究室有极少的PC机,在上面有设备限制了此协议返回客户所需的信
+息.同时,主机接受了有危害的信息,可导致完全的错误和误解.
+   本协议并非有意成为特许权或访问控制协议,最多,它提供了一些有关
+连接的附加审核信息,在最坏的情况下,可能提供令人误解的,不正确的或
+相反的错误信息.
+  此协议返回的信息在除此以外的审核作用是很无效果的,特别的,利用
+此协议信息存取控制决议―不管是主要方法(i.e., no other checks)还
+是作为附属的方法,都可能削弱正常主机的安全.
+  鉴定服务器应能展现关于用户的信息,实体,对象或过程都被认为是私
+有的, 鉴定服务器提供的服务与一些电话公司提供的CallerID服务是大
+致相同的, CallerID服务的许多的秘密事项和见解同样适用于鉴定服务
+器.假如你不想正常的运行"finger"服务器,你就不可能运行本协议.
+7、致谢
+在这里特别感谢Dan Bernstein,他在本协议中做出了重要的补充, 并且在RFC 931中
+指出了一些错误.
+
+参考资料
+
+   [1] St. Johns, M., "Authentication Server", RFC 931, TPSC, January
+       1985.
+
+   [2] Reynolds, J., and J. Postel, "Assigned Numbers", STD 2, RFC 1340,
+       USC/Information Sciences Institute, July 1992.
+
+作者地址
+
+       Michael C. St. Johns
+       DARPA/CSTO
+       3701 N. Fairfax Dr
+       Arlington, VA 22203
+
+       Phone: (703) 696-2271
+       EMail: stjohns@DARPA.MIL
+RFC1413――Identification Protocol                                               鉴定协议
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,92 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：詹瞻（zanyman    zanyman@263.net）
+译文发布时间：2001-5-23
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                     Charles Hornig
+Request for Comments: 894            Symbolics Cambridge Research Center
+                                                              April 1984
+
+IP 数据包通过以太网网络传输标准 
+(RFC894  A Standard for the Transmission of IP Datagrams over Ethernet Networks)
+
+
+  本备忘录的状态：
+  本RFC文档讲述了在以太网[2]中封装IP[1]的一种标准方法。本RFC文档讲述了ARPA
+网络社区的一种标准协议。
+                                目录
+一．介绍：
+本备忘录用于10MB/S，48位地址的以太网。IP数据包在3MB/S，8位地址的以太网中
+的传输过程见[3]。
+帧格式：
+IP数据包以标准的以太网帧格式方式传输。以太网帧数据必须包含十六进制数0800H
+以表示它的类型。帧数据要包含IP数据前面的IP首部。
+发送到以太网的数据包的最小长度为1500个字节，因此，发送到以太网的IP数据包的
+最大长度为1500个字节。在实行中，推荐使用最大长度的包。网关的设计必须能够接收最
+大长度的包，并且在必要的情况下，可以将过大的包切割。如果一个系统不能接收最大长度
+的包，他应该采取步骤，在发送时减小包长，例如使用TCP最大段长度[4]。
+  注意：在以太网上的数据包可能不再是一般Internet上默认的576字节的最大包长。连接
+在一个以太网上的主机在向另一个以太网上的主机发送数据包时，应该注意。比较合适的方
+法是发送一个较小的数据包以避免在中间的网关处被不必要地分割。在这一点上，请参考[4]
+以得到更多的信息。
+1984年4月
+二．地址映射：
+32位的IP地址映射到48位的以太网地址有多种方式。可以使用一个静态的表格或一
+个动态的程序。
+2．1．静态的表格：
+    在一个局域网里可以为每一个主机制定一个以太网地址和IP地址对应的表格。
+2．2．动态的程序：
+    32位的IP地址和48位的以太网地址之间的映射可以通过ARP[5]（地址解析协议）
+来实现。IP地址在一些Internet中，被随意的指定。每一个主机必须知道它的IP地址并合
+适的响应它的以太网地址才能正常工作。它也应该在需要时，使用ARP去把IP地址映射为
+以太网地址。
+2．3．广播地址：
+    Internet上的广播地址（在局域网上的地址是48个全1）可以被映射为广播以太网
+地址（FF-FF-FF-FF-FF-FF）。
+强烈推荐使用ARP动态解析程序。
+三．跟踪格式：
+一些版本的Unix 4.2bsd使用一种不同的掩盖法，为了在VAX虚拟内存结构下得到更好
+的性能。在同一个以太网中的兼容的系统可能在它们中使用这种格式。
+主机不要求去实现这种方式。没有数据包能在这种方式下发送给其它主机，除非发送
+者肯定接受者将能够解释它们。
+（注意：现在Unix 4.2bsd系统可以一直使用追踪方式，也可以不使用它们，这取决于
+引导式的选项。这种状况希望将来能被改变。Unix 4.2bsd系统还使用全0的以太网地址作
+为广播地址，这也将在将来被改变。）
+1984年4月
+四．字节约定：
+    如在Internet协议说明的附录B中所描述的，被发送至以太网的IP数据包以8位
+为一字节。
+五．参考：
+      [1]  Postel, J., "Internet Protocol", RFC-791, USC/Information
+   Sciences Institute, September 1981.
+
+   [2]  "The Ethernet - A Local Area Network", Version 1.0, Digital
+   Equipment Corporation, Intel Corporation, Xerox Corporation,
+   September 1980.
+
+   [3]  Postel, J., "A Standard for the Transmission of IP Datagrams
+   over Experimental Ethernet Networks", RFC-895, USC/Information
+   Sciences Institute, April 1984.
+
+   [4]  Postel, J., "The TCP Maximum Segment Size Option and Related
+   Topics", RFC-879, USC/Information Sciences Institute, November 1983.
+
+   [5]  Plummer, D., "An Ethernet Address Resolution Protocol", RFC-826,
+   Symbolics Cambridge Research Center, November 1982.
+
+   [6]  Leffler, S., and M. Karels, "Trailer Encapsulations", RFC-893,
+   University of California at Berkeley, April 1984.
+
+
+RFC894  A Standard for the Transmission of IP Datagrams over Ethernet Networks     IP 数据包通过以太网
+网络传输标准
+
+
+1
+RFC文档中文翻译计划

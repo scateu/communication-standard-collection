@@ -1,0 +1,402 @@
+ 组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：高鹏（g622   g622@xanet.edu.cn）
+译文发布时间：2001-5-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。 
+
+
+
+Network Working Group                                           J. Myers
+Request for Comments: 2554                       Netscape Communications
+Category: Standards Track                                     March 1999
+
+
+SMTP服务认证扩展
+（RFC 2554 SMTP Service Extension for Authentication）
+
+Status of this Memo
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+
+1. 简介
+
+   本文档定义扩展邮件服务,一个SMTP(简单邮件传输协议)的客户端和服务器之间可以存
+在一种认证机制，执行认证协议的交互，并为以后的邮件协议交互进行安全层次的协商。这
+个扩展是SASL(简单认证与安全层)的一个方面。
+   
+
+2. 本文档中的约定
+   在示例中，“c:”和“s:”分别代表了客户端和服务器端发送的数据行。
+ 
+   本文中，关键词MUST", "MUST NOT", "SHOULD", "SHOULD NOT",  "MAY"和"Key 
+words for use in RFCs to Indicate Requirement Levels"中的定义一致。
+
+3. 验证服务扩展
+
+   (1)  这种SMTP扩展服务的名称是“认证”。
+   
+   (2)  和本扩展服务关联的EHLO关键字的值是“AUTH”
+
+   (3) AUTH EHLO关键字 是一个有空格间隔的被SASL机制支持的名字列表的参数。
+   
+   (4) 定义了一个新的SMTP协议的命令词 AUTH。
+  
+   (5) 关键词AUTH被用做一个可选的参数被加入MAIL FORM 命令中并把MAIL FROM 
+命令行的的最大长度扩展到500个ansi字符。
+  
+   (6) 此扩展和委托协议兼容（the submission protocol [SUBMIT]）。
+
+
+4. AUTH命令
+   
+   AUTH机制 [初始化响应]
+
+   参数：
+     判别是一个SASL认证机制的字符串。
+
+     可选的由base64编码的响应。
+
+   约束：
+         在一个AUTH命令完整结束后，本次会话就不再有其他的AUTH命令涉及了。
+就是说，在一个成功的AUTH命令后，SMTP服务器用503标识的回应来拒绝任何以后的         
+AUTH命令。
+
+         在一个邮件传输过程中发出的AUTH命令是不被容许的。
+
+   讨论：
+         AUTH命令显示了一种和邮件服务器间的安全认证机制 。如果邮件服务器支持这         
+种认证机制，它就会执行一个认证协议交互来认证并识别邮件用户。作为可选的情况，他也
+会忽略这以后后协议交互的一个安全层。如果服务器并不支持所需要的认证协议，就会用
+504的回答来拒绝这个AUTH命令。
+
+         认证协议交互过程由一系列由认证机制定义的邮件服务器端的命令和邮件客户端         
+的响应组成。
+
+         一个邮件服务器端命令，或者所谓一个准备好响应，是一个334起头的，包含用         
+base64编码的字符串文本。邮件客户端也同样由包含了用base64编码的字符串。如果邮件
+客户端希望可以取消一个进行中的认证交互过程，它会发出一个仅包含一个字符"*"命令行，
+邮件服务器端一旦收到这样的一个回答后，必须发一个501标识的回答，而后拒绝AUTH
+命令。
+         对AUTH命令来说，可选的初始化响应建议是用来在使用认证机制时保持一个往
+返的回程,认证机制的定义中此建议不发送任何数据。当初始化响应部分用在这种机制时，
+开始的空的发起命令不被送到客户端，并且服务器端使用的数据也好象是发送来         
+响应一个空的命令。它发送一个零长度的初始化回答作为一个"="符号。如果客户端         
+在认证机制的AUTH命令响应中使用初始化建议，客户端就在初始化命令中发送响应的         
+数据，服务器端用535回答来拒绝AUTH命令。
+
+         如果不能对参数用base64解码，就用501回答来拒绝AUTH命令，如果服务器
+拒绝认证数据，它应该用535的回答（可以带其他详细的特殊错误代码，比如在第6节所列
+的代码中的一个）来拒绝AUTH命令。如果客户端成功完成了认证交互，SMTP服务器就
+应该返回一个235的响应。        
+         本SASL协议梗概中描述的服务名称是SMTP.
+
+         如果一个安全层通过了SASL认证交换，随着作为终止客户端认证交换的CRLF
+（回车换行），这个安全层立即有效。在安全层起作用后，其上的SMTP协议被复位到初试
+状态（这个SMTP状态是在服务器发出一个220服务准备好的消息后开始的）。接着服务器
+就会放弃所有来自客户端的知识，例如，不是获得自SASL协商本身的EHLO命令的参数。
+客户端也会放弃所有来自服务器端的知识，例如，不是获得自SASL协商本身的SMTP扩
+展服务（这里假设一个客户端可以比较认证前后的建议的SASL机制的列表，从而检测主动
+down-negotiation攻击）。客户端应该发出一个EHLO命令，此命令作为使一个安全层有效的
+认证协商成功后的第一个命令。 
+         服务器并不被要求一定支持任何特定的认证机制，同样认证机制要不要求必须支
+持某种安全层。
+         一旦一个AUTH命令失败，客户端可以通过发出另外一个AUTH命令来尝试其
+他一种认证机制。
+         一旦一个AUTH命令失败，服务器端的行为就好象客户端从没有发出那次AUTH         
+命令一样。
+         
+         base64编码的字符串一般可以有任意长度。客户端和服务器端都应该可以支持         
+那些由认证机制产生的合法的任意长的请求和响应字符串，而不依赖于服务器或者客户端
+的、可能存在于协议实现的某些方面的行长度的限制。
+         
+     例如：
+         S: 220 SMTP.example.com ESMTP server ready
+         C: EHLO jgm.example.com
+         S: 250-SMTP.example.com
+         S: 250 AUTH CRAM-MD5 DIGEST-MD5
+         C: AUTH FOOBAR
+         S: 504 Unrecognized AUTHentication type.
+         C: AUTH CRAM-MD5
+         S: 334
+         PENCeUxFREJoU0NnbmhNWitOMjNGNndAZWx3b29kLmlubm9zb2Z0LmNvbT4=
+         C: ZnJlZCA5ZTk1YWVlMDljNDBhZjJiODRhMGMyYjNiYmFlNzg2ZQ==
+         S: 235 Authentication successful.
+
+
+5. 对应MAIL from 命令的AUTH参数
+
+   AUTH=addr-spec
+
+参数：
+       一个包含标志的被提交给传送系统的addr-spec，或者是两个字符组成的序列"<>" ,
+表明这个标志是未知的或被验明为不完成的。
+
+       为了遵守附加在eSMTP参数上的限制，addr-spec被编码到一个xtext中，关于xtext       
+语法的描述在[eSMTP-dsn]中的第5节中。     
+
+讨论：
+       对应MAIL from 命令的可选的AUTH参数容许在一个可以信赖的环境中多代理    
+合作来传送个人消息的认证。
+       
+       如果服务器信任客户端的被验证的标志（这个标志表明这个消息最初是由给定的       
+addr-spec提交的），则当需要把消息转发到任何支持AUTH扩展的服务器去的时候，服务器
+应该用包含相同的addr-spec参数的AUTH命令来回复。
+      
+       一个MAIL FORM 参数 AUTH=<>显示最初提交的信息是未知的。服务器端并不把
+这个消息作为由客户端的初始提交数据对待。 
+       如果MAIL FORM的AUTH参数没有提供，客户端已经被验证，并且服务器端相信
+消息
+       是原始的客户端的提交，则当需要把消息转发到任何支持AUTH扩展的服务器去的
+时候，
+       服务器端应该在AUTH参数的中的add-spe里提供客户端标记。
+       
+       如果服务器端不是充分信任客户端的认证标志，或者客户端没有通过认证，则服务
+器端会表现为似乎由一个AUTH=<>参数被提交一样。服务器端也可以把ahth的参数写入到      
+一个log文件中去。
+       
+       如果提交一个AUTH=<>参数，不管是明确提供还是由于在上面段落中的条件隐含
+提供，服务器端在转发消息到用AUTH扩展认证的其他任何服务器的时候都必须提供
+AUTH=<>的参数。
+       
+       一个服务器应该把邮件列表扩展作为一个新的子任务来对待，在转发消息到列表订
+户的时候，为邮件列表地址或邮件列表管理设置AUTH参数。 
+       一个“硬编码”的实现是把所有客户端都当作不完全信任的。这时，这个实现只是
+解析并抛弃语法有效的mial from命令的AUTH参数并提供AUTH=<>参数给任何用AUTH
+扩展来做认证的服务器。
+       
+   例如：
+       C: MAIL FROM:<e=mc2@example.com> AUTH=e+3Dmc2@example.com
+       S: 250 OK
+6. 错误代码
+   以下的错误代码可以被用来显示被描述的几种情况。
+   
+   432 需要一个密码转换
+   
+   这个对于AUTH命令的响应显示用户需要转换到被选择的认证机制。使用PLAIN认证
+机制时会这样做。
+   
+   534 认证机制过于简单
+ 
+   这个对于AUTH命令的响应显示被选择的认证机制比服务器安全政策所许可此用户的等
+级要低。
+   
+   538 当前请求的认证机制需要加密
+   
+   这个对于AUTH命令的响应显示当前的认证机制必须在SMTP 连接被加密的情况下才
+可以使用。
+   
+   454 临时认证失败
+   
+   这个对于AUTH命令的响应显示因为临时服务器出错而导致认证失败
+   
+   530 需要认证
+   
+   这个响应可以被任何命令返回（除了 AUTH, EHLO,   HELO, NOOP, RSET, 或 QUIT）。
+它表明服务器安全策略要求认证以执行客户端的请求动作。
+7. 正式的语法
+   下面的语法定义使用了扩展的Backus-Naur Form (BNF)符号，它的详细说明在[abfn]。  
+   除了有名的另外的方式，所有的字母表字符都是大小写不敏感的。这里使用大写或小   
+写字符来定义关键字符串只是为了编辑上的清晰。具体实现必须把这些字符串做为大小   
+写不敏感的方式来接受。
+   
+   UPALPHA         = %x41-5A            ;; Uppercase: A-Z
+
+   LOALPHA         = %x61-7A            ;; Lowercase: a-z
+
+   ALPHA           = UPALPHA / LOALPHA  ;; case insensitive
+
+   DIGIT           = %x30-39            ;; Digits 0-9
+
+   HEXDIGIT        = %x41-46 / DIGIT    ;; hexidecimal digit (uppercase)
+
+   hexchar         = "+" HEXDIGIT HEXDIGIT
+
+   xchar           = %x21-2A / %x2C-3C / %x3E-7E
+                     ;; US-ASCII except for "+", "=", SPACE and CTL
+
+   xtext           = *(xchar / hexchar)
+
+   AUTH_CHAR       = ALPHA / DIGIT / "-" / "_"
+
+   AUTH_type       = 1*20AUTH_CHAR
+
+   AUTH_command    = "AUTH" SPACE AUTH_type [SPACE (base64 / "=")]
+                     *(CRLF [base64]) CRLF
+
+   AUTH_param      = "AUTH=" xtext
+                       ;; The decoded FORM of the xtext MUST be either
+                       ;; an addr-spec or the two characters "<>"
+
+   base64          = base64_terminal /
+                     ( 1*(4base64_CHAR) [base64_terminal] )
+
+   base64_char     = UPALPHA / LOALPHA / DIGIT / "+" / "/"
+                     ;; Case-sensitive
+
+   base64_terminal = (2base64_char "==") / (3base64_char "=")
+
+   continue_req    = "334" SPACE [base64] CRLF
+
+
+   CR              = %x0C           ;; ASCII CR, carriage return
+
+   CRLF            = CR LF
+
+   CTL             = %x00-1F / %x7F ;; any ASCII control character and DEL
+
+   LF              = %x0A           ;; ASCII LF, line feed
+
+   SPACE           = %x20           ;; ASCII SP, space
+
+
+
+
+8. References
+
+   [ABNF]      Crocker, D. and P. Overell, "Augmented BNF for Syntax
+               Specifications: ABNF", RFC 2234, November 1997.
+
+   [CRAM-MD5]  Klensin, J., Catoe, R. and P. Krumviede, "IMAP/POP
+               AUTHorize Extension for Simple Challenge/Response", RFC
+               2195, September 1997.
+
+   [ESMTP]     Klensin, J., Freed, N., Rose, M., Stefferud, E. and D.
+               Crocker, "SMTP Service Extensions", RFC 1869, November
+               1995.
+
+   [ESMTP-DSN] Moore, K, "SMTP Service Extension for Delivery Status
+               Notifications", RFC 1891, January 1996.
+
+   [KEYWORDS]  Bradner, S., "Key words for use in RFCs to Indicate
+               Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [SASL]      Myers, J., "Simple Authentication and Security Layer
+               (SASL)", RFC 2222, October 1997.
+
+   [SUBMIT]    Gellens, R. and J. Klensin, "Message Submission", RFC
+               2476, December 1998.
+
+   [RFC821]    Postel, J., "Simple Mail Transfer Protocol", STD 10, RFC
+               821, August 1982.
+
+   [RFC822]    Crocker, D., "Standard for the Format of ARPA Internet
+               Text Messages", STD 11, RFC 822, August 1982.
+
+
+
+9. 安全上的考虑
+
+   这里探讨有关安全的主题。
+
+   如果客户端使用这种扩展来得到一个通过一个不安全的网络到达与之合作的服务器   
+的加密信道，同时连接没有被交互认证和加密，它需要被配置为从没有向这个服务器发送邮
+件。否则一个攻击者可以通过截获SMTP连接并假装服务器不能支持认证扩展或让所有
+AUTH命令失败的方式偷走用户的邮件。
+   
+   在SASL协商发生之前，任何协议交互数据都是明文而且可以被一个主动攻击者更改，
+因此，客户端和服务器端都应该抛弃在SASL协商开始前的获得的信息。
+   
+   这种机制不保护tcp端口，所以主动进攻者可以把一个转发连接重定向到委托端口。
+AUTH=<>参数防止这种导致转发没有认证消息以恢复转发客户端的认证的攻击。
+   
+   一个消息托付客户端可以要求用户不管是否被告之一个适当的SASL机制都必须认证。
+因此，对一个委托服务器来说，去建议一个SASL机制使不合适的，使用这种机制通过匿名   
+委托给客户端不会带来任何的益处。
+   
+   这种扩展不是为了取代类似s/mime 或 pgp的端到端的消息签名和加密系统。它和端到
+端系统要解决的问题不同。有以下主要的区别：
+   
+      (1) 它一般只在被信任的环境中有效。
+
+      (2) 它保护整个消息的报头部分，而不是邮件消息的主体部分。
+
+      (3) 它对消息委托进行认证，而不是对消息内容的作者的认证。
+
+      (4) 它可以给发送者一定的保证：在发送者交互认证并协商了一个合适的安全层的情          
+况下，这个消息确信被传递到了下一跳。
+
+   其他有关安全问题的事项在SASL规范中有论述。
+
+
+10  作者地址
+
+   John Gardiner Myers
+   Netscape Communications
+   501 East Middlefield Road
+   Mail Stop MV-029
+   Mountain View, CA 94043
+
+   EMail: jgmyers@netscape.com
+
+
+11.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the inFORMation contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Myers                       Standards Track                    [Page 11]
+
+
+
+RFC 2554 SMTP Service Extension for Authentication        SMTP服务认证扩展
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,104 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：cc8131（cc8131   ）
+译文发布时间：2001-12-28
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                          V. Cerf
+Request for Comments #63                                       31 July 70
+
+
+                         迟来的网络会议报告
+　　　　　　　　　　（RFC63－Belated Network Meeting Report）
+
+1970年5月8日,网络工作组会议在林肯实验室召开,会议讨论的主题是:
+
+1)	林肯实验室的局部相互作用语言(LIL)。
+
+2)	记录，消息，还有HOST-HOST信息交换的形式。
+
+3)	多方面控制。
+
+第一个主题已经在1970年5月31日的林肯工作室年度技术总结（题为"Graphics"）中
+被彻底的概括了（文本号为ESD-TR-70-151)。
+
+第二个主题是与许多NWG/RFC #42的讨论相关的，其中，提出了所有的消息必须被提
+前8-bit类型的字节发送，该字节声明了其后紧跟着的消息的格式。
+
+其后面的决议是这样的：
+
+ａ）一个消息中的记录可以开始于任何地方。
+
+ｂ）第一个8比特的记录保存了类型信息。
+
+ｃ）第一个连接的传送起始于一个记录。
+
+类型0表示下面的传送可以包含任意长度的记录，但是更长的类型字节是不存在的。
+
+消息和记录是不依赖于流动控制协议的，所以，消息的接收并不带有任何语义色彩。然
+而，记录的接收是从译码开始的。
+
+经过上述讨论之后，有关NWG/RFC #42的提议作出了下面的序列改变：
+
+　　 type 0 = bit string of arbitrary length follows
+
+　　 type 1 = 8-bit ASCII follows
+
+　　 type 2 = EBCDIC follows
+
+　　 type 3 = MOD 33 TTY 7-bit ASCII
+
+　　 type 4 = YOUR Local
+            followed by another type byte
+
+　　 type 5 = MY Local
+            followed by another type byte
+对上述决议的褒贬在与参加会议人员的评价，也就是说这些人：
+
+E. Ancona (LL)
+T. J. Barkalow (LL)
+D. B. Black (Harvard)
+Jack Bouknight (UI)
+Howard Brodie (MAC)
+Vint Cerf (UCLA)
+Steve Crocker (UCLA)
+Jim Curry (UTAH)
+A. Evans (LL, MAC)
+Robert Flegal (UTAH)
+Jim Frogie (LL)
+J. D. Fry (MITRE)
+John Heafner (RAND)
+Bob Hoffman (RAND)
+Richard Kalin (LL)
+William Kantrowitz (LL)
+Peggy Karp (MITRE)
+Abe Landsberg (SDC)
+Robert Long (SDC)
+James Madden (UI)
+John Melvin (SRI)
+Alan Nemeth (LL)
+John Newkirk (Harvard)
+Jon Postel (UCLA)
+Tom O'Sullivan (Raytheon)
+Ari Shoshani (SDC)
+Joel Winett (LL)
+
+
+Jim Torson将会代替Case大学的Chuck Rose接收NWG/RFC's。
+
+　　[ This RFC was put into machine readable form for entry ]
+     [ into the online RFC archives by Tammy and Ofer Porat 1/97 ]
+
+
+
+
+RFC63－Belated Network Meeting Report                             迟来的网络会议报告
+
+
+1
+RFC文档中文翻译计划

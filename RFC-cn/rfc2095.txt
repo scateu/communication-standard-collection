@@ -1,0 +1,101 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王利明（walimis walimis@163.com）
+译文发布时间：2002-6-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                         				          J. Klensin
+Request for Comments: 2095                                    			R. Catoe
+Category: Standards Track                                 					P. Krumviede
+                                                                MCI
+                                                          		January 1997
+
+简单查问/应答的IMAP/POP授权扩展
+(IMAP/POP AUTHorize Extension for Simple Challenge/Response)
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001)。
+摘要
+虽然在RFC 1731中描述说，IMAP4支持大量的鉴别机制，但是，它缺乏任何机制，使得不用传递明文，从而避免让密码也通过网络，同时也缺乏一个重要的安全架构或者邮件服务器对于每次邮件存取都要更新一个邮件系统级的用户认证文件。这个规范提供了一个简单的适合于IMAP4的查问/应答协议。因为它使用了键入MD5摘要算法，并不需要任何秘密信息显式的存储在服务器端，它同样适合POP3中的APOP方面的改进，这在RFC 1734有详细说明。
+1. 介绍
+在已被提议的标准中，已经为IMAP4[IMAP, IMAP-AUTH]协议详细说明了一个鉴别机制，同时为POP3协议[POP3-AUTH]说明了一个类似的鉴别机制。本文这个鉴别机制只是用来扩展的；在[IMAP-AUTH]中说明的四个方法非常强大，但需要一些安全架构支持。基本的POP3规范[POP3]同样包含一个轻型的查问/应答机制叫做APOP。APOP由于使用这种协议随之也带来了危险：通常，它需要客户端和服务器端存取共享的，以明文方式存在的机密信息。CRAM提供了一个方法来避免保存明文，在保留APOP算法简单的情况下，仅仅使用键入方法的MD5就能实现。
+目前为止，IMAP [IMAP]缺乏任何同APOP相对应的机制。在[IMAP-AUTH]中唯一可认为是加强机制的，大概是提供了明文方式的用户名和口令，这通过在[IMAP]的LOGIN命令来支持。这个文档描述了一个简单的查问/应答机制，类似于APOP 和PPP CHAP[PPP]，这个机制可以用在IMAP中（原则上，也可以用在POP3中）。
+这种机制也有一些其它方法不具备的优点，即不需要服务器端在每次登陆时维护关于email的“logins”信息。虽然这种机制，不需要维护每次登录的历史纪录，会提供加强的安全性，但像IMAP的这种协议，在客户端和服务器端之间已有一些连接，并且在同时打开的情况下，会使它们在实现上具有显著的难度。
+2. 查问/应答鉴别机制Challenge-Response Authentication Mechanism (CRAM)
+这个和CRAM有关的鉴别类型是“CRAM-MD5”。
+在第一个应答中被编码的数据，包含一个任意的并由随机数字组成的字符串，一个时间戳，和这个服务器的完全主机名称组成。不被编码形式的语法必须符合一个RFC 822的'msg-id' [RFC822]，这在[POP3]有描述。
+客户端处理数据，然后响应一个包含用户名的字符串，一个空格，和一个“数字”。后者通过应用在[KEYED-MD5]中的键入MD5算法来计算，这里，键值是一个共享的秘文，摘要文本是一个时间戳（包括尖括号）。
+这个共享的秘文是一个只有客户端和服务器端知道的字符串。这个“数字”参数本身是个16字节的值，以十六进制的形式发送，用小写的ASCII码。
+当服务器收到客户端的响应，它验证所提供的摘要。如果摘要正确，服务器将考虑客户端已被认证，并正确的响应。
+之所以为这个应用选键入MD5，是因为它对于短消息认证能有更好的安全性。此外，在[KEYED-MD5] 中描述说，使用这个技术进行预计算的中间结果，可以避免共享的秘文在服务器端以显式的明文保存，这通过保存我们称之为“上下文”的中间结果来实现。
+CRAM不支持保护机制。
+例子：
+这个文档的例子显示通过IMAP4 AUTHENTICATE命令来使用CRAM机制。查问和应答的base64编码是IMAP4 AUTHENTICATE命令的一部分，不是CRAM规范本身的一部分。
+S: * OK IMAP4 Server
+C: A0001 AUTHENTICATE CRAM-MD5
+S: + PDE4OTYuNjk3MTcwOTUyQHBvc3RvZmZpY2UucmVzdG9uLm1jaS5uZXQ+
+C: dGltIGI5MTNhNjAyYzdlZGE3YTQ5NWI0ZTZlNzMzNGQzODkw
+S: A0001 OK CRAM authentication successful
+在这个例子中，共享的秘文是字符串“tanstaaftanstaaf”，因此，键入的MD5摘要通过计算产生：
+      MD5((tanstaaftanstaaf XOR opad),
+            MD5((tanstaaftanstaaf XOR ipad),
+<1896.697170952@postoffice.reston.mci.net>))
+这里ipad和opad在键入MD5的工作过程中定义[KEYED-MD5]，在响应中显示的字符串是<1896.697170952@postoffice.reston.mci.net>的base64编码。共享的秘文用null填充到64字节长度。如果共享的秘文长于64字节，共享秘文的MD5摘要以16字节输入到键入MD5进行计算。
+这产生一个摘要值（以十六进制形式）
+         		b913a602c7eda7a495b4e6e7334d3890
+用户名加到它的前头，形成
+         tim b913a602c7eda7a495b4e6e7334d3890
+base64编码满足了IMAP4 AUTHENTICATE命令（或者类似POP3 AUTH命令）的需求，产生如下
+         dGltIGI5MTNhNjAyYzdlZGE3YTQ5NWI0ZTZlNzMzNGQzODkw
+3. 参考
+[CHAP]  Lloyd，B.和W. Simpson，“PPP Authentication Protocols”，RFC 1334，October 1992。
+[IMAP] Crispin，M.，“Internet Message Access Protocol - Version 4rev1”，RFC 2060，University of Washington，December 1996。
+[IMAP-AUTH] Myers，J.，“IMAP4 Authentication Mechanisms”，RFC 1731，Carnegie Mellon，December 1994。
+[KEYED-MD5] Krawczyk，H.，“HMAC-MD5：Keyed-MD5 for Message        Authentication”，Work in Progess。
+[MD5]  Rivest，R.，“The MD5 Message Digest Algorithm”，RFC 1321，MIT Laboratory for Computer Science，April 1992。
+[POP3] Myers，J.和M. Rose，“Post Office Protocol - Version 3”，STD 53，RFC 1939，Carnegie Mellon，May 1996。
+[POP3-AUTH] Myers，J.，“POP3 AUTHentication command”，RFC 1734，       Carnegie Mellon，December，1994。
+4. 安全事宜
+可以说CRAM认证机制的使用，提供了在一个会话中，对鉴别和响应的保护。从而，一个同时实现了明文口令的命令和这种认证类型的服务器，不会允许对一个给定用户，同时进行这两种方法的访问。
+虽然在服务器上，保存“上下文”（看第二节）要比以明文方式保存的共享秘文要好，这一点在CHAP [CHAP]和APOP [POP3]是必需的，但如果服务器本身不安全的话，这仍然不足以保护秘密信息。从而，保存着秘密信息或者上下文的服务器，必须在用户的邮箱和标识符中，同时提供相同水平的保护力度。
+随着共享秘文长度的增加，连带的复杂性也会增加。
+虽然在一些文献中建议说，MD5和键入MD5在认证过程中可能有受限的有效寿命，这个技术现在还是被广泛的使用和认可。据认为，这种广泛的认可，有助于通过使用CRAM-MD5，使得对于在IMAP中使用持久的明文口令，进行快速的替换。当考虑这些已被普遍的接受和具有足够的安全性时，这个文档故意允许简单更新到使用SHA（或者任何可替代的）。
+尽管使用了CRAM，用户仍然易受到主动攻击。常见的主动攻击的例子是“TCP Session Hijacking”，这在CERT Advisory CA-95:01 [CERT95]有描述。
+小节1有更多的讨论
+ 5. 致谢
+这个备忘录从[POP3]和[RFC-1731]中借鉴大量的想法和一些文字，应该感谢这些文档的作者们。Ran Atkinson为这个文档做了大量有价值的技术和编辑方面的贡献。
+6．作者的联系地址
+John C. Klensin
+MCI Telecommunications
+800 Boylston St, 7th floor
+Boston, MA 02199
+USA
+EMail: klensin@mci.net
+Phone: +1 617 960 1011
+
+Randy Catoe	
+MCI Telecommunications
+2100 Reston Parkway
+Reston, VA 22091
+USA
+EMail: randy@mci.net
+Phone: +1 703 715 7366
+
+Paul Krumviede
+MCI Telecommunications
+2100 Reston Parkway
+Reston, VA 22091
+USA
+EMail: paul@mci.net
+Phone: +1 703 715 7251
+RFC2095―IMAP/POP AUTHorize Extension for Simple Challenge/Response           简单查问/应答的IMAP/POP授权扩展
+
+
+
+
+1
+RFC文档中文翻译计划
+

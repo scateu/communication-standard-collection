@@ -1,0 +1,30 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：邵毅（epl   shaoyi@163.net）
+译文发布时间：2001-10-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                                  UCLA
+Request for Comments: #104			Computer Science
+                                                               71年2月25日
+
+连接191
+(RFC104--Link 191)
+
+在Illinois大学的网络会议上，大家一致同意保留一个连接用作度量。被选连接为
+最高未指派连接，编号223。但计算有误，正确编号应为191。连接191将被指派用做
+度量用途。所有这一连接的使用应由网络度量中心（NMC）的联络官员清楚。
+
+
+[本RFC文档由Thomas Nielsen于97年4月]
+[编为机器可读形式以便录入RFC在线档案]
+
+RFC104--Link 191                                                    连接191
+
+
+1
+RFC文档中文翻译计划

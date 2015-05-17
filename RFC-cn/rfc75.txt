@@ -1,0 +1,63 @@
+组织：中国互动出版网（<http://www.china-pub.com/>）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm <http://www.china-pub.com/>）
+E-mail：ouyang@china-pub.com <mailto:ouyang@china-pub.com>
+译者：董苛（cnchris    duke913@163.com）
+译文发布时间：2001-10-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                           S. Crocker
+Request for Comments #75                                        UCLA
+                                                                14 Oct. 70
+
+                      网络会议(Network Meeting)
+
+利用在Houston FJCC的优越条件，我计划于1970年11月16日星期一晚上8点，在Astroworld宾馆Astro VII房间召开网络工作小组会议。
+
+召开这个会议的主要目的是讨论几个有关网络实际应用的话题。我已经想好了：
+
+     (1) 清算机构
+     (2) 资料分发
+     (3) 面对面信息交互和保留
+     (4) 用外来用户身份访问系统
+
+欢迎与会者提出其他问题。
+
+我预料在FJCC期间，一些小的附属会议会随着这次会议的召开而产生，以便更深入的讨论这些或者是相关的话题。
+
+预期要来的与会者需要和我的秘书Benita Kirstel 联系(213)825-2368，以便我们知道会场是否够大。事先未联系的与会者也同样欢迎。
+
+         [ This RFC was put into machine readable form for entry ]
+           [ into the online RFC archives by Lloyd Duhon 4/97]
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+   

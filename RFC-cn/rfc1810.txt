@@ -1,0 +1,227 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：（）
+译文发布时间：2001-11-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                           J. Touch
+Request for Comments: 1810                                           ISI
+Category: Informational                                        June 1995
+
+
+ MD5性能报告
+（RFC1810――Report on MD5 Performance）
+本文的地位
+本文并非指定一个Internet标准，而是向互联网提供信息，本文可以任意传播，不受
+限制。
+摘要 
+MD5是一个认证算法，它被提议作为IPv6的默认的认证算法，在可能的情况下，MD5
+能对包括报头的整个数据包进行操作。本RFC介绍了MD5在软件和硬件上的执行速度以及它
+是否支持当前的可用IP带宽。MD5可在现有的硬件技术下以256 Mbps的速度运行，在现有
+的软件技术下以87 Mbps的速度运行。此速率不能支持当前的IP速率（如：在ATM 下100 Mbps 
+TCP 及 130 Mbps UDP）。如果MD5在现有的技术下不支持现有的网络带宽，那么它就跟不上
+将来网络速度的提高。本RFC目的是提醒IP社区有关MD5的性能限制，并提议在高速IP
+应用中采用MD5的替代物。                    
+1、绪论
+MD5是一个认证算法，在IPv6[1]中它被提议作为默认的认证算法。RFC 1321中描述了
+MD5算法和一个参考应用程序。在可能的情况下，MD5能对包括报头的整个数据包进行操作，
+本RFC介绍了MD5在软件和硬件上的执行速度以及它是否支持当前的可用IP带宽。本RFC
+假设在IPv6中高速进行普通的安全和求校验和。IPv6没有求校验和（IPv4则有），但建议
+使用整个数据包（包括可变不分置零的报头）的认证摘要，本RFC特别讲述了这种认证机制
+的性能。
+2、测量
+MD5的性能是标准的，RFC [3]的代码是MD5参考应用程序的优化版本，它在匿名FTP [7]
+中可以用到。下面是"md5 -t"性能测试结果，为防止数据分组的隐藏而作了修改。   
+        87 Mbps    DEC Alpha (190 Mhz)
+        33 Mbps    HP 9000/720
+        48 Mbps    IBM RS/6000 7006 (PPC 601 @80 Mhz)
+        31 Mbps    Intel i486/66 NetBSD
+        44 Mbps    Intel Pentium/90 NeXTStep
+        52 Mbps    SGI/IP-20 IRIX 5.2
+        37 Mbps    Sun SPARC-10/51, SPARC-20/50 SunOS 4.1.3
+        57 Mbps    Sun SPARC-20/71 SunOS 4.1.3
+这些速率跟不上现有的IP带宽，如在Sun SPARC-20/71的Fore SBA-200 ATM网络主机
+下100 Mbps TCP 和 130 Mbps UDP。
+   据报道对DEC Alpha (190 Mhz)速度可达到100 Mbps，这些值反应了数据在一级缓存中
+的速度，此时性能的测量同在内存,二级缓存还是一级缓存中区别不明显，它更依赖于IP
+的性能。   
+3、MD5算法分析
+MD5算法是一种“链分组”散列算法，第一个分组用一个初始种子进行Hash运算，得到
+一个散列值，然后将此散列值加上原始的种子，作为下一个分组的种子，当计算最后一个分
+组时，它的“下一个种子”就成为了整个数据串的散列值。因此，一个分组的种子就依靠上
+一个分组产生的散列值和上一个分组的种子，所以，各个分组是不能并列计算的。
+每一个16字（64位）的分组经过64个步骤进行哈希运算，使用一个四个字中间散列值，
+并在最后拆销掉中间散列值，64个步骤分为16组四个步骤，每一步用到一个中间散列值，
+本RFC用到了下面的符号（引自RFC-1321 [3]）：   
+        A,B,C,D         中间散列字
+        X[i]            输入数据分组
+        T[i]            sine 函数查找表
+        << i            循环移动i位
+        F              3个参数的逻辑函数
+X，I以及<<在每一步中都是故定的，在此处被忽略了，另外还有四个逻辑函数也被忽略
+了，每个组（4步）如下所示：   
+        A = B + ((A + F(B,C,D) + X[i] + T[i]) << i)
+        D = A + ((D + F(A,B,C) + X[i] + T[i]) << i)
+        C = D + ((C + F(D,A,B) + X[i] + T[i]) << i)
+        B = C + ((B + F(C,D,A) + X[i] + T[i]) << i)
+注意这有着下面的一般形式，由于函数f的复杂性这些等式不能转变成更小的集合。
+        A = f(D); B = f(A); C = f(B); D = f(C)
+每一步包括两个查找表，一个循环和一个三参数的逻辑操作以及四个加法，最好的并行
+化可能使F(x,y,z)停留到最后一步，一直等到前一步的结果到来，结果树如下所示：
+   
+     (t0) B* C  C  D      X   T
+          |  |  |  |      |   |
+          |  |  |  |      |   |
+           \/    \/        \ /
+      t1   op    op   A     +                               X   T
+            \    /    \    /                                |   |
+             \  /      \  /                                 |   |
+              \/        \/                                   \ /
+      t2      op        +             (t0) B* C  C  D   A     +
+               \       /                   |  |  |  |    \    /
+                 \   /                      \ |  | /      \  /
+                  \ /                         \\//         \/
+      t3           +                   t1      op          +
+                   |                            \         /
+                   |                              \     /
+                   |                                \ /
+      t4           <<      B*          t2            +       B*
+                    \     /                           \     /
+                     \   /                             <<  /
+                      \ /                               \ /
+      t5               +               t3                +
+                       |                                 |
+                       |                                 |
+                       |                                 |
+                       A**                               A**
+
+            二叉树                                优化的硬件树
+
+    此表假设每一步操作占用一个单位时间，以上树展示了依赖于上一步的项目(如B*)，
+也展示了下一步操作需要用到的项目（如：A**），二叉树不能折叠，但是优化的硬件树则可
+以。
+每个字的输入对应四步操作，算法的整个耗时依赖于我们在正处理的一个字输入的带
+宽下处理这4步操作的速度。
+二叉树中每步算法需要5个单位时间并可进行3路并行处理（在t1时刻），在软件方
+面，也就是每字输入用到5 * 4 = 20个指令，一台M MIPS的计算机能支持M/20 * 32 Mbps
+的带宽，也即每秒等于1.6x的MIP速率。因此，一台100 MIPS的机器能支持160Mbp的位
+流。
+   
+        并行软件速率Mbps = 1.6 * MIPS 
+这是假设寄存器读写整个的和计算重叠的，没有任何并行操作情况下，每步包括8个
+操作，每个字包括4步，所以每个对字的操作包括32步，也就是速率Mbps等同于MIPS速
+率：
+连续软件速率Mbps=MIPS 速率
+用SpecInt92作为MIPS的估计值和固定速率进行比较：
+  
+     Spec-    Predicted      MD5
+     Int92   Upper-Bound   Measured      Machine
+   ------------------------------------------------------------
+     122       122-195     87 Mbps    DEC Alpha (190 Mhz)
+      48        48- 77     33 Mbps    HP 9000/720
+      88        88-141     48 Mbps    IBM RS/6000 7006 (PPC 601 @80 Mhz)
+      32        32- 51     31 Mbps    Intel i486/33 NetBSD
+      90        90-144     44 Mbps    Intel Pentium/90 NeXTStep
+      90        90-144     52 Mbps    SGI/IP-20 IRIX 5.2
+      65        65-104     37 Mbps    Sun SPARC-10/51 SunOS 4.1.3
+126       126-202     57 Mbps    Sun SPARC-20/71 SunOS 4.1.3
+    硬件速率每一步需要3个单位时间，也就是每个字的输入需要3 * 4 = 12倍的单位时
+间。一个操作花费N 纳秒（十亿分之一秒）的硬件能支持32/12/N bps,也即2/3N bps的数
+据带宽。
+        硬件速率 Mbps = 8/3N * 1,000
+
+对CMOS来说，一个操作（32位加法，包括寄存器更新和存储）花费大约5.2 ns时间
+（加法2.6秒,锁存2.6秒），高度并行应用需要6个时钟，速度也就是对每32位的字操作
+需要31.2纳秒，或256 Mbps，此速率跟不上现有的硬件速率，现有的硬件链接速率已超过
+622Mbps（ATM）。
+比较而言，IPv4使用了Internet Checksum [5]，这种求校验和操作在32位宽的单元
+上进行时，在现有的低价PLD（可编程逻辑电路）上速度超过1Gbps，此校验和可以并行操
+作，计算部分和以及降低值。  
+4、一个解决方案
+有几种方法可以提高IPv6的认证机制，一种方法是靠稍微改变算法来提高MD5硬件的
+性能，另一种方法是推荐一种新的替代算法。本RFC简短的讨论一下为得到高速的硬件应用
+对MD5的修改，速度是MD5算法3.5倍的替代算法在其它地方将讨论[6]。
+MD5使用分组的连接来精确确保每个分组的顺序，分组连接还可以防止任意的并行操
+作，这可能对用户和欺骗者都有用，MD5稍微改变一下就可以适应高带宽数据率。要求先有
+一个预先确定的可通过独立的种子处理的有限数量的分组，这样第I个分组就是第"I mod K"
+个链的一部分，结果K就计算自己的摘要，形成一个能被MD5通过一个简单分组算法编码的
+消息。这种思想是由作者和RSA的Burt Kaliski 独立提出的。目的是为了支持有限的并行
+处理，以在当前的处理速度情况下提供充足的带宽，而不给欺骗者提供任何能力。还需要更
+进一步分析以确定它确实提高了安全水平。
+对于当前的技术和网络带宽，4路并行处理链就能满足要求了，16路链将更好。在CMOS
+硬件方面，4路链将支持1Gbps的网络带宽，为产生完整的分组摘要（每个摘要4个字，每
+个分组16个字），必须采用4的倍数的并行链，这种改变能够达到MD5目的，不会影响当前
+的MD5算法的执行。      
+5、安全考虑
+全文提供了一种IPv6的安全机制，MD5建议作为IPv6通信的默认认证机制，本RFC
+特别介绍了象MD5这样的安全机制使用现有的硬件不支持高速带宽，这会影响到本身的发
+展，最终会危及到它要维护的系统安全。
+IPv6必备的文献强调IPv6应用不应该如IPv4那样影响到性能，即使能使IPv6功能增
+加，IPv6的“必需选项”成分也应该包含到同一的标准中。MD5性能受到影响，所以也应重
+新考虑它作为IPv6的默认认证算法。
+使用MD5作为默认认证算法可能会影响宽带系统的安全性，因为使用它会引起性能的，
+所以应取消它作为IPv6的默认认证算法。总之，此算法可能会被完全取消掉。
+IPv6中在开端处就可得到替代的认证机制对在高性能的系统中认证的使用是很重要
+的。这可能需要多种“必需”鉴定机制的规范，一种是速度慢，但是很可信，一种是速度快
+但是不可信的成分。
+6、结论
+MD5不能在现有的硬件速度超过256Mbps或软件速度超过86Mbps的技术上执行，MD5
+被提议作为IPv6的默认认证机制，IPv6是一种支持现有网络技术的协议，它的UDP速率是
+130Mbps。
+总之，MD5以现有的速率不能支持现有网络的IP鉴定即使MD5在将来随着技术的提高
+能够支持更高的带宽，但是网络也同样在发展。如果MD5不能在现有的技术下支持现有网络
+的带宽那么将来它就跟不上网络速度的提高。本RFC提议为了使MD5在现有技术（CMOS硬
+件）下支持现有网络速率（1Gbps）对它进行了改变到能支持16路链分组，本RFC进一步提
+议在高速网络上使用MD5的替代算法。
+7、致谢
+作者在此向BBN的Steve Kent ，RSA的 Burt Kaliski，Victor Chang ，Steve 
+Burnett ，NRL的 Ran Atkinson， ISI HPCC的 Division表示感谢，他们对本文的内容作
+了评论，Burt独立提出了本文中的分组平行操作的建议。
+8、参考文献
+
+   [1] Atkinson, R., "IPv6 Authentication Header", Work in Progress,
+       Naval Research Lab, February 1995.
+
+   [2] DiMarco, J., "Spec Benchmark table, V.  4.12",
+       <ftp://ftp.cfd.toronto.edu/pub/spectable>.
+
+   [3] Rivest, R., "The MD5 Message-Digest Algorithm", RFC1321, MIT LCS
+       & RSA Data Security, Inc., April 1992.
+
+   [4] Partridge, C., and F. Kastenholz, "Technical Criteria for
+       Choosing IP The Next Generation (IPng)", RFC 1726, BBN Systems
+       and Technologies, FTP Software, December 1994.
+
+   [5] Postel, J., "Internet Protocol - DARPA Internet Program Protocol
+       Specification," STD 5, RFC 791, USC/Information Sciences
+       Institute, September 1981.
+
+   [6] Touch, J., "Performance Analysis fo MD5," to appear in ACM
+       Sigcomm '95, Boston.
+
+   [7] Touch, J., Optimized MD5 software, <ftp://ftp.isi.edu/pub/hpcc-
+       papers/touch/md5-opt.tar>.
+
+作者地址
+
+   Joe Touch
+   Information Sciences Institute
+   University of Southern California
+   4676 Admiralty Way
+   Marina del Rey, CA 90292-6695
+   USA
+
+   Phone: +1 310-822-1511 x151
+   Fax:   +1 310-823-6714
+   URL:   ftp://ftp.isi.edu/pub/hpcc-papers/touch
+   EMail: touch@isi.edu
+RFC1810――Report on MD5 Performance                         MD5性能报告
+
+
+2
+RFC文档中文翻译计划

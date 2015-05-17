@@ -1,0 +1,137 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：马东辉（eaststone  ）
+译文发布时间：2001-4-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                        D. Waitzman
+Request For Comments: 1073                                       BBN STC
+October 1988
+
+
+RFC1073  Telnet窗口尺寸选项
+（RFC1073 Telnet Window Size Option）
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+目录
+1．命令名称和选项代码	2
+2. 命令含义	2
+3. 默认的规范	3
+4. 动机	3
+5.描述和实现的注释	4
+6.例子	4
+7. 致谢	5
+
+
+
+
+
+1．命令名称和选项代码
+　　名称= NAWS (Negotiate About Window Size)协商窗口的尺寸
+
+　　代码=31
+2. 命令含义
+　　IAC WILL NAWS
+
+　　由Telnet客户端发送来建议使用NAWS.
+
+　　IAC WON'T NAWS
+
+　　由Telnet客户端发送来拒绝使用NAWS.
+
+　　IAC DO NAWS
+
+　　由Telnet服务器端发送来建议使用NAWS.
+
+　　IAC DON'T NAWS
+
+　　由Telnet服务器端发送来拒绝使用NAWS.
+
+　　IAC SB NAWS <16-bit value> <16-bit value> IAC SE
+
+　　由Telnet客户端发送，通知Telnet服务器端这个窗口的宽度和高度。窗口尺寸信息从Telnet客户端到Telnet服务器端通过这个选项来传递。此信息是参考性的。服务器可能接受这个选项，但是并不使用传递的信息。
+
+　　客户端和服务器端使用标准的Telnet WILL/DO/DON'T/WON'T机制来协商发送窗口尺寸信息。如果客户端和服务器端都同意，客户端可以发送一个子协商用来传递窗口的尺寸。如果以后客户端的窗口尺寸改变了（例如，窗口尺寸被用户改变），客户端可能再次发送这个子协商。因为在某些操作系统上，服务器正在执行的时候可能不允许更新窗口尺寸信息，所以服务器可能在接受最初的窗口尺寸后发送一个DON'T NAWS给客户端以阻止更多的子协商。一个协商循环将不会形成下面这些规则。
+
+　　子协商包含两个值，用字符表示的窗口的宽度值和高度值。这两个值中的每一个值都是以两个字节为一组以标准的Internet字节和比特顺序发送的。这就允许窗口的宽度或高度的最大值是65535个字符。对于宽度或高度来说，接受一个等于零的值就意味着没有字符宽度或高度被发送。既然如此，Telnet服务器将假定宽度或高度是与操作系统相关的（它将有可能是基于终端类型信息的，这个终端类型信息是使用TERMINAL TYPE的Telnet选项来发送的）。
+
+　　子协商的语法是
+
+　　IAC SB NAWS WIDTH[1] WIDTH[0] HEIGHT[1] HEIGHT[0] IAC SE
+
+　　象Telnet协议所要求的那样，在子协商中任何出现255的地方都必须显示两次。为了和IAC（它有一个255的值）字符区别。
+3. 默认的规范
+　　WON'T NAWS
+
+　　DON'T NAWS
+
+　　这个选项不假定任何默认的窗口尺寸信息。通常由TERMINAL TYPE Telnet选项传递的终端类型可能暗示着一个窗口尺寸，但是对于这个选项，那是不必要的。
+4. 动机
+　　随着窗口系统的日益流行，Telnet客户端总是运行在一个可变尺寸的窗口中。Telnet服务器为了正确控制光标，需要知道窗口的尺寸。窗口可能在Telnet的会话过程中改变尺寸，更新的窗口尺寸需要传送给服务器。本备忘录就确定了一个从客户端到服务器发送用字符表示的窗口高度和宽度的选项。
+
+Telnet选项：协商输出行宽（NAOL）和协商输出页尺寸(NAOP)在语义上并不是很恰当，他们不是公用的[见RFC-1011 "正式Internet协议",和"防卫协议手册"]。NAOL和NAOP选项是双向的（也就是说服务器可以控制客户端的行宽或者页尺寸），在每一轴中限制253个字符。
+
+　　这个选项是正常窗口协商过程的一个较好的模型。客户端完全控制它的窗口尺寸，只是简单地告诉服务器当前的窗口是多大。而且，253个字符的高度和宽度的限制非常低，所以，新的选项具有65535字符的限制。最后，这个选项同时发送窗口的高度和宽度，因为窗口高度和宽度通常都是同时改变的。许多操作系统和窗口应用程序更可能认为窗口的高度和宽度是同时改变的。
+5.描述和实现的注释
+　　这个选项的典型用户可能是运行在X Window下的Telnet客户端。在用户调整了客户端窗口的尺寸后，一定会和Telnet客户端通信。在4.3BSD Unix中，信号SIGWINCH（窗口改变）可能被Telnet客户端捕获并且一个新的NAWS子协商会被发送到服务器端。在接收到NAWS子协商后，服务器可能作出适当地ioctl来处理这个新的消息，然后发出SIGWINCH信号给它的子进程，可能是一个shell。
+6.例子
+　　在下列的例子中，数据流中的所有数字都是十进制。
+1). 服务器建议，客户端同意使用NAWS
+　　（服务器发送）IAC DO NAWS
+　　（客户端发送）IAC WILL NAWS
+　　（客户端发送）IAC SB NAWS 0 80 0 24 IAC SE
+　　[窗口80字符宽，24字符高]
+　　[某个时刻用户改变了窗口尺寸]
+　　（客户端发送）IAC SB NAWS 0 80 0 64 IAC SE
+　　[窗口80字符宽，64字符高]
+
+　　所有的数字形式
+
+　　（服务器发送）255 253 31
+　　（客户端发送）255 253 31
+　　（客户端发送）255 250 31 0 80 0 24 255 240
+
+　　（客户端发送）255 250 31 0 80 0 64 255 240
+
+2)．客户端建议，服务器同意使用NAWS
+
+　　（客户端发送）IAC WILL NAWS
+　　（服务器发送）IAC DO NAWS
+　　（客户端发送）IAC SB NAWS 1 44 0 24 IAC SE
+
+　　[窗口300字符宽，24字符高] 
+
+
+3). 客户端建议，服务器拒绝使用NAWS
+
+　　（客户端发送）IAC WILL NAWS
+　　（服务器发送）IAC DON'T NAWS
+
+4). 服务器建议，客户端拒绝使用NAWS
+
+　　（服务器发送）IAC DO NAWS
+　　（客户端发送）IAC WON'T NAWS
+7. 致谢
+　　一个基于X window系统的这个选项的更加详细的版本已经由Glenn Marcy和作者本人在Carnegie-Mellon大学实现。它在Carnegie-Mellon大学的计算机系被广泛地使用。Marcy先生帮助撰写了此备忘录的早期版本，记录了更多的选项。
+
+
+
+
+RFC1073 Telnet Window Size Option                                RFC1073  Telnet窗口尺寸选项
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+
+
+
+
+

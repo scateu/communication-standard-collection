@@ -1,0 +1,99 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：肖威（xiaoweiking    xiaoweiking@263.net）
+译文发布时间：2002-1-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                       J. Postel
+Request for Comments: 1818                                        ISI
+BCP: 1                                                        T. Li
+Category: Best Current Practice                 cisco Systems
+                                                Y. Rekhter
+                                                cisco Systems
+                                                August 1995
+
+
+最好最新的实践
+(RFC1818――Best Current Practices)
+本备忘录的状态
+   This document specifies an Internet Best Current Practices for the
+   Internet Community, and requests discussion and suggestions for
+   improvements.  Distribution of this memo is unlimited.
+
+摘要
+这篇文章介绍了一系列新的Internet通讯的最好最新的文档。这个系列的文档是被
+Internet工程指导组（Internet Engineering Steering Group）所认可的。
+
+讨论
+
+当前的IETF过程包括两种类型的RFC文档：标准路径文档和其他的RFC文档（例如：
+有关情报的，实验的以及供参考的）[1].标准路径文档的目的很清楚，它将上升到官方Internet
+标准的高度[2，3]。要发表有关情报的RFC文档不需要很正式的基础，只要能够符合RFC
+编辑的审核即可。它不需要接受同行的审查，无论它是否处于IETF审查过程都没有任何的
+意义[4]。
+
+现在IETF没有其他的机制和手段来发布经过它审查的有关技术信息。这篇文章给出了
+一个新的RFC子系列，被命名为“最新最好的实践”（BCPs）。
+BCP的发布过程和那些被提名的标准路径文档相似。BCP文档提交给IESG来审核，使
+用现有的审核过程，包括在IETF公告邮件列表中刊登“最后通知”（last call）。然而，一旦
+被IESG通过，这个过程就结束了，文档被发布出来。在技术上，最终的文档被IETF承认，
+但它不是也不能是官方的Internet标准。
+BCP可能应用到的技术信息范例有“OSI NSAP Allocation" [5] 和 "OSPF Applicability 
+Statement"[6]
+
+参考文献
+
+   [1] IAB, and IESG, "Internet Standards Process -- Revision 2", RFC
+       1602, IAB and IESG, March 1994.
+
+   [2] Postel, J., Editor, "Internet Official Protocol Standards", STD
+       1, RFC 1800, IAB, July 1995.
+
+   [3] Hinden, R., "Internet Engineering Task Force Internet Routing
+       Protocol Standardization Criteria", RFC 1264, BBN, October 1991.
+
+   [4] Waitzman, D., "Standard for the Transmission of IP Datagrams on
+       Avian Carriers", RFC 1149, BBN, April 1990.
+
+   [5] Collela, R., Callon, R., Gardner, E., and Y. Rekhter, "Guidelines
+       for OSI NSAP Allocation in the Internet", RFC 1629, NIST,
+       Wellfleet, Mitre, IBM, May 1994.
+
+   [6] Chapin, L., "Applicability Statement for OSPF", RFC 1370, IAB,
+       October 1992.
+
+安全考虑
+	安全问题没有在这个备忘录中讨论
+
+作者地址
+      Jon Postel
+      USC - ISI, Suite 1001
+      4676 Admiralty Way
+      Marina del Rey, CA  90292-6695
+
+      Phone: 310-822-1511
+      EMail: postel@isi.edu
+
+
+      Yakov Rekhter
+      cisco Systems, Inc.
+      170 West Tasman Drive
+      San Jose, CA 95134
+
+      Phone: 914-528-0090
+      EMail: yakov@cisco.com
+
+
+      Tony Li
+      cisco Systems, Inc.
+      1525 O'Brien Drive
+      Menlo Park, CA 94025
+
+      EMail: tli@cisco.com
+RFC1818――Best Current Practices                                 最好最新的实践
+
+
+1
+RFC文档中文翻译计划

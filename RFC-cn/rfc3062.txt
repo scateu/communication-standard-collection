@@ -1,0 +1,169 @@
+组织：中国互动出版网（http://www.china-pub.com）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：Bille（Bille  bill_e@sina.com ）
+译文发布时间：2001-5-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必
+须保留本文档的翻译及版权信息。
+
+
+network working group                                           K.Zeilenga
+Request for comments：rfc3062                                   OpenLDAP foundation
+category：standards track                                         2001年2月
+                  
+LDAP口令修改扩展操作
+（RFC3062 LDAP Password Modify Extended Operation）
+
+
+备忘录的作用
+这个文档为因特网社区详述了一个（因特网）标准跟踪协议，并且为进一步的改进寻求
+讨论意见和建议。要了解这个协议的标准化状态和地位，请参阅最新版的“Internet Official 
+Protocol Standards"(STD 1)。本文的分发不受限制。
+
+版权注意事项
+The Internet Society(2001)版权所有。
+
+摘要
+这个小型目录存取协议和外部认证服务的集成，引入了non-DN口令的身份认证，并允
+许非目录口令存储。因此，更新目录的机制（例如，修改）不能被用来改变一个用户的口令。
+这个文档描述了一个LDAP扩展操作，允许修改那些不依赖于身份认证形式也不依赖于存
+储机制的口令。
+
+本文档中的部分关键字"MUST","MUST NOT","REQUIRED","SHALL","SHALL 
+NOT","SHOULD","SHOULD NOT","RECOMMENDED"和"MAY" 已经在RFC2119中有了
+说明。
+
+1.	应用背景和目的
+小型目录存取协议（ 以下均用LDAP表示）[RFC2251]是设计用来支持很多认证机制的，
+包括简单用户名与口令的匹配。
+一般来讲，LDAP用户由一个目录入口所提供的唯一的名字（Distinguished Name[RFC2253]）
+确认，并且这个入口包含了一个有一个以上的用户口令（userPassword[RFC2256]）属性。
+    这个协议不将口令连同他所对应的用户存处于一个目录服务器中，服务器可以使用适合
+口令存储的任何属性（例如，userPassword）,或者使用非目录（non-directory）存储。
+支持简单用户名/口令机制（例如，DIGEST-MD5）的中立SASL[RFC2222]应用集成向
+我们介绍了non-LDAP DN身份确认形式，并且使口令的存储成为了SASL服务供应商的职
+责。
+LDAP 更新操作被设计在目录内，对入口的属性起作用。当某个用户没有DN身份认证，
+没有入口，或者服务器提供给他的口令没有入口属性时，LDAP更新操作就不能修改他的口
+令，这样我们就需要另一种替换机制。
+这个文档描述了一个可以允许目录客户更新用户口令的扩展LDAP操作。用户可以与
+一个用户入口相关联，用户可以作为一个LDAP DN代表，同样，用户的口令也可以存储在
+目录中。
+这个操作不可以在没有提供完备的保密和保护措施的情况下施行，也不可以匿名使用。
+
+2． 口令更改的请求和响应
+这个口令更改操作是一个LDAPv3扩展操作[RFC2251,4.12节]，并且被对象认证标识符
+（the PBJECT IDENTIFIER passwdModifyOID）所认证，这部分详细说明了协议请求和响应
+的语法。(在此，译者用类C++的注释方法加以注释)
+PasswdModifyOID OBJECT IDENTIFIER ::=1.3.6.1.4.1.4203.1.11.1       //认证
+PssswdModifyRequestValue ::=SEQUENCE{                           //请求
+    UserIdentity     [0]   OCTET STRING OPTIONAL               //用户身份认
+证
+    Old Passwd     [1]   OCTET STRING OPTIONAL               //原口令     
+    NewPasswd     [2]   OCTET STRING OPTIONAL}             //新口令
+PasswdModifyResponseValue ::=SEQUENCE{                          //响应
+    GenPasswd      [0]    OCTET STRING OPTIONAL}            //生成的新口
+令
+                                                                //以上标识
+均为8位字节字符串
+
+2．1． 口令更改请求
+口令更改请求是一个有包含passwdModifyOID　OID的请求名（requestName）域的扩
+展请求（ExtendedRequest），并且它选择性的提供请求值域（requestValue field），如果请求
+值域（requestValue field）已被提供，它就可以包含一个口令更改请求值
+（PasswdModifyRequestValue）。
+用户认证域，如果有的话，将包含一个八位字节的字符串，代表此用户和相关联的请求，
+这个字符串可以是一个LDAPDN[RFC2253]。如果没有提供用户认证域，这个请求就作用于
+用户当前的LDAP口令。
+如果现存原口令（oldPasswd）域，它将包含用户的当前口令。
+如果现存新口令（newPasswd）域，它将包含用户希望更改为的新口令。
+
+2．	2   更改响应
+口令更改响应就是，在退出口令修改操作后的一种扩展响应（ExtendedResponse），如
+果现存响应域，它将包含口令
+更改响应值，和生成的新口令。
+如果现存生成口令（genPasswd）域,她将包含一个此用户的新口令。
+如果响应中显示的不是成功（返回０），而是其他的结果，则响应域一定是不存在的。
+
+３．操作要求
+客户不应该在没有足够的安全保护措施的情况下提交口令更改请求，服务器也应相应的
+返回失败的信息，以提示客户。
+服务器亦应提供passwdModifyOID,作为扩展支持属性型的值，来表明他们支持上述的
+扩展操作。服务器可以选在建立了必要的安全服务保障或是授权给客户时，宣传此项扩展服
+务。客户也应该去证实服务器已经执行了这项扩展操作，这要比通过赋值去尝试好得多。
+服务器应只在成功的改变了用户的口令时返回成功信息，在没能成功的更改口令时，应
+保留原口令，并返回没成功的信息，提示用户。如果服务器不能识别所提供的域，或者不支
+持所提供域的联合，它将不改变用户口令。
+如果现存原口令，但提供的值不能通过验证，或者不是正确的值，服务器将不能改变用
+户的口令。如果原口令不存在，服务器将采取另外的策略来决定是否更改口令。
+如果客户自己提供了一个（他想要）的口令，服务器将不生成一个代表此客户的口令；
+如果客户自己没提供一个新的口令，服务器将生成一个代表此客户的口令，或者返回一个不
+成功操作的提示信息。服务器必须在生成口令域值正确的前提下，生成一个新的口令，并返
+回成功信息以提示客户。
+服务器应适当选择，返回
+adminLimitExceeded,busy,confidentialityRequired,operationsError,unavailable,unwillingToPerfor
+m,或是其他的（未成功）信息，来声明此操作没成功。
+服务器可以实施管理措施来限制这项操作。
+
+4． 安全因素
+这个操作是用来进行口令更改的，它本身并不提供任何的安全保护措施来确保信息的完
+整性和隐蔽性，所以应用这个操作会让你感觉很沮丧――当没有信息隐蔽的保障，导致你的
+口令泄漏的时候。所以，这个扩展操作必须在有保密措施（例如Start TLS[RFC2830]）的情
+况下使用，其他情况下务必不要使用。
+
+5． 参考书目
+[RFC2219]  Bradner, S., "key words for use in RFCs to Indicate Requirement Levels",
+ BCP 14,RFC 2119,March 1997.
+[RFC2222]  Myers, J., "Simple Authentication and Security Layer (SASL)",
+RFC 2222, October 1997.
+[RFC 2251]  Wahl, M., Howes, T. and S. kille, "Lightweight Directory Access Protocol 
+(v3)",
+RFC 2251,December 1997.
+[RFC2252]  Wahl, M., Coulbeck, A., Howes, T. and S. Kille,
+              "Lightweight Directory Access Protocol (v3): Attribute
+              Syntax Definitions", RFC 2252, December 1997.
+
+[RFC2253]  Wahl, M., Kille,S. and T. Howes, "Lightweight Directory
+              Access Protocol (v3): UTF-8 String Representation of
+              Distinguished Names",RFC 2253,December 1997.
+[RFC2256]  Wahl, M., "A Summary of the X.500(96) User Schema for use
+              with LDAPv3", RFC 2256, December 1997.
+
+[RFC2829]  Wahl, M., Alvestrand, H., Hodges, J. and R. Morgan,
+              "Authentication Methods for LDAP", RFC 2829, May 2000.
+
+[RFC2830]  Hodges, J., Morgan, R. and M. Wahl, "Lightweight Directory
+              Access Protocol (v3): Extension for Transport Layer
+              Security", RFC 2830, May 2000.
+
+6． 致谢
+这篇文档借用了很多IETF文档的内容，是基于IETF LDAPext 工作组的支持而来，在
+此表示深深谢意。
+
+7． 作者地址
+Kurt D.Zeilenga
+OpenLDAP Foundation
+
+Email:Kurt@OpenLDAP.org
+
+8． 完整版权陈述
+Copyright ? The internet Society(2001).All Rights Reserved.
+本文档及其译本可以被复制并分发，它的衍生版本，包括评述，解释和应用帮助均可以
+（完整或部分的）复制，出版，和分发，没有任何类型的限制，但以上的版权说明和这一段
+说明（本段）必须要包含于其中。然而，本文档部分不可以做任何修改，例如不标明版权说
+明和不说明引用了Internet Society和其他Internet组织资料的说明等（当有需要建立一个
+Internet标准，或需要翻译成其他语言时除外）。
+以上限制有永久效应，因特网协会（Internet Society）及其转让者，继承者均不得将其
+撤回。
+本文档及其包含的信息是基于"AS IS"原则提出的，Internet协会和互联网工程组织
+（internet engineering task force）拒绝一切授权，但对不侵害所有权和某些特殊目的的授权
+没有限制。
+
+感谢
+Internet 协会为此RFC编辑功能提供支持。
+
+RFC3062 LDAP Password Modify Extended Operation           LDAP口令修改扩展操作
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,90 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：stan001（stan001   ）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                         S. Bradner
+Request for Comments: 2119                            Harvard University
+BCP: 14                                                       March 1997
+Category: Best Current Practice
+
+关键字用于使用在RFCs指出要求水平 
+（RFC2119――Key words for use in RFCs to Indicate Requirement Levels）
+本目录的状态
+	本文详细说明了一个为网络交流的Internet Best Current Practices，并且为改进网
+络间的交流而要求讨论和建议。本备忘录的贡献是有限的。
+摘要
+	在许多标准路径的文件中一些词用来表示在规范中的必要条件。这些词通常以大写字母
+的形式出现。本文定义了这些词当他们在IEIF文件中应该被说明时。遵循这些指导方针的
+作者应该在文件的开头规范化这些习语：
+	关键字"MUST","MUST NOT","REQUIRED","SHALL","SHALL 
+NOT","SHOULD","SHOULD NOT","RECOMMENDED","MAY","OPTIONAL"在本文中被
+说明。
+	注意这些词的强制性可以根据使用中的需要被修正。
+
+目录
+1.MUST	1
+2.MUST NOT	1
+3.SHOULD	1
+4.SHOULD NOT	2
+5.MAY	2
+6.这些命令使用向导	2
+7.安全方面的考虑	2
+8.致谢	2
+作者地址	2
+
+1.MUST
+   这个关键字，或是术语"REQUIRED"或"SHALL"，意味着他们的定义是一个绝对的规范
+的必要条件。
+2.MUST NOT
+   这个词组，或是词组"SHALL NOT"，意味着他们的定义是一个绝对的规范的禁止的条件。
+3.SHOULD
+   这个关键字，或是形容词"EWCOMMENED"，意味着在特殊的环境下可能存在正当的理
+由忽略一个特殊的项目，但是完整的含义必须能被理解并且要仔细的考虑在重新选择一条不
+同的路径之前。
+4.SHOULD NOT
+   这个词组，或是词组"NOT RECOMMENDED"，意味着在特殊的环境下可能存在正当的
+理由当特殊的行为可接受或是甚至有效，但是完整的含义应该被理解并且这种情况应该被仔
+细考虑当暗含某种行为用标签描述前。
+5.MAY
+   这个关键字，或是形容词"OPTIONAL"，意味着一个项目是真正可选的。一个买主可以
+选择包含项目因为一个特殊的市场要求或是因为买主觉得它能够增强产品当另一个买主可
+能遗漏了同样的项目时。一个没有包含一个特殊对象MUST的工具准备用来与另一个不包
+含这个对象的工具间相互起作用，因此或许有简化的功能。在同样的脉络里一个包含了特殊
+对象MUST的工具准备用来和另一个没有包含这个对象的工具间相互作用。
+6.这些命令使用向导
+	在本文种定义的命令必须小心谨慎的使用。特别的，他们必须仅仅用在为相互间交流或
+限制潜在性的有害行为实际上确实需要的地方。例如，他们不必用来强加一个特殊方法在为
+相互作用间不需要的方法的地方。
+7.安全方面的考虑
+	这些习语经常用来指定安全含义的行为。没有暗含一个关键字MUST或SHOULD，或
+在作某些事的说明时定义为MUST NOT或SHOULD NOT的影响将是非常的敏感的。本文
+作者应该慢慢的详细描述没有遵循建议或要求的安全暗示作为大多数的执行者将不会有产
+生规范的经历和讨论的而得的好处。
+8.致谢
+	这些术语的定义是一个来自许多RFCs的综合定义。另外，得到了许多人如Robert 
+Ullmann, ThomasNarten, Neal McBurnett, and Robert Elz的建议。
+
+
+作者地址
+      Scott Bradner
+      Harvard University
+      1350 Mass. Ave.
+      Cambridge, MA 02138
+
+      phone - +1 617 495 3864
+
+      email - sob@harvard.edu
+
+
+RFC2119――Key words for use in RFCs to Indicate Requirement Levels
+关键字用于使用在RFCs指出要求水平  
+
+
+1
+RFC文档中文翻译计划

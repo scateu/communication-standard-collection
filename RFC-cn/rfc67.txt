@@ -1,0 +1,42 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者： cc8131（cc8131）
+译文发布时间：2001-12-09
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                   W. Crowther
+Request for Comments #67                                        BBN
+                                                        [IMPORTANT]
+
+
+提议改变主机/IMP规范来消除标记
+（RFC67――Proposed Change to Host/IMP Spec to Eliminate Marking）
+
+   当Dave Walden离开这里去挪威前，他观察到主机/IMP规范有一点简单的变化，这种变
+化会消除“标记”问题。这种变化将会从定期的信息文本中隔离前导字符，然后，它们取代
+打包的信息，作为连续的信息，而被发送出去。正文将从一个字边界说起，而不管机器所允
+许的字的长度。这个过程既可以发生在IMP-主机信息中，又可以发生在主机-IMP信息中。
+
+   我们可以看到这个方案并没有坏处，主机反馈的抽样结果可以归纳为对该方案的中立和
+广泛热情。所以，我们暂时准备接受这个变化。我们承认这个变化将包括主继程序的变化，
+我们计划提供更改过了的主机规范文本，同时还提供连续一星期的对新版本的通知。
+
+   如果有人发现关于这个方案的任何缺点，或者是对这个方案不满意，请立刻与BBN联
+系，这是因为一个全新的IMP程序版本正在使用中。
+
+[ This RFC was put into machine readable form for entry ]
+        [ into the online RFC archives by Kai Henningsen 5/97 ]
+
+
+
+
+RFC67――Proposed Change to Host/IMP Spec to Eliminate Marking                                    
+提议改变主机/IMP规范来消除标记
+
+
+1
+RFC文档中文翻译计划

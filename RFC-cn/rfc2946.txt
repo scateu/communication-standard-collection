@@ -1,0 +1,183 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划(http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：安智平（fivestar   anzp@xanet.edu.cn）
+译文发布时间：2001－4－12
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+Network Working Group                                           T. Ts'o
+Request for Comments: 2946                             VA Linux Systems
+Category: Standards Track                                September 2000
+
+RFC2946 Telnet 数据加密选项
+(RFC2946  Telnet Data Encryption Option)
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+本文档描述了倘若telnet数据流需要机密服务时作为一种普通方法的telnet加密选项。本文档摘要普遍使用了加密类型和代码，但并没专门定义一种特定的加密算法。对每一种加密算法有专门的文档来定义实现并发布。
+
+目录
+1．命令名称和编码	2
+2．命令的含义	2
+3．缺省配置	4
+4．动机	4
+5．实施规则	4
+6. 安全考虑	5
+7. telnet 加密的发展方向	6
+8．感谢	6
+9．参考资料	6
+10．作者联系方法	6
+11．版权说明	7
+12．鸣谢	7
+
+1．命令名称和编码
+
+   ENCRYPT         38
+
+       加密命令
+       IS                 0
+       SUPPORT          1
+       REPLY             2
+       START             3
+       END               4
+       REQUEST-START    5
+       REQUEST-END      6
+       ENC_KEYID        7
+       DEC_KEYID        8
+
+       加密类型
+       NULL             0
+       DES_CFB64        1
+       DES_OFB64        2
+       DES3_CFB64       3
+       DES3_OFB64       4
+       CAST5_40_CFB64   8
+       CAST5_40_OFB64   9
+       CAST128_CFB64   10
+       CAST128_OFB64   11
+
+根据以前的实践，今后的加密类型号将由IANA机构按照RFC 2434中描述的先来先服务策略进行分配。尽管认证类型号分配的空间已经超出8位空间（并且telnet规范中多数值都超过了8位空间），但它并不被认为已经或将要处于被耗尽的处境。并且，如果这将成为一个问题，当超过50％以上的空间被分配后，IANA将把分配请求提交至IESG或一个指定的专家以得到批准。
+2．命令的含义
+IAC WILL ENCRYPT
+此命令的发送者同意发送已经加密的数据。
+IAC WONT ENCRYPT
+
+此命令的发送者拒绝发送已加密的数据。
+IAC DO ENCRYPT
+此命令的发送者同意接收已加密的数据。
+IAC DONT ENCRYPT
+此命令的发送者拒绝接收已加密的数据。
+IAC SB ENCRYPT SUPPORT encryption-type-list IAC SE
+此命令指出发送者支持何种加密类型。仅当连接的一方为DO ENCRYPT时才可能发送SUPPORT命令。目前的加密类型the Assigned Numbers document【1】的当前版本中有详细说明。
+加密类型列表中仅包括在当前会话中所实际支持的类型。如果ENCRYPT带有AUTH选项，在此次会话键确定之前，绝对不能发送SUPPORT信息。否则，将无法确定所选择的加密类型能否根据有效键的类型和长度进行正确初始化。
+IAC SB ENCRYPT IS encryption-type ... IAC SE
+此命令指出命令的发送者将使用何种加密类型及所有需要的初始化数据。仅当连接方处于WILL ENCRYPT时才能发送IS命令来初始化该加密类型的配置方案。
+IAC SB ENCRYPT REPLY encryption-type ... IAC SE
+此命令为初始化加密类型方案配置进一步进行初始化数据的交换。仅当连接方处于DO ENCRYPT时才能发送REPLY命令。
+IAC SB ENCRYPT START keyid IAC SE
+此命令指出数据流中此命令后的所有数据将通过事先协商好的数据加密方法进行加密。仅当连接方处于WILL ENCRYPT时才能发送START命令。
+Keyid是一个可变长字段。当连接的某一端被告知多个密钥时，加密机制使用keyid来标识具体使用哪一个密钥。Keyid字段作为最重要的一项进行编码，并且值0d被保留作为出缺省的密钥（一般地，密钥是在带有AUTHENTICATION选项时的认证阶段派生出来的）。Keyid字段最少为一个字节长。"keyid"的所有有效值仅为那些由DEC_KEYID命令收到的值。
+IAC SB ENCRYPT END IAC SE
+此命令指出数据流中此命令后的所有数据将不进行加密。仅当连接方处于WILL ENCRYPT时才能发送END命令。
+IAC SB ENCRYPT REQUEST-START keyid IAC SE
+此命令请求远端开始对telnet数据流进行加密。仅当连接方为DO ENCRYPT时才能发送REQUEST-START命令。Keyid为可选项{advisory}，可以省略。
+IAC SB ENCRYPT REQUEST-END IAC SE
+此命令请求远端停止对telnet数据流进行加密。仅当连接方为DO ENCRYPT时才能发送REQUEST-END命令。
+IAC SB ENCRYPT ENC_KEYID keyid IAC SE
+此命令请求远端对"keyid"是否映射到一个有效密钥进行校验，或对由DEC_KEYID命令接收的"keyid"是否有效进行校验。如果keyid被省略，说明不知道其它可用的keyid，试图找到一个通用keyid的作法将会失败。  仅当连接方WILL ENCRYPT时才能发送ENC_KEYID命令。
+IAC SB ENCRYPT DEC_KEYID keyid IAC SE
+此命令请求远端对keyid是否映射到远端的一个有效密钥进行校验，或对由ENC_KEYID命令收到的"keyid"是否正确进行校验。如果keyid被省略，说明不知道其它可用的keyid，试图找到一个通用keyid的作法将会失败。  仅当连接方DO ENCRYPT时才能发送ENC_KEYID命令。
+3．缺省配置
+本选项的缺省配置是
+WONT ENCRYPT
+DON'T ENCRYPT
+即对Telnet 数据流不作任何加密。
+4．动机
+Telnet协议在由某个网关以IP包形式穿越网段时没有任何保护。对于密码在网络间以明文传送将尤其危险。本选项提供一种对数据流进行加密的方法。
+5．实施规则
+一旦加密选项被激活，在协商阶段的所有数据，包括TELNET选项，都将被加密。"IAC SB ENCRYPT START encryption-type IAC SE"命令之后的数据以8位字节形式开始加密，并以"IAC SB ENCRYPT END IAC SE"命令结束加密。
+只能在连接开始时用WILL和DO为以后的连接获得权限。ENCRYPT选项必须在双方均声学明。
+一旦两端主机交换了一个WILL和一个DO，发送DO ENCRYPT方必须再发送一个ENCRYPT SUPPORT命令通知远端它所能够接收的加密类型。在发送请求时，将其所支持的加密方案列出。只有DO命令发送者才能发送所支持的加密类型列表（IAC SB ENCRYPT SUPPORT encryption-type-list IAC SE）。只有WILL命令发送者才能实际传送加密数据。加密将以"IAC SB ENCRYPT START IAC SE"命令开始，以"IAC SB ENCRYPT END IAC SE"命令结束。如果收到一个START命令后，在还没有收到一个END命令之前又收到了一个START，那么收到的第二个START将被忽略。
+如果DO命令发送者希望对方开始传送加密数据，它可发一个"IAC SB ENCRYPT REQUEST-START IAC SE"命令。如果DO命令发送者希望对方停止传送加密数据，它可发一个"IAC SB ENCRYPT REQUEST-STOP IAC SE"命令。
+如果SUPPORT命令接收者并不支持SUPPORT命令所列出的任何一个加密类型，它将发送一个"IAC SB ENCRYPT IS NULL IAC SE"命令来指出没有共有的加密类型。同时发送一个"IAC WONT ENCRYPT"命令来关闭加密选项。
+SUPPORT命令中的加密类型必须根据不同加密类型的优先权进行排序，优先权最大的应排在第一位，排在最后一位的是优先权最低的。
+如果ENCRYPT选项有效，并正在接收加密数据时，接收到一个"IAC WONT ENCRYPT"同时也意味着"IAC SB ENCRYPT END IAC SE"，此后面Telnet数据流将不再加密。
+以下面的例子来说明该选项的用法：
+
+      Host1                            Host2
+
+[主机1对主机2发出请求商议对它发送给主机1的数据进行加密问题。主机2同意对该数据进行加密来商议。]
+      DO ENCRYPT
+                                           WILL ENCRYPT
+[Host1请求Host2一旦初始化完就使加密选项有效，并通知Host2它支持DES_CFB64.  ]
+      IAC SB ENCRYPT REQUEST-START IAC
+      SE
+      IAC SB ENCRYPT SUPPORT DES_CFB64
+      IAC SE
+ [ Host2给Host1发送初始化数据.  Host1 回答接收到IV.  ]
+                                       IAC SB ENCRYPT IS DES_CFB64
+                                       CFB64_IV  144 146 63 229 237 148
+                                       81 143 IAC SE
+      IAC SB ENCRYPT REPLY DES_CFB64
+      CFB64_IV_OK  103 207 181 71 224
+      55 229 98 IAC SE
+ [ Host2 开始为发送加密数据作好准备，一旦收到REQUEST-START，就开始加密。]
+IAC SB ENCRYPT START IAC SE
+ [从Host2发往Host1的所有数据都已经加密。]
+IAC SB ENCRYPT END IAC SE
+ [从Host2发往Host1的所有数据又以明文传送。]
+支持Telnet加密选项的所有实施方法将同样支持本规范的所有内容。
+6. 安全考虑
+被隔离的ENCRYPT选项提供被动攻击的保护，但不提供主动攻击的保护。换句话说，当别人只是查看流过网段的IP包时，它能提供一定的保护。然而，一个能够修改数据包的攻击者可以阻止加密选项被协商通过。
+此问题可通过使用ENCRYPT选项并Telnet Authentication选项来解决。具体说，当面对主动攻击时，在authentication-type-pair中设置为ENCRYPT_USING_TELOPT来强行进行加密协商。
+另外，一个主动攻击者可以试图启动或重新启动加密选项。如果加密选项由用户发起，并且客户端无法进行协商使加密有效或重新生效，那么客户端将认为这是被攻击的，并立即终止telnet连接。
+7. telnet 加密的发展方向
+
+此规范定义了一种保证telnet数据流机密性的方法。遗憾的是此选项下提供的所有加密机制并不提供数据完整性，因为在面向流的协议中，对特定的协议要有效地提供完整性服务非常复杂。
+TELNET START_TLS规范提供一种方案能够提供机密性、完整性、压缩及未来的工作需要的telnet加密选项。 一个可能的方法是在telnet AUTHENTICATION选项后使用TLS的匿名Diffie-Hellman方式，并且authentication 机制必须包括在TLS协商期间的client和server有关消息。
+8．感谢
+本文最初是由Cray Research 的Dave Borman起草的，在起草过程中得到了MIT的Theodore Ts'o the IETF Telnet Working Group的帮助。
+9．参考资料
+   [1] Reynolds, J. and J. Postel, "Telnet Protocol Specification", STD
+       8, RFC 854, May 1983.
+
+   [2] Ts'o, T. and J. Altman, "Telnet Authentication Option", RFC 2941,
+       September 2000.
+
+   [3] Alvestrand, H. and T. Narten, "Guidelines for Writing an IANA
+       Considerations Section in RFCs", BCP 26, RFC 2434, October 1998.
+10．作者联系方法
+Theodore Ts'o, Editor
+   VA Linux Systems
+   43 Pleasant St.
+   Medford, MA 02155
+
+   Phone: (781) 391-3464
+   EMail: tytso@mit.edu
+11．版权说明
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works.  However, this document itself may not be modified in any way, such as by removing the copyright notice or references to the Internet Society or other Internet organizations, except as needed for the purpose of developing Internet standards in which case the procedures for copyrights defined in the Internet Standards process must be followed, or as required to translate it into languages other than   English.
+
+   The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+12．鸣谢
+感谢Internet协会给予RFC编辑部门的资金。
+RFC2946  Telnet Data Encryption Option                                RFC2946 Telnet 数据加密选项
+
+
+
+
+1
+RFC中文翻译计划
+
+

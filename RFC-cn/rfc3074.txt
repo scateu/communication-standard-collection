@@ -1,0 +1,257 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：徐永久（albertxu    albertxu@bigfoot.com）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                   B. Volz
+Request for Comments: 3074                             Ericsson 
+Category: Standards Track                              S. Gonczi   
+              Network Engines,Inc.                                                             T. Lemon
+                                           Internet Engines, Inc.
+                                                      R. Stevens
+                                               Join Systems, Inc.
+February 2001
+
+DHCP 负载平衡算法 
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+
+摘要
+本文档建议了一种负载平衡算法，它让多个合作的服务器决定哪一个来为客户服务，而不必在初始设置时作任何信息交换。
+当存在多个DHCP 服务器时，根据服务器端散列存储的客户MAC 地址来选择服务器。建议的技术提供了高效选择服务器的手段，当网络上存在多个DHCP 服务器时，不需要改变客户端的设置。对于选择目标服务器作为转向代理，例如 BOOTP 中继也采用同样的方法。
+目录
+1.  介绍	2
+2. 术语	2
+2.1.  要求的术语	2
+2.2. 负载平衡术语	2
+3.  背景知识和外部需求	3
+4. 概览	3
+5. 操作	4
+5.1 设置	4
+5.2 面向服务器的 HBA	4
+5.3 延迟服务参数	4
+5.4 转向 HBA	4
+6.  负载平衡的散列函数	5
+7.  安全考虑	6
+参考	6
+鸣谢	7
+作者地址：	7
+版权声明	8
+致谢	8
+
+1.  介绍
+本协议最初用来支持对特定的 DHCP 失败请求协议的负载平衡优化。作者后来意识到可以用来优化多个合作的 DHCP 服务和 BOOTP 中继代理。本建议可以设置每个参与的服务器接受一个预先设置的客户负载百分比。这可以通过确定性的散列算法来达到，对于具有同样特性的其他协议也能很容易的做到。
+2. 术语
+本节既讨论了 IETF 协议指定的一般性术语，也讨论了本文档要用到的一些术语。 
+2.1.  要求的术语
+本文中的关键字“必须”，“必须不”，“要求的”，“应该”，“不应该”，“会”，“不会”，“建议”，“或许”，“可选的”在 RFC 2119 中解释。   
+2.2. 负载平衡术语
+本文档介绍了以下术语：
+    服务延迟 （Service Delay）, SD
+参加负载平衡方案中的服务器允许对客户机延迟服务，而不是忽略客户请求。
+散列桶分配 （Hash Bucket Assignments）, HBA
+参加负载平衡方案服务器的配置节名称，设置散列桶的大小。
+服务器 ID （Server ID）, SID
+对参与的服务器指定 ID 。从 DHCP 的行文来说， SID 就是指服务器的 IP 地址或者 DNS 名字。
+服务事务 (Service Transaction) , ST
+客户机和服务器之间信息交换的集合，例如 DHCP 服务器和客户机之间 DISCOVER/OFFER/REQUEST/ACK 信息的交换就是一种服务事务。
+服务事务 ID (Service Transaction ID), STID
+负载平衡中单个客户请求属性。
+3.  背景知识和外部需求
+因为 DHCP 客户机采用 UDP 广播来联系 DHCP 服务器，因此，客户机的   DHCPDISCOVER 消息可以被多台服务器接收到。所有接收到这条广播的服务器会 对客户机作出响应，来让客户机决定采用哪一台服务器。
+如果使用了 BOOTP 中继代理，一般它会转发或者向所有配置的服务器重新广播客户机的请求，因此也存在同样低效的问题。
+优化算法允许服务器采用计算“服务”和“不服务”的比例来让每一个事务选择。转发代理也可以采用同样的计算方法选择转发目的地。
+在每一种例子中，对服务器的选择是可计算的，而不必要求参与者协商谁来响应。
+因为几乎不能预测下一个请求会来自哪一台客户机，所以该算法逼近自然界的概率。对短期而言，实际的客户机得到的请求百分比会偏离期望的百分比，但是随着请求次数的增加，每一台服务器的负载百分比就会达到配置的百分比。
+4. 概览
+DHCP 服务器必须使用客户机标记选项作为 STID ，如果没有客户机标记的话，   DHCP 包的 hlen 域 必须使用要散列的数据长度，而 chaddr 的内容必须为要散列的数据。最多用到客户端标记或者 chaddr 的最初 16 字节。
+本建议把 STID 映射为第6节中函数用到的散列值。返回的散列值就能用来决定谁能响应客户机的请求，或者谁是转发目标。
+提供的散列函数产生0 到 255 的散列值，产生相当平坦的散列桶分布，对于每一个参与的服务器，通过分配指定的散列值来分配资源。
+服务器仅当那些请求机器的 STID 匹配分配的散列值中的一个时才会接受请求。
+任何没有对服务器分配的散列桶会导致一些客户的 ST 完全被忽略。 STID 并非一定要唯一，但是必须有足够余量能分布到每一台服务器。
+HBA 可以以消息传送，封包在其他协议中，例如：e-mail 或者 DHCP Failover    协议。
+DHCP 服务器实现可以采取可配置的策略，来处理负载平衡已经配置好，但是服务器不能响应或者不符合预定的分配地址的情况。
+DHCP 服务器的这项功能可以通过设置 DS 参数来达到。来让服务器延迟对客户机的请求。
+DHCP 服务器应该利用客户机请求的 secs 域的值，如果这个值不为0 的话。
+因为有些客户可能没能正确实现 secs 域，DHCP 服务器应该记录客户事务的第一次情况，如果第二次请求包中的 secs 域依然为0 ，那么DHCP 服务器就可以采用请求之间延时，而不再使用 secs 域。
+5. 操作
+5.1 设置
+设置步骤包括分配散列值给服务器，这一步通过提供一个或者多个散列桶分配来实现。这可以通过配置文件，Windows NT 注册表，EEPROM 等得到。另外，散列桶的值可以采用一些贪婪算法来分配。例如：“所有奇数由A 服务器服务，所有偶数由B 服务器服务。”
+5.2 面向服务器的 HBA 
+当设置为一个指定的服务器时，HBA 应该采用 32 位八进制的简单位图。
+HBA 位图的第一个八进制代表了 HBA 值 0-7，下一个为 8-15，依此类推，第32个代表 248-255，在每一个八进制数字中，最小位代表了那个八进制数中最小的HBA 值。
+HBA 的每个位和每个可能的散列值对应。如果位图中的位是设置的话，意味着接收服务器必须服务客户机的请求，这时，STID 产生对应的散列值。
+例如，如果一台服务器的HBA 如下：   
+            FF FF FF FF FF FF 00 00 ( 0   - 63 )
+            FF FF FF FF FF FF FF FF ( 64 - 127 )
+            00 00 00 00 00 00 00 00 (128 - 191 )
+            00 00 00 00 00 00 00 00 (192 - 255 )
+那么它必须服务那些STID 散列值在 0-47 和64-127 之间的客户机请求。
+5.3 延迟服务参数
+延迟服务参数是可选的。
+如果这个参数没有设置，那么 HBA 会设置一个严格的服务/不服务规则。
+如果参数已经设置，对于本来不服务于一些特定客户请求的服务器，可以在 S 秒以后响应请求。服务器可以利用BOOTP 消息头中的 secs 域来决定客户尝试获得服务的请求时间，否则它会采用其他办法继续请求。
+5.4 转向 HBA 
+当设置为转向代理时，(例如，BOOTP 中继) 可能会使用包含服务器ID/散列桶值对的HBA。
+这里，服务器 ID (SID) 决定了服务器对指定的散列桶负责，转向代理转发每个客户请求， STID 产生指定的散列值给 SID 决定的服务器。
+服务器 ID 可以是任意服务器属性的唯一值，（例如 IP 地址，DNS 名字等），只要在中继代理中的上下文有意义就可以了。
+转发器可以设置为转发指定的包到多台服务器，例如，BOOTP中继可以设置为把负载分割为两个基本的备份服务器对，每一个对运行 DHCP Failover 协议。在这个例子中，一个目标为服务器对的包就会转发到基本的和辅助的服务器对。
+一个转发代理的可能配置文件设置如下：
+   192.33.43.11 192.33.43.12: 0..24;
+   192.33.43.13:  25..55;
+   192.33.43.15:  56..128;
+   192.33.43.16: 129 130 131 200..202;
+以上的配置文件包含4 个 HBA，第一行的含义为：
+“客户请求产生的 STID 散列值在0-24 之间时，转发到服务器 192.33.43.11 和192.33.43.12”。
+第四行的含义是：“ STID 散列值为129,139,131,200,201或者202时，转发到 192.33.43.16 ”。
+6.  负载平衡的散列函数
+下面的散列函数采用 C 语言来实现，利用了"Pearson 的散列" 算法。
+   
+这个函数具有计算的廉价性，对每一个键字节作一次数组搜索和 xor 操作。
+为了让本建议运作，所有其他的实现方法必须使用这个散列函数。混合表集合的数值如下：  
+/* 256 个唯一值的混合表，采用伪随机排序。*/
+
+unsigned char  loadb_mx_tbl[256] ={
+251, 175, 119, 215, 81, 14, 79, 191, 103, 49, 181, 143, 186, 157,  0,
+232, 31, 32, 55, 60, 152, 58, 17, 237, 174, 70, 160, 144, 220, 90, 57,
+223, 59,  3, 18, 140, 111, 166, 203, 196, 134, 243, 124, 95, 222, 179,
+197, 65, 180, 48, 36, 15, 107, 46, 233, 130, 165, 30, 123, 161, 209, 23,
+97, 16, 40, 91, 219, 61, 100, 10, 210, 109, 250, 127, 22, 138, 29, 108,
+244, 67, 207,  9, 178, 204, 74, 98, 126, 249, 167, 116, 34, 77, 193,
+200, 121,  5, 20, 113, 71, 35, 128, 13, 182, 94, 25, 226, 227, 199, 75,
+
+27, 41, 245, 230, 224, 43, 225, 177, 26, 155, 150, 212, 142, 218, 115,
+241, 73, 88, 105, 39, 114, 62, 255, 192, 201, 145, 214, 168, 158, 221,
+148, 154, 122, 12, 84, 82, 163, 44, 139, 228, 236, 205, 242, 217, 11,
+187, 146, 159, 64, 86, 239, 195, 42, 106, 198, 118, 112, 184, 172, 87,
+2, 173, 117, 176, 229, 247, 253, 137, 185, 99, 164, 102, 147, 45, 66,
+231, 52, 141, 211, 194, 206, 246, 238, 56, 110, 78, 248, 63, 240, 189,
+93, 92, 51, 53, 183, 19, 171, 72, 50, 33, 104, 101, 69, 8, 252, 83, 120,
+76, 135, 85, 54, 202, 125, 188, 213, 96, 235, 136, 208, 162, 129, 190,
+132, 156, 38, 47, 1, 7, 254, 24, 4, 216, 131, 89, 21, 28, 133, 37, 153,
+149, 80, 170, 68, 6, 169, 234, 151
+};
+
+unsigned char loadb_p_hash(
+        const unsigned char *key,       /* 要散列的键值 */
+        const int len )                 /* 键长度（bytes）  */
+{
+unsigned char hash  = len;
+int i;
+
+        for (i=len ; i > 0 ;  )
+            hash = loadb_mx_tbl  [ hash ^ key[ --i ] ];
+
+        return( hash );
+}
+
+int accept_service_request(
+        const unsigned char HBA[32],    /* 散列桶二进制表 */
+        const unsigned char *key,       /* 服务事务 id   */
+        const int len  )                /* 长度   */
+{
+unsigned char hash = loadb_p_hash(key,len);
+int index          = (hash >> 3) & 31;
+int bitmask        = 1 << (hash & 7);
+
+        /* 服务事务的话，返回  1 */
+        return((HBA[index] & bitmask) != 0);
+}
+7.  安全考虑
+本建议本身不构成安全问题，也不会影响现存的安全设置。采用这个算法的服务器保证HBA 的内容能在网络上传送，这个消息能防止窜改。因为对 HBA 的篡改会导致一些或者所有客户拒绝服务。
+
+      
+参考
+
+[FAILOVR]  Kinnear, K,, Droms, R., Rabil, G., Dooley, M., Kapur, A.,
+              Gonczi, S. and B. Volz, "DHCP Failover Protocol", Work in
+              Progress.
+
+   [PEARSON]  The Communications of the ACM  Vol.33, No.  6 (June 1990),
+              pp. 677-680.
+
+   [RFC2131]  Droms, R., "Dynamic Host Configuration Protocol", RFC
+              2131, March 1997.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels," BCP 14, RFC 2119, March 1997.
+
+鸣谢
+
+特别感谢 Peter K. Pearson，无私奉献他的算法。
+本建议来自1999年2月，在CISCO 公司和 Ted Lemon讨论 Failover协议时，对散列 MAC 地址到单个位的思想。 Rob Stevens 建议采用这个算法。
+还要感谢在以后的讨论中 Ralph Droms, Kim Kinnear, Mark Stapp, Glenn Waters,Greg Rabil 和 Jack Wong 提出的建议。
+作者地址：
+   Bernie Volz
+   Ericsson
+   959 Concord Street
+   Framingham, MA  01701
+
+   Phone: +1-617-513-9060
+   EMail: bernie.volz@ericsson.com
+
+   Steve Gonczi
+   Network Engines, Inc.
+   25 Dan Road Canton, MA 02021-2817
+
+   Phone: 781-332-1165
+   EMail: steve.gonczi@networkengines.com
+
+   Ted Lemon
+   950 Charter Street
+   Redwood City, CA 94043
+
+   EMail: ted.lemon@nominum.com
+
+   Rob Stevens
+   Join Systems, Inc.
+   1032 Elwell Ct Ste 243 Palo Alto CA 94203
+
+   Phone: (650)-968-4470
+   EMail: robs@join.com
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+RFC3074  DHC Load Balancing Algorithm                   DHCP 负载平衡算法
+
+
+
+
+1
+RFC文档中文翻译计划
+

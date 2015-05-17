@@ -1,0 +1,1952 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：Careon（careon muzi   careon@sohu.com）
+译文发布时间：2001-12-28
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                   M. St. Johns, Ed.
+Request for Comments: 2669                                 @Home Network
+Category: Proposed Standard                                  August 1999              
+
+基于DOCSIS标准CM和CMTS的电缆设备 MIB库定义
+（RFC2669 ――DOCSIS Cable Device MIB Cable Device Management Information 
+Base for DOCSIS compliant Cable Modems and Cable Modem Termination Systems） 
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1999).
+
+摘要
+本文档为在Internet设区中所使用的网络管理协议定义了部分管理信息库（MIB），
+具体为基于DOCSIS1.0标准的兼容CM和CMTS定义了基本管理对象集，该管理方
+法基于SNMP协议。
+本文档所定义的MIB模块符合SNMP SMIv2 [5][6][7]标准描述方法，所使用的
+SNMP框架结构和现有SNMP标准保持一致。
+目录
+1.  SNMP管理架构	2
+2. 术语	2
+2.1. 有线电视（CATV）	3
+2.2. 电缆调制解调器（CM）	3
+	2.3 电缆调制解调器前端系统（CMTS）………………………………………………….
+	2.4 DOCSIS………………………………………………………………………………..
+	2.5 下行传输………………………………………………………………………………….
+	2.6 前端……………………………………………………………………………………..
+	2.7 MAC包……………………………………………………………………………………
+	2.8 电缆多媒体网络系统……………………………………………………………………
+	2.9 射频………………………………………………………………………………………..
+	2.10上行传输…………………………………………………………………………………
+3. 概览	4
+	3.1 管理信息库结构………………………………………………………………………….
+	3.2 管理要求……………………………………………………………………………….
+	3.2.1 软件升级…………………..
+	3.2.2 事件和陷阱………………..
+	3.2.3 Trap限制……………………………………………………………………………….
+	3.2.3 .1 Trap速率级别…………………………………………………………………………
+	3.2.3.2 限制Trap速率…………………………………………………………………………
+	3.3 协议过滤…………………………………………………………………………………
+	3.3.1入内的链路层包过滤（LLC filter）…………………………………………………….
+	3.3.2 专有过滤………………………………………………………………………………
+	3.3.2.1 IP盗用过滤……………………………………………………………………………..
+	3.3.2.2 SNMP访问过滤……………………………………………………………………….
+	3.3.3 IP包过滤………………………………………………………………………………..
+	3.3.4 出外的链路层过滤(LLC filter)……………………………………………………….
+	4 定义…………………………………………………………………………………………
+	5 鸣谢…………………………………………………………………………………………
+	6 参考…………………………………………………………………………………………
+	7 安全事项…………………………………………………………………………………….
+	8 知识产权……………………………………………………………………………………
+	9 作者地址…………………………………………………………………………………….
+	10 版权声明………………………………………………………………………………….
+
+
+1.  SNMP管理架构
+SNMP当前的管理架构可从五个方面来描述。
+0	总体结构描述，可参照 RFC2571[1]。
+0	网络管理目标和MIB对象的命名和描述。
+0	传输管理信息所需消息协议描述。
+0	访问管理信息的协议操作
+0	   基本应用集描述和网络管理访问控制机制
+2. 术语
+本节既讨论了 IETF 协议指定的一般性术语，也讨论了本文档要用到的一些术语。 
+2.1.  有线电视（CATV）
+最初称为公用天线电视系统，现在不管是普通的电缆系统或是HFC系统都可以统
+称为CATV系统
+2.2. 电缆调制解调器（Cable Modem）
+在DOCSIS兼容电缆数据传输系中被称为"slave"的调制解调器。
+2.3 电缆调制解调器终端系统（CMTS）
+	工作在头端的覆盖电缆桥接或电缆路由的一般性术语，CMTS在DOCSIS电容电缆数据
+传输系统中一般作为主设备（master），而且它是唯一的传输下行和控制上行传输的设备。
+2.4 DOCSIS
+	基于Cable的数据传输接口规范，可参考 ITU-T J.112 Annex B。
+2.5 下行（Downstream）
+	从头端（CMTS）传向用户端的方向称为下行。
+2.6 头端
+	用户端数据的发源地，一般指CMTS设备的所在位置。
+2.7 MAC包
+	符合DOCSIS标准的数据单元。
+2.8 MCNS
+	多媒体电缆网络系统，一般被DOCSIS来代替表示。
+2.9 射频
+	表示射频信号。
+2.10 上行
+	从用户端传输到头端的方向称为上行。
+3概览
+	本MIB库提供了满足DOCSIS兼容CableModem和CMTS的管理需求的管理子集，该
+管理需求来源于DOCSIS射频接口规范标准（DOCSIS Radio Frequency Interface 
+specification）。需要留意的是DOCSIS1.0标准仅仅要求CableModem实现SnmpV1和处理
+IPv4的通信数据，未来的DOCSIS版本将会支持SnmpV3和Ipv6。 
+3.1 MIB结构
+	本MIB结构被划分为七个组（groups）：
+0	Cable设备系统管理组docsDevBase
+0	网络访问控制组docsDevNmAccessGroup
+0	软件升级所需信息处理组docsDevSoftware
+0	事件报告控制和记录组docsDevEvent
+0	链路层和IP层过滤器配置组docsDevFilter
+0	客户端设备IP控制组docsDevCpe
+3.2管理要求
+3.2.1 软件升级处理
+	CableModem的软件升级处理可以通过DOCSIS射频接口规范标准中描述的方法进行操
+作，作为网络管理者可以通过下列步骤升级CableModem：
+0	设置docsDevSwServer为软件升级TFTP服务器的IP地址
+0	设置docsDevSwFilename为软件升级映像文件的文件名
+0	设置docsDevSwAdminiStatus为upgrade-from-mgt
+注意软件升级在下列情况下应禁止：
+0	软件升级文件未完全下载
+0	软件升级文件内容不完整或已被破坏
+0	软件升级文件并不是针对本设备的硬件标识
+3.2.2 事件和Traps
+	本MIB库为系统事件的报告提供了灵活的控制机制，包括在日志服务器（syslog）、Traps、
+非易失性本地记录等。如果事件通过Traps报告应符合相应的规范。其他非Traps事件报告
+的机制本文不加论述。
+	Trap事件报告的定义和编码规则可以有厂商自定义。不过为了多厂家设备的通用性考
+虑，各厂家CableModem应当提供TOD（Time of day）时钟以便于网络故障的检修。
+	每一个通过Trap报告的厂商自定义事件必须定义企业指定的定义，Trap定义必须包括
+事件发生的原因而且为DisplayString编码。如下所示：
+	trapName NOTIFICATION-TYPE
+			OBJECTS {
+				ifIndex,
+				EventReason,
+				Other useful objects
+			}
+			STATUS current
+			DESCRIPTION 
+					"trap description"
+				：：= Object Id
+	注意ifIndex 仅在接口相关时有具体含义。
+3.2.3 Trap限制
+	CM和CMTS必须按如下所述方法提供对Trap消息的扼制或限制机制，网络操作员可
+以方便的通过调整部分MIB来实现缩减Trap消息速率和限制Trap消息。
+3.2.3.1 Trap速率级别
+	Trap速率限制可以通过两种方法实现，第一种方法是设置Trap消息的最大速率，当
+Trap消息的发送超过该极限速率时，CM或CMTS主动停止发送Trap消息直到网络管理站
+点有信的请求。
+	在第二种方法中当Trap消息的产生低于最大速率时CM或CMTS恢复Trap消息的发
+送。
+	限制Trap速率通过限制在一定的时间间隔（秒）发送Trap消息的个数和设置超标的动
+作状态设置（Trap消息发送使能）。
+3.2.3.2 限制Trap速率
+	网络管理希望限制在一定时间内发送的Trap个数，当CM或CMTS发送的Trap个数
+超过指定的限制时CM或CMTS停止发送Trap。
+3.3协议过滤 
+	Cable设备MIB库提供了链路层和IP层的协议过滤控制。链路层协议过滤机制可以限
+制一系列网络层协议包的转发（例如IP,IPX,NetBios,AppleTalk等）。
+	IP层协议过滤机制可以限制CM和CMTS上下行基于源目标IP和目标IP的包过滤、
+传输层协议包（例如TCP,UDP,和ICMP等）、基于TCP/UDP协议的源和目的端口号等。
+	通常，Cable设备按照下列顺序使用过滤器：
+
+
+				************************
+				* INBOUND LLC FILTER *
+				************************
+				|			|		   |	
+				V			|		   V
+		   ***********      |      ***************   
+		   * IP Spoof  *      |      * SNMP Access *
+		   ***********      |      ***************
+                |		    |			   | 
+				V          V              V
+		       ******************************
+			   *  IP   Filter   In				*
+			   ******************************
+							|
+						   V	 
+				****************************
+			    *    IP    Filter　Out       *
+				****************************
+							|
+							V
+		*****************************
+	    * LLC FILTER OUTBOUND   * 
+	    *****************************
+3.3.1 入内的链路层过滤-docsDevFilterLLCTable
+	入内的链路层（MAC层或第二层）过滤在docsDevFilterLLCTable中实现，该表的内容
+应用于RF口和任何一个CPE接口。该过滤器用于限制处理或转发第二层可能对网络造成
+负担的协议包族。
+	就目前而言，该过滤器可以被设置为这两种情况：当符合Filter表中的至少一个filter
+时丢弃该帧（在第二层上我们称之为帧）或者是匹配表中的至少一个filter时处理该帧。
+	在链路层上的过滤器可能的应用例子：限制IP通信（包括arp包）或者丢弃NetBeuI
+协议的通信帧。
+3.3.2 特殊过滤器
+	特殊的过滤器被应用在MAC帧经过处理后已经被IP层所接受但其他的任何处理过程
+都未进行时。特殊过滤器一般被应用在特殊的通信网络系统当中。
+3.3.2.1 IP spoofing filters-docsDevCpeTable
+	IP盗用过滤器应用在当IP包从任何一个CPE接口进入CM时，为了防止用户盗用他人
+IP地址或者是误用了非服务运营商所提供的IP地址。若该filter被激活，从任何一个CPE
+接口进入的IP包的源地址（src addr）必须符合该Filter表中的至少一个IP地址，否则该IP
+包将被不加任何的进一步处理而丢弃。
+	该表的内容可以根据最先使用CM的N个CPE的IP地址自动创建，也可以根据实际情
+况采用一定的策略来进行进一步的网络控制。例如使用docsDevCpeEnroll和docsDevCpeMax
+等。
+3.3.2.2 SNMP Access filters-docsDevNmAccessTable
+	SNMP 访问控制过滤器被用作过滤从任何接口进入的snmp 包（不管是以太网口或是
+RF口）。如果该报是从CPE接口进入的则该过滤器应用在IP spoof filter之后，而且仅考虑
+过滤SNMPv1和v2的包，至于SNMPv3的包则不在考虑之内。有关SNMPv3的访问控制
+可以参考USM MIB[12]。
+3.3.3 IP Filters-docsDevIpFilterTable
+	IP层的过滤器实际上是一个分类器表，表中的每一行描述了过滤IP包的模板。模板中
+包括IP包的源地址、目的地址（以及相关联的掩码）、上层协议（例如TCP、UDP）、源端
+口和目的端口、服务类型（TOS）及服务类型掩码。并且每一行还包括接口索引和通信方向
+的结合来比较。在进行包比较时只有匹配该表中其中一行的所有列项时才认为匹配该行，当
+然接口索引值和传输方向也必须在比较考虑之内。
+	当分拣一个包时，首先扫描索引值较小的过滤行，若发现有匹配的行，对应该行的处理
+动作就会被指定。若所匹配过滤器的继续扫描位（continue bit set）被置位，IP过滤器会继
+续扫描其他可能的匹配和相应的处理动作。这样就可以在匹配条件较宽松的情况下帧对某些
+特殊包进行过滤（例如在条件24.0.16/255.255.255.0下可以对24.0.16.30进行不同的控制）。
+	一旦某个IP包在表中找到对应的匹配行，通过docsDevFilterIpControl的设置可以有三
+种可能性来处理该IP包：丢弃（该包不再被处理）、接受进而继续被处理、根据
+docsDevFilterIpContinue的设置进行处理（若被设为true，继续扫描IP过滤器表和其他的可
+能匹配的结果）。
+	若IP包匹配表中的某一行，并且docsDevFilterIpControl被设为"policy"， 
+docsDevFilterIpPolicyId就被作为docsDevFilterPolicyTable表的索引或选择，在该 
+docsDevFilterPolicyTable表中可能有对匹配IP包的多种处理动作，通过
+docsDevFilterIpPolicyId选择对应的处理行进行处理。
+3.3.4 Outbound LLC Filters
+	最后Outbound LLC Filters被应用于在前面处理中所释放出来的包，当然也对应于相应
+的接口。本MIB库不指定任何的Outbound LLC Filters，因为在前面描述的各种过滤器应已
+经考虑到未来的DOCSIS标准会包括服务质量保证（Qos）并且应该处理本应在Outbound 
+LLC Filters过滤器中所做的处理。
+4. 定义
+DOCS-CABLE-DEVICE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+-- do not import        BITS,
+        IpAddress,
+        Unsigned32,
+        Counter32,
+        Integer32,
+        zeroDotZero,
+        mib-2
+                FROM SNMPv2-SMI
+        RowStatus,
+        RowPointer,
+        DateAndTime,
+        TruthValue
+                FROM SNMPv2-TC
+        OBJECT-GROUP,
+        MODULE-COMPLIANCE
+                FROM SNMPv2-CONF
+        SnmpAdminString
+                FROM SNMP-FRAMEWORK-MIB
+        InterfaceIndexOrZero
+                FROM IF-MIB;  -- RFC2233
+
+docsDev MODULE-IDENTITY
+        LAST-UPDATED    "9908190000Z" -- August 19, 1999
+        ORGANIZATION    "IETF IPCDN Working Group"
+        CONTACT-INFO
+            "        Michael StJohns
+             Postal: @Home Network
+                     425 Broadway
+                     Redwood City, CA 94063
+                     U.S.A.
+             Phone:  +1 650 569 5368
+             E-mail: stjohns@corp.home.net"
+        DESCRIPTION
+            "MCNS兼容cable modems和cable-modem termination systems MIB库模块"
+        REVISION "9908190000Z"
+        DESCRIPTION
+            "Initial Version, published as RFC 2669.
+             Modified by Mike StJohns to add/revise filtering, TOS
+             support, software version information objects."
+        ::= { mib-2 69 }
+
+docsDevMIBObjects  OBJECT IDENTIFIER ::= { docsDev 1 }
+docsDevBase OBJECT IDENTIFIER ::= { docsDevMIBObjects 1 }
+
+--
+-- 下面所列举的某些MIB对象在目前的DOCSIS射频标准中并没有定义 
+-- 但在这里定义出来，防止有人能够定义它或使用
+-- （目前并没有这样的支持，仅作为保留的MIB对象）
+--.
+--
+
+docsDevRole OBJECT-TYPE
+        SYNTAX INTEGER {
+            cm(1),
+            cmtsActive(2),
+            cmtsBackup(3)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"描述当前设备在网路中的扮演角色，cm(1)表示这是一个CableModem，
+cmtsActiv(2)表示这是一个正在管理网路中Cablemodems的CMTS(正被激
+活的)， cmtsBackup(3) 表示这是一个网路中但并不管理Cablemodem
+的CMTS(当前并未使用)。
+    一般来说，如果该设备是一个CM，在网路操作或重启后它的角色并不
+改变。如果该设备是一个CMTS，则在网路操作中它可能在工作CMTS和备
+份CMTS的角色中转换。 
+注意：目前DOCSIS并不支持备份CMTS，此处有backup CMTS 完全是
+为了完整性考虑。"
+        ::= { docsDevBase 1 }
+docsDevDateTime OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "日期和时间，加上可选的时区信息"
+        ::= { docsDevBase 2 }
+
+docsDevResetNow OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "设为真true(1)使本设备重新启动
+             读取本对象的值将一致返回假false(2)."
+        ::= { docsDevBase 3 }
+
+docsDevSerialNumber OBJECT-TYPE
+        SYNTAX      SnmpAdminString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "生产厂商为该设备所指定的串号"
+        ::= { docsDevBase 4 }
+
+docsDevSTPControl OBJECT-TYPE
+        SYNTAX INTEGER {
+            stEnabled(1),
+            noStFilterBpdu(2),
+            noStPassBpdu(3)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+"   本对象控制对STP（802.1d生成树协议）协议包的处理。
+若被设为stEnabled(1)，该设备支持STP并处理STP包。
+若被设为noStFilterBpdu(2), 该设备不支持STP协议并且
+将接收到的BPDU包丢弃。
+若被设为noStPassBpdu(3) ，该设备不支持STP协议但会
+将接收到的BPDU包透明传输。
+注意：该设备不必支持所有的选项，但必须支持noStFilte
+-rBpdu(2)项"
+        ::= { docsDevBase 5 }
+
+--
+-- 下面的表提供了对网络管理站点进行网络管理访问
+-- 提供了一种控制方法。注意这种访问受到community
+-- 字符串和任何的厂家指定安全层所控制
+-- 
+--
+
+docsDevNmAccessTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF DocsDevNmAccessEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"本表控制网管站点访问SNMP对象的访问权限。
+若本表为空表则没有任何限制并且本表只有SNMP
+版本v1和v2c存在，在SNMP版本v3中不存在。
+                在SNMP版本v3中对应的MIB对象和安全模块
+已经覆盖了本表的内容。"
+        ::= { docsDevMIBObjects 2 }
+
+docsDevNmAccessEntry OBJECT-TYPE
+        SYNTAX      DocsDevNmAccessEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"   网管站点访问SNMP代理的入口索引值. 若网管站点有该
+SMMP代理的读写访问权限该入口索引值可被网管站点所更
+改(或缺省的读写权限或者在本表中有指定的读写权限)
+	每个入口索引按docsDevNmAccessIndex排序。第一个匹配
+（例如匹配IP地址和community字符串）入口的访问权限被应
+用于访问的网管站点。"
+        INDEX { docsDevNmAccessIndex  }
+        ::= {  docsDevNmAccessTable 1 }
+
+DocsDevNmAccessEntry ::= SEQUENCE {
+            docsDevNmAccessIndex         Integer32,
+            docsDevNmAccessIp            IpAddress,
+            docsDevNmAccessIpMask        IpAddress,
+            docsDevNmAccessCommunity     OCTET STRING,
+            docsDevNmAccessControl       INTEGER,
+            docsDevNmAccessInterfaces    OCTET STRING,
+            docsDevNmAccessStatus        RowStatus
+        }
+
+docsDevNmAccessIndex OBJECT-TYPE
+        SYNTAX      Integer32 (1..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"对访问权限控制排序的索引值"
+        ::= { docsDevNmAccessEntry 1 }
+
+docsDevNmAccessIp OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"网络管理站点的IP地址。地址255.255.255.255被定义
+为任何网络管理站点。若支持陷阱(Traps)则该值必须被
+指定为该设备的IP地址"
+        DEFVAL { 'ffffffff'h }
+        ::= { docsDevNmAccessEntry 2 }
+
+docsDevNmAccessIpMask OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "网络管理站点的子网掩码。若支持陷阱（Traps）.
+             该值必须被设为255.255.255.255."
+        DEFVAL { 'ffffffff'h }
+        ::= { docsDevNmAccessEntry 3 }
+
+docsDevNmAccessCommunity OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"本访问入口所必需匹配的community 字符串。若被设为0，则任何的
+community字符串都匹配。当被读访问时本对象应该返回0长度的字符
+串"
+        DEFVAL { "public" }
+        ::= { docsDevNmAccessEntry 4 }
+
+docsDevNmAccessControl OBJECT-TYPE
+        SYNTAX         INTEGER {
+            none(1),
+            read(2),
+            readWrite(3),
+            roWithTraps(4),
+            rwWithTraps(5),
+            trapsOnly(6)
+        }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"指定网络管理站点的访问权限。设为none(1)表示本入口已经被废弃，
+ 	         Read(2) 允许'get' 和 'get-next'访问
+ReadWrite(3)允许再加上'set'访问
+RoWithtraps(4), rwWithTraps(5), 和trapsOnly(6)用来控制由本设备发送的
+Traps的发送控制。"
+        DEFVAL { read }
+        ::= { docsDevNmAccessEntry 5 }
+
+-- 下面对象的语法是从RFC1493复制过来的
+-- dot1dStaticAllowedToGoTo.
+
+docsDevNmAccessInterfaces OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"指定接受网络访问站点访问包的接口。
+该对象值的每一个字节表示8个接口并且第1个字节
+表示1-8接口第2个字节表示9-16接口以此类推。
+  在每个字节中的最高有效位表示索引较低的接口值，最
+地有效位表示索引较高的接口值，因此每个接口都可以被
+本对象值的单独一个bit位所表示。该bit位设为1，则该
+接口就被包括其中。
+注意：该接口索引值仅对链路层有效（例如Ethernet和RF MAC
+层）上行Upstream和下行downstream通道接口索引值不能
+够在该表中被指定。"
+--         DEFVAL is the bitmask corresponding to all interfaces
+        ::= { docsDevNmAccessEntry 6 }
+
+docsDevNmAccessStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"控制当前行的当前状态。表中的每一行可以由reate-and-go或者
+create-and-wait 创建。当某一行在激活状态时本对象的值可以更改。"
+        ::= { docsDevNmAccessEntry 7 }
+
+--
+--  下列组的使用过程在DOCSIS射频标准 DOCSIS Radio Frequence Interface Specification
+--  的3.2.1有描述
+
+docsDevSoftware OBJECT IDENTIFIER ::= { docsDevMIBObjects 3 }
+
+docsDevSwServer OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "软件升级TFTP服务器IP地址，若未知，返回0.0.0.0."
+        ::= { docsDevSoftware 1 }
+
+docsDevSwFilename OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..64))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+"被下载道被设备的软件影像文件的文件名。该项应返回CM配置文件
+服务器提供的新版本软件的升级文件名除非通过网络管理进行更改。
+若未知，返回'unknown' "
+        ::= { docsDevSoftware 2 }
+
+docsDevSwAdminStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+            upgradeFromMgt(1),
+            allowProvisioningUpgrade(2),
+            ignoreProvisioningUpgrade(3)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+"若被设为upgradeFromMgt(1), 该设备将从软件升级TFTP服务器下载
+在docsDevSwFilename.中指定的升级文件。在成功的接收到升级文件进行升
+级后该设备将本对象值设为ignoreProvisioningUpgrade(3)然后重新启动。
+若下载过程由于重启或电源工作失败所中止，设备将加载上一个软件影像
+经过重新初始化会继续尝试下载在docsDevSwFilename指定的软件升级文件
+影像。
+	若被设为allowProvisioningUpgrade(2), 该设备将会根据配置服务器所提
+供的升级文件信息在设备下一次启动时进行升级 (这并不会导致设备重启)。
+			    若被设为ignoreProvisioningUpgrade(3), 设备将会忽略来自配置服务器所
+提供的软件升级信息。
+	             注意读本对象的值时可能返回upgradeFromMgt(1)，这意味着此时正在进
+行软件升级而且在成功的下载完升级文件后设备会重新启动。一般情况下设备
+在初始化启动结束后本对象会返回缺省值allowProvisioningUpgrade(2)."
+        ::= { docsDevSoftware 3 }
+
+docsDevSwOperStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+            inProgress(1),
+            completeFromProvisioning(2),
+            completeFromMgt(3),
+            failed(4),
+            other(5)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"InProgress(1) I表明TFTP下载正在进行当中，这可能由于
+配置文件中的版本信息或软件升级请求消息所导致（upgrad
+eFromMgt request.）。
+CompleteFromProvisioning(2)表明上一次软件升级时在配置
+信息中所指定的版本信息。
+CompleteFromMgt(3)表明上一次软件升级是设置docsDevS
+WAdminStatus的状态为upgradeFromMgt所进行的升级。
+Failed(4) 表明上一次的升级尝试失败，一般是由于TFTP等
+待时间超出所导致。"
+        REFERENCE
+"DOCSIS射频接口规范DOCSIS Radio Frequency Interface
+ Specification，8.2部分Cable Modem软件升级下载操作"
+        ::= { docsDevSoftware 4 }
+
+docsDevSwCurrentVers OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+"指示本设备当前运行的软件版本，本对象的值的语法控制由
+生产厂商控制如何标识软件版本。访问它时对于任何CM来讲
+必须返回当前所使用的软件版本描述信息字符串，对于CMTS
+来讲本对象应该包含厂家指定信息的人性化描述信息或者操作
+处理器的软件信息，若这些都不是则返回值必须是空字符串。"
+    ::= { docsDevSoftware 5 }
+
+--
+-- 下面的组描述了在设备初始化启动时所使用的和各种服务器相关的信息
+--
+
+docsDevServer OBJECT IDENTIFIER ::= { docsDevMIBObjects 4 }
+
+docsDevServerBootState OBJECT-TYPE
+        SYNTAX INTEGER {
+            operational(1),
+            disabled(2),
+            waitingForDhcpOffer(3),
+            waitingForDhcpResponse(4),
+            waitingForTimeServer(5),
+            waitingForTftp(6),
+            refusedByCmts(7),
+            forwardingDenied(8),
+            other(9),
+            unknown(10)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"若为operational(1),设备已经完成的配置参数的加载和处理并且
+CMTS也已经完成了登记信息交换。
+若为disabled(2) ，设备的启动时加载和处理配置参数被禁止或者载配置文件
+中被指定网络访问被禁止。
+若为waitingForDhcpOffer(3) 则DHCP广播请求信息Discover已经被发送但还
+没有受到第一次响应信息offer
+若为waitingForDhcpResponse(4) 则DHCP确认请求信息 Request 已经被发送
+但还没有收到任何确认相应信息。
+若为waitingForTimeServer(5) 则时间请求信息Time Request已经被发送但还
+没有受到任何响应信息。
+若为waitingForTftp(6) 则参数请求已经向TFTP服务器发送但还没有受到任
+何响应信息
+若为refusedByCmts(7) 则登记请求/响应信息交换失败。
+若为forwardingDenied(8) 则登记处理完成但在配置文件中的网络访问选项被
+设为禁止网络访问。"
+        REFERENCE
+" DOCSIS射频接口规范DOCSIS Radio Frequency Interface Specification，7.1
+部分Cable Modem初始化启动过程"
+        ::= { docsDevServer 1 }
+
+docsDevServerDhcp OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"为本设备分配IP地址的DHCP服务器IP地址。若没有使用DHCP分配
+IP地则应返回0.0.0.0"
+        ::= { docsDevServer 2 }
+
+docsDevServerTime OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "时间服务器的IP地址 (参考RFC-868).若未知返回0.0.0.0 。"
+        ::= { docsDevServer 3 }
+
+docsDevServerTftp OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "设备所使用的配置文件和升级文件下载TFTP服务器，若未知返回0.0.0.0。"
+        ::= { docsDevServer 4 }
+
+docsDevServerConfigFile OBJECT-TYPE
+        SYNTAX      SnmpAdminString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "来自TFTP的配置文件名，若配置文件未知则返回空字符串。"
+        ::= { docsDevServer 5 }
+
+--
+--  事件报告
+--
+
+docsDevEvent OBJECT IDENTIFIER ::= { docsDevMIBObjects 5 }
+
+docsDevEvControl OBJECT-TYPE
+        SYNTAX INTEGER {
+            resetLog(1),
+            useDefaultReporting(2)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+"设为resetLog(1)将会清空以前的事件记录，所有的记录数据被删除。
+设为useDefaultReporting(2)将使用厂家在出厂时所设定的缺省事件报
+告级别进行事件报告。访问该对象将返回值useDefaultReporting(2)。"
+        ::= { docsDevEvent 1 }
+
+docsDevEvSyslog OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "系统日志服务器的IP地址。若设为 0.0.0.0, 日志信息传输被禁止。"
+        ::= { docsDevEvent 2 }
+
+docsDevEvThrottleAdminStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+            unconstrained(1),
+            maintainBelowThreshold(2),
+            stopAtThreshold(3),
+            inhibited(4)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+"系统陷阱（Traps）消息和日志消息传输控制。
+unconstrained(1) 将会导致traps和syslog 消息没有限制的传输；
+ 	maintainBelowThreshold(2) 将使trap和syslog消息的传输在指定的
+极限值条件下传输，超过极限值暂停传输；
+topAtThreshold(3) 指超过极限值后停止传输除非进行干预；
+        inhibited(4)将禁止所有的traps和syslog消息传输。
+注意：一个单一的事件仅仅会将极限值计数器加一而不管它是通过
+trap消息传输或是syslog消息传输或者是两种消息都传输。
+向这个对象中写入值将会导致极限值的状态恢复到初始状态。系统初
+始化完成后改对象的缺省值为unconstrained(1)。"
+        ::= { docsDevEvent 3 }
+
+docsDevEvThrottleInhibited OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"若为true(1), trap和syslog 消息的传输由于极限值超过或者
+docsDevEvThrottleAdminStatus的设定被禁止。
+另外若由于没有指定syslog或trap目标地址传输被禁止则该
+对象的值会被设为true(1) "
+        ::= { docsDevEvent 4 }
+
+docsDevEvThrottleThreshold OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "每docsDevEvThrottleInterval间隔内被传输的trap/syslog 消息数目。
+一个单一的事件仅仅会将极限值计数器加一而不管它是通过trap消
+息传输或是syslog消息传输或者是两种消息都传输。
+系统初始化完成后该对象值返回0。"
+        ::= { docsDevEvent 5 }
+
+docsDevEvThrottleInterval OBJECT-TYPE
+        SYNTAX      Integer32 (1..2147483647)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "trap消息限制统计的时间间隔，系统初始化完成后改对象值返回1。"
+
+        ::= { docsDevEvent 6 }
+
+--
+-- 下表控制了事件报告的不同级别
+--
+
+docsDevEvControlTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF DocsDevEvControlEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"本表控制着事件报告的等级。针对每一个事件优先级，系统记录
+和报告的结合机制会被选择，而对于事件类型所对应的优先级别
+由厂家自定义，也可能允许用户来自定义一些优先级别。"
+        ::= {  docsDevEvent 7 }
+
+
+docsDevEvControlEntry OBJECT-TYPE
+        SYNTAX      DocsDevEvControlEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "允许为某些特殊事件级别配置报告的入口"
+        INDEX { docsDevEvPriority }
+        ::= { docsDevEvControlTable 1 }
+
+DocsDevEvControlEntry ::= SEQUENCE {
+            docsDevEvPriority        INTEGER,
+            docsDevEvReporting       BITS
+        }
+
+docsDevEvPriority OBJECT-TYPE
+        SYNTAX INTEGER {
+            emergency(1),
+            alert(2),
+            critical(3),
+            error(4),
+            warning(5),
+            notice(6),
+            information(7),
+            debug(8)
+        }
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"可以控制的优先级别，优先级别由高(emergency)到低debug)排序。
+Cm或CMTS发生的每一个事件都有一个具体的事件级别和它相
+关联（由厂家定义）。在正常的工作过程当中级别critical到notice(6)
+应该及时生成报告给系统，级别在warning和emergency之间的事
+件应该在相应的问题发生时产生系统报告（例如当系统crash时紧急级
+别的事件报告应该报告给系统）"
+        ::= { docsDevEvControlEntry 1 }
+
+docsDevEvReporting OBJECT-TYPE
+        SYNTAX BITS {
+            local(0),
+            traps(1),
+            syslog(2)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+"定义当本事件级别的事件发生时所采取的动作，动作的执行可
+能对于所有的事件级别并非是必须的但最少应该允许traps和sys
+-log消息被禁止掉。
+若设为local(0)则系统日志被记录到内部；
+若设为traps(1) 则系统生成trap消息并发送；
+若设为syslog(2)则系统向系统日志服务器发送syslog 消息（假定
+系统日志服务器地址已经被指定）。"
+        ::= { docsDevEvControlEntry 2 }
+
+docsDevEventTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF DocsDevEventEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "对于排错和查找原因有用的网络和设备事件报告内容表。"
+        ::= {  docsDevEvent 8 }
+
+docsDevEventEntry OBJECT-TYPE
+        SYNTAX      DocsDevEventEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"对于排错和查找原因有用的网络和设备事件报告内容表入口。这些
+事件的索引或标识由docsDevEvCounts和docsDevEvLastTime控制。
+前者为事件计数器，后者为事件发生后创建列表行的时间。
+            先发生的事件先创建，可以用docsDevEvControl来清空整个表的内容。"
+        INDEX { docsDevEvIndex }
+
+        ::= { docsDevEventTable 1 }
+
+DocsDevEventEntry ::= SEQUENCE {
+            docsDevEvIndex           Integer32,
+            docsDevEvFirstTime       DateAndTime,
+            docsDevEvLastTime        DateAndTime,
+            docsDevEvCounts          Counter32,
+            docsDevEvLevel           INTEGER,
+            docsDevEvId              Unsigned32,
+            docsDevEvText            SnmpAdminString
+        }
+
+docsDevEvIndex OBJECT-TYPE
+        SYNTAX      Integer32 (1..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"为在该表中的事件记录提供索引值，该索引值会随着事件记录的增加
+而增加除了下列情况：
+			(a) 事件记录被docsDevEvControl复位
+(b) 设备重新启动而且事件记录并不存储在非易失性存储器中
+(c) 事件记录索引值到达了2^31，下一个索引值应该是1。"
+        ::= { docsDevEventEntry 1 }
+
+docsDevEvFirstTime OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "该入口行所创建的时间"
+        ::= { docsDevEventEntry 2 }
+
+docsDevEvLastTime OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"如果有多个发生的事件在同样的入口则该时间是指该入口中最后
+所发生事件发生的时间。另外它应该和docsDevEvFirstTime有相
+同的值"
+        ::= { docsDevEventEntry 3 }
+
+-- 该对象是从docsDevEvCount 重命名后而得，此举是为了满足Counter32
+-- 的要求
+
+docsDevEvCounts OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"本入口连续发生事件的数量。它在该行被创建时为1然后被后来发生
+的同样的事件加1。"
+        ::= { docsDevEventEntry 4 }
+
+docsDevEvLevel OBJECT-TYPE
+        SYNTAX INTEGER {
+            emergency(1),
+            alert(2),
+            critical(3),
+            error(4),
+            warning(5),
+            notice(6),
+            information(7),
+            debug(8)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "这个事件的优先级别由厂家定义，按照紧急情况排序。"
+        ::= { docsDevEventEntry 5 }
+
+--
+-- 生产厂商将会提供下面的特定信息
+-- 
+
+docsDevEvId OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "对于本产品设备的唯一标识。"
+        ::= { docsDevEventEntry 6 }
+
+docsDevEvText OBJECT-TYPE
+        SYNTAX      SnmpAdminString
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "提供了易读的事件描述信息包括所有相关的内容（接口数目等）。"
+        ::= { docsDevEventEntry 7 }
+
+docsDevFilter OBJECT IDENTIFIER ::= { docsDevMIBObjects 6 }
+
+
+--
+-- 链路层过滤器
+--
+
+-- docsDevFilterLLCDefault renamed to docsDevFilterLLCUnmatchedAction
+
+docsDevFilterLLCUnmatchedAction OBJECT-TYPE
+        SYNTAX INTEGER {
+            discard(1),
+            accept(2)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+"链路层 (Link Level Control) 过滤器可以被定义为包含特性或排外特性。
+CMs 可以被设置为转发匹配第三层（LLC）协议包或丢弃匹配第三层协
+议的包。该过滤器的典型应用是过滤可能对网络造成危害的协议包（在大
+型网络中）。
+若设置为discard(1)任何不匹配docsDevFilterLLCTable表中至少一个过滤行
+的第二层的包就会被丢弃（第二层包括MAC层和LLC层）；
+若设置为accept(2)任何不匹配docsDevFilterLLCTable表中至少一个过滤行的
+第二层的包都会被通过做进一步的处理 (例如, 桥转发功能)。
+在系统初始启动后该对象返回accept(2)。"
+        ::= { docsDevFilter 1 }
+
+docsDevFilterLLCTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF DocsDevFilterLLCEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"被应用于桥设备的LLC通信的过滤器列表，该表中的过滤器被应用在
+通过某个接口进入到设备中的LLC层帧，而且在第三层或桥处理之前
+进行处理。匹配过滤器后所做的处理动作由docsDevFilterLLCUnmatched
+-Action控制。"
+        ::= { docsDevFilter 2 }
+
+docsDevFilterLLCEntry OBJECT-TYPE
+        SYNTAX      DocsDevFilterLLCEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "描述了在某个设备接口接受到进来的LLC帧所应用的过滤。"
+        INDEX { docsDevFilterLLCIndex }
+        ::= { docsDevFilterLLCTable 1 }
+
+DocsDevFilterLLCEntry ::= SEQUENCE {
+            docsDevFilterLLCIndex               Integer32,
+            docsDevFilterLLCStatus              RowStatus,
+            docsDevFilterLLCIfIndex             InterfaceIndexOrZero,
+            docsDevFilterLLCProtocolType        INTEGER,
+            docsDevFilterLLCProtocol            Integer32,
+            docsDevFilterLLCMatches             Counter32
+        }
+
+docsDevFilterLLCIndex OBJECT-TYPE
+        SYNTAX      Integer32 (1..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "表索引"
+        ::= { docsDevFilterLLCEntry 1 }
+
+docsDevFilterLLCStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"控制和反映了表中当前行的状态。该对象被设为Active时任何和它
+相关的列项都可以改变。"
+
+        ::= { docsDevFilterLLCEntry 2}
+
+docsDevFilterLLCIfIndex OBJECT-TYPE
+        SYNTAX      InterfaceIndexOrZero
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"该过滤器所应用的接口（ CATV MAC接口或其他的网络接口），若为0
+则表示应用到所有的接口。对于Cable Modems，缺省的接口是和用户相
+连的接口。对于CMTS，该对象必须创建表中的一行。"
+        ::= { docsDevFilterLLCEntry 3 }
+
+docsDevFilterLLCProtocolType OBJECT-TYPE
+        SYNTAX INTEGER {
+            ethertype(1),
+            dsap(2)
+        }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"docsDevFilterLLCProtocol:所应用的协议格式。或双字节以太网Ethertype或
+单字节802.2 SAP 。EtherType(1) 类型同样适用于SNAP- encapsulated 帧。"
+        DEFVAL { ethertype }
+        ::= { docsDevFilterLLCEntry 4 }
+
+docsDevFilterLLCProtocol OBJECT-TYPE
+        SYNTAX      Integer32 (0..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"该过滤器所使用的第三层协议（LLC层）。协议真的格式依赖在
+docsDevFilterLLCProtocolType所指定的类型。注意对于SNAP 帧
+             指DSAP=0xAA。"
+        DEFVAL { 0 }
+        ::= { docsDevFilterLLCEntry 5 }
+
+docsDevFilterLLCMatches OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "匹配过滤器的协议包数目"
+        ::= { docsDevFilterLLCEntry 6 }
+
+
+--
+-- 不匹配IP过滤器的缺省处理由docsDevFilterIpDefault.定义
+--
+
+docsDevFilterIpDefault OBJECT-TYPE
+        SYNTAX INTEGER {
+            discard(1),
+            accept(2)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "若设为discard(1)所有不匹配IP过滤器的包都会被丢弃；
+若设为accept(2), 所有不匹配IP过滤器的包都会被接受从
+而做进一步的处理。
+在系统初始启动后返回值为accept(2)。"
+        ::= { docsDevFilter 3 }
+
+docsDevFilterIpTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF DocsDevFilterIpEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"应用在IP通信的过滤器或分类器的有序列表。过滤器的应用
+顺序按照索引值依次进行，并非查找一个最匹配的过滤行（这
+暗示着表中可能有某些行是空的）。没有匹配行的IP包使用在
+docsDevFilterPolicyTable 存在的第0个策略，若该表中的第0个
+策略不存在，则该IP包会依照docsDevFilterIpDefault的设置转发
+或丢弃。
+理论上任何IP包都能匹配该表中的多个行。当涉及到某个IP包时
+，CM会从高到低扫描该表的每一行（例如10比20优先），若IP
+包匹配某一行（这意味者该行的每一项都符合），和docsDevFilterIpControl 
+以及该行的docsDevFilterPolicyId对应的动作就会被执行。若为丢弃，
+处理就此结束。若docsDevFilterIpContinue 为真，就会继续比较
+下一行进行寻找其他的匹配行，若最终在表中不能找到相应的匹配行
+则根据docsDevFilterIpDefault的设置进行处理。
+逻辑上任何IP包都会被应用两次该IP过滤器表，一次是从L2（第二层）
+接受一次是发送到L2(第二层)。事实上在CableModem中IP过滤器是唯一
+的IP层的处理，也就是说在IP层的过滤处理不管是接收的还是发送的都是
+同时进行的。"
+        ::= { docsDevFilter 4 }
+
+docsDevFilterIpEntry OBJECT-TYPE
+        SYNTAX      DocsDevFilterIpEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "描述在接受端口应用IP过滤的过滤器，所有的实体对象都在该表中描述。
+(包括源和目的地址/掩码，协议，源/目的端口，服务类型/掩码，接口，方
+向) 。
+在该表中创建新行时docsDevFilterIpIfIndex必须被指定。"
+        INDEX { docsDevFilterIpIndex }
+        ::= { docsDevFilterIpTable 1 }
+
+DocsDevFilterIpEntry ::= SEQUENCE {
+            docsDevFilterIpIndex             Integer32,
+            docsDevFilterIpStatus            RowStatus,
+            docsDevFilterIpControl           INTEGER,
+            docsDevFilterIpIfIndex           InterfaceIndexOrZero,
+            docsDevFilterIpDirection         INTEGER,
+            docsDevFilterIpBroadcast         TruthValue,
+            docsDevFilterIpSaddr             IpAddress,
+            docsDevFilterIpSmask             IpAddress,
+            docsDevFilterIpDaddr             IpAddress,
+            docsDevFilterIpDmask             IpAddress,
+            docsDevFilterIpProtocol          Integer32,
+            docsDevFilterIpSourcePortLow     Integer32,
+            docsDevFilterIpSourcePortHigh    Integer32,
+            docsDevFilterIpDestPortLow       Integer32,
+            docsDevFilterIpDestPortHigh      Integer32,
+            docsDevFilterIpMatches           Counter32,
+            docsDevFilterIpTos               OCTET STRING,
+            docsDevFilterIpTosMask           OCTET STRING,
+            docsDevFilterIpContinue          TruthValue,
+            docsDevFilterIpPolicyId          Integer32
+        }
+
+docsDevFilterIpIndex OBJECT-TYPE
+        SYNTAX      Integer32 (1..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "索引值，索引制越低越先被使用。"
+        ::= { docsDevFilterIpEntry 1 }
+
+docsDevFilterIpStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"该项控制着和反映了表中当前行的状态。生成新行必须指定
+ docsDevFilterIpIfIndex 且将本项设为create-and-wait或
+create-and-go。创建了新行后只有将本项设为active后该行才有效。
+当该项为active时可以任意更改它的状态"
+        ::= { docsDevFilterIpEntry 2 }
+
+docsDevFilterIpControl OBJECT-TYPE
+        SYNTAX INTEGER {
+            discard(1),
+            accept(2),
+            policy(3)
+        }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"若设为discard(1), 所有匹配该过滤器的IP包都会被丢弃且不会扫描其他
+的过滤行；
+若设为accept(2), 所有匹配该过滤器的IP包都会被接受并进行进一步的
+处理（例如,桥功能处理），若docsDevFilterIpContinue设为真继续扫描其他的
+IP过滤器，否则退出；
+若设为policy (3), 则执行在 docsDevIpFilterPolicyTable中对应
+docsDevIpFilterPolicyId 的那一行的策略。若docsDevFilterIpContinue设为真则
+继续扫描其他的过滤器匹配行，否则退出。"
+        DEFVAL { discard }
+        ::= { docsDevFilterIpEntry 3 }
+
+docsDevFilterIpIfIndex OBJECT-TYPE
+        SYNTAX      InterfaceIndexOrZero
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+" 该过滤器所应用的接口索引值，该值对应CATV MAC或其他网络接口，若为则
+表示应用于所有的接口。CableModem的缺省值由厂家确定。"
+        ::= { docsDevFilterIpEntry 4 }
+
+docsDevFilterIpDirection OBJECT-TYPE
+        SYNTAX INTEGER {
+            inbound(1),
+            outbound(2),
+            both(3)
+        }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"过滤器应用方向，inbound(1)表示进入，outbound(2) 表示出去
+both(3)表示双向."
+        DEFVAL { inbound }
+        ::= { docsDevFilterIpEntry 5 }
+
+docsDevFilterIpBroadcast OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"若设为true(1), 该过滤器仅仅应用在多目包和广播包。
+若设为false(2), 该过滤器应用在所有的通信包。"
+        DEFVAL { false }
+        ::= { docsDevFilterIpEntry 6 }
+
+docsDevFilterIpSaddr OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"源IP地址或其中的一部分,使用该IP地址使首先和docsDevFilterIpSmask 
+进行掩码操作。0表示所有的IP源地址。"
+        DEFVAL { '00000000'h }
+        ::= { docsDevFilterIpEntry 7 }
+
+docsDevFilterIpSmask OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "源IP地址Bit位掩码，注意它与子网掩码不同。"
+        DEFVAL { '00000000'h }
+        ::= { docsDevFilterIpEntry 8 }
+
+docsDevFilterIpDaddr OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+        "源IP地址或其中的一部分,使用该IP地址使首先和
+docsDevFilterIpSmask进行掩码操作。0表示所有的IP
+源地址。"
+        DEFVAL { '00000000'h }
+        ::= { docsDevFilterIpEntry 9 }
+
+docsDevFilterIpDmask OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "目标IP地址Bit位掩码，注意它与子网掩码不同。"
+        DEFVAL { '00000000'h }
+        ::= { docsDevFilterIpEntry 10 }
+
+docsDevFilterIpProtocol OBJECT-TYPE
+        SYNTAX Integer32 (0..256)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"该过滤器所匹配的IP协议，例如1为ICMP协议、6位TCP协议、
+7为UDP协议。255表示所有任何协议。"
+        DEFVAL { 256 }
+        ::= { docsDevFilterIpEntry 11 }
+
+docsDevFilterIpSourcePortLow OBJECT-TYPE
+        SYNTAX      Integer32 (0..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"若docsDevFilterIpProtocol为udp协议或tcp协议，这表示和传输层相
+关的所包含的最低的源端口范围值，在其他情况下它被忽略。"
+        DEFVAL { 0 }
+        ::= { docsDevFilterIpEntry 12 }
+
+docsDevFilterIpSourcePortHigh OBJECT-TYPE
+        SYNTAX      Integer32 (0..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+ "若docsDevFilterIpProtocol为udp协议或tcp协议，这表示和传输层相
+关的所包含的最高的源端口范围值，在其他情况下它被忽略。"
+        DEFVAL { 65535 }
+        ::= { docsDevFilterIpEntry 13 }
+
+docsDevFilterIpDestPortLow OBJECT-TYPE
+        SYNTAX      Integer32 (0..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+  "若docsDevFilterIpProtocol为udp协议或tcp协议，这表示和传输层相
+关的所包含的最低的目的端口范围值，在其他情况下它被忽略。"
+        DEFVAL { 0 }
+        ::= { docsDevFilterIpEntry 14 }
+
+docsDevFilterIpDestPortHigh OBJECT-TYPE
+        SYNTAX      Integer32 (0..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"若docsDevFilterIpProtocol为udp协议或tcp协议，这表示和传输层相
+关的所包含的最高的目的端口范围值，在其他情况下它被忽略。"
+        DEFVAL { 65535 }
+        ::= { docsDevFilterIpEntry 15 }
+
+docsDevFilterIpMatches OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"匹配当前过滤器的IP包计数，系统启动初始化后或新的过滤行生成后
+或系统重启后，该计数器的值为0。"
+        ::= { docsDevFilterIpEntry 16 }
+
+docsDevFilterIpTos  OBJECT-TYPE
+        SYNTAX      OCTET STRING ( SIZE (1))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"该过滤器所要匹配的TOS服务类型（在TOS值和docsDevFilterIpTosMask
+经过掩码操作值后所得的值）。若该项为零TOS掩码也为零则表示匹配所
+有的服务类型"
+        DEFVAL { '00'h }
+        ::= { docsDevFilterIpEntry 17 }
+
+docsDevFilterIpTosMask OBJECT-TYPE
+        SYNTAX      OCTET STRING ( SIZE (1) )
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "应用于IP包TOS值掩码操作的掩码"
+        DEFVAL { '00'h }
+        ::= { docsDevFilterIpEntry 18 }
+
+docsDevFilterIpContinue OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"若该值为真且docsDevFilterIpControl不是discard (1), 则CM继续扫描
+其它的过滤行和应用本过滤行的策略"
+        DEFVAL { false }
+        ::= { docsDevFilterIpEntry 19 }
+
+docsDevFilterIpPolicyId OBJECT-TYPE
+        SYNTAX      Integer32 (0..2147483647)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"该对象指向docsDevFilterPolicyTable表的一个入口，若 
+docsDevFilterIpControl被设为policy (3)则执行所有在
+docsDevFilterPolicyTable.匹配的policy值；
+若没有任何policy值匹配docsDevFilterIpControl会被设为accept (1)；
+若该对象设为0，且没有匹配的policy，就会忽略考虑docsDevFilterPolicyTable 
+表中的内容。"
+        DEFVAL { 0 }
+        ::= { docsDevFilterIpEntry 20 }
+
+--
+--
+
+docsDevFilterPolicyTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF DocsDevFilterPolicyEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"通过组ID和所要应用的policy集合相关联的一个map表，表中具有相同
+docsDevFilterPolicyId 值的每个policy集合都会按表中的顺序应用到所匹
+配的IP包。
+该表docsDevFilterPolicyTable 允许将多个policy动作应用到所给定的匹配包
+policy 动作按照以下的顺序应用：
+
+             索引   ID      类型    动作
+              1      1      TOS     1
+              9      5      TOS     1
+              12     1      IPSEC   3
+
+这表示一个包若匹配一个policy ID值为1的过滤器，首先第一个TOS policy 动
+作被应用，然后IPSEC policy 3 被应用 (这可能导致该包被复制到安全VPN 
+层从而送到一个远程的加密器。
+Policy ID 0 是为缺省动作所保留的，仅仅被应用在过滤其中没有匹配的包的
+情况。"
+        ::= { docsDevFilter 5 }
+
+docsDevFilterPolicyEntry OBJECT-TYPE
+        SYNTAX      DocsDevFilterPolicyEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+DocsDevFilterPolicyTable表的入口。每个入口由网络管理者生成。
+在生成入口时docsDevFilterPolicyId 和docsDevFilterPolicyAction
+必须被指定。"
+        INDEX { docsDevFilterPolicyIndex }
+        ::= { docsDevFilterPolicyTable 1 }
+
+DocsDevFilterPolicyEntry ::= SEQUENCE {
+            docsDevFilterPolicyIndex   Integer32,
+            docsDevFilterPolicyId      Integer32,
+--            docsDevFilterPolicyType    INTEGER,
+--            docsDevFilterPolicyAction  Integer32,
+            docsDevFilterPolicyStatus  RowStatus,
+            docsDevFilterPolicyPtr     RowPointer
+        }
+
+docsDevFilterPolicyIndex OBJECT-TYPE
+        SYNTAX      Integer32 (1..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION "表索引"
+        ::= { docsDevFilterPolicyEntry 1 }
+
+docsDevFilterPolicyId OBJECT-TYPE
+        SYNTAX      Integer32 (0..2147483647)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"入口Policy ID。一个policy ID 可能会应用到表中的多个行所有相关的
+policies都会被执行（如果存在）. "
+        ::= { docsDevFilterPolicyEntry 2 }
+
+-- docsDevFilterPolicyType ::= { docsDevFilterPolicyEntry 3} 已废除
+-- docsDevFilterPolicyAction ::= { docsDevFilterPolicyEntry 4 } 已废除
+
+docsDevFilterPolicyStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "用来生成该表中的行入口"
+        ::= { docsDevFilterPolicyEntry 5 }
+
+
+docsDevFilterPolicyPtr OBJECT-TYPE
+        SYNTAX      RowPointer
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+"该对象指向过滤器应用policy表中的一行。目前唯一的标准policy表是
+docsDevFilterTosTable。经过约定，该对象指向表中第一个可访问的对象。
+例如：索引值21指向docsDevFilterTosTable表中的一行，该对象的值就是
+docsDevTosStatus.21。
+厂家必须按照此约定进行扩展。.
+			新行生成后缺省指为空，即没有任何policy被执行。"
+        DEFVAL { zeroDotZero }
+        ::= { docsDevFilterPolicyEntry 6 }
+
+--
+-- TOS Policy 动作表
+--
+
+docsDevFilterTosTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF DocsDevFilterTosEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+             "该表用于描述服务类型（TOS）位处理。
+该表附属于或辅助docsDevFilterIpTable表和docsDevFilterPolicy表。后者的
+入口可以指向本表中或其他表中的一行从而导致特定的动作被执行。本表还限
+制了匹配IP包的IP头中的服务类型值的处理，例如：
+			设置IP包的tosBits位
+                (tosBits & docsDevFilterTosAndMask) |
+                                                 docsDevFilterTosOrMask
+
+             这种机制允许灵活的设置和清除所有的TOS位。"
+        ::= { docsDevFilter 6 }
+
+docsDevFilterTosEntry OBJECT-TYPE
+        SYNTAX      DocsDevFilterTosEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+             " TOS policy入口
+        INDEX { docsDevFilterTosIndex }
+        ::= { docsDevFilterTosTable 1 }
+
+DocsDevFilterTosEntry ::= SEQUENCE {
+            docsDevFilterTosIndex   Integer32,
+            docsDevFilterTosStatus  RowStatus,
+            docsDevFilterTosAndMask OCTET STRING (SIZE (1)),
+            docsDevFilterTosOrMask  OCTET STRING (SIZE (1))
+        }
+
+docsDevFilterTosIndex OBJECT-TYPE
+        SYNTAX      Integer32 (1..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"该行唯一的索引值，该索引值无任何顺序要求即可以指定任何有效的索引
+值。"
+        ::= { docsDevFilterTosEntry 1 }
+
+docsDevFilterTosStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "生成和删除表中的入口。"
+        ::= { docsDevFilterTosEntry 2 }
+
+docsDevFilterTosAndMask OBJECT-TYPE
+        SYNTAX      OCTET STRING (SIZE (1))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+
+            "用来和匹配包的TOS位进行相与操作的掩码值。"
+        DEFVAL { 'ff'h }
+        ::= { docsDevFilterTosEntry 3 }
+
+docsDevFilterTosOrMask OBJECT-TYPE
+        SYNTAX      OCTET STRING (SIZE (1))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "用来和匹配包的TOS位进行相或操作的掩码值。（在上述的相与操作之后）"
+        DEFVAL { '00'h }
+        ::= { docsDevFilterTosEntry 4 }
+
+--
+-- CPE IP管理和IP防伪组，仅在CableModem端执行
+--
+
+docsDevCpe OBJECT IDENTIFIER ::= { docsDevMIBObjects 7}
+
+docsDevCpeEnroll OBJECT-TYPE
+        SYNTAX      INTEGER {
+            none(1),
+            any(2)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "这控制着docsDevFilterCpeTable表的弹出。
+若设为none,该过滤器必须被手工设置；
+若设为any, CM 学习来自以太网口的IP包的源地址并且记录下来直到达到
+docsDevCpeIpMax数目。
+系统初始化启动后的缺省值为any(2)。"
+        ::= { docsDevCpe 1 }
+
+docsDevCpeIpMax OBJECT-TYPE
+        SYNTAX      Integer32 (-1..2147483647)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+"这控制着允许连接在CM的最大CPE数目。
+若设为zero，任何数目的CPE都可以连接直到达到本设备的最大数目限制；
+若设为-1,不对CPE的源地址进行过滤并且在docsDevFilterCpeTable.表中没有
+任何入口被生成；
+若尝试将该项设为超过设备的最大连接数目值，则该项为设备的实际最大连接
+数目值。.
+            系统初始化启动后的缺省值为1。"
+        ::= { docsDevCpe 2 }
+
+docsDevCpeTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF DocsDevCpeEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+"该表列出了所通过的或所经过的在CPE端口的IP包的源地址，另外该表可
+以由配置文件设定或网络管理者进行设定。"
+        ::= { docsDevCpe 3 }
+
+docsDevCpeEntry OBJECT-TYPE
+        SYNTAX      DocsDevCpeEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+" docsDevFilterCpeTable表的入口。
+每一个经过的或提供的CPE的IP地址都有一个入口，若docsDevCpeIpMax
+被设为-1,该表就会被忽略，否则从CPE端过来的每一个IP包的源IP地址都
+会被检测，若在表中有该IP地址，该IP包会被继续处理；若表中无该IP地
+址而且docsDevCpeEnroll被设为any、该表的大小仍小于docsDevCpeIpMax
+的值，则该IP的源地址会被加进该表中且该包继续被处理，反之该包被丢弃。
+
+该表中所指定的动作只有在LLC过滤器（docsDevFilterLLCTable）被执行完
+以后才会被执行，但在其他任何IP过滤之前进行（包括docsDevFilterIpTable
+和docsDevNmAccessTable）。"
+        INDEX   { docsDevCpeIp }
+        ::= {docsDevCpeTable 1 }
+
+DocsDevCpeEntry ::= SEQUENCE {
+            docsDevCpeIp      IpAddress,
+            docsDevCpeSource  INTEGER,
+            docsDevCpeStatus  RowStatus
+        }
+
+docsDevCpeIp OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "该入口应用的 IP地址"
+        ::= { docsDevCpeEntry 1 }
+
+docsDevCpeSource OBJECT-TYPE
+        SYNTAX      INTEGER {
+            other(1),
+            manual(2),
+            learned(3)
+        }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+"该对象描述了本入口的建立方式。
+若为manual(2)，则表示本入口由网络管理者所创建（或配置文件或SNMP）；
+若为learned(3)，则表示本入口由CM从接收包的源IP地址学习后创建的。"
+        ::= { docsDevCpeEntry 2 }
+
+docsDevCpeStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+"处理行的标准对象。
+指定该对象可生成一个新行。网络管理者应该使用create-and-go 机制来创
+建表中的新行。"
+        ::= { docsDevCpeEntry 3 }
+
+--
+--  notifications/traps在树中的位置
+--
+docsDevNotification OBJECT IDENTIFIER   ::= { docsDev 2 }
+
+
+--
+-- 一致性定义
+--
+docsDevConformance  OBJECT IDENTIFIER   ::= { docsDev 3 }
+docsDevGroups       OBJECT IDENTIFIER   ::= { docsDevConformance 1 }
+docsDevCompliances  OBJECT IDENTIFIER   ::= { docsDevConformance 2 }
+
+docsDevBasicCompliance MODULE-COMPLIANCE
+        STATUS  current
+        DESCRIPTION
+            MCNS Cable Modems 和Cable Modem Termination Systems一致性描述"
+
+MODULE  -- docsDev
+
+-- 强制执行组
+
+GROUP docsDevBaseGroup
+        DESCRIPTION
+            "Cable Modems必须实现，Cable Modem Termination Systems可选"
+GROUP docsDevEventGroup
+        DESCRIPTION
+            "Cable Modems必须实现，Cable Modem Termination Systems可选"
+
+GROUP docsDevFilterGroup
+        DESCRIPTION
+            "Cable Modems必须实现，Cable Modem Termination Systems可选"
+
+GROUP docsDevNmAccessGroup
+        DESCRIPTION
+"该组仅在不能执行SNMPv3 USM的设备上实现且不应在支持SNMPv3 
+的设备上实现
+            对于不支持SNMPv3的这类设备在CM必须实现而在CMTS上是可选的。"
+
+GROUP docsDevServerGroup
+        DESCRIPTION
+            "该项仅在Cablemodem上实现。"
+
+GROUP docsDevSoftwareGroup
+        DESCRIPTION
+            "Cable Modems必须实现，Cable Modem Termination Systems可选"
+
+GROUP docsDevCpeGroup
+        DESCRIPTION
+            " 该项在Cable Modems上必须实现而在CMTS上不应该实现。"
+
+OBJECT docsDevSTPControl
+        MIN-ACCESS read-only
+        DESCRIPTION
+            "对于仅支持noStFilterBpdu(2)的设备该项应该设为只读"
+
+OBJECT docsDevEvReporting
+         MIN-ACCESS read-only
+         DESCRIPTION
+             "对于仅支持local(0)的设备该项应该设为只读。"
+         ::= { docsDevCompliances 1 }
+
+docsDevBaseGroup OBJECT-GROUP
+        OBJECTS {
+             docsDevRole,
+             docsDevDateTime,
+             docsDevResetNow,
+             docsDevSerialNumber,
+             docsDevSTPControl
+        }
+        STATUS      current
+        DESCRIPTION
+            "设备状态和控制组"
+        ::= { docsDevGroups 1 }
+
+docsDevNmAccessGroup OBJECT-GROUP
+        OBJECTS {
+             docsDevNmAccessIp,
+             docsDevNmAccessIpMask,
+             docsDevNmAccessCommunity,
+             docsDevNmAccessControl,
+             docsDevNmAccessInterfaces,
+             docsDevNmAccessStatus
+        }
+        STATUS      current
+        DESCRIPTION
+            "控制SNMP访问的组"
+        ::= { docsDevGroups 2 }
+
+docsDevSoftwareGroup OBJECT-GROUP
+        OBJECTS {
+            docsDevSwServer,
+            docsDevSwFilename,
+            docsDevSwAdminStatus,
+            docsDevSwOperStatus,
+            docsDevSwCurrentVers
+        }
+        STATUS      current
+        DESCRIPTION
+            "控制软件升级的组"
+        ::= { docsDevGroups 3 }
+
+docsDevServerGroup OBJECT-GROUP
+        OBJECTS {
+            docsDevServerBootState,
+            docsDevServerDhcp,
+            docsDevServerTime,
+            docsDevServerTftp,
+            docsDevServerConfigFile
+        }
+        STATUS      current
+        DESCRIPTION
+            "提供设备当前状态和信息配置的组"
+        ::= { docsDevGroups 4 }
+
+docsDevEventGroup OBJECT-GROUP
+        OBJECTS {
+            docsDevEvControl,
+            docsDevEvSyslog,
+            docsDevEvThrottleAdminStatus,
+            docsDevEvThrottleInhibited,
+            docsDevEvThrottleThreshold,
+            docsDevEvThrottleInterval,
+            docsDevEvReporting,
+            docsDevEvFirstTime,
+            docsDevEvLastTime,
+            docsDevEvCounts,
+            docsDevEvLevel,
+            docsDevEvId,
+            docsDevEvText
+        }
+        STATUS      current
+        DESCRIPTION
+            "控制和监视系统的事件组"
+        ::= { docsDevGroups 5 }
+
+docsDevFilterGroup OBJECT-GROUP
+        OBJECTS {
+            docsDevFilterLLCUnmatchedAction,
+            docsDevFilterIpDefault,
+            docsDevFilterLLCStatus,
+            docsDevFilterLLCIfIndex,
+            docsDevFilterLLCProtocolType,
+            docsDevFilterLLCProtocol,
+            docsDevFilterLLCMatches,
+            docsDevFilterIpControl,
+            docsDevFilterIpIfIndex,
+            docsDevFilterIpStatus,
+            docsDevFilterIpDirection,
+            docsDevFilterIpBroadcast,
+            docsDevFilterIpSaddr,
+            docsDevFilterIpSmask,
+            docsDevFilterIpDaddr,
+            docsDevFilterIpDmask,
+            docsDevFilterIpProtocol,
+            docsDevFilterIpSourcePortLow,
+            docsDevFilterIpSourcePortHigh,
+            docsDevFilterIpDestPortLow,
+            docsDevFilterIpDestPortHigh,
+            docsDevFilterIpMatches,
+            docsDevFilterIpTos,
+            docsDevFilterIpTosMask,
+            docsDevFilterIpContinue,
+            docsDevFilterIpPolicyId,
+            docsDevFilterPolicyId,
+            docsDevFilterPolicyStatus,
+            docsDevFilterPolicyPtr,
+            docsDevFilterTosStatus,
+            docsDevFilterTosAndMask,
+            docsDevFilterTosOrMask
+        }
+        STATUS      current
+        DESCRIPTION
+            "链路层和IP层过滤器组"
+        ::= { docsDevGroups 6 }
+
+docsDevCpeGroup OBJECT-GROUP
+        OBJECTS {
+           docsDevCpeEnroll,
+           docsDevCpeIpMax,
+           docsDevCpeSource,
+           docsDevCpeStatus
+        }
+        STATUS      current
+        DESCRIPTION
+            "控制设备使用用户数目和IP地址的组。"
+        ::= { docsDevGroups 7 }
+
+END
+5 致谢
+This document was produced by the IPCDN Working Group.  It is based
+   on a document written by Pam Anderson from CableLabs, Wilson Sawyer
+   from BayNetworks, and Rich Woundy from Continental Cablevision.  The
+   original working group editor, Guenter Roeck of cisco Systems, did
+   much of the grunt work of putting the document into its current form.
+   Special thanks is also due to Azlina Palmer, who helped a lot
+   reviewing the document.      
+6参考
+[1]  Harrington, D., Presuhn, R. and B. Wijnen, "An Architecture for
+        Describing SNMP Management Frameworks", RFC 2571, April 1999.
+
+[2]  Rose, M. and K. McCloghrie, "Structure and Identification of
+        Management Information for TCP/IP-based Internets", STD 16, RFC
+        1155, May 1990.
+
+[3]  Rose, M. and K. McCloghrie, "Concise MIB Definitions", STD 16,
+        RFC 1212, March 1991.
+
+[4]  Rose, M., "A Convention for Defining Traps for use with the
+        SNMP", RFC 1215, March 1991.
+
+[5]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Structure of
+        Management Information for Version 2 (SMIv2)", STD 58, RFC 2578,
+        April 1999.
+
+[6]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Textual
+        Conventions for SMIv2", STD 58, RFC 2579, April 1999.
+
+[7]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Conformance
+        Statements for SMIv2", STD 58, RFC 2580, April 1999.
+
+[8]  Case, J., Fedor, M., Schoffstall, M. and J. Davin, "Simple
+        Network Management Protocol", STD 15, RFC 1157, May 1990.
+
+[9]  Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+        "Introduction to Community-based SNMPv2", RFC 1901, January
+        1996.
+
+[10] Case, J., McCloghrie, K., Rose, M. and S. Waldbusser, "Transport
+        Mappings for Version 2 of the Simple Network Management Protocol
+        (SNMPv2)", RFC 1906, January 1996.
+[11] Case, J., Harrington D., Presuhn R. and B. Wijnen, "Message
+        Processing and Dispatching for the Simple Network Management
+        Protocol (SNMP)", RFC 2572, April 1999.
+
+[12] Blumenthal, U. and B. Wijnen, "User-based Security Model (USM)
+        for version 3 of the Simple Network Management Protocol
+        (SNMPv3)", RFC 2574, April 1999.
+
+[13] Case, J., McCloghrie, K., Rose, M. and S. Waldbusser, "Protocol
+        Operations for Version 2 of the Simple Network Management
+        Protocol (SNMPv2)", RFC 1905, January 1996.
+
+[14] Levi, D., Meyer, P. and B. Stewart, "SNMP Applications", RFC
+        2573, April 1999.
+
+[15] Wijnen, B., Presuhn, R. and K. McCloghrie, "View-based Access
+        Control Model (VACM) for the Simple Network Management Protocol
+        (SNMP)", RFC 2575, April 1999.
+
+[16] "Data-Over-Cable Service Interface Specifications: Cable Modem
+        Radio Frequency Interface Specification SP-RFI-I04-980724",
+        DOCSIS, July 1998,
+        http://www.cablemodem.com/public/pubtechspec/SP-RFI-I04-
+        980724.pdf.
+
+[17] Steinberg, L., "Techniques for Managing Asynchronously Generated
+        Alerts", RFC 1224, May 1991.
+
+[18] "Data-Over-Cable Service Interface Specifications: Operations
+        Support System Interface Specification RF Interface SP-OSSI-RF-
+        I02-980410", DOCSIS, April 1998,
+        http://www.cablemodem.com/public/pubtechspec/ossi/sp-ossi.PDF.
+
+[19] Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+
+[20] "Data-Over-Cable Service Interface Specifications: Baseline
+        Privacy Interface Specification SP-BPI-I01-970922", DOCSIS,
+        September 1977,
+        http://www.cablemodem.com/public/pubtechspec/ss/SP-BPI-I01-
+        970922.pdf
+7安全考虑
+本MIB库提供了和系统相关的公共internet 网络访问的MIB对象集。然而对这些
+MIB对象不正确的操作可能会导致对大量最终用户的服务终止。另外对
+docsDevNmAccessTable、 docsDevFilterLLCTable、 docsDevFilterIpTable和 
+docsDevCpe组（某些项）的操作也可能允许最终用户自行提高自己的服务等级、盗用
+他人的IP地址、改变受限的网络管理站点等，更严重的情况是还可能影响其他用户的
+服务。
+在MIB库中已经有一些具有读写属性或访问创建属性MIB对象定义了最大访问意
+向。这些对象是为了考虑到在较为敏感的或容易受到攻击的网络环境下工作而设置的。
+在不安全的网络环境而且没有经过正确的保护措施的情况下进行写操作（SET）可能会
+对网络具有负面影响，就像上面所提及的对象值被更改。
+   o    docsDevNmAccessTable仅仅是为了指定受限制的唯一的网络管理站
+点 ，但不能防止盗用该网络管理站点Ip的攻击。比较安全的管理机制是
+使用SNMPv3。在这种情况下SNMPv3 VACM 和USM必须和v3 agent
+一起来访问MIB库。管理员甚至考虑会不允许docsDevNmAccessTable
+的读访问； 
+   o    CM的软件可以通过网络管理者的操作进行在线升级，然而不正确的软件
+升级操作可能会引起系统的安全性和真正网络管理者失去管理能力的潜
+在危险。
+   o    设备可以通过设置docsDevResetNow = true(1)对设备进行重新启动，这
+会导致设备重新下载它的配置文件从而消除了先前网络管理者进行的非
+存储的网络设定。这也成为了系统受到攻击的一方面。
+   o    设置docsDevEvThrottleAdminStatus = unconstrained(1) (即缺省值)
+		可能导致traps消息的泛滥从而对网络性能造成破坏。
+
+   本MIB库不提供CableModem系统所提供服务的机密性。[20]指定了DOCSIS
+协议标准基本保密机制的实现 ，工作组期望在后来的MIB库中为网络管理定义这些
+MIB对象。
+   SNMPv1本身就是不安全的，即使网络本身是安全的（比如使用了IPSec）因
+为SNMPv1没有提供在安全网络之上的访问和对MIB对象进行GET/SET 操作(即
+read/change/create/delete)的控制机制。
+基于上面的安全考虑，建议设备的开发者使用SNMPv3协议。特别的，
+User-based Security Model [12]（即USM用户安全模型）和View-based Access   
+Control Model [15]（VACM观察访问控制模型）也是推荐使用的。  
+ 有了上面的安全保护之后，下面就是客户/用户如何来保证SNMP实体对MIB对
+象的安全访问，即对MIB对象进行真正GET和SET操作的用户具有合法性（正确的
+配置）。
+知识产权
+	The IETF takes no position regarding the validity or scope of any
+   intellectual property or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; neither does it represent that it
+   has made any effort to identify any such rights.  Information on the
+   IETF's procedures with respect to rights in standards-track and
+   standards-related documentation can be found in BCP-11.  Copies of
+   claims of rights made available for publication and any assurances of
+   licenses to be made available, or the result of an attempt made to
+   obtain a general license or permission for the use of such
+   proprietary rights by implementors or users of this specification can
+   be obtained from the IETF Secretariat.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights which may cover technology that may be required to practice
+   this standard.  Please address the information to the IETF Executive
+   Director.
+9作者地址
+Michael StJohns
+   @Home Network
+   425 Broadway
+   Redwood City, CA 94063
+   U.S.A
+
+   Phone: +1 650 569 5368
+   EMail: stjohns@corp.home.net
+10 版权说明
+	Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+鸣谢
+	Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+RFC2669―DOCSIS Cable Device MIB Cable Device Management Information Base for 
+DOCSIS compliant Cable Modems and Cable Modem Termination Systems
+基于DOCSIS标准CM和CMTS的电缆设备 MIB库定义
+
+
+1
+RFC文档中文翻译计划

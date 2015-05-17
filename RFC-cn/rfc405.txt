@@ -1,0 +1,22 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+NWG/RFC  #405                       AAM 10-OCT-72 13:09 12110
+对RFC 404的更正
+（Correction to RFC 404）
+这里对RFC# 404中的一处排版错误进行了更正。ISI IMP的地址是22(十进制)，而不是错误规定的86。所有RFC# 404中的其他编号都是正确的；完整的更正后的文本如下：
+本周，RAND的IMP被临时从网络上删除，在ISI上建立了新的IMP。来自RAND的一些人和计算机已经迁移到ISI了，特别是RAND的TENEX现在就是ISI的TENEX了。ISI IMP的地址是22 (十进制)，ISI的TENEX的主机编号是1；因此ISI TENEX的“网络地址（Network Address）”是86。下周的某一天RAND的IMP将被重建。IMP的编号仍然是7，RAND的IBM 360/65的“网络地址（Network Address）”将仍然是7。
+[这个RFC文档是在Alex McKenzie指导由BBN以计算机可读的文件格式归档到在线RFC文档库的。1/97]
+
+RFC405――Correction to RFC 404                                            对RFC 404的更正
+
+
+
+
+1
+RFC文档中文翻译计划
+

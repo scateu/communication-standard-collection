@@ -1,0 +1,221 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-
+pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陶志荣（dick_hw  jerrytaowx@263.net）
+译文发布时间：2001-6-5
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必
+须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                       E. Rescorla
+Request for Comments: 2818                                   RTFM, Inc.
+Category: Informational                                        May 2000
+
+
+TLS之上的HTTP
+（RFC2818 HTTP Over TLS）
+
+本备忘录的状态
+本文档为Internet社区提供信息。它不指定一个Internet标准。本备忘录的发布不
+受任何限制。
+版权声明
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+本文档描述如何在Internet上使用TLS保护HTTP连接。当前的通行做法是HTTP
+位于SSL（TLS的前辈）之上，通过使用一个不同的服务器端口来区别受保护的通信
+量和不安全的通信。本文档描述了使用TLS的实践。一个伴侣文档描述一种在正常的
+HTTP端口之上使用HTTP/TLS[RFC2817]的方法。
+
+目录
+1.  介绍	2
+相关术语	2
+2. TLS之上的HTTP	2
+2.1.  初始化连接	2
+2.2. 关闭连接	2
+2.2.1 客户行为	3
+2.2.2 服务器行为	3
+2.3端口号	3
+2.4 URI格式	4
+3 端标识	4
+3.1 服务器身份	4
+3.2 客户身份	4
+参考	5
+安全考虑	5
+作者地址：	5
+版权说明	6
+致谢	6
+
+
+1.  介绍
+HTTP[RFC2616]最初是在INTERNET上不用密码的应用。但随着HTTP的敏感性应
+用日益增加，对安全性的要求也随之增加。SSL及其后继TLS[RFC2246]提供了面向通
+道的安全性。本文介绍怎样在TLS之上应用HTTP。
+相关术语
+在本文中的关键字“必须”，“必须不”，“要求”，“应该”，“不应该”和“可
+能”的解释见[RFC2119]。
+2. TLS之上的HTTP
+从概念上讲，HTTP/TLS非常简单。简单地在TLS上应用HTTP，如同在TCP上应
+用HTTP一样。 
+2.1.  初始化连接
+作为HTTP客户的代理同时也应作为TLS的客户。它应该向服务器的适当端口发
+起一个连接，然后发送TLS ClientHello来开始TLS握手。当TLS握手完成，客户可
+以初始化第一个HTTP请求。所有的HTTP数据必须作为TLS的“应用数据”发送。正
+常的HTTP行为，包括保持连接，应当被遵守。
+2.2. 关闭连接
+	TLS提供了安全关闭连接的机制。当收到一个有效的关闭警告时，实现上必须保证在
+这个连接上不再接收任何数据。TLS的实现在关闭连接之前必须发起交换关闭请求。TLS
+实现可能在发送关闭请求后，不等待对方发送关闭请求即关闭该连接，产生一个“不完全
+的关闭”。注意：这样的实现可能选择重用该对话。这只应在应用了解（典型的是通过检
+测HTTP的消息边界）它已收到所有它关心的数据的情况下进行。
+
+如[RFC2246]中所定义的，任何未接收一个有效的关闭警告（一个“未成熟关闭”）
+即接到一个连接关闭必须不重用该对话。注意：一个未成熟请求并不质疑数据已被安全地
+接收，而仅意味着接下来数据可能被截掉。由于TLS并不知道HTTP的请求/响应边界，为
+了解数据截断是发生在消息内还是在消息之间，有必要检查HTTP数据本身（即Content-
+Length头）。
+
+2.2.1 客户行为
+由于HTTP使用连接关闭表示服务器数据的终止，客户端实现上对任何未成熟的关闭
+要作为错误对待，对收到的数据认为有可能被截断。在某些情况下HTTP协议允许客户知
+道截断是否发生，这样如果客户收到了完整的应答，则在遵循“严出松入[RFC1958]”的
+原则下可容忍这类错误，经常数据截断不体现在HTTP协议数据中；有两种情况特别值得
+注意：
+一个无Content-Length头的HTTP响应。在这种情况下数据长度由连接关闭请求通
+知，我们无法区分由服务器产生的未成熟关闭请求及由网络攻击者伪造的关闭请求。
+
+一个带有有效Content-Length头的HTTP响应在所有数据被读取完之前关闭。由于
+TLS并不提供面向文档的保护，所以无法知道是服务器对Content-Length计算错误还是攻
+击者已截断连接。
+以上规则有一个例外。当客户遇到一个未成熟关闭时，客户把所有已接收到的数据同
+Content-Length头指定的一样多的请求视为已完成。
+
+客户检测到一个未完成关闭时应予以有序恢复，它可能恢复一个以这种方式关闭的
+TLS对话。
+客户在关闭连接前必须发送关闭警告。未准备接收任何数据的客户可能选择不等待服
+务器的关闭警告而直接关闭连接，这样在服务器端产生一个不完全的关闭。
+
+2.2.2 服务器行为
+RFC2616允许HTTP客户在任何时候关闭连接，并要求服务器有序地恢复它。特别是，
+服务器应准备接收来自客户的不完全关闭，因为客户往往能够判断服务器数据的结束。服
+务器应乐于恢复以这种方式关闭的TLS对话。
+
+实现上注意：在不使用永久连接的HTTP实现中，服务器一般期望能通过关闭连接通
+知数据的结束。但是，当Content-Length被使用时，客户可能早已发送了关闭警告并断
+开了连接。
+
+服务器必须在关闭连接前试图发起同客户交换关闭警告。服务器可能在发送关闭警告
+后关闭连接，从而形成了客户端的不完全关闭。
+2.3端口号
+HTTP服务器期望最先从客户收到的数据是Request-Line production。TLS服务器期
+望最先收到的数据是ClientHello。因此，一般做法是在一个单独的端口上运行
+HTTP/TLS，以区分是在使用哪种协议。当在TCP/IP连接上运行HTTP/TLS时，缺省端口是
+443。这并不排除HTTP/TLS运行在其它传输上。TLS只假设有可靠的、面向连接的数据
+流。
+
+2.4 URI格式
+HTTP/TLS和HTTP的URI不同，使用协议描述符https而不是http。使用HTTP/TLS
+的一个URI例子是：
+https://www.example.com/~smith/home.html
+
+3 端标识
+3.1 服务器身份
+通常，解析一个URI产生HTTP/TLS请求。结果客户得到服务器的主机名。若主机名
+可用，为防止有人在中间攻击，客户必须把它同服务器证书信息中的服务器的身份号比较
+检查。
+若客户有相关服务器标志的外部信息，主机名检查可以忽略。（例如：客户可能连接
+到一个主机名和IP地址都是动态的服务器上，但客户了解服务器的证书信息。）在这种
+情况下，为防止有人攻击，尽可能缩小可接受证书的范围就很重要。在特殊情况下，客户
+简单地忽略服务器的身份是可以的，但必须意识到连接对攻击是完全敞开的。
+若dNSName类型的subjectAltName扩展存在，则必须被用作身份标识。否则，在证
+书的Subject字段中必须使用Common Name字段。虽然使用Common Name是通常的做法，
+但不受赞成，而Certification Authorities被鼓励使用dNSName。
+使用[RFC2459]中的匹配规则进行匹配。若在证书中给定类型的身份标识超过一个
+（也就是，超过一个dNSName和集合中的相匹配），名字可以包括通配符＊表示和单个域
+名或其中的一段相匹配。例如：＊.a.com和foo.a.com匹配但和bar.foo.a.com不匹配。
+f＊.com和foo.com匹配但和bar.com不匹配。
+在某些情况下，URI定义的不是主机名而是IP地址。在这种情况下，证书中必须有
+iPAddress subjectAltName字段且必须精确匹配在URI中的IP地址。
+若主机名和证书中的标识不相符，面向用户的客户端必须或者通知用户(客户端可以
+给用户机会来继续连接)或终止连接并报证书错。自动客户端必须将错误记录在适当的审
+计日志中(若有的话)并应该终止连接(带一证书错)。自动客户端可以提供选项禁止这种检
+查，但必须提供选项使能它。
+注意，在很多情况下URI本身是从不可信任的源得到的。以上描述的检查并未提供对
+危害源的攻击的保护。例如，若URI是从一个未采用HTTP/TLS的HTML页面得到的，某个
+人可能已在中间已替换了URI。为防止这种攻击，用户应仔细检查服务器提供的证书是否
+是期望的。
+3.2 客户标识
+典型情况下，服务器并不知道客户的标识是什么也就无法检查(除非有合适的CA证
+书)。若服务器知道的话(通常是在HTTP和TLS之外的源得到的)，它应该象上面描述的那
+样检查。
+参考
+   [RFC2459] Housley, R., Ford, W., Polk, W. and D. Solo, "Internet
+             Public Key Infrastructure: Part I: X.509 Certificate and
+             CRL Profile", RFC 2459, January 1999.
+
+   [RFC2616] Fielding, R., Gettys, J., Mogul, J., Frystyk, H., 
+Masinter,
+             L., Leach, P. and T. Berners-Lee, "Hypertext Transfer
+             Protocol, HTTP/1.1", RFC 2616, June 1999.
+
+   [RFC2119] Bradner, S., "Key Words for use in RFCs to indicate
+             Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RFC2246] Dierks, T. and C. Allen, "The TLS Protocol", RFC 2246,
+             January 1999.
+
+   [RFC2817] Khare, R. and S. Lawrence, "Upgrading to TLS Within
+             HTTP/1.1", RFC 2817, May 2000.
+
+安全考虑
+整个文档是关于安全的。
+作者地址：
+   Eric Rescorla
+   RTFM, Inc.
+   30 Newell Road, #16
+   East Palo Alto, CA 94303
+
+   Phone: (650) 328-8631
+   EMail: <A href="mailto:ekr@rtfm.com">ekr@rtfm.com</A>
+  
+
+版权说明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain 
+it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph 
+are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on 
+an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet 
+Society.
+RFC2818      HTTP Over TLS                                                                       TLS之上的HTTP
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,504 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：netjnn (netjnn  netjnn@263.net)
+发布时间：2001-6-25
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                                 A. Conta
+Request for Comments: 2463                                              Lucent
+Obsoletes: 1885                                                     S. Deering
+Category: Standards Track                                         Cisco Systems
+                                                                  December 1998
+
+针对因特网协议第六版(Ipv6)的
+因特网控制报文协议(ICMPv6)规范
+(Internet Control Message Protocol (ICMPv6)
+for the Internet Protocol Version 6 (IPv6)
+Specification)
+
+
+关于本文的说明
+	这个文档说明了一个为Internet通讯的Internet标准跟踪协议，而且它的改进希望
+得到讨论和建议。请参考"Internet 正式协议标准" (标准 1) 的当前版本来得到本协议的标
+准化陈述. 本文的分发不受限制.
+
+版权声明
+	版权所有Internet协会(1998).保留所有权利。
+
+概述
+　　　这篇文档说明了一系列基于第六版本的因特网协议(IPv6)的因特网控制报文协(ICMPv6)
+      使用的报文。
+
+目录
+1.  简介	2
+2.  ICMPv6	2
+2.1报文的总体格式	2
+2.2报文源地址的测定	3
+2.3报文校验和的计算	3
+2.4报文处理规则	3
+3．ICMPv6差错报文	4
+3.1目的不可达报文	4
+3.2包过大报文	5
+3.3超时报文	6
+3.4参数出错报文	6
+4．ICMPv6信息报文	7
+4.1回显请求报文	7
+4.2回显应答报文	7
+5．安全考虑	8
+5.1 ICMP报文的认证和加密	8
+5.2 ICMP攻击	8
+6．参考文献	9
+7．致谢	9
+8．作者地址	10
+附录A――自RFC 1885以来的改变	10
+完整的版权声明	11
+
+1.  简介
+第六版本的因特网协议是一个IP协议的新版本．IPv6使用了为IPv4定义的ICMP协议，
+但是有一些改变．最后的协议被称为ICMPv6．它在IPv6的下一首部字段中对应的值为58。
+这篇文档描述了在ICMPv6中使用的一系列控制报文的格式。它并没有描述使用这些报文
+以达到某种功能比如发现路径的最大传输单元(MTU)的具体过程。这些具体的过程是在其他的
+文档中描述的(比如：[PMTU].)。其他的文档有可能介绍了一些另外的ICMPv6的报文类型，
+比如邻站探测报文[IPV6-DISC]，他们都服从在这篇文档第二节中所阐述的ICMPv6报文的整
+体规则。
+在IPv6规范和IPv6路由和寻址规范中所定义的术语也被应用到这篇文档中。
+这篇文档中使用的关键字：“必须”，“必须不”，“要求”，“将要”，“将不
+会”，“应该”，“不应该”，“推荐”，“可能”，“任选”。它们在RFC-2119中有详细
+的解释。
+	
+2.  ICMPv6
+IPv6节点使用ICMPv6来报告在传送包的过程中遇到的错误，而且用它来完成其它网络
+层的功能，比如诊断（ICMPv6 ping）。ICMPv6是IPv6内在的一部分，而且每一个IPv6节点
+都必须充分的应用它。
+
+2.1报文的总体格式
+ICMPv6报文总体上被分为两种类型：差错报文和信息报文。差错报文的识别是通过在消
+息类型字段值的高比特位中设置0。因此，差错报文的报文类型从0到127；信息报文的类型
+从128到255。
+这篇文档为以下的ICMPv6报文定义了报文格式：
+ICMPv6差错报文
+1      目的不可达          （3.1节）
+2      包过大              （3.2节）
+3      超时                （3.3节）
+4      参数出错            （3.4节）
+ICMPv6消息报文
+       128    回显请求            （4.1节）
+  129    回显应答            （4.2节）
+每一个ICMPv6报文在传送时会被加上一个IPv6基本首部和若干（或没有）IPv6扩展首
+部。ICMPv6首部的识别是通过在它之前离它最近的首部中的下一首部字段。ICMPv6在该字段
+中对应的值为58。（注意：这和在IPv4中ICMP的识别有很大的不同）
+ICMPv6报文有如下的总体格式：
+              0        7           15                       31
+         类型        代码          校验和
+                     
+                          报文体
+	
+	类型字段描述了报文的类型。它的值决定了后面数据的格式。
+	代码字段是依赖于报文类型的。在报文类型的基础上，它被用来在基本的类型基础上
+创 
+       建更细的报文等级。
+	校验和字段是用来在ICMPv6报文中检验数据的完整性和部分IPv6首部的。
+
+2.2报文源地址的测定
+	一个送出ICMPv6报文的节点在计算校验和以前要在IPv6首部中决定源地址和目标
+IPv6地址。如果节点有多于一个的单目地址，它必须按以下的原则选定源地址：
+（a）	如果报文是对发往该节点的某一单目地址进行响应的，那应答报文的源地址必须是这
+个单目地址。
+ (b) 如果报文是对发往该节点为组员的多播组或任意播组的报文进行响应的，那麽应答报
+文
+ 的源地址必须是一个属于接收到多播或任意播包接口的单目地址。
+   (c) 如果报文是对发往一个并不属于该节点地址的报文进行响应的，那麽源地址必须是属
+于
+该节点且最有利于诊断错误的那个单目地址。比如，如果报文是对一个不能正常转发
+包
+的行为进行响应的，源地址就是那个属于转发包失败的接口的单目地址。
+   (d) 另外，在转发报文到目的地时，必须使用节点的路由表来决定由哪个接口转发报文。
+属
+       于那个接口的单目地址作为报文的源地址。
+
+2.3报文校验和的计算
+校验和是整个ICMPv6报文的一个16位字的补数和。校验和的计算起始于ICMPv6的类型
+字段并被加上一个IPv6的伪首部（在IPv6 8.1节中有介绍）。在伪首部中下一首部字段的
+值为58。（注意：在ICMPv6的校验和计算中加上伪首部是从IPv4变化而来的；想了解改变
+的原理请查看IPv6。）
+为了计算校验和，校验和字段被设置为0。
+
+2.4报文处理规则
+      在处理ICMPv6报文时，应用程序必须遵守以下的规则：（来自RFC-1122）
+(a)	如果收到了一个不知道类型的ICMPv6差错报文，它必须被送往上层协议。
+(b)	如果收到了一个不知道类型的ICMPv6信息报文，它必须被悄悄的丢弃。
+(c)	每一个ICMPv6差错报文（类型<128）在不超过最小IPv6最大传输单元的情况
+下，包括尽可能大的引起出错的包。
+(d)	在以上的情况中，网络层协议把ICMPv6差错报文传送到上层协议的进程。原包中
+的上层协议字段（在ICMPv6差错报文的报文体中）被取出，用来选择合适的上一
+层进程来处理错误。
+如果原包含有一个很大的扩展首部，那麽有可能上层协议类型并没有包含在
+ICMPv6差错报文中。原因是为了满足最小IPv6最大传输单元的限制，原包被切断
+了。在这种情况下，差错报文在任何IPv6 层处理后被悄悄的丢弃。
+(e)	如果接收到的情况为下列之一，则ICMPv6差错报文必须不被发出。
+（e.1）一个ICMPv6差错报文，或者
+（e.2）一个预定发往IPv6多目地址的包（这种情况有两个例外：(1)包过大报文
+       ――3.2节 ――为了允许路径MTU发现为IPv6多播工作(2)参数出错报
+       文，代码值为2――3.4节――通过将选项类型的最高两比特位设置为10
+报
+       告一个不认识的IPv6选项），或者
+（e.3）一个作为链路层多播的包，（e.2中指出的两条例外情况也适用于这
+里），
+       或者
+（e.4）一个作为链路层广播的包，（e.2中指出的两条例外情况也适用于这
+里），
+       或者
+（e.5）一个源地址并不是指明的一个唯一的节点的包，比如：IPv6未指明地址，
+       IPv6多目地址，或一个ICMPv6报文发送者知道的IPv6任意播地址
+(f)	最后，为了限制由于发送ICMPv6差错报文引起的带宽和转发的代价，一个IPv6
+节
+点必须限制它发送的ICMPv6差错报文的比率。当源站发送一串错误的包，并且没
+有 
+注意到由此产生的ICMPv6差错报文的时候，这种情况就可能发生。有一系列的实
+现
+限制比率的方法，比如：
+(f.1) 基于定时器的――比如：对给定的源站或者对任意的源站，限制传送
+ICMPv6
+      差错报文的比率，每T毫秒最多发送一次。
+          (f.2) 基于带宽的――比如：限制从特定接口发出的的差错报文的比率，相连接
+的
+                带宽上最多利用自己的F来发送。
+       限制的参数（比如：以上例子中的T或F）必须是针对节点配置的，且每个参数
+有
+       缺省值（比如：T=1秒，不是0秒；F=2%,不是0%）
+
+ 以下几节描述了以上ICMPv6报文的格式。
+
+3．ICMPv6差错报文
+
+3.1目的不可达报文
+               0           7            15                         31
+                   类型        代码                  校验和
+                                      未使用 
+                    在不超过最小IPv6MTU的情况下，
+                    包括了尽可能大的引起出错的包。
+
+IPv6字段：
+      目的地址     从引起出错的包的源地址字段拷贝来的
+ICMPv6字段：
+      类型         1
+      代码         0-没有路由到目的
+   1-同目的的通讯由于管理被禁止
+			   2-（没有指派）
+                        3-地址不可达
+                        4-端口不可达
+          未使用       这个字段对所有的代码值都是不可用的。它必须被发送者初始化为
+                       0，被接受者忽略
+   描述
+    一个目的不可达报文应该由路由器或源节点的IPv6层产生，作为对由于除阻塞以外
+的
+   原因使得包不能传送到目的地址的回应。（如果由于阻塞导致包丢失的话，必须不会
+产 
+   生一个ICMPv6报文）
+       如果传送失败的原因是由于才转发节点上的路由表中缺少对应的表项，代码字段将被
+置
+       为0。（注意：这种错误只有在节点路由表中缺少缺省路由表项时才可能发生。）
+       如果传送失败的原因是由于管理的禁止，比如：防火墙过滤，代码字段被置为1。
+       如果传送失败是由于任何其他的原因，比如：不能把IPv6地址映射成相应的链路层
+地
+       址，或某种链路层特定的错误，代码字段将被置为3。
+       如果对收到的包传输层协议（如UDP）没有监听者的且传输层协议没有别的措施来通
+知
+       发送者的话，目的节点应该发送一个目的不可达报文，代码字段置4。
+   上层通告
+       当节点收到ICMPv6目的不可达报文时，必须通知上一层进程。
+
+3.2包过大报文
+            0            7             15                         31
+                 类型         代码             校验和
+                                 最大传输单元
+                  在不超过最小IPv6MTU的情况下，
+                   包括了尽可能大的引起出错的包。
+
+   IPv6字段
+     目的地址     从引起出错的包的源地址字段拷贝来的
+   ICMPv6字段：
+     类型         2
+         代码         它必须被发送者初始化为0，被接受者忽略。
+         最大传输单元 下一跳链路的最大传输单元。
+   描述
+     一个包过大报文必须由路由器发出，作为对因为包太大超过了出口链路的最大传输
+单
+     元而不能转发的回应。这个报文中的信息作为进程的一部分，在最大路径传输单元
+进
+     程中使用
+     发送包过大报文是甚麽时候发送ICMPv6差错报文规则的一个例外。因为不象其它
+的
+     报文，它的发送是作为接收到有着IPv6多播地址或链路层多播或链路层广播地址
+的
+     包的回应。
+上层通告
+     一个到来的包过大报文必须被送到上层进程。
+
+3.3超时报文
+             0            7            15                         31
+                 类型          代码                校验和
+                                     未使用 
+                  在不超过最小IPv6MTU的情况下，
+                  包括了尽可能大的引起出错的包。
+
+
+ IPv6字段：
+      目的地址     从引起出错的包的源地址字段拷贝来的
+ICMPv6字段：
+      类型         3
+      代码         0-传送过程中超过了跳数限制
+   1-分片重组超时
+	   未使用       这个字段对所有的代码值都是不可用的。它必须被发送者初始化为
+                       0，被接受者忽略
+描述
+      如果一个路由器收到一个跳数限制为0的包，或是它将跳数限制减去1后变为0，
+      那这个路由器必须丢弃这个包并且发一个代码为0的ICMPv6超时报文给源站点。
+这
+      种情况通常意味着一个路由环路或是初始的跳数限制值太小。
+上层通告
+     一个到来的超时报文必须被送到上层进程。
+
+3.4参数出错报文
+              0            7            15                         31
+                   类型         代码              校验和
+                                     指针
+                      在不超过最小IPv6MTU的情况下，
+                            包括了尽可能大的引起出错的包。
+
+IPv6字段：
+      目的地址     从引起出错的包的源地址字段拷贝来的
+ICMPv6字段：
+      类型         4
+      代码         0-错误的首部字段
+   1-不可识别的下一首部类型
+			  2-不可识别的IPv6选项
+          指针         指出了在引起出错的包中错误出现地方的八位偏移量。
+                       如果源包引起错误的字段即使在ICMPv6差错报文达到最大长度时
+也
+                       不能被包括在内，指针的值将超过ICMPv6包的长度。
+描述
+      如果一个IPv6节点因为发现了IPv6首部或其扩展首部中的某个字段有问题而导
+致
+      对包的处理失败，那它必须丢弃这个包并发送一个ICMPv6参数错误报文给源站，
+指
+      出出错的地方和出错的类型。
+      指针字段指出了检测出错误的地方相对于源包首部的八位组。比如，一个类型为
+      4，代码为1的，指针字段值为40的ICMPv6报文，指出了源包中跟在IPv6基本
+首
+      部后的IPv6扩展首部的下一首部字段有一个不被识别的值。
+上层通告
+      一个节点收到ICMPv6报文时必须通报上层进程。
+
+4．ICMPv6信息报文
+
+4.1回显请求报文
+                0           7            15                         31
+                    类型          代码            校验和
+                           标识                   序列号
+数据…
+      
+ IPv6字段：
+      目的地址     一个合法的IPv6地址
+ICMPv6字段：
+      类型         128
+          代码         0
+          标识         用来将请求与应答进行匹配。也可能是0。
+          序列号       用来将请求与应答进行匹配。也可能是0。
+          数据         0或任意数据的八位组。
+     描述
+          每一个节点必须能够完成ICMPv6回显应答者的功能，即在收到ICMPv6回显请求
+时
+          发出相应的ICMPv6回显应答。为了诊断，一个节点还应该能够为发送请求接收应
+答
+          提供应用层接口。
+     上层通告
+          回显请求报文可能被送到接收ICMP报文的进程。
+
+4.2回显应答报文
+                0            7           15                       31
+                     类型        代码             校验和
+                             标识                 序列号
+                    数据…
+ IPv6字段：
+      目的地址     从引起出错的包的源地址字段拷贝来的
+ ICMPv6字段：
+      类型         129
+          代码         0
+          标识         相应的回显请求报文的标识符。
+          序列号       相应的回显请求报文的序列号。          
+          数据         相应的回显请求报文的数据。
+     描述
+          每一个节点必须能够完成ICMPv6回显应答者的功能，即在收到ICMPv6回显请求
+时
+          发出相应的ICMPv6回显应答。为了诊断，一个节点还应该能够为发送请求接收应
+答
+          提供应用层接口。
+          对一个单目地址的回显请求报文应答时，源地址必须和回显请求报文的目的地址
+相
+          同。
+        如果回显请求报文是发往多目地址的，应该发送回显应答报文。回显应答报文的源
+        地址必须是一个属于接收到多播回显请求报文接口的单目地址。
+          ICMPv6回显请求报文中的数据必须在回显应答报文中必须被不加改变的完
+          整的送回。
+     上层通告
+          回显应答报文必须被送到引起发送回显请求报文的进程。它也有可能被送到没有
+引
+          起发送回显请求报文的进程。
+
+5．安全考虑
+
+5.1 ICMP报文的认证和加密
+         通过IP[IPv6-AUTH]认证首部，交换的ICMP包能够被认证.如果目的地址的安全联
+盟
+     (SA)要求使用IP认证首部的话，节点在发送ICMP报文时就应该包括IP认证首部。安
+全
+     联盟可以通过手工建立，也可以通过一些密钥管理协议自动建立。
+         收到有认证首部的ICMP包时，必须对它的正确性加以验证。如果包的认证首部不
+正
+     确的话，这个包必须被忽略，丢弃。
+         这里也应该有一种可能，系统管理员将节点配置为忽略任何使用认证首部或封装安
+全
+     载荷(ESP)的ICMP报文，不对他们进行验证。这种改变在缺省情况下，应该允许接收没
+有
+     认证的报文。
+
+         机密性的问题在IP安全结构和IP封装安全载荷文档[IPv6-SA,IPv6-ESP]中有讲
+解。
+
+5.2 ICMP攻击
+         ICMP报文可能遭受到各种各样的攻击。在IP安全结构文档[IPv6-SA]中可以找到有
+     关与此的完整的讨论。一个简短的有关此类攻击即其防范的讨论如下：      
+1.	有的攻击故意使报文接收者认为报文是从另外的源站发出的，而不是报文真正的产
+生
+   者。防范这类攻击可对ICMP报文采取IPv6认证机制[IPv6-AUTH].
+2.	有的攻击故意使报文或者其应答到达一个不是发起者想到的目的地。对于报文在源
+地
+   址和目的地址之间通过IP包传送时被恶意的拦截者拦截，并改变了报文的数据的情 
+   况，如果通过对ICMP报文进行认证[IPv6-AUTH]和加密[IPv6-ESP]而将ICMP的校验
+和
+   字段加以保护，ICMP的校验和就能对这种情况提供防范机制。
+3.	ICMP报文的信息字段或有效载荷可能被改变。对ICMP报文进行认证[IPv6-AUTH]和
+加
+   密[IPv6-ESP]是对这种攻击的一种防范机制。
+4.	通过给先前的恶意的IP包回送，ICMP报文可能被用来试图完成否认服务攻击。正
+确
+   的遵循这个规范的2.4节，f段提到的ICMP错误比率限制机制能够提供防范。
+
+6．参考文献
+   [IPv6]       Deering, S. and R. Hinden, "Internet Protocol, Version
+                6, (IPv6) Specification", RFC 2460, December 1998.
+
+   [IPv6-ADDR]  Hinden, R. and S. Deering, "IP Version 6 Addressing
+                Architecture", RFC 2373, July 1998.
+
+   [IPv6-DISC]  Narten, T., Nordmark, E. and W. Simpson, "Neighbor
+                Discovery for IP Version 6 (IPv6)", RFC 2461, December
+                1998.
+
+   [RFC-792]    Postel, J., "Internet Control Message Protocol", STD 5,
+                RFC 792, September 1981.
+
+   [RFC-1122]   Braden, R., "Requirements for Internet Hosts -
+                Communication Layers", STD 5, RFC 1122, August 1989.
+
+   [PMTU]       McCann, J., Deering, S. and J. Mogul, "Path MTU
+                Discovery for IP version 6", RFC 1981, August 1996.
+
+   [RFC-2119]   Bradner, S., "Key words for use in RFCs to Indicate
+                Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [IPv6-SA]    Kent, S. and R. Atkinson, "Security Architecture for the
+                Internet Protocol", RFC 2401, November 1998.
+
+   [IPv6-Auth]  Kent, S. and R. Atkinson, "IP Authentication Header",
+                RFC 2402, November 1998.
+
+   [IPv6-ESP]   Kent, S. and R. Atkinson, "IP Encapsulating Security
+                Protocol (ESP)", RFC 2406, November 1998.
+
+7．致谢
+这篇文档是从以前SIPP和Ipng工作组的ICMP草稿变化来的。
+Ipng工作组特别是 Robert Elz, Jim Bound, Bill，Simpson, Thomas Narten, Charlie 
+Lynn, Bill Fink, Scott Bradner, Dimitri Haskin, and Bob Hinden （按逻辑顺序）
+提
+供了深入的评论和回馈。
+
+8．作者地址
+    Alex Conta
+    Lucent Technologies Inc.
+    300 Baker Ave, Suite 100
+    USA
+
+    Phone: +1 978 287-2842
+    EMail: aconta@lucent.com
+ 
+    Stephen Deering
+    Cisco Systems, Inc.
+    170 West Tasman Drive
+    San Jose, CA 95134-1706
+    USA
+
+    Phone: +1 408 527-8213
+    EMail: deering@cisco.com
+
+附录A――自RFC 1885以来的改变
+版本2-02
+- 从2.4节 f.2段开始没有提到信息回显。
+- 在“上层通告”段中，将“上层协议”和“用户接口”改为“进程”。
+- 改变了5.2节第二条和第三条，都参考AH认证。
+- 将5.2节有关否认服务攻击的第5条删除。
+- 在“作者地址”节中更新了电话号码和Email地址。
+版本2-01
+- 将所有作为最大ICMP报文长度的“576八位组”改为在基本IPv6规范中定义的“最小
+  IPv6 MTU”。
+- 删除了信息报文中的比率控制。
+- 加入了接收者忽略包过大报文中代码字段的需求。
+- 删除了目的不可达报文中的代码2“不是邻居”。
+- 确定了格式，更新了参考。
+版本2-00
+- 在信息报文中应用了比率控制。
+- 在组管理ICMP报文中删除了2.4节。
+- 删除了对IGMP概述和第一节的参考。
+- 更新了其它IPv6文档的参考。
+- 删除了对RFC_1112概述，第一节，第一节和3.2节中RFC-1119的参考。
+- 加入了安全一节。
+- 加入了附录A――改变。
+
+完整的版权声明
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any kind, 
+   provided that the above copyright notice and this paragraph are included 
+   on all such copies and derivative works.  However, this document itself 
+   may not be modified in any way, such as by removing the copyright notice 
+   or references to the Internet Society or other Internet organizations,
+   except as needed for the purpose of developing Internet standards in which 
+   case the procedures for copyrights defined in the Internet Standards 
+   process must be followed, or as required to translate it into languages
+   other than English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+RFC2463――Internet Control Message                 针对因特网协议第六版(Ipv6)的
+Protocol (ICMPv6)  for the  Internet              因特网控制报文协议(ICMPv6)规范   
+Protocol Version 6 (IPv6) Specification
+
+1
+
+1
+RFC文档中文翻译计划

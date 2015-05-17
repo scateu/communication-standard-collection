@@ -1,0 +1,350 @@
+
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（Guodagang   gdg0188_cn@sina.com）
+译文发布时间：2001-6-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                          M. Rose, Editor
+Request for Comments: 1215             Performance Systems International
+March 1991
+
+为使用SNMP定义Trap的惯例
+（RFC1215 A Convention for Defining Traps for use with the SNMP）
+
+本备忘录的状态：
+    本备忘录建议了一种利用SNMP定义陷阱的正面的方法。读者应该
+注意到在internet标准网络管理框架中使用的陷阱是不可靠的。因此，本备
+忘录仅为信息目的提供建议。建议从事网络管理的经营者使用本文档。没有
+利用陷阱的经营者可以完全忽略本文档。
+    本备忘录提供了一种Internet社区的信息，它并没有规定任何标准。本
+备忘录的发布不受任何限制。
+
+目录
+1．	历史前景。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。1
+2．	定义陷阱。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。2
+2.1制定宏观陷阱种类。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。3
+2.1.1制定企业条款。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。3
+2.1.2制定变量条款。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。4
+2.1.3制定描述条款。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。4
+2.1.4制定参考条款。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。4
+2.1.5制定陷阱类型评估。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。4
+2.2使用举例。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。5
+2.2.1专业企业陷阱。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。5
+2.2.2为使用SNMP的普通陷阱。。。。。。。。。。。。。。。。。。。。。。。。。。5
+3.致谢。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。7
+4.参考。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。9
+5.安全考虑。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。9
+6.作者地址。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。9
+
+1．	历史前景
+ 就如RFC1025中所报告的，为Internet网络管理标准[1]发展做的 IAB 推荐，一个基于
+TCP/IP的网管的双重策略被采纳。  在短期内，在RFC中定义的简单网管协议，被用来管
+理Internet 社区的节点。在长期内，OSI网络管理框架的使用将会通过检验。产生了两份
+文档来定义管理信息：RFC1065，它定义了管理信息结构（SMI），以及RFC1066。定义
+了管理信息基础。设计这两份文档以便于与SNMP和OSI网管框架相协调。
+这个策略在短期内非常成功：在几个月内，通过研究和商业社区，形成了基于Internet
+的网管技术。由此而产生的结果是：一时间 Internet部分社区变为可管理的网络。
+在RFC 1109中报告的，第二Ad Hoc网管审查组[2]的报告，SNMP和OSI网管框架
+比预期的有很大不同。由此，在SMI和MIB之间以及二者共同的和谐性的需求被暂停了。
+这个行动允许了基于SNMP的可操作的网管框架在Internet社区通过MIB-II产生来响应新
+的操作请求。
+1990年5月，核心文档以被建议的身份被提升为标准协议。由此，Internet标准网管
+框架包含：基于TCP/IP internet管理信息的结构和认证，即RFC 1155 [3]，它描述了包含
+在MIB中被管理的对象是如何被定义的；基于TCP/IP internet网管的管理信息基础，即RFC 
+1156 [4]，它描述了包含在MIB中的被管理的对象；简单网管协议，即RFC 1157 [5]，定义
+了用于管理这些对象的协议。
+
+
+  2. 定义陷阱
+由于Internet标准 SMI起初独立于协议的要求，它并没有提供定义陷阱的方法。取而
+代之的是，SNMP定义了一些标准化的陷阱，为企业的管理传送企业专用陷阱提供了一种
+方法。
+然而，随着实验性MIBs的出现，其中有些需要定义实验专用的陷阱，急需一种定义陷阱的
+方便的方法。为此建议使用陷阱类型宏。
+
+ IMPORTS
+              ObjectName
+                  FROM RFC1155-SMI;
+
+          TRAP-TYPE MACRO ::=
+          BEGIN
+              TYPE NOTATION ::= "ENTERPRISE" value
+                                    (enterprise OBJECT IDENTIFIER)
+                                VarPart
+                                DescrPart
+                                ReferPart
+              VALUE NOTATION ::= value (VALUE INTEGER)
+
+              VarPart ::=
+                         "VARIABLES" "{" VarTypes "}"
+                              | empty
+              VarTypes ::=
+                         VarType | VarTypes "," VarType
+              VarType ::=
+                         value (vartype ObjectName)
+
+              DescrPart ::=
+                         "DESCRIPTION" value (description DisplayString)
+                              | empty
+
+              ReferPart ::=
+                         "REFERENCE" value (reference DisplayString)
+                              | empty
+
+          END
+然而必须强调在Internet标准网管框架中，使用陷阱是非常令人失望的。陷阱类型宏是
+用来认可现存的简明的定义，而不是促使定义新的陷阱。
+
+  
+2.1. 制定陷阱宏种类
+   应该注意的是陷阱类型宏的扩张概念上是发生在完成时而不是在运行期间。
+
+2.1.1.  制定企业条款
+企业条款，必须是现有的，定义了企业管理，在其下的注册权限，这个陷阱是定义了的。（关
+于注册权限的授权的讨论，见SMI [3]）。评估被放在SNMP陷阱协议数据单元的企业项内。
+根据惯例，如果企业条款的评估是简单网管协议中的
+对象标志符 ::= { mib-2 11 }
+就象在MIB-II [7]中定义的，sysObjectID 的评估被放在SNMP陷阱协议数据单元的企业项
+内，而不使用此项评估。这提供了一种使用陷阱类型宏来代表现存的SNMP标准陷阱的方
+法；它并没有用来提供定义另外的SNMP标准陷阱的方法。
+2.1.2.  制定变量条款
+    变量条款，不必是现有的，定义了MIB对象的有序的序列，这些对象包含在每个陷阱
+类型的实例中。每个变量按顺序被放置在SNMP陷阱协议数据单元的变量绑定域内。注意
+到在代理的选项中，附加的变量可能在变量绑定域内出现。
+然而，如果企业条款的评估是简单网管协议中的
+对象标志符 ::= { mib-2 11 }
+就象在MIB-II [7]中定义的，那么附加变量的出现不会导致连续的SNMP 消息超过484
+字节。
+
+2.1.3. 制定描述条款
+    描述条款，不必是现有的，包含一个陷阱类型的原文的定义。注意到为了符合ASN.1
+的语法，这个条款的全部评估必须包含在双引号内，尽管这些评估是多线程的。
+    更要注意如果MIB模块其他地方没有包含陷阱的原文描述，描述条款必须是现有的。
+
+2.1.4.  制定参考条款
+    参考条款，不需要是现有的，包含有在其他MIB模块中定义的一个陷阱的原文的相互
+参照，事件，或是警告。当其他一些组织产生出 MIB时，这是非常有用的。
+
+2.1.5.制定陷阱类型评估
+    陷阱类型祷文的评估是整数。企业条款指示的注册权限为陷阱唯一指定这些整数。这项
+评估被放在SNMP陷阱协议数据单元的专用陷阱域内，普通陷阱域被放在“企业专用(6) ”。
+根据惯例 ，如果企业条款的评估是简单网管协议中的
+对象标志符 ::= { mib-2 11 } 
+就象在MIB-II [7]中定义的，那么陷阱类型宏祷文的评估放在SNMP陷阱协议数据单元的普
+通陷阱域内，专用陷阱域放在0.它提供了使用陷阱宏来代表已存的SNMP陷阱的方法；他
+并没有用来提供定义附加标准SNMP陷阱的方法。
+
+2.2.  使用举例
+
+2.2.1. 专用企业陷阱
+   考虑这样一个简单例子：当一个通信连接失败时，发送一个企业专用陷阱
+
+          myEnterprise OBJECT IDENTIFIER ::= { enterprises 9999 }
+
+          myLinkDown TRAP-TYPE
+              ENTERPRISE  myEnterprise
+              VARIABLES   { ifIndex }
+              DESCRIPTION
+                          "一个myLinkDown 陷阱表示发送的
+                          SNMP 请求实体确认了表现在代理配置通信里的一次失败连
+接。"
+              ::= 2
+
+2.2.2.为使用 SNMP的普通陷阱
+
+   考虑标准SNMP陷阱可能会这样定义： 
+          coldStart TRAP-TYPE
+              ENTERPRISE  snmp
+              DESCRIPTION
+                          "一个coldStart陷阱表示发送的协议实体在重新初始化自己这
+样可能会改变代理配置或协议实体。
+
+              ::= 0
+
+          warmStart TRAP-TYPE
+              ENTERPRISE  snmp
+
+              DESCRIPTION
+                          "一个warmStart 陷阱表示发送的协议实体在重新初始化自己
+这样代理配置和协议实体都会改变."
+              ::= 1
+
+          linkDown TRAP-TYPE
+              ENTERPRISE  snmp
+              VARIABLES   { ifIndex }
+              DESCRIPTION
+                          "一个linkDown陷阱表示了发送的协议实体确认了表现在代
+理配置 中通信连接的一次失败."
+              ::= 2
+
+          linkUp TRAP-TYPE
+              ENTERPRISE  snmp
+              VARIABLES   { ifIndex }
+              DESCRIPTION
+                          "一个 linkUp 陷阱表示了发送的协议实体
+认了在代理配置出现时的一个通信连接."
+              ::= 3
+
+          authenticationFailure TRAP-TYPE
+              ENTERPRISE  snmp
+              DESCRIPTION
+                          "一个 authenticationFailure 陷阱表示了发送的协议实体是
+不恰当鉴别协议消息中的地址。当SNMP 的补充协议必须能
+够产生这个陷阱，它同样必须能够压缩这些陷阱的发送通过一
+个特殊执行机制."
+              ::= 4
+
+          egpNeighborLoss TRAP-TYPE
+              ENTERPRISE  snmp
+              VARIABLES   { egpNeighAddr }
+              DESCRIPTION
+                          "一个 egpNeighborLoss 陷阱表示了从发送协议实体的一相
+邻EGP是 一个已经被标记的等同EGP ，现在这个等同的关
+系是不包含在内的."
+              ::= 5
+
+
+3.  致谢
+本文档由SNMP网络工作组产生：
+               Anne Ambler, Spider
+               Karl Auerbach, Sun
+               Fred Baker, ACC
+               Ken Brinkerhoff
+               Ron Broersma, NOSC
+               Jack Brown, US Army
+               Theodore Brunner, Bellcore
+               Jeffrey Buffum, HP
+               John Burress, Wellfleet
+               Jeffrey D. Case, University of Tennessee at Knoxville
+               Chris Chiptasso, Spartacus
+               Paul Ciarfella, DEC
+               Bob Collet
+               John Cook, Chipcom
+               Tracy Cox, Bellcore
+               James R. Davin, MIT-LCS
+               Eric Decker, cisco
+               Kurt Dobbins, Cabletron
+               Nadya El-Afandi, Network Systems
+               Gary Ellis, HP
+               Fred Engle
+               Mike Erlinger
+               Mark S. Fedor, PSI
+               Richard Fox, Synoptics
+               Karen Frisa, CMU
+               Chris Gunner, DEC
+               Fred Harris, University of Tennessee at Knoxville
+               Ken Hibbard, Xylogics
+               Ole Jacobsen, Interop
+               Ken Jones
+               Satish Joshi, Synoptics
+               Frank Kastenholz, Racal-Interlan
+               Shimshon Kaufman, Spartacus
+               Ken Key, University of Tennessee at Knoxville
+
+               Jim Kinder, Fibercom
+               Alex Koifman, BBN
+               Christopher Kolb, PSI
+               Cheryl Krupczak, NCR
+               Paul Langille, DEC
+               Peter Lin, Vitalink
+               John Lunny, TWG
+               Carl Malamud
+               Randy Mayhew, University of Tennessee at Knoxville
+               Keith McCloghrie, Hughes LAN Systems
+               Donna McMaster, David Systems
+               Lynn Monsanto, Sun
+               Dave Perkins, 3COM
+               Jim Reinstedler, Ungerman Bass
+               Anil Rijsinghani, DEC
+               Kathy Rinehart, Arnold AFB
+               Kary Robertson
+               Marshall T. Rose, PSI (chair)
+               L. Michael Sabo, NCSC
+               Jon Saperia, DEC
+               Greg Satz, cisco
+               Martin Schoffstall, PSI
+               John Seligson
+               Steve Sherry, Xyplex
+               Fei Shu, NEC
+               Sam Sjogren, TGV
+               Mark Sleeper, Sparta
+               Lance Sprung
+               Mike St.Johns
+               Bob Stewart, Xyplex
+               Emil Sturniold
+               Kaj Tesink, Bellcore
+               Dean Throop, Data General
+               Bill Townsend, Xylogics
+               Maurice Turcotte, Racal-Milgo
+               Kannan Varadhou
+               Sudhanshu Verma, HP
+               Bill Versteeg, Network Research Corporation
+               Warren Vik, Interactive Systems
+               David Waitzman, BBN
+               Steve Waldbusser, CMU
+               Dan Wintringhan
+               David Wood
+               Wengyik Yeong, PSI
+               Jeff Young, Cray Research
+
+4.  参考
+
+   [1] Cerf, V., "IAB Recommendations for the Development of Internet
+       Network Management Standards", RFC 1052, NRI, April 1988.
+
+   [2] Cerf, V., "Report of the Second Ad Hoc Network Management Review
+       Group", RFC 1109, NRI, August 1989.
+
+   [3] Rose M., and K. McCloghrie, "Structure and Identification of
+       Management Information for TCP/IP-based internets", RFC 1155,
+       Performance Systems International, Hughes LAN Systems, May 1990.
+
+   [4] McCloghrie K., and M. Rose, "Management Information Base for
+       Network Management of TCP/IP-based internets", RFC 1156, Hughes
+       LAN Systems, Performance Systems International, May 1990.
+
+   [5] Case, J., Fedor, M., Schoffstall, M., and J. Davin, "Simple
+       Network Management Protocol", RFC 1157, SNMP Research,
+       Performance Systems International, Performance Systems
+       International, MIT Laboratory for Computer Science, May 1990.
+
+   [6] Information processing systems - Open Systems Interconnection -
+       Specification of Abstract Syntax Notation One (ASN.1),
+       International Organization for Standardization International
+       Standard 8824, December 1987.
+
+   [7] Rose M., Editor, "Management Information Base for Network
+       Management of TCP/IP-based internets: MIB-II", RFC 1213,
+       Performance Systems International, March 1991.
+
+5.  安全考虑
+本备忘录中没有考虑安全问题。
+
+6.  作者地址
+
+   Marshall T. Rose
+   Performance Systems International
+   5201 Great America Parkway
+   Suite 3106
+   Santa Clara, CA  95054
+
+   Phone: +1 408 562 6222
+
+   EMail: mrose@psi.com
+   X.500:  rose, psi, us
+
+
+ 
+
+
+ 
+
+RFC1215 A Convention for Defining Traps for use with the SNMP     为使用SNMP定义Trap的惯例
+
+
+1
+

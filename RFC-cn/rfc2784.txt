@@ -1,0 +1,276 @@
+组织：中国互动出现网 (http://www.china-pub.com/)
+  RFC文档中文翻译计划 (http://www.china-pub.com/computers/emook/aboutemook.htm)
+  E-mail: ouyang@china-pub.com
+译者： hlq (hlq   hlq@mail.ndsc.com.cn )
+译文发布时间：
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                    D. Farinacci
+Request for Comments: 2784                                      T. Li
+Category: Standards Track                            Procket Networks
+                                                             S. Hanks
+                                                 Enron Communications
+                                                             D. Meyer
+                                                        Cisco Systems
+                                                            P. Traina
+                                                     Juniper Networks
+                                                           March 2000
+
+
+通用路由封装
+Generic Routing Encapsulation (GRE)
+
+本文档的现状
+
+   本文当描述了一种供Internet协会采用的Internet标准跟踪协议，尚需对之进行讨论并提出建议以待改进。本协议的标准化进程请参考最新版的“Internet正式协议标准”（STD 1）。本文档可以无限制的分发。
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+   本文档描述了一种协议，以在任一种网络层协议之上封装其它任一种网络层协议。
+
+1.  简介
+    在一种协议上封装另一种协议，当前有几种不同的建议（RFC1234, RFC1226）。出于策略方面的考虑，提出了其他形式的封装（RFC1241, RFC1479）以在IP上传输IP。本文档描述的协议与上述协议相似，但更具通用性。为力图更通用，很多协议相关的细微差别被忽略掉了。这样做的结果是本协议对于某个已经描述的特定的“X over Y”封装的情形可能不太合适。本协议试图提供一种简单、通用的封装机制来把封装的问题从其现在的大小（n^2）降低到另一个更容易控制的大小。本文档故意不讨论何时应该对数据包进行封装的问题，本文档承认但不讨论相互封装（RFC 1326）的问题.
+
+
+   在最通常的情况下，系统有一个数据包需要被封装并传送到某个目的地。我们称该数据包为净载数据包（payload packet）。净载数据包首先被封装在一个GRE数据包中。所得的GRE数据包可以封装在另一种协议中，然后被转发。我们称外层协议为传输协议（delivery protocol）。处理该数据包的算法我们在后面讨论。
+
+   最后，本文档描述了多个厂商当前使用的GRE的交集。
+
+   关键词“必须”,“不允许”，“可能”,“可选”，“必要的”,“推荐”,“应该”，“要求”，“不得”,“应该”,“不应该”，按RFC 2119 的定义进行解释。
+
+2. GRE封装后数据包的结构
+
+   封装后一个GRE数据包的格式如下：
+
+    ---------------------------------
+    |                               |
+    |       Delivery Header         |
+    |                               |
+    ---------------------------------
+    |                               |
+    |       GRE Header              |
+    |                               |
+    ---------------------------------
+    |                               |
+    |       Payload packet          |
+    |                               |
+    ---------------------------------
+
+   本文档主要关心的是GRE头部的结构，但是也对围绕IPv4净载的问题给于一些特别的考虑。
+
+2.1. GRE头部
+
+   GRE数据包的头部格式如下:
+
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |C|       Reserved0       | Ver |         Protocol Type         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |      Checksum (optional)      |       Reserved1 (Optional)    |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+2.2. Checksum Present (bit 0)
+
+   如果Checksum Present位置为1,那么Checksum和Reserved1域都出现并且Checksum域包含有效信息。注意一个compliant实现必须接受并处理该域。
+
+2.3. Reserved0 (bits 1-12)
+
+   接收者必须丢弃1-5比特中任一位为非0的数据包，除非接收者使用RFC 1701。比特6-12保留以备后用，这些比特位必须按0发送，并且在接收时必须忽略掉。
+
+2.3.1. Version Number (bits 13-15)
+
+   Version Number域必须包含值0。
+
+2.4. Protocol Type (2 octets)
+
+   Protocol Type域包含净载数据包的协议类型。这些协议在RFC 1700中定义为“ETHERT TYPES”，可在参考文献[ETYPES]的网址上得到。应用程序如果接收到一个包含未列于RFC 1700中的协议类型的数据包应该丢弃该数据包。
+
+2.5. Checksum (2 octets)
+
+   Checksum域包含了GRE头部和净载数据包所有的16位字（word）的IP（one's complement）检验和。为了计算检验和，checksum域的值为0。该域仅在Checksum Present位为1时出现。
+2.6. Reserved1 (2 octets)
+
+   Reserved1域保留以待将来使用。如果出现，传输时必须为0。Reserved1域仅在Checksum域出现时出现(也就是说,Checksum Present为置为1)。
+
+3. IPv4作为净载
+
+   当IPv4作为GRE的净载时,Protocol Type域必须置为0x800。
+
+3.1. 转发拆封后的IPv4净载数据报文
+
+   当Ipv4数据报文作为GRE数据报的净载时，隧道端点在拆封该GRE数据报文时,IPv4净载报文头部的目的地址必须用来转发该数据报文，同时净载报文的TTL必须递减。 在转发这样的数据报文时应该注意，因为如果净载报文的目的地址正好是该GRE报文的拆封者时 (即,隧道的另一端),可能出现环路。这种情形下，数据报文必须丢弃。
+
+4. IPv4作为交付协议
+
+   当GRE数据报文封装于IPv4数据报文中时，使用IPv4协议号47 [参考RFC1700]。关于在IPv4网络上传输数据报文的要求参见[RFC1122]。
+
+5. 与符合RFC 1701的应用的互操作
+
+   在RFC 1701中, 本文描述为Reserved0的域 包含几个标志位，本规范不赞成使用这些比特。特别是,Routing Present位,Key Present位,Sequence Number Present位,以及Strict
+ Source Route位，以及Recursion  Control域已经不适用。因而,GRE 头部将不再包含RFC1701中定义的Key, Sequence Number以及Routing域。
+
+   但是，有一些现存的RFC 1701的应用，下面的章节将描述与这些应用的正确的互操作。
+
+5.1. 符合RFC 1701的接收方
+
+   遵循本规范的应用在传输时将把Reserved0域置为0。符合RFC 1701的接收方将把该域理解为Routing Present, Key Present, Sequence  Number Present,以及Strict Source Route等各个比特位都设置为0,将不再期望RFC 1701中的Key, Sequence Number或者 Routing域出现。
+
+5.2. 符合RFC 1701的发送方
+
+   RFC 1701的发送方可以设置Routing Present, Key  Present, Sequence Number Present, 以及Strict Source Route等各比特位中的任意一位，从而可以在GRE头中传输RFC 1701 Key, Sequence Number或Routing等各域。正如5.3所述,包含1-5比特中任意非零值的数据报文必须丢弃除非接收方使用RFC 1701。
+
+Farinacci, et al.           Standards Track                     [Page 4]
+
+RFC 2784             Generic Routing Encapsulation            March 2000
+
+
+6. 安全方面的考虑
+
+   使用GRE的网络的安全应该类似于普通IPv4网络中的安全,就像GRE的路由与IPv4内部使用的路由一样。路由器过滤将保持不变，但是数据报的过滤要求防火墙观察GRE内部报文，或者过滤在GRE隧道的两端进行。在那些环境中，这被认为是一个安全问题，因此隧道终止于防火墙可能较为合理。
+
+7. IANA方面的考虑
+
+   本章考虑另外的GRE版本号和协议类型的赋值问题。
+
+7.1.  GRE版本号
+
+   本文当指定GRE版本号为0。GRE版本号1用于PPTP [参见RFC2637].其他的GRE版本号由IETF Consensus指定，在RFC 2434 [RFC2434]中定义。
+
+7.2.协议类型
+   GRE的Protocol Type使用ETHER Type。新的ETHER TYPES由Xerox Systems Institute 指定[参见RFC1700]。
+
+8.致谢
+
+   本文档由RFC1701和RFC1702作者最初的思想派生而来。Hitoshi Asaeda, Scott Bradner, Randy Bush,Brian Carpenter, Bill Fenner, Andy Malis, Thomas Narten, Dave Thaler,   Tim Gleeson以及其他人提供了很多建设性的富有见解的评论。
+9. 附录――已知的问题
+
+   本文档定义了当前使用的GRE实现。即便如此，它并没有试图论述下面这些已知问题：
+
+   o 路径MTU发现(PMTU) 的交互[RFC1191]
+
+     现存的GRE实现,当使用IPv4作为传输头部时,没有实现路径MTU发现，没有在传输头部设置Don't Fragment比特位。这可能引起大的数据报文在隧道内部被分片而在隧道出口点被重组(与净载数据报文是否 使用PMTU无关)。如果隧道入口点试图使用路径MTU发现,隧道的入口点将需要把ICMP不可达错误消息(特别是"fragmentation needed and DF set" 错误)中继给数据报文的始发者, 这在本规范中并不要求。无法正确的中继路径MTU信息给始发者可能导致下面的行为：始发者设置don't fragment比特位,数据报文在隧道内丢失，但是，因为始发者没有接收到反馈,它使用相同的PMTU重发,导致随后发送的数据报文丢失。
+
+   o IPv6作为传输与/或净载协议
+
+     本规范描述多个厂家当前实施的GRE的交集。IPv6作为传输与/或净载协议在当前实现版本的GRE中并没有包含。
+
+   o 与ICMP的交互
+
+   o 与区分服务（Differentiated Services）结构的交互
+
+   o 多次封装和环回封装
+
+10. 参考文献
+
+   [ETYPES]  ftp://ftp.isi.edu/in-notes/iana/assignments/ethernet-
+             numbers
+
+   [RFC1122] Braden, R., "Internet主机通信层的要求", STD 3, RFC 1122, October 1989.
+
+   [RFC1191] Mogul, J. and S. Deering, "路径MTU发现", RFC 1191,
+             November 1990.
+
+   [RFC1226] Kantor, B., "AX.25帧的IP封装", RFC 1226, May 1991.
+
+   [RFC1234] Provan, D., "通过IP网络使用IPX隧道", RFC 1234, June 1991.
+
+   [RFC1241] Woodburn, R. and D. Mills, "一个Internet封装协议方案:版本1", RFC 1241, July 1991.
+
+   [RFC1326] Tsuchiya, P., "相互封装被认定为危险的", RFC 1326, May 1992.
+
+   [RFC1479] Steenstrup, M., "域间策略路由协议规范:版本", RFC 1479, July 1993.
+
+   [RFC1700] Reynolds, J. and J. Postel, "已赋值数字", STD 2, RFC 1700, October 1994.
+
+   [RFC1701] Hanks, S., Li, T., Farinacci, D. and P. Traina, "通用路由封装", RFC 1701, October 1994.
+
+   [RFC1702] Hanks, S., Li, T., Farinacci, D. and P. Traina, "IPv4网络上的GRE", RFC 1702,     October 1994.
+
+   [RFC2119] Bradner, S., "在RFC中用于表明要求级别的关键字", BCP 14, RFC 2119, March, 1997.
+
+   [RFC2408] Maughan, D., Schertler, M., Schneider, M. and J.  Turner,
+             "Internet安全协定和密钥管理协议(ISAKMP)", RFC 2408, November 1998.
+
+   [RFC2434] Narten, T. and H. Alvestrand, "在RFC中写IANA方面的考虑一节的向导", BCP 26, RFC 2434,     October, 1998.
+
+   [RFC2637] Hamzeh, K., et al., "点到点隧道协议(PPTP)", RFC 2637, July, 1999.
+
+11.作者地址
+
+   Dino Farinacci
+   Procket Networks
+   3850 No. First St., Ste. C
+   San Jose, CA 95134
+
+   EMail: dino@procket.com
+
+
+   Tony Li
+   Procket Networks
+   3850 No. First St., Ste. C
+   San Jose, CA 95134
+
+   Phone: +1 408 954 7903
+   Fax:   +1 408 987 6166
+   EMail: tony1@home.net
+
+
+   Stan Hanks
+   Enron Communications
+
+   EMail: stan_hanks@enron.net
+
+
+   David Meyer
+   Cisco Systems, Inc.
+   170 Tasman Drive
+   San Jose, CA, 95134
+
+   EMail: dmm@cisco.com
+
+
+   Paul Traina
+   Juniper Networks
+   EMail: pst@juniper.net
+
+
+
+12.  完整的版权通告
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+RFC 2784  Generic Routing Encapsulation (GRE)
+通用路由封装
+

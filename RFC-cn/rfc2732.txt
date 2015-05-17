@@ -1,0 +1,197 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王治恒（cata_xu   amethyst@theory.issp.ac.cn）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                        R. Hinden
+Request for Comments: 2732                                       Nokia
+Category: Standards Track                                 B. Carpenter
+                                                                   IBM
+                                                           L. Masinter
+                                                                  AT&T
+                                                         December 1999
+
+               
+文本IPv6地址在URL上的格式
+(rfc2732--Format for Literal IPv6 Addresses in URL's)
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标
+准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1999). All Rights Reserved.
+
+摘要
+本文档定义了在WWW浏览器的URL中执行的文本IPv6地址的格式。在包括Microsoft的
+IE，Mozilla和Lynx等几个已经被广泛安装使用的浏览器的IPv6版本中，这种格式已
+经被使用。并且这种格式也将被应用于服务定位协议的IPv6版本中。
+本文档包括了一个对在RFC 2396 [URL]被定义的统一资源标识符中的一般性语法的
+更新。为了这个预定目标，本文档明确定义了IPv6地址的语法规则并允许在统一资源
+标识符中使用“[”和“]”符号。
+
+目录
+1. 介绍	
+1.1 要求
+2. URL语法中的IPv6地址文本格式
+3. 对RFC 2396的修改
+4. 安全考虑
+5. IANA的考虑
+参考
+作者的地址
+版权声明
+致谢
+
+1. 介绍
+
+在[ARCH]中定义的文本IPv6地址的原文表述不能直接和URL的表述方法相适应。尽管
+两者都使用符号“：”和“.”作为分隔符。本文档定义了在WWW浏览器的URL中执行
+的文本IPv6地址的格式。其目的就是为了得到一种格式，能够很容易的使用剪切和
+粘贴操作以使文本地址编辑操作达到最少。
+在包括Microsoft的IE，Mozilla和Lynx等几个已经被广泛安装使用的浏览器的IPv6
+版本中，这种格式已经被使用。并且这种格式也将被应用于服务定位协议的IPv6版本
+中。
+
+1.1 要求
+
+如果本文档中任何地方出现关键词 MUST，MUST NOT，REQUIRED，SHALL， SHALL 
+NOT， SHOULD， SHOULD NOT， RECOMMENDED， MAY，以及OPTIONAL，都将和它们
+在[KEYWORDS]中的定义一致。
+WWW浏览器‘SHOULD’（应当）在URL中使用本文档定义的IPv6文本格式。其它一些
+使用URL的应用和协议‘MAY’（可以）用这种格式。
+
+2. URL语法中的IPv6地址文本格式
+
+为了在一个URL中使用一文本IPv6地址，文本地址应该用符号“[”和“]”来封闭。
+例如下列文本IPv6地址：
+      FEDC:BA98:7654:3210:FEDC:BA98:7654:3210
+      1080:0:0:0:8:800:200C:4171
+      3ffe:2a00:100:7031::1
+      1080::8:800:200C:417A
+      ::192.9.5.5
+      ::FFFF:129.144.52.38
+      2010:836B:4179::836B:4179
+就应该写做下列URL示例：
+      http://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]:80/index.html
+      http://[1080:0:0:0:8:800:200C:417A]/index.html
+      http://[3ffe:2a00:100:7031::1]
+      http://[1080::8:800:200C:417A]/foo
+      http://[::192.9.5.5]/ipng
+      http://[::FFFF:129.144.52.38]:80/index.html
+      http://[2010:836B:4179::836B:4179]
+
+3. 对RFC 2396的修改
+
+本文档包括了一个对在RFC 2396 [URL]被定义的统一资源标识符中的一般性语法的
+更新。为了这个预定目标，本文档明确定义了IPv6地址的语法规则并允许在统一资源
+标识符中使用“[”和“]”符号。
+
+对RFC 2396中语法的一些改变如下：
+(1) 在‘主机（host）’末端增加一节IPv6项 ：
+      主机         = 主机名 | IPv4地址 | IPv6参考地址
+      ipv6参考地址 = "[" IPv地址 "]"
+这里的IPv6地址和RFC2373 [ARCH]中定义的一致。
+(2)由于RFC 2373中“IPv4地址”的定义更清晰的说明了IPv4地址是由每节最多三个
+十进制数组成的，所以用这个定义来替换RFC 2396中的定义。
+(3)在’设定‘符号组中增加“[”和“]”：
+    设定（reserved）=";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" |
+                    "$" | "," | "[" | "]"
+   并且把它们从’非合理‘符号组中去掉：
+    非合理（unwise）= "{" | "}" | "|" | "\" | "^" | "`"
+
+4. 安全考虑
+
+这种在URL中使用文本IPv6地址的表述方法的应用不会引起任何新的已知安全问题。
+
+5. IANA的考虑
+
+   （空）
+
+参考
+
+   [ARCH]     Hinden, R. and  S. Deering, "IP Version 6 Addressing
+              Architecture", RFC 2373, July 1998.
+
+   [STD-PROC] Bradner, S., The Internet Standards Process -- Revision 3,
+              BCP 9, RFC 2026, October 1996.
+
+   [URL]      Fielding, R., Masinter, L. and T. Berners-Lee, "Uniform
+              Resource Identifiers: Generic Syntax", RFC 2396, August
+              1998.
+
+作者的地址
+
+   Robert M. Hinden
+   Nokia
+   313 Fairchild Drive
+   Mountain View, CA 94043
+   USA
+
+   Phone: +1 650 625 2004
+   EMail: hinden@iprg.nokia.com
+   Web: http://www.iprg.nokia.com/~hinden
+
+   Brian E. Carpenter
+   IBM
+   iCAIR, Suite 150
+   1890 Maple Avenue
+   Evanston IL 60201
+   USA
+
+   EMail: brian@icair.org
+
+   Larry Masinter
+   AT&T Labs
+   75 Willow Road
+   Menlo Park, CA 94025
+
+   EMail: LMM@acm.org
+   Web: http://larry.masinter.net
+
+版权申明
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+    
+
+
+
+
+rfc2732--Format for Literal IPv6 Addresses in URL's          文本IPv6地址在URL上的格式
+
+
+1
+RFC文档中文翻译计划

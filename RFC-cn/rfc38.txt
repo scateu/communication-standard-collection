@@ -1,0 +1,47 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang   mcsewang@21cn.com）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group										  Stephen M. Wolfe
+RFC-38																  UCLA CCN
+																 20 March 1970
+
+
+NWG/RFC #36 网络协议的注解
+（RFC38 Comments on Network Protocol from NWG/RFC #36）
+
+	推荐的协议没有考虑到链路上可能存在的多路传输连接。
+	一般来说，这不会有什么问题，但将来可能会导致线路负载受到限制。在同一条链路上
+路由多路传输连接的两种情况是显而易见的：
+
+a）	一种情况是当一个用户拥有若干个高速连接，比如通过网络传输文件的进程之间的
+连接，将这些连接分配给同一条线路将限制该用户所能使用的网络资源的比率。当
+网络利用若干个“存储──连接”IMP进程来影响通信时，这就显得尤其重要了。
+b）	另一种情况是当两个主机每个都拥有自己独立的网络，而又希望可以通过ARPA网
+来获取对其他主机所在网络的访问权限，链路的缺陷将显得更明显。将若干个连接
+分配给同一条链路的方法将再次帮助解决此问题。
+
+协议中的下述改变将使得未来对于多路传输链路的应用成为可能。这时不必将多路传输
+自身加入到协议中去。
+
+a）	END和RDY字段必须在连接号码中再指定有关的套接字，只需指定本地套接口名字。
+b）	由RSM和SPD命令引出一些问题。它们是对整个网络而言的还是只针对某个给定的
+连接？既然已经有一条建议用来改变RFNM以使之适应这些命令，那么也许加入另
+一组命令来维护连接的通断会更好，但是我并不认为那是最好的解决方法。
+c）	目标套接字必须加到数据链路的每条消息的报头。可能是由紧跟在报头后面，位于
+标记前的32个位组成。
+
+
+
+[ This RFC was put into machine readable form for entry ]
+[ into the online RFC archives by Karl Reinsch 1/97 ]
+
+RFC38 Comments on Network Protocol from NWG/RFC #36   NWG/RFC#36网络协议的注解
+
+
+1
+RFC文档中文翻译计划

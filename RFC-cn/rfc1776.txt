@@ -1,0 +1,44 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：boniter（boniter   boniter@etang.com）
+译文发布时间：2001-12-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         S. Crocker
+Request for Comments: 1776                               CyberCash, Inc.
+Category: Informational                                     1 April 1995
+地址是信息
+（RFC1776――The Address is the Message）
+本备忘录的状态
+    此备忘录为Internet社会提供信息。此备忘录并不定义任何一种Internet标准。此备
+忘录的发布是无限的。
+讨论
+    声明地址是信息，IPng WG已经选择了一个数据包格式，它包含了1696个地址空间。
+这个长度是53的倍数，并且与ATM体系机构完全兼容。注意这不是你所知道的什么，而是
+你知道的人，IPng集中注意于选择一个地址方案，使得当分配实际上必须说的不相关的企
+业一般管理费用时，有可能与每一个人对话。
+    安全专家对此认为是一个主要的突破。信息包中没有留下内容，所有机密性和完整性的
+问题都是没有实际意义的。智能和法律实施的代理立即重新考虑他们对于谁在与谁对话的努
+力，并且默默地感激他们在关键契约，输出控制和相关事件上能避免于分裂的公众争论。
+    尽管IPng WG声明了对每一个人应该有足够多的地址空间，但是服务供应商立即开始了
+保留一部分地址空间的竞争。
+安全考虑
+    此备忘录不讨论安全问题。
+作者地址
+   Steve Crocker
+   CyberCash, Inc.
+   2086 Hunters Crest Way
+   Vienna, VA 22181
+
+   Phone: +1 703 620 1222
+   EMail: crocker@cybercash.com
+RFC1776――The Address is the Message                             地址是信息
+
+
+1
+RFC文档中文翻译计划

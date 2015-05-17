@@ -1,0 +1,464 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：顾国飞（ggfei,ggfei@263.net）
+译文发布时间：2001-4-20
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                            M. Rose
+Request for Comments:  1155            Performance Systems International
+Obsoletes:  RFC 1065                                       K. McCloghrie
+                                                      Hughes LAN Systems
+                                                                May 1990
+基于TCP/IP网络的管理结构和标记
+(RFC1155 Structure and Identification of Management Information for TCP/IP-based Internets)
+
+目录
+1．本文档的状态	2
+2. 介绍	2
+3. 管理信息的结构和标记	3
+3.1 名字	3
+3.1.1. 目录	4
+3.1.2. Mgmt	4
+3.1.3. Experimental	4
+3.2. 语法	5
+3.2.1. 原始类型	5
+3.2.1.1.  枚举整数的指导方针	5
+3.2.2. 构造类型	5
+3.2.3. 定义的类型	5
+3.2.3.1. NetworkAddress	6
+3.2.3.2. IpAddress	6
+3.2.3.3. Counter	6
+3.2.3.4. Gauge	6
+3.2.3.5. TimeTicks	6
+3.2.3.6. Opaque	6
+3.3. 编码	6
+4. 管理对象	7
+4.1. 对象名	7
+4.2. 对象类型和实例	7
+4.3. 管理对象宏	9
+5. MIB扩展	10
+6. 定义	11
+7．感谢	14
+8.  参考	15
+9．安全的考虑：	16
+10．作者地址：	16
+
+1．本文档的状态
+本RFC是RFC1065的改进，同时修正了一些印刷上的错误，技术内容并未作改变。
+本文档提供了基于TCP/IP网络的管理结构和标记的普通定义。特别的，除了描述了管理信息库和网络管理协议，本文档还提供了一种简单、可行的架构和系统来管理基于TCP/IP的网络，特别是INTERNET。
+因特网活动组织建议所有的IP和TCP实现应该是可网络管理的。这意味着要实现因特网管理信息库MIB(RFC-1156)和SNMP(RFC1157)或CMOT(RFC1095)这两种建议的管理协议中至少一种。值得一说的是，现在SNMP已经是完全的INTERNET标准，而CMOT还是个草案。可以从Host and Gateway Requirements RFCs中获得该标准得更多的信息。
+请参考最新版的“Internet正式协议标准”来获得本协议的标准化程度和状态。
+本文档的发布不受任何限制。
+2. 介绍
+本文描述的是用于管理TCP/IP网络的一般结构和方法，网络管理的对象信息模型和一系列用来描述管理信息的普通类。结构的正式描述使用了抽象语法描述(ASN.1)。
+本文不说明具体的解决方法，也不是什么协议和数据结构，如果需要这方面的内容请参阅SNMP和MIB的说明。
+在IEEE中有文章是关于Internet管理结构和方法的，本文基本上来自于这篇文章，但在以下几方面有所不同：那篇文章主要说明OSI类型网络的管理，对于SNMP并不适用。
+本文要达到两个目标：简单性和可扩展性，虽然网络管理的研究已经开展了许多年，但是对这方面问题的理解的深度和广度不见得有多好。通过给出一个通用的SMI，可以为未来的发展打好一个基础。
+3. 管理信息的结构和标记
+管理对象通过虚拟信息存储访问，我们称这一结构为管理信息库或MIB。MIB中的对象以ASN.1定义。
+每个对象有自己的名字，语法和编码。名字就象对象标记，它是一个管理管理用的名字。
+对象类型的请求定义了和对象类型相一致的抽象数据结构。虽然这可以通过ASN.1进行定义，但在本文中还是加以了限制。这种限制是为了定义的结果更为一般。
+对象类型的编码说明对象类型的实例如何通过对象的类型语法表示。通常将对象的语法和编码通过对象的定义进行连结，这也是对象在网络上传输的形式。
+至于定义MIB或管理协议，这不是本文的工作，本文只是通过一个纲领性的说明陈述一般性的原则。当然，在有些时候，定义也加以了限制，这是为某种特定的管理而加的，在具体实现时可以不用管这些限制。
+3.1 名字
+名字用于标记管理对象。对象标记概念用于进行定义。无论对象是什么语义，对象标记是确定某些对象的方法。对象标记是根据全局树而来的整数串。这个树和一些标记过的结点相连。每个结点还有子结点。我们对对象标记的理解应该是建立在对这个全局树进行遍历的基础上的。一个标记就是一个简单的文本描述和一个整数。
+根结点不标记，它至少要有三个子结点，一个子结点由国际标准化组织管理，标记为iso(1)；另一个由CCITT管理，标记为ccitt(0)；第三个由两者共同管理，标记为：joint-iso-ccitt(2)。
+在iso(0)下，ISO有一个子树用于其它国际组织，org(3)，对于子结点来说，两个留给美国国家标准和技术局，另一个由NIST转给美国国防部，dod(6)。
+就本文来说，DoD未指明它如何管理自己的对象标记子树。本文假设DoD将给Internet分一个区，它由IAB由下面的方式管理：
+internet OBJECT IDENTIFIER ::= { iso org(3) dod(6) 1 }
+也就是说，对象标记的Internet子树以1.3.6.1开始。本文作为IAB同意的标准，说明管理对象标记子树的策略。开始时，四个结点是这样的：
+directory OBJECT IDENTIFIER ::= { internet 1 }
+mgmt OBJECT IDENTIFIER ::= { internet 2 }
+experimental OBJECT IDENTIFIER ::= { internet 3 }
+private OBJECT IDENTIFIER ::= { internet 4 }
+3.1.1. 目录
+directory(1)子树留作以后OSI目录如何被用作Internet目录。
+3.1.2. Mgmt
+mgmt(2)子树用于标记定义在IAB文件中的对象。例如，如果定义初始Internet标准MIB的RFC被指定为管理文档号1，此RFC可以被用作对象标记：{ mgmt 1 }或1.3.6.1.2.1来定义Internet标准的MIB。本文的后半部分将定义新的MIB标准。
+3.1.3. Experimental
+experimental(3)子树定义用于Internet实验的对象。例如实验者可能接收到定义号17，那可用的对象标记就是：{ experimental 17 }或1.3.6.1.3.17。IANA对如何使用此子树提出要求。
+3.1.4. Private
+private(4)子树用于定义其它对象。此子树最初只有一个孩子：
+enterprises OBJECT IDENTIFIER ::= { private 1 }
+使用enterprises(1)时可以允许提供网络子系统的机构来注册它们产品的模型。
+在接收到子树时，一个企业可以在子树中定义新的MIB对象。而且此企业也应该在此子树下注册它的网络子系统，这样可以在管理协议中进行有效地管理。例如，如果"Flintstones, Inc."生产网络子系统，它会要求一个在企业子树下的结点，这样的结点可能进行如下编号：
+1.3.6.1.4.1.42，它可能在此下面注册它自己的路由器为：1.3.6.1.4.1.42.1.1
+3.2. 语法
+语法是根据对象类型定义对象结构，定义时使用ASN.1，但ASN.1中的一些通用化需要加以限制。
+在ASN.1中ObjectSyntax定义可用于不同对象类型的语法。
+3.2.1. 原始类型
+ASN.1中的原始类型包括INTEGER，OCTET STRING，OBJECT IDENTIFIER和NULL。
+3.2.1.1.  枚举整数的指导方针
+如枚举整数列为一个对象类型，拥有值0的命名号不应该出现在枚举列表中，而且不能使用此值。
+  
+3.2.2. 构造类型
+ASN.1中的SEQUENCE可用，使用它可以建立对于列或表。
+对于列，语法如下：SEQUENCE { <type1>, ..., <typeN> }
+其中<type>是原始类型。
+对于表，语法如下：SEQUENCE OF <entry>
+其中<entry>指向列。
+3.2.3. 定义的类型
+允许在一个新应用产品的范围内定义新类型，新类型必须能够分解为基本类型，列，表或其它新类型。
+3.2.3.1. NetworkAddress
+此类型代表多个可能的协议族中的一个地址格式。当前只有只允许Internet协议族。
+3.2.3.2. IpAddress
+这种定义的类型代表32位的IP地址，它表示为长度为4的字符串。在ASN.1类型使用ASN.基本编码规则进行编码时，只能使用原始编码形式。
+3.2.3.3. Counter
+这种定义的类型代表一个非负整数，它只能增加，直到最大值。当达到最大值后，它会返回0重新开始。本文指定它的最大值为2^32-1，也就是4294967295。
+3.2.3.4. Gauge
+此类型代表一个非负整数，它可以可以增加或减少，但在最大值时停止。本文指定它的值为2^32-1，也就是4294967295。
+3.2.3.5. TimeTicks
+此类型为非负整数，用于记录从一时间点起经过了多少个百分之一秒的时间。
+3.2.3.6. Opaque
+此类型支持对ASN.1语法进行扩充的能力。只类型只要求接收方能够对数据进行解密，并没有要求接收方一定要理解其内容。
+3.3. 编码
+在对象类型的实例实编码以后，它的值可以将ASN.1的基本编码规则用于对象类型的语法而进行传输。
+4. 管理对象
+本文不定义MIB对象，但本文指定一种可被其它文章使用的的格式。一个对象定义通常包括下面五个域： 
+* OBJECT:是一个字符串名，它叫OBJECT DESCRIPTOR，它指定对象类型，这个类型和OBJECT IDENTIFIER相对应。 
+* 语法：对象类型的抽象语法。它必须可以解析到ASN.1类型ObjectSyntax的一个实例上。 
+* 定义：对对象类型语义的文本描述。实现中必须保证对象的实例满足这个定义，因为这个MIB是用于多厂商环境中的，要照顾到它们的情况。对象在不同的机器上有相同的意义是很重要的。 
+* 访问：取只读，读写，只写或不能访问这四个值。 
+* 状态：强制（mandatory），可选（optional）或过时的（obsolete）。 
+以后的文档中可能会定义其它域。
+4.1. 对象名
+在Internet标准中的MIB中的对象名中不能有0，此值留作扩展。每个和对象类型相对应的OBJECT DESCRIPTOR应该有独一无二的，可记忆和打印的字符串名。这对于人们的阅读和开发对象用户接口的表机制很有好处。
+4.2. 对象类型和实例
+一个对象类型就是一类可管理的对象的定义，而对象实例就是一个对象类型的实例，而这个实例已经有值了。例如，路由表入口的定义在MIB中已有定义，这个定义和一个对象类型相关，给定路由表的单个入口中的那个存在一会儿的值就是对象类型的实例。
+MIB中定义了许多对象类型，每个类型通过OBJECT IDENTIFIER标记，同时也有一个文本名，称为OBJECT DESCRIPTOR。这标明MIB中的数据如果被访问是由特定协议决定的，而不在MIB中规定。
+一个对象类型可以定义在MIB中，这样一个对象类型的实例可以代表一些信息的集合，也被一些次要对象类型号的实例所代表。例如，假设下面的对象是定义在MIB中的： 
+OBJECT: atIndex { atEntry 1 }
+Syntax: INTEGER
+Definition: 物理地址的接口号
+Access: read-write.
+Status: mandatory.
+OBJECT: atPhysAddress { atEntry 2 }
+Syntax: OCTET STRING
+Definition: 与介质相关的物理地址
+Access: read-write.
+Status: mandatory.
+OBJECT: atNetAddress { atEntry 3 }
+Syntax: NetworkAddress
+Definition: 与介质相关物理地址相对应的网络地址
+Access: read-write.
+Status: mandatory.
+第四个对象类型也可能被定义在MIB中：
+OBJECT: atEntry { atTable 1 }
+Syntax: 
+AtEntry ::= SEQUENCE {
+atIndex
+INTEGER,
+atPhysAddress
+OCTET STRING,
+atNetAddress
+NetworkAddress
+}
+Definition: 地址映射表中的入口
+Access: read-write.
+Status: mandatory.
+每个对象类型的实便包括由前三个对象类型实例表示的信息。把这种定义出的对象类型称为列表（list）。同样的，列表类型的集合可以组成表（table）。例如，第五个对象的定义如下：
+OBJECT: atTable { at 1 }
+Syntax: SEQUENCE OF AtEntry
+Definition: 地址映射表
+Access: read-write.
+Status: mandatory.
+上面的地址映射表就是由AtEntry的集合构成的。让我们想一下如何获得表中的对象。下面我们看一个例子，下面是一个对象类型：
+{ atPhysAddress }
+而下面是与协议相关的对象实例：
+{ atNetAddress } = { internet "10.0.0.52" }
+这两个量组成的偶对将可以参照atPhysAddress的实例。这里的atPhyAddress是任何与atNetAddress相关值为{ internet "10.0.0.52 }的地址映射表入口的一部分。下来我们看看如何访问一个包中的集合对象（list），将对象类型命名为：
+{ atEntry }
+然后指定与协议相关的对象实例：
+{ atNetAddress } = { internet "10.0.0.52" }
+上面的对象实例访问表中入口的所有实例，其中表与atNetAddress的值 { internet "10.0.0.52" }相关。
+每个管理协议均提供了访问非集合对象类型的机制，每个管理协议也说明了它是否支持访问集合对象类型。而且，协议必须指定当一个对象类型/实例对访问多个类型的实例时会返回哪个实例。为支持不同的管理协议，所有能够使对象能够区分的信息由对象类型的实例定义在MIB中。
+4.3. 管理对象宏
+可以使用OBJECT-TYPE宏来处理MIB中的定义。这个宏允许一个对象类型的主要访问采取统一的表示方式。
+OBJECT-TYPE MACRO ::=
+BEGIN
+TYPE NOTATION ::= "SYNTAX" type (TYPE ObjectSyntax)
+"ACCESS" Access
+"STATUS" Status
+VALUE NOTATION ::= value (VALUE ObjectName)
+Access ::= "read-only"
+| "read-write"
+| "write-only"
+| "not-accessible"
+Status ::= "mandatory"
+| "optional"
+| "obsolete"
+END
+根据上面定义的对象类型，我们可以看到下面定义在MIB中的定义：
+atIndex OBJECT-TYPE
+SYNTAX INTEGER
+ACCESS read-write
+STATUS mandatory
+::= { atEntry 1 }
+atPhysAddress OBJECT-TYPE
+SYNTAX OCTET STRING
+ACCESS read-write
+STATUS mandatory
+::= { atEntry 2 }
+atNetAddress OBJECT-TYPE
+SYNTAX NetworkAddress
+ACCESS read-write
+STATUS mandatory
+::= { atEntry 3 }
+atEntry OBJECT-TYPE
+SYNTAX AtEntry
+ACCESS read-write
+STATUS mandatory
+::= { atTable 1 }
+atTable OBJECT-TYPE
+SYNTAX SEQUENCE OF AtEntry
+ACCESS read-write
+STATUS mandatory
+::= { at 1 }
+AtEntry ::= SEQUENCE {
+atIndex
+INTEGER,
+atPhysAddress
+OCTET STRING,
+atNetAddress
+NetworkAddress
+}
+5. MIB扩展
+每个Internet标准MIB文档都将前面文档标记为过时的。在下面标记处标记的名字是在改变版本时没有进行过改变的：
+{ mgmt version-number }
+新版本可以会
+(1) 宣布老的对象类型过时，但不删除它们的名字；
+(2) 通过添加非集合对象类型到列表(list)中对象类型而扩展一个对象类型的定义；
+(3) 要么就索性定义新的对象。
+新版本不能在未改变对象名字的情况下改变对象的语义。这样就保证了相同的名字在不同的版本下会有相同的语义，这样在实现起来就比较方便。
+但是，管理代表可能会返回一个对象，它是需要对象的一个超集。考虑到健壮性，管理程序应该忽略掉这些附加信息。但是我们要注意：如果一个实例没有和希望的对象类型相同的语法，控制将会失败。在监视和控制的情况下，由一个操作返回的对象名必须和操作要求的对象名一致。
+6. 定义
+RFC1155-SMI DEFINITIONS ::= BEGIN
+
+EXPORTS -- EVERYTHING
+internet, directory, mgmt,
+experimental, private, enterprises,
+OBJECT-TYPE, ObjectName, ObjectSyntax, SimpleSyntax,
+ApplicationSyntax, NetworkAddress, IpAddress,
+Counter, Gauge, TimeTicks, Opaque;
+
+-- the path to the root
+
+internet OBJECT IDENTIFIER ::= { iso org(3) dod(6) 1 }
+
+directory OBJECT IDENTIFIER ::= { internet 1 }
+
+mgmt OBJECT IDENTIFIER ::= { internet 2 }
+
+experimental OBJECT IDENTIFIER ::= { internet 3 }
+
+private OBJECT IDENTIFIER ::= { internet 4 }
+enterprises OBJECT IDENTIFIER ::= { private 1 }
+
+
+-- definition of object types
+
+OBJECT-TYPE MACRO ::=
+BEGIN
+TYPE NOTATION ::= "SYNTAX" type (TYPE ObjectSyntax)
+"ACCESS" Access
+"STATUS" Status
+VALUE NOTATION ::= value (VALUE ObjectName)
+
+Access ::= "read-only"
+| "read-write"
+| "write-only"
+| "not-accessible"
+Status ::= "mandatory"
+| "optional"
+| "obsolete"
+END
+
+-- names of objects in the MIB
+
+ObjectName ::=
+OBJECT IDENTIFIER
+
+-- syntax of objects in the MIB
+
+ObjectSyntax ::=
+CHOICE {
+simple
+SimpleSyntax,
+
+-- note that simple SEQUENCEs are not directly
+-- mentioned here to keep things simple (i.e.,
+-- prevent mis-use). However, application-wide
+-- types which are IMPLICITly encoded simple
+-- SEQUENCEs may appear in the following CHOICE
+
+application-wide
+ApplicationSyntax
+}
+
+SimpleSyntax ::=
+CHOICE {
+number
+INTEGER,
+
+string
+OCTET STRING,
+
+object
+OBJECT IDENTIFIER,
+
+empty
+NULL
+}
+
+ApplicationSyntax ::=
+CHOICE {
+address
+NetworkAddress,
+
+counter
+Counter,
+
+gauge
+Gauge,
+
+ticks
+TimeTicks,
+
+arbitrary
+Opaque
+
+-- other application-wide types, as they are
+-- defined, will be added here
+}
+
+
+-- application-wide types
+
+NetworkAddress ::=
+CHOICE {
+internet
+IpAddress
+}
+
+IpAddress ::=
+[APPLICATION 0] -- in network-byte order
+IMPLICIT OCTET STRING (SIZE (4))
+
+Counter ::=
+[APPLICATION 1]
+IMPLICIT INTEGER (0..4294967295)
+
+Gauge ::=
+[APPLICATION 2]
+IMPLICIT INTEGER (0..4294967295)
+
+TimeTicks ::=
+[APPLICATION 3]
+IMPLICIT INTEGER (0..4294967295)
+
+Opaque ::=
+[APPLICATION 4] -- arbitrary ASN.1 value,
+IMPLICIT OCTET STRING -- "double-wrapped"
+
+END
+7．感谢
+   本文档的完成要感谢三方面提供的草案：
+ 
+   首先是 MITRE 公司的Lee Labarre，他是NETMAN SMI [4] 的作者。
+   其次是许多对本文档的原始版本提供了有价值建议的一些个人： 
+         James R. Davin, Proteon
+         Mark S. Fedor, NYSERNet
+         Craig Partridge, BBN Laboratories
+         Martin Lee Schoffstall, Rensselaer Polytechnic Institute
+         Wengyik Yeong, NYSERNet
+   最后是IETF MIB 工作组:
+         Karl Auerbach, Epilogue Technology
+         K. Ramesh Babu, Excelan
+         Lawrence Besaw, Hewlett-Packard
+         Jeffrey D. Case, University of Tennessee at Knoxville
+         James R. Davin, Proteon
+         Mark S. Fedor, NYSERNet
+         Robb Foster, BBN
+         Phill Gross, The MITRE Corporation
+         Bent Torp Jensen, Convergent Technology
+         Lee Labarre, The MITRE Corporation
+         Dan Lynch, Advanced Computing Environments
+         Keith McCloghrie, The Wollongong Group
+         Dave Mackie, 3Com/Bridge
+         Craig Partridge, BBN (chair)
+         Jim Robertson, 3Com/Bridge
+         Marshall T. Rose, The Wollongong Group
+         Greg Satz, cisco
+         Martin Lee Schoffstall, Rensselaer Polytechnic Institute
+         Lou Steinberg, IBM
+         Dean Throop, Data General
+         Unni Warrier, Unisys
+ 
+8.  参考
+ 
+   [1] Information processing systems - Open Systems Interconnection,
+       "Specification of Abstract Syntax Notation One (ASN.1)",
+       International Organization for Standardization, International
+       Standard 8824, December 1987.
+ 
+   [2] McCloghrie K., and M. Rose, "Management Information Base for
+       Network Management of TCP/IP-based Internets", RFC 1156,
+       Performance Systems International and Hughes LAN Systems, May
+       1990.
+ 
+   [3] Case, J., M. Fedor, M. Schoffstall, and J. Davin, The Simple
+       Network Management Protocol", RFC 1157, University of Tennessee
+       at Knoxville, Performance Systems International, Performance
+       Systems International, and the MIT Laboratory for Computer
+       Science, May 1990.
+ 
+   [4] LaBarre, L., "Structure and Identification of Management
+       Information for the Internet", Internet Engineering Task Force
+       working note, Network Information Center, SRI International,
+       Menlo Park, California, April 1988.
+ 
+   [5] Cerf, V., "IAB Recommendations for the Development of Internet
+       Network Management Standards", RFC 1052, IAB, April 1988.
+ 
+   [6] Cerf, V., "Report of the Second Ad Hoc Network Management Review
+       Group", RFC 1109, IAB, August 1989.
+ 
+   [7] Information processing systems - Open Systems Interconnection,
+       "Specification of Basic Encoding Rules for Abstract Notation One
+       (ASN.1)", International Organization for Standardization,
+       International Standard 8825, December 1987.
+ 
+9．安全的考虑：
+ 
+   本文档并未考虑安全问题。
+10．作者地址：
+   Marshall T. Rose
+   PSI, Inc.
+   PSI California Office
+   P.O. Box 391776
+   Mountain View, CA 94039
+ 
+   Phone: (415) 961-3380
+ 
+   EMail: mrose@PSI.COM
+ 
+ 
+   Keith McCloghrie
+   The Wollongong Group
+   1129 San Antonio Road
+   Palo Alto, CA 04303
+ 
+   Phone: (415) 962-7160
+ 
+   EMail: sytek!kzm@HPLABS.HP.COM
+
+RFC1155  Structure and Identification of Management Information for TCP/IP-based Internets          RFC1155  基于TCP/IP网络的管理结构和标记
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

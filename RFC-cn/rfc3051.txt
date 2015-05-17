@@ -1,0 +1,282 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：hlhuang（hlhuang   hlhuang-99@21cn.com）
+译文发布时间：2001-12-28
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                           J. Heath
+Request for Comments: 3051                                     J. Border
+Category: Informational                           Hughes Network Systems
+                                                            January 2001
+
+         用ITU-T V.44封装方法对IP有效数据的压缩
+（RFC3051――IP Payload Compression Using ITU-T V.44 Packet Method）
+
+本备忘录状态
+
+   本备忘录为互联网社区提供信息。它不规定任何一种互联网标准。对本备忘录的发布是
+没有任何限制的。
+
+版权声明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+摘要：
+
+   本文档描述了一个压缩方法，该方法基于国际通讯联合会(ITU-T)建议V.44中描述的数
+据压缩算法。 V.44建议是一个除Annex B和Clause B.1之外的调制解调器标准，描述了V.44
+在包封装网络中的应用 (如V.44包封装方法)。
+   本文档定义了V.44 包封装方法在IP有效数据压缩协议(RFC 2393)中的应用。RFC 2393 
+定义了在IP数据报中有效数据部分进行无损压缩的方法。V.44包封装方法基于LZJH数据
+压缩算法。在本文档的其他部分，术语V.44包封装方法（Packet Method）和LZJH是同义
+的。
+
+目录
+1. 介绍	2
+1.1 综述	2
+1.2 LZJH数据压缩算法的背景	2
+1.3 知识产权	3
+1.4 需求定义	3
+2. 压缩处理	3
+2.1 编码器字典	3
+2.2 编码器输出	4
+2.3 填充	4
+3. 解压缩处理	4
+3.1 压缩数据包	4
+3.2 原始的未压缩数据包	5
+4. IPComp Association (IPCA) 参数	5
+4.1 变换 ID	5
+4.2 安全连接属性	5
+4.3 手工配置	5
+4.4 最小包长度限制	5
+4.5 可压缩性测试	6
+5. 安全考虑	6
+6. IANA 考虑	6
+7. 致谢	6
+8. 参考文档	6
+9. 作者地址	7
+10.完整版权说明	8
+
+1. 介绍
+1.1 综述
+
+   本文档详细说明了LZJH数据压缩算法在IP数据包有效数据上的应用，该算法是一种无
+损数据压缩算法。LZJH数据压缩是和IP有效数据压缩协议(IPComp) [RFC2393]一起使用的。
+本文档在写作时假设读者已经理解了IPComp协议。
+
+1.2 LZJH数据压缩算法的背景
+
+   尽管LZJH算法从外面看与[LZ77]中所描述的算法很相似，其实它与[LZ78]中所描述的
+算法是相近的。它比[LZ77]好的多的压缩率，并且执行速度快，对内存的要求小。这个算法
+原先是为卫星工业中的IP数据包压缩而开发的，它在IPComp中的应用是很理想的。基于
+建议V.44，LZJH算法被修改成用来压缩调制解调器环境中的连续的数据流。LZJH是一种
+自适应的，通用目的的，无损的数据压缩算法。由于它在各种数据类型尤其是HTML网页
+方面的性能，和压缩率特征，每MIP和 内存利用（和其他候选算法类似），ITU-T选择它
+作为建议V.44的基础。它的 编码器是极其有效的，能够将在数据中第二次遇到一个两个字
+节的字串时，将其压缩成3位大小。一个典型的[LZ78]压缩算法，如V.42bis，由于在建立
+压缩字典时要花很长的时间，导致在IP数据包中独立压缩时差的压缩效率，不适合用于
+IPComp应用。同时，在数据包中间，它要求太多的循环来重设[LZ78]字典，显著的影响了
+执行时间。
+类似的，典型的[LZ77]压缩算法由于压缩时费时太多，在IPComp不使用。Hash表在压缩连
+续数据时，可用来减少压缩时间，但是由于他们必须在每个数据包之间重设初始化，因此它
+在IPComp应用中也可能会增加执行时间。
+
+   LZJH在压缩和解压数据包时有很好的执行速度，并且在两个IP数据报之间重设字典所
+花的时间也是微不足道的。编码器只要求初始化一个256个字节的数组和少数几个变量，而
+解码器只要求初始化少数几个变量。LZJH算法在IPComp应用中只使用1525个词的字典，
+总共占用16K的内存。在编码过程中，未匹配的字符被编码成序数（ordinals），匹配的多余
+的字串被编码成代码字（codewords） 或表示多余字串的扩展字串长度。在解码过程中，序
+数、代码字和扩展字串长度被解释成正确的原始数据包的有效数据。
+
+   LZJH数据压缩的细节可以在[V44]中找到。
+
+1.3 知识产权
+
+   IETF将根据本文档中的一些或所有规范进行知识产权声明。更多的信息请参考再线声明
+列表。
+
+1.4 需求定义
+
+   在本文档中的一些关键词可以用[RFC2119]中描述的那样来解释，如"MUST"、 "MUST 
+NOT"、 "REQUIRED"、 "SHALL"、 "SHALL NOT"、"SHOULD"、 "SHOULD NOT"、 
+"RECOMMENDED"、"MAY"、 和"OPTIONAL"。
+
+2. 压缩处理
+
+   数据包的压缩由编码器函数来实现。
+
+2.1 编码器字典
+
+   根据[V44]中7.5.1条款规定，发送实体必须在处理每个数据报有效数据之前重设编码器
+字典。这将能保证每个数据报的有效数据，在数据报可能丢失或乱序的环境下，可独立于其
+他数据报进行解压缩。
+
+   传输单元必须在数据报的最后一个字节送入编译器后，清空未处理的编码数据，这样已
+编码过的数据可以作为一个单元传输。刷新确保所有的数据都得到处理并都包含在输出中，
+如已压缩过的数据包是完整的，并且没有任何当前数据要在下个数据报中处理。
+
+2.2 编码器输出
+
+   有效数据压缩算法的输入数据是一个IP数据报的有效数据。该算法的输出是一个新（有
+望更小的）的有效数据。输出的有效数据包含有输入的有效数据，该数据或是压缩过的或是
+未压缩的格式。输入和输出的有效数据在长度上都是完整的。
+
+   若使用了未压缩的形式，输出有效数据和输入有效数据是一致的，IPComp的头部将被
+忽略。若使用压缩的形式，输出的有效数据包含有IPComp头部，并按[V44] 的6.3节中规
+定的进行编码。
+
+2.3 填充
+使用LZJH进行压缩的数据包有效数据结尾的最后一个或两个压缩数据字节总是用平齐代
+码字（FLUSH codeword）来表示。平齐代码字可能在最后一个压缩数据包字节的第二位开
+始，到最尾的一个位结束，或整个字节都是。平齐代码字用来标志压缩数据的结尾，区分压
+缩的填充。在被压缩后的有效数据中，在平齐代码字以后的任何位或字节都被认为是填充的。
+   被压缩的有效数据长度必须是整字节单元。
+
+3. 解压缩处理
+
+   数据包的解压缩是由解码器函数来实现的。
+
+3.1 压缩数据包
+
+   若收到的数据包是压缩过的，接收者在处理该数据包前必须重设解码器字典。这样可以
+确保每一个数据包能够独立的被解开，即使在该对话过程中其他的数据包丢失或乱序。如在
+[V44]的7.5.2中规定的那样，在初始化阶段重设解码字典，接收者根据[V44]的6.4中规定的
+过程来解码数据包中的有效数据数据域。
+
+3.2 原始的未压缩数据包
+   若收到的数据包是未压缩的，接收者将不执行解压缩过程，直接将数据包中的有效数据
+传给下一个协议层，不做任何修改。
+
+4. IPComp Association (IPCA) 参数
+
+  如[RFC2393]中定义的那样，基于IPCA的LZJH压缩算法可能使用IKE [RFC2409]来进行
+协商。
+
+4.1 变换 ID
+
+   LZJH变换ID的值是IPCOMP_LZJH。这个值是用来协商使用IKE的LZJH数据压缩算
+法的使用。
+
+4.2 安全连接属性
+
+   在使用IKE进行协商的LZJH压缩算法中，对于协商没有额外的参数要求。
+
+4.3 手工配置
+
+   CPI的值IPCOMP_LZJH是用来手工配置IPComp压缩连接的（Compression 
+Associations）。
+
+4.4 最小包长度限制
+
+   如[RFC2393]中描述，小包的压缩效果可能不是很好。  在网页和电子邮件文件中，使
+用LZJH的分正式测试表明经压缩后平均有效数据的长度增长了大约50个字节。因此，具
+体的实现最好不要去压缩大约或小于50个字节的有效数据。
+
+4.5 可压缩性测试
+
+   [V44]中描述的LZJH算法可以很容易修改就可组成一个适应性强的、[RFC2393]中引用
+的可压缩性测试。[V44] 的Annex B指定了包含在LZJH中的这样一个测试的机制。
+
+5. 安全考虑
+
+   本文档不增加任何其他比[RFC2393]中记载的更多的安全考虑。
+
+6. IANA 考虑
+
+   本文档不介绍任何新的命名空间。IPCOMP_LZJH从在[RFC2407]中定义的IPsec IPCOMP
+变换标志符空间中进行赋值的。由于这个目的，IANA已经将4赋给它了。
+
+7. 致谢
+
+   本文档基于[RFC2395]的一个模型。.
+
+8. 参考文档
+
+   [LZ77]    Lempel, A., and Ziv, J., "A Universal Algorithm for
+             Sequential Data Compression", IEEE Transactions On
+             Information Theory, Vol. IT-23, No. 3, May 1977.
+
+   [LZ78]    Lempel, A., and Ziv, J., "Compression of Individual
+             Sequences via Variable Rate Coding", IEEE Transactions On
+             Information Theory, Vol. IT-24, No. 5, Sep 1978.
+
+   [RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+             Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RFC2393] Shacham, A., "IP Payload Compression Protocol (IPComp)",
+             RFC 2393, December 1998.
+
+   [RFC2395] Friend, R. and R. Monsour, "IP Payload Compression Using
+             LZS", RFC 2395, December 1998.
+
+   [RFC2407] Piper, D., "The Internet IP Security Domain of
+             Interpretation for ISAKMP", RFC 2407, November, 1998.
+
+   [RFC2409] Harkins, D. and D. Carrel, "The Internet Key Exchange", RFC
+             2409, November 1998.
+
+   [V44]     ITU Telecommunication Standardization Sector (ITU-T)
+             Recommendation V.44 "Data Compression Procedures", November
+             2000.
+
+9. 作者地址
+
+   Jeff Heath
+   Hughes Network Systems
+   10450 Pacific Center Ct.
+   San Diego, CA  92121
+
+   Phone: 858-452-4826
+   Fax:   858-597-8979
+   EMail: jheath@hns.com
+
+   John Border
+   Hughes Network Systems
+   11717 Exploration Lane
+   Germantown, MD  20876
+
+   Phone: 301-601-4099
+   Fax:   301-601-4275
+   EMail: border@hns.com
+
+10.完整版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+感谢
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+RFC3051――IP Payload Compression Using ITU-T V.44 Packet Method
+用ITU-T V.44封装方法对IP有效数据的压缩
+
+
+1
+RFC文档中文翻译计划

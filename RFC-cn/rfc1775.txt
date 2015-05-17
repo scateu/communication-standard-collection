@@ -1,0 +1,128 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：boniter（boniter    boniter@etang.com）
+译文发布时间：2001-12-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         D. Crocker
+Request for Comments: 1775                        Brandenburg Consulting
+Category: Informational                                       March 1995
+
+
+ “On”Internet上
+(RFC1775――To Be "On" the Internet)
+本备忘录的状态
+    此备忘录为Internet社会提供信息。此备忘录不定义任何一种Internet标准。此备忘
+录的发布是无限的。
+
+摘要
+    Internet允许消费者和供应商服务不同级别的访问。那些差别的本性在他们可承担的
+容量内是十分重要的。因此，提供在范围内辨别的技术就很适当，所以当区别是否一个用户
+（或一个组织）“on”Internet上时，Internet社会就能增加一些透明度。这篇文档建议了
+四个条款，用来辨别主要的访问类。
+目录
+1. 导言	1
+2. INTERNET访问标签	2
+3. 例子用法	2
+4. 安全考虑	3
+5. 承谢	3
+安全考虑	3
+作者地址	3
+
+1. 导言
+Internet对许多人来说意味着许多事情。它作为一种技术兴起，而后成长为全球化服
+务。随着成长的增加，技术和服务详细资料的复杂性导致了在判决一个特定用户是否“on”
+Internet上出现混乱。谁在Internet上？他们的实际能力如何？这篇注解是对帮助
+Internet消费者和供应商确定终端用户访问的基本类型，而这种访问在Internet附件中辨
+别了临界的差异。
+列表主要发展是作为用户的观点，而不是为技术社会。列表中的定义带有在应用服务中
+用户主要感兴趣的观点。一个古怪的含义就是某些定义不依赖于根本的Internet连通性协
+议,TCP/IP的直接使用。由于许多技术上的讨论，因此，这些条款并不合适。
+
+2. INTERNET访问标签
+从用户（消费者）的观点，下列的定义从“most”到“least”Internet访问的运行。
+第一个条款主要适用于Internet服务供应商。余下的条款主要适用于Internet服务的消费
+者。
+
+FULL访问
+    这是一个执行TCP/IP的永久（全部时间）Internet附件，主要适用于允许Internet
+社会访问应用服务器，通过Internet服务供应商来操作。带有Full访问的机器对于其他
+Internet的附件来说是直接可视的，就像通过Internet协议的ICMP Echo(ping)工具。这
+些带有Full访问的机器构成了Internet的核心。
+
+CLIENT访问
+    执行应用程序的用户，在他们自己的电脑平台上直接使用Internet应用协议，但是可
+能不是执行根本的Internet协议（TCP/IP）,可能不是全部时间访问，就像通过拨号，或是
+有被强迫的访问，就像通过防火墙。当活动时，Client用户可能对普通Internet时可视的，
+但是这样的可视化不能被预知。例如，这意味着许多Client访问用户在任何特定的时刻，
+在系统经验化的探测“on”Internet上，就不能被发觉，就像通过ICMP Echo工具。
+
+MEDIATED访问
+    用户没有Internet访问，通过电子邮件和网络新闻除外，就像Usenet或公告牌服务。
+因此告知服务能有作为high-latency――也就是，slow-transport服务，这种mail-enabled
+服务访问级别的使用就十分强大，尽管不是交互式的。
+
+3. 例子用法
+命名法的测试是，当然，它对于真实生活情形的应用。两个简单的案例包括了家庭用户。
+如果用户通过运行自己PC机上的终端程序来访问Internet，然后拨叫一个提供Internet
+应用的公共服务，接着用户就有了Mediated Internet访问。公共服务有Client或Full
+访问，当时用户没有。换句话说，经由SLIP或PPP访问的用户在他们自己的PCs上正在执
+行Internet应用程序，他们就有Client Internet访问。
+许多公司现在都有Internet的全时间连接。这种连接是基于TCP/IP,而求通常有许多
+Internet服务器运行，对于电子邮件的交换和对世界其它部分制造公共可利用数据，犹如
+通过World Wide Web和Gopher.明显的，通过Full Internet访问，公司是“on”Internet
+上。
+    在公司的用户怎么样？今天许多公司通过防火墙把它们内部的internet从公共的
+Internet分离出来。如果在内部internet的用户有一台桌上型电脑，而且连接到Internet，
+经由防火墙，通过运行任何Internet应用程序，例如Web浏览器，然后用户就有Client 
+Internet访问。
+    一些公司不允许这样，代替的是需要接触公共Internet的所有软件在特定的管理机器
+上使用，而这台机器是公司防火墙一套服务的一部分。因此，用户必须使用对特定机器的终
+端连接，从那里执行Internet应用程序。这样的用户有Mediated Internet访问，就像拨
+叫公共服务的家庭用户一样。
+
+4. 安全考虑
+这篇规范NOT，自身，提供或定义任何安全相关机制。尽管如此，它确实描述了对于使
+用者和供应商的不同安全含义的特定情节。这篇讨论的读者在选择服务时需要谨慎考虑那些
+应用程序。
+
+5. 承谢
+   Development of these definitions was spurred by many public and
+   private discussions in which confusion over Internet access reigned.
+   Convergence on an initial set of three terms was the result of
+   discussion on the Big-Internet mailing list, particularly from
+   comments made by Alan Barret, Howard Berkowitz, Noel Chiappa, Steve
+   Goldstein, Iain Hanson, Gary Malkin, Bob McKisson, Tim O'Reilly, Dave
+   Piscitello and Bill Simpson.  Eventually, the need for a fourth
+   category became evident and was discussed further with the
+   participants on the list.  This does not mean that any of them
+   necessarily endorses the terms and definitions provided, merely that
+   their notes assisted my thinking on the topic.  After the initial
+   round of public discussion, Smoot Carl-Mitchell and John Quarterman
+   of Texas Internet Consulting developed terminology for similar
+   categories and served to prompt modification of this set, described,
+   here, to distinguish between provider and consumer forms of access
+   and emphasize the role of Full access in defining the Internet core.
+
+安全考虑
+此备忘录不讨论安全问题。
+
+作者地址
+   David H. Crocker
+   Brandenburg Consulting
+   675 Spruce Dr.
+   Sunnyvale, CA 94086 USA
+
+   Phone:    +1 408 246 8253
+   Fax:      +1 408 249 6205
+   EMail:    dcrocker@mordor.stanford.edu
+RFC1775――To Be "On" the Internet                                         “On”Internet上
+
+
+1
+RFC文档中文翻译计划

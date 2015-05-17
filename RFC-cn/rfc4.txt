@@ -1,0 +1,283 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：yh_2001（yh_2001   sflu@netbig.com）
+译文发布时间：2001-4-2
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                   Elmer B. Shapiro
+Request for Comment: 4                       Stanford Research Institute
+Category: Informational                                    24 March 1969
+
+
+                        RFC 4  网络时间表
+(rfc 4   Network Timetable)
+目录
+1．(N10)网络测试	2
+2．通信工具安装 8/1/69	2
+3．设计和建造主-IMP9/1/69界面	2
+4．IMP I安装 9/15/69	2
+6．在UCLA-SRI 中测试通信10/15/69	3
+7．在UCSB-SRI 之间测试通信11/15/69	4
+8．在 UTAH-SRI之间测试通信 12/15/69	5
+9．运行单一的TTY系统	6
+10．运行简单的打字机系统	7
+11．没有本地反馈的情况下在任意终端机上运行	7
+13．移动文件	7
+14．开发调试技巧	7
+
+1  (n10)网络测试
+2  通信工具安装 8/1/69
+   2a  从AT&T 和/或 BBN 需要空间，能力和接缆详细规格说明书。
+
+   2b  需要制定SRI预期交替定位以至决定最大telco 电缆长度。
+
+   2c  需要制定位置来调和电路。
+
+   2d  需要电路信息来表达内部通话信息。
+
+   2e  需要整理和安装a.c.（同等于4b）.
+
+   2f  看 16
+3  设计和建造主-IMP9/1/69界面
+   3a  需要BBN的详细说明书。
+
+   3b  设计尝试开发
+
+   3c  考查系统程序员
+
+   3d  制定最后的计划
+
+   3e  建立和设计硬件
+
+   3f  试验性地调试软件和硬件的循环测试
+4  Imp I安装 9/15/69
+   4a  从AT&T 和/或 BBN 需要空间，能力和接缆详细规格说明书
+
+   4b  整理SRI 并安装 a.c. (同 2e)
+
+   5a  从BBN获得已列出的错误和程序
+
+   5b  写程序在BBN调试
+
+       5b1  传输测试信息
+
+       5b2  测试程序
+
+       5b3  在程序里检查消息填充
+
+   5c T试图转移测试
+
+       5c1  证实转移到 Imp
+
+       5c2  证实从Imp转移
+
+       5c3  证实从IMP循环转移 
+
+   5d  设计出 Imp 重载和重启程序
+6  在UCLA-SRI 中测试通信10/15/69
+   6a  网络配置
+
+         
+           SRI  |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+          UCLA |
+
+   6b  同意在UCLA上测试通信信息
+
+       6b1  初始化
+
+       6b2  顺序
+
+       6b3  检查
+
+       6b4  测试程序
+
+       6b5  报告出错
+
+   6d  测试传递顺序
+
+   6e  测量延迟
+
+   6f  UCLA循环
+
+   6g  系统响应无效和非法条件
+
+   6h  丢失和恢复设备
+
+       6h1  通信连接
+
+       6h2  Imps
+
+       6h3  Hosts
+
+   6i  发展网络双报告计划
+
+7  在UCSB-SRI 之间测试通信11/15/69
+   7a  网络配置
+
+           SRI .
+              |  .
+              |   .
+              |     .
+              |       .
+              |         .
+              ------------
+           UCLA           UCSB
+
+   7b  6的所有
+
+   7c  装载网络更替有效的确路由
+
+   7d  发展表达同等计划
+
+       7d1  会议的3条方向
+
+       7d2 设计和建立会议安排
+
+       7d3 传递会议安排到UCLA 和 UCSB
+
+   7e  环形路径通信
+
+       7e1  通过 Imps
+
+       7e3  六条测试
+
+         7e3a  UCLA-I, UCSB-I
+
+         7e3b  UCLA-H, UCSB-I
+
+         7e3c  UCLA-H, UCSB-H
+
+         7e3d  UCSB-I, UCLA-I
+
+         7e3e  UCSB-H, UCLA-I
+
+         7e3f  UCSB-H, UCLA-H
+
+8  在 UTAH-SRI之间测试通信 12/15/69
+   8a  网络配置
+
+           SRI .----------------UTAH
+               | .
+               |   .
+               |     .
+               |       .
+               |         .
+               |           .
+               |             .
+               |               .
+           UCLA-----------------UCSB
+
+   8b  选择预先测试的团体
+
+       8b1  所有同 6
+
+       8b2  7b
+
+   8c  扩充表达同等方案
+
+       8c1  UTAH 已通过SRI 访问 UCLA 和 UCSB 
+
+       8c2  同 BBN 和 ARPA
+9  运行单一的TTY系统
+   9a  单个用户访问
+
+         9a1a  A 到 B
+
+       9a2  利用主机名
+
+         9a2a  A 到 B
+
+   9b 多用户访问
+
+       9b1  在服务器上
+
+         9b1a  A,C 到 B
+
+       9b2  从用户机上
+
+         9b2a  A,A 到 B
+
+       9b3  不同制品
+
+   9c  登录，退出，进入和退出子系统
+
+   9d  处理错误信息，崩溃，恢复 
+
+   9e  制定信息格式
+
+   9f  制定协议
+
+   9g  文件存储和恢复
+
+   9h  需要用户手册给每个站点
+
+   9i  需要制定时间表的用法
+
+   9j  需要设置用户名Need to set user names
+
+   9k  设计和建立 cmm 执行和它的同等物
+10  运行简单的打字机系统
+   10a  与 9c - 9g相同
+
+   10b  当全双工或半双工时如何定义
+
+   10c  怎样设置 "break" 
+11  没有本地反馈的情况下在任意终端机上运行
+13  移动文件
+
+14  开发调试技巧
+   14a 错误检测
+
+       14a1  一致操作
+
+       14a2  “合理”的结果
+
+       14a3  相互交换使用对照
+
+   14b  局限目标
+
+       14b1  合成Comm-Imp 
+
+       14b2  主机服务
+
+       14b3  使用主机
+
+       14b3  尝试其它程序
+
+       14b5  在可能的情况下通过"link"程序来监视子系统
+
+       14b5a  使用分离电脑通讯
+
+       14b5b  使用表达一致的通道
+
+       14b6  移动通道消息
+   14c  决定目标
+
+   14d  目标修订
+
+
+
+
+
+
+         [ This RFC was put into machine readable form for entry ]
+          [ into the online RFC archives by David Capshaw 11/97 ]
+
+
+ RFC 4    Network Timetable                                                  RFC 4    网络时间表
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

@@ -1,0 +1,74 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang    guodagang@tyut.edu.cn）
+译文发布时间：2001-10-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                 Internet Architecture Board
+Request for Comments: 1370                                   Lyman Chapin, Chair
+                                                                    October 1992
+OSPF适用范围声明
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+1.介绍
+对于来自不同厂家的IP路由器，使用一个公共的内部网关协议(Interior Gateway 
+Protocol，缩写为IGP)实现互通，用户和厂商已经表达了强烈的需求。因此，对一种高性能
+的、非专有的、“开放的”IGP产生了紧迫的需求。that will be ubiquitously available from所
+有的IP路由器厂商都。 
+开放最短路径优先(Open Shortest Path First，缩写为OSPF)路由协议[1]是IETF为满足
+这一需求而开发的。本适用范围声明详细说明了在哪种环境下路由器厂商必须实现OSPF。
+OSPF的发展历程和本适用范围声明的推论可以从[5]中得到。
+本适用范围声明寄予厂商一种需求，要求和本标准保持一致性。这样，当他们需要多厂
+商时，为了保证用户有选择配置OSPF的权利，在他们的环境中实现互通的IGP。当然，用
+户可以自由的使用任何最符合他们需求的路由协议。
+2. OSPF的适用范围
+一个运行任意路由协议(除了静态路由)的IP路由器需要使OSPF [1]和OSPF MIB [2]生
+效。在OSPF内，除了典型服务(Type-of-Service，缩写为TOS)路由，必须使所有特征生效； 
+推荐使典型服务路由生效。
+本需求并不排斥采用除OSPF以外的其他路由协议的路由器。IP路由器各个方面的全部
+的确定的需求将在一个现在正由IETF准备、并即将发布的适用范围声明------“IP路由器的
+需求”[4]中建立。当“IP路由器的需求”成为一个标准，而在OSPF方面的需求和当前RFC
+发生冲突时，它将被优先采用。
+注意，OSPF会被路由器用于交换动态路由信息，而不是针对主机。正如在STD-2的
+3.3.1.4节“Internet主机需求----通讯层”[3]中讨论的那样，不推荐由主机使用路由协议的“白
+皮书”。对于主机，用于发现本地路由器和探测废弃的路由器得推荐机制在[3]中有描述。实
+际上，在开发期间，ICMP路由发现消息将提供一种标准方式给一个主机来学习本地路由地
+址[6]。
+3. 参考文献
+[1] Moy, J., "OSPF Version 2", RFC 1247, Proteon, Inc., July 1991.
+[2] Baker, F., and R. Coltun, "OSPF Version 2 Management Information Base", RFC 
+1253, ACC, Computer Science Center, August 1991.
+[3] Braden, R., Editor, "Requirements for Internet Hosts -- Communication Layers", 
+IETF, STD 3, RFC 1122, October 1989.
+[4] Almquist, P., Editor, "Requirements for IP Routers", Work in Preparation, IETF.
+[5] Gross, P., Editor, "Choosing a "Common IGP" for the IP Internet (The IESG's 
+Recommendation to the IAB)", RFC 1371, IESG, October 1992.
+[6] Deering, S., Editor, "ICMP Router Discovery Messages", RFC 1256, Xerox PARC, 
+September 1991.
+安全因素
+   本备忘录不讨论有关安全问题。
+作者地址：
+A. Lyman Chapin
+BBN Communications Corporation
+150 Cambridge Park Drive
+Cambridge, MA  02140
+
+Phone: 617-873-3133
+Fax:   617-873-4086
+Email: Lyman@BBN.COM
+
+RFC1370――Applicability Statement for OSPF                        OSPF适用范围声明
+
+
+1
+RFC文档中文翻译计划                                                                  
+
+

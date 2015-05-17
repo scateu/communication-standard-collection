@@ -1,0 +1,185 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：piex（piex    jintao@bigfoot.com）
+译文发布时间：2002-01-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Net Work Group                             Internet Architecture Board (IAB)
+Request For Comments:2825                  L.Daigle,Editor
+Category:Informational                     MAY 2000                                                           
+
+
+备忘录概述:
+   
+    这个备忘录是为internet团体提供信息的.它并不只针对一种internet,这篇备忘录的范围是无限制的.
+
+版权声明:
+    
+    Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要:
+    
+    这篇著作的目的是使Internet协议国际化,标准化,它包括向internet用户提供一种性能,他们可以使用他们自己的语言,以及语言包含的标准字符集,来表达他们自己,书写他们的名字,并且控制整个网络.这就影响到了在电子邮件地址中的可见的区域名,以及如此之多的目前用来定位万维网中信息的URL,等等.但是,internet用区域名来区分国际之间的界限.因为这些服务是在全世界范围操作的,所以如果不这样,我们就得冒被其他周遍网络孤立出来的危险.这种类型的孤立,不仅仅会影响到人与人之间的交流,同样也会影响那些被牵扯进去的地区的网络商务,远程教学,以及其他各种国际性的行为,以至影响经济发展.
+
+    关于区域名的国际化,这里有几条建议,但还是要看它们中的哪一些可以在使用可见名作地址时,确定互动性和全球范围.它们中的一些当然不行.本文不想复习那些特殊的建议,因为那是IETF的区域名国际化工作组的工作,而且这已经在一边工作,一边检验过了,就象全球Internet用户期望的一样,它得到了可持续的全球网络的认可.
+
+    这篇文章是Internet Architecture Board的声明.它并不是某个协议的概述,而是试图阐明建设学的重点,也就是区域名国际化所要面临的问题.
+
+1.成功的定义
+
+    区域名国际化(IDN)工作组是IETF坚持不懈的努力的一部分,IETF为了使全球Internet活动中涉及的协议都使用同样标准的国际化语言而努力.
+
+    为了与大多数人传统的原则保持一致,运行代码,建筑学的完整,同时也为了确保全球Internet的稳定,IAB强调,所有提供给(IDN)工作组的解决方法,不可以只适合在特定的技术范围内,同时也要考虑到给现存的Internet标准和操作,以及终端用户带来的影响:也就是说,解决方案决不可以只解决当地的单一问题,而让用户同其他用户之间变的更孤立.某些情况中,现存的协议对于特性的容纳有局限性,还有些情况,Internet核心(不是单独的)协议在执行时,事实上也并不能满足所有现存标准必须设置.
+
+2.区域名系统(DNS)中的技术难题
+
+    在许多的技术著作中,IDN的工作,与那些在原始文基础上努力去制定多重字符集的工作并没有什么不同,都受英文字符传统的限制.
+
+    难题的一个方面就是决定如何把用户希望使用的用户名,在DNS中以一种明确的方式表示出来,并且在技术上是可行的,同时要确定一个名字意味着相同的东西.一些好的建议已经被提供出来实现这些要求.
+
+    这些要求重点已经在IDN 工作组的发展需求草案文档中非常详细的作了描述.对于WG和它的文档,还有待更详尽的讨论.
+
+3.与当前现实的结合
+
+    然而,IDN工作组所面临的难题是复杂的,并且大多与Internet操作部分杂乱的联系在一起.在测验任何一个被提议的解决方法时,寻找答案的难题就产生了,它主要是要分析当前方法对现存的标准操作的影响.所谓现存的标准操作就是那些完全合格的区域名[RFC1034]和单一的主机名[RFC1123].标准改变一样有效,但是向前的最好的途径是重视现实,并且注重潜伏的情况.在Internet的全球性的文档中,这些还远不够解决一些孤立的系统,即使它们中的大多数在一个地区.注意力一定要放在通用性上,尽可能不要使核心操作部分产生孤岛,那些孤岛与Internet的其他部分缺少联系和数据交换.
+
+    尽量不要涉及到过分高深或短暂的操作.那些特殊的部分已经在IDN 工作组的工作中声明过了.这些下面会详细举例(例子并无限制).
+
+3.1区域名和电子邮件
+
+    就象IDN需求草案文档中阐述的那样,重点已经远远超出了标准DNS用法的范围.电子邮件是长久以来,Internet最常用也最重要的应用.Internet电子邮件同样是相同地区不同用户的交流桥梁,私人邮件的交流.标准协议定义了它的用法(举例来说SMTP[RFC821],[RFC822]和MIME[RFC2045]),但是并不是所有DNS许可的用户都可以使用.鉴于准则中的电子邮件区域地址部分的规定,某些特定的用户是不被允许的.一些邮箱,虽说是完全按照准则制造的,但却众所周知的在缺少ASCII码区域名是作废,大多是由于邮件的遗失,错邮或者损坏造成的.因此,除非全世界所有的用户都升级完成,否则,想让区域名国际化和全球的电子邮件轻松的转换是不可能的.
+
+3.2区域名和邮件路由
+
+    在一个较低的级别,关于路由方针的语言概述(RPLS)[RFC2622]主要利用"为对象命名"--从旧的标准([RFC822]相同的邮件地址和[RFC1034]主机名)中继承了命名对象,同时也继承了某些限制.这就意味着,除非路由的注册系统以及相关的协议得到升级,否则想要利用国际化的区域名来描述网络服务是不可能的.
+
+3.3区域名与网络管理
+
+    同样的,简单的网络管理协议(SNMP)使用了[RFC2579]中定义的表示法.当其中的准则允许UTF--8--基础的区域名时,用来建立SNMP相关软件的软件库就会执行一个并不十分规则的测试,然后由它揭露出事实(如果有的话),并且执行它.
+
+    如果上述名字就是国际化的区域名的话,就会使一些Internet管理的工具不能正常的管理正确的数据.
+
+3.4区域名与安全性
+
+    Internet公开的关键技术,它的重要组成部分(PKIX[RFC2459]和IKE[RFC2409])主要依靠服务器(主机名,或者完全有效的区域名)和使用者(电子邮件地址)的鉴定.在协议中,要特别注意特征的区别,如果失败,就会影响安全工具来使用它们--传输层安全协议(TLS,[RFC2246]),和IPsec[RFC2401]
+命名.
+
+    错误也许并不明显.例如,在TLS中,对于一个服务器来说,发布一个包涵证书的声明声称是服务器的区域名,随后客户端就会同它曾经收到过服务的服务器名进行匹配.
+
+    除非区域名的比较进行过适当的定义,否则客户端可能会在匹配一个合法服务器名的时候发生错误,也有可能会在匹配一个正在进行恶意攻击的服务器名时发生失败.每一个失败都会造成对系统的攻击,或许现在不可能,但是将来可能会很困难.
+
+4.总结
+ 
+    综上所述,尽管分配国际化区域名有很多可行的方法,使得它与当今的DNS(或者一个将来可以容易展开的一个版本)相符合,并不是所有方法都能与所有网络工具兼容.当设计区域名国际化的解决方案时,它对当前Internet的的影响一定要小心注意.一些被提议的解决方法,如果马上就实践,就可能导致Internet连接的失败,并且以一种非常难检测到的方式产生,同时也会给那些准备发展新服务的服务器带来问题;同时那些会给那些不实行方法的服务器也带来麻烦,这就会切断那些试图展开新服务的用户与有效使用Internet之间的联系.
+
+    IDN 工作组已经成为公认的论坛,来鉴定和讨论上述潜在问题和互动性重点.
+
+    关于其他协议的研发得来的经验指出,想要一个新的协议或者是旧协议的更新遍布Internet,起码也要几年时间.迄今为止,IDN 工作组已经得到了很多从各个岗位提供的好的解决方法,其中包括一些组织想提供一些服务,服务包括地址可见名的表示方法,以及注册方法.稍微发展一下,也就是想得到一个关于这个问题的解决方法,并且最好这个方法是简单的,易升级的,易展开的.这也是可持续发展的全球中心操作的唯一出路,也是全世界Internet用户所期望的.
+
+5.安全事项注意
+
+    一般而言,正常的工作和名称的使用并不会引发特殊的安全问题.但是,就象上面提到的,一些现有的安全机制,是依赖与现存的区域名准则的,也许并不会按预期的样子执行,尤其是使用国际化的区域名时.另外,非标准系统在研发升级时(举例来说回复当前的本地或国际的字符集表示法),也许就会由于在全球范围内,它用来表示名称的字符串并不唯一而引发很多问题,比如会引起从一个地区到另一个地区的"哄骗"主机,就想[RFC2826]中描述的那样.
+
+6.感谢
+
+    这篇文档是IAB中各个成员共同努力的成果.另外,其中很多宝贵的评论是由Randy Bush,
+   Patrik Faltstrom, Ted Hardie, Paul Hoffman, 和Mark Kosters提供的.
+
+7.参考书目
+
+
+   [RFC821]  Postel, J., "Simple Mail Transfer Protocol", STD 10, RFC
+             821, August 1982.
+
+   [RFC822]  Crocker, D., "Standard for the Format of ARPA Internet Text
+             Messages", STD 11, RFC 822, August 1982.
+
+   [RFC1034] Mockapetris, P., "Domain Names - Concepts and Facilities",
+             STD 13, RFC 1034, November 1987.
+
+   [RFC1123] Braden, R., "Requirements for Internet Hosts -- Application
+             and Support", STD 3, RFC 1123, November 1989.
+
+   [RFC2401] Kent, S. and R. Atkinson, "Security Architecture for the
+             Internet Protocol", RFC 2401, November 1998.
+
+   [RFC2409] Harkins, D and D. Carrel, "The Internet Key Exchange
+             (IKE)", RFC 2409, November 1998.
+
+   [RFC2045] Freed, N. and N. Borenstein, "Multipurpose Internet Mail
+             Extensions (MIME) Part One:  Format of Internet Message
+             Bodies", RFC 2045, November 1996.
+
+   [RFC2246] Dierks, T. and C. Allen, "The TLS Protocol Version 1.0",
+             RFC 2246, January 1999.
+
+   [RFC2459] Housley, R., Ford, W., Polk, W. and D. Solo, "Internet
+             X.509 Public Key Infrastructure Certificate and CRL
+             Profile", RFC 2459, January 1999.
+
+   [RFC2579] McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J.
+             and M. Rose, "Textual Conventions for SMIv2", RFC 2579,
+             April 1999.
+
+   [RFC2622] Alaettinoglu, C., Villamizar, C., Gerich, E., Kessens, D.,
+             Meyer, D., Bates, T., Karrenberg, D. and M. Terpstra,
+             "Routing Policy Specification Language (RPSL)", RFC 2622,
+             June 1999.
+
+   [RFC2826] IAB, "IAB Technical Comment on the Unique DNS Root", RFC
+             2826, May 2000.
+
+8.作者地址
+
+Internet Architecture Board
+
+   EMail:  iab@iab.org
+
+   文档作者个成员名单如下:
+
+      Harald Alvestrand
+      Ran Atkinson
+      Rob Austein
+      Brian Carpenter
+      Steve Bellovin
+      Jon Crowcroft
+      Leslie Daigle
+      Steve Deering
+      Tony Hain
+      Geoff Huston
+      John Klensin
+      Henning Schulzrinne
+
+9.版权声明
+
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+9.感谢
+
+    RFC 的文档编辑的资金是由Internet社团提供的.

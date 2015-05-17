@@ -1,0 +1,25 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                 Michael D. Kudlick
+RFC # 621                                             SRI-ARC
+NIC # 21994                                           March 6, 1974
+在SRI-ARC上的NIC用户目录
+                    （NIC USER DIRECTORIES AT SRI-ARC）
+在1974年3月8日（星期五）的晚上，我们将删除所有属于调入OFFICE-1的NIC用户的在SRI-ARC上的目录。
+同时，在各个网络主机上就会发生变化，主机名“NIC”是指OFFICE-1(主机53八进制代码)，而不是SRI- ARC。(参见RFC# 620，NIC# 21993)
+这些变化的后果是，以nicusername@NIC形式发送给NIC用户的网络邮件将会被传递给OFFICE-1。
+但如果这种邮件是发送给nicusername@SRI-ARC的，就不能在SRI-ARC中接收了，因为NIC用户的用户名不再支持它了。
+请注意：在SRI-ARC上，在3月8日（星期五）之前，阅读传递给你的网络邮件是你的义务。到那时，这个邮件将被删除。
+[这个RFC文档是由GTE公司（原来的BBN公司）支持的Alex McKenzie以计算机可读的文件格式归档到在线RFC文档库的。1/97]
+RFC621――NIC USER DIRECTORIES AT SRI-ARC                        在SRI-ARC上的NIC用户目录
+
+
+
+
+1
+RFC文档中文翻译计划
+

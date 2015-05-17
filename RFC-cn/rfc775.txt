@@ -1,0 +1,142 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：prince1680（prince1680 prince1680@163.com）
+译文发布时间：2001-4-20
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+面向目录的 FTP 命令
+（RFC 775 Directory oriented FTP commands）
+
+David Mankins (dm@bbn-unix)
+Dan Franklin (dan@bbn-unix)
+A. D. Owen (ADOwen@bbnd)
+
+
+    	作为ARPA网远程站点维护工程（RSM）的一部分，BBN需在运行Unix操作系统的若干台PDP-11上安装并维护软件。因为Unix系统有一个树状目录结构，在这种结构中，对目录的操作同对普通文件操作一样容易，我们发现在这些机器上可以非常便利地扩展FTP服务器来包含涉及目录创建等的命令。
+	因为在ARPA网上存在有树状目录的包括Tops-20和Multics在内的其他主机，我们试图尽可能地使这些命令成为常规命令。
+    我们在服务器上添加了四条命令：
+
+	   XMKD child
+                         建立一个名为“child”的目录。                               
+	   XRMD child
+                          删除名为“child”的目录。
+	   XPWD
+                         打印当前工作目录。    
+	   XCUP
+                          改变目录到当前工作目录的父目录。         
+
+     "child"参数将作为当前工作目录的子目录被创建（删除），除非“child”字符串包含足够的信息指明其他的服务器，例如，“child”是一个绝对路径名（在Multics和Unix中），或在Tops-20中chlid象"<abso.lute.path>"的东西。
+
+	回答码
+
+    XCUP命令是XCWD中的一种特殊情况,包含在简单化执行的程序中，这些程序在对父目录命名有不同语法的操作系统之间传递目录树。因此我们推荐XCUP的回答码与XCWD的回答码相同。同样地， 我们推荐XRMD的回答码和与其相似的文件删除的命令DELE的回答码相同。
+    然而，XMKD的回答码比较复杂。一个新近创建的目录或许会成为XCWD命令的将来的目标。不幸的是，XMKD的参数不可能总是XCWD合适的参数。这里有种情况，例如，在Tops-20上，一个子目录只需在给出名字的情况下就可以被创建。也就是说，在Tops-20服务器的FTP上，下列命令序列
+
+				 XMKD MYDIR
+				 XCWD MYDIR
+
+将会出错。一个新目录可能仅仅只用“绝对的”名字指明；例如，如果在目录<DFRANKLIN>下使用上述XMKD命令，新的子目录只可使用名称<DFRANKLIN.MYDIR>来指明。甚至在Unix和Multics上，XMKD中给定的参数可能也不合适。如果它是一个“相对”的路径名（也就是说，一个路径名被认为与当前目录有关），用户要到达子目录必须在同一当前目录下才行。如果依赖于应用程序，将会造成不方便。在任何情况下它都不会很健壮。
+   要解决这些问题，在成功完成XMKD的命令之外，服务器应当返回一行表格：
+
+	       257<空格>"<目录名>"<空格><注释>
+
+   也就是说，服务器会告诉用户在创建目录时要用到什么字符串。目录名可以包含任何字符；内嵌的双引号要用双引号转义（“双重引用”惯例）。例如，用户进入目录/usr/dm，并创建一名为child的子目录：
+
+		  XCWD /usr/dm
+		  200 directory changed to /usr/dm
+		  XMKD child
+		  257 "/usr/dm/child" directory created
+
+       一个带有内嵌双引号的例子：
+		  XMKD foo"bar
+		  257 "/usr/dm/foo""bar" directory created
+		  XCWD /usr/dm/foo"bar
+		  200 directory changed to /usr/dm/foo"bar
+
+    如果已存在一个同名子目录，我们认为应解释为一个错误，在这种情况下，服务器应给出“access denied（拒绝访问）”的错误回答。
+		  CWD /usr/dm
+		  200 directory changed to /usr/dm
+		  XMKD child
+		  521-"/usr/dm/child" directory already exists;
+		  521    taking no action.
+
+   我们推荐XMKD的失败回答与文件创建命令STOR相类似。
+   同样，如果一个与子目录同名的文件与子目录创建相冲空，我们也推荐返回“access denied（拒绝访问）”（这是一个Unix上的问题，但不是Top-20上的）。
+
+    由于XPWD命令与XMKD命令完成返回同一种的信息，我们也应用257回答码来表示这一命令成功执行。这里我们提交一个试验命令的回答码摘要。圆括号外给出的代码与RFC691相一致；也就是那份RFC中被建议更新的旧协议的代码。BBN-Unix服务器和用户程序均执行这些代码。
+    回答码257是唯一的新编码。圆括号中显示的回答码是“新”FTP协议的，大多数已最近记录在RFC765中。
+      为RFX765协议发明的代码是251。
+      命令:    回答码         解释
+
+
+      XMKD               创建目录
+	      257 (251) "pathname" created（"pathname" 已创建）
+	      521 (450) "pathname" already exists（"pathname" 已存在）
+	      506 (502) action not implemented（操作未执行）
+	      521 (450) access denied（拒绝访问）
+	      550 (501) bad pathname syntax or ambiguous（错误或不明确的路径名）
+	      425 (451) random file system error（随机文件系统错误）
+
+      XCUP                    改变目录到上一级目录
+	      200 (200) working directory changed（工作目录已改变）
+	      506 (502) action not implemented（操作未执行）
+	      507 (551) no superior directory（无上一级目录）
+	      521 (450) access denied（拒绝访问）
+	      425 (451) random file system error（随机文件系统错误）
+
+      XRMD                    删除目录
+
+	      224 (250) deleted ok（删除完成）
+	      506 (502) action not implemented（操作未执行）
+	      521 (450) access denied（拒绝访问）
+	      550 (501) bad pathname syntax or ambiguous（错误或不明确的路径名）
+	      425 (451) random file system error（随机文件系统错误）
+
+      XPWD                    打印当前工作目录
+	      257 (251) "pathname"（“路径名”）
+	      425 (451) random file system error（随机文件系统错误）
+	      506 (502) action not implemented（操作未执行）
+
+
+				 SUBTLETIES
+
+      因为这些命令在机器间传递目录树非常有用，所以我们必须强调这样一个事实，即XMKD的参数应解释为当前工作目录下的子目录，除非它包含足够的能够说明其他情况的目的主机信息。
+      下面是一个Tops-20上假想的例子：
+		  XCWD <some.where>
+	      200 Working directory changed
+		  XMKD overrainbow
+		  257 "<some.where.overrainbow>" directory created
+		  XCWD overrainbow
+		  431 No such directory
+		  XCWD <some.where.overrainbow>
+		  200 Working directory changed
+
+		  XCWD <some.where>
+		  200 Working directory changed to <some.where>
+		  XMKD <unambiguous>
+		  257 "<unambiguous>" directory created
+		  XCWD <unambiguous>
+
+    注意第一个例子建立一个连接的目录下的一个子目录。相反，第二个例子的参数为Tops-20包含了足够的信息，指明<unambiguous>目录是一个上层目录。同时注意，在第一个例子中，用户“违反”协议，试图用一个不同于被Tops-20返回的名字访问刚创建的目录。在已存在<overrainbow>目录的情况下可能导致问题；这是某些Tops-20执行中固有的不确定性。XRMK命令也需要进行类似的考虑。这就是：不考虑在哪里操作，为了表示相关的绝对路径名，违反主机的惯例，主机会把XMKD和KRMD的操作视为对子目录操作。XMKD命令的回答必须包含创建目录的绝对路径名。
+
+参考资料
+
+      File Transfer Protocol (RFC 765), Postel,  J., June 1980
+      CWD Command of FTP (RFC 697), Lieb, J., NIC 32963, 14 July 1975
+      One More Try on the FTP (RFC 691), Harvey, B., NIC 32700, 28  May
+      1975
+      Revised FTP Reply Codes (RFC 640),  Postel,  J.,  N.  Neigus,  K.
+      Pogran, NIC 30843, 5 June 1974
+      File Transfer Protocol (RFC 542), Neigus, N., NIC 17759,  12 July
+      1977
+ RFC775  Directory oriented FTP commands           RFC775  面向目录的 FTP 命令
+
+1
+
+
+4
+ＲＦＣ文档中文翻译计划
+

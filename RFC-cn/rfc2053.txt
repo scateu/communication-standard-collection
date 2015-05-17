@@ -1,0 +1,112 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：cc8131（cc8131 fengyun813115@263.net）
+译文发布时间：2001-12-28
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                 E. Der-Danieliantz
+Request for Comments: 2053                 AM Network Information Center
+Category: Informational                                     October 1996
+
+
+
+
+                            AM（美国）域
+             （RFC2053――The AM (Armenia) Domain）
+
+这篇文章的目的
+该文章为互联时代提供了必要的信息。这篇文章并没有制定任何种类的网络标准，这
+篇文章的发行是无限的。
+
+AM领域
+   AM域是亚美尼亚的一个正式的高水平网络领域。
+
+   AM是亚美尼亚共和国的ISO-3166 2-letter国家代码，因此，AM域被确定为一个高水平
+的领域，并被注册为InterNIC，这一点同其他国家领域是一样的。
+
+名字构造
+   AM域的层次是平和的，这意味着任何组织在AM TLD下都可被直接注册。例如，
+arminco.am。
+
+然而，子域也被允许，例如，ORG和MIL，还有CO和AC。
+
+请注意MIL.AM和GOV.AM域已经被亚美尼亚的国防部门和政府分别保留下来。在
+HOSTMASTER@AMNIC.NET.中，通过与AM网络信息中心联系，其他域可能被保留下来
+是为了适当的组织。
+
+注册
+   有两种类型的注册授权，一种是AM域的一个分支被分派到一个可运行姓名服务的组织
+来支持这个分支，另一种是直接注册，这种方法是信息被直接送入主数据库中。
+
+直接注册有两种情况：（a）IP主机（附有IP地址），（b）无IP主机（例如，一个UUCP
+主机）。任何特殊的注册都脱离不了这三种情况。
+
+
+     该注册是被AM网络信息中心，即亚美尼亚国内网络注册处，所执行的。对于更多的
+有关AM网络信息中心的信息，请访问：
+
+                       http://www.amnic.net
+
+需求
+  在AM域中请求注册一个主机的任何人将会被赠送一个“AM第二水准领域注册模板”的
+副本。出于考虑，填写这个模板并通过e-mail把它送到HOSTMASTER@AMNIC.NET是必
+要的。
+
+   AM域模板，同InterNIC域模板，但是它们不一样。为了请求一个AM域模板的副本，
+有必要发信息到HOSTMASTER@AMNIC.NET.。
+
+参考书籍
+     [1]  Stahl, M., "Domain Administrators Guide", RFC 1032, SRI
+        International, November 1987.
+
+   [2]  Lottor, M., "Domain Administrators Operations Guide" RFC 1033,
+        SRI International, November 1987.
+
+   [3]  Mockapetris, P., "Domain Names - Concepts and Facilities",
+        STD 13, RFC 1034, ISI, November 1987.
+
+   [4]  Mockapetris, P., "Domain Names - Implementation and
+        Specification", STD 13, RFC 1035, ISI, November 1987.
+
+   [5]  Dunlap, K., "Name Server Operations Guide for Bind,
+        Release 4.3", UC Berkeley, SMM:11-3.
+
+   [6]  Partridge, C., "Mail Routing and the Domain Name System",
+        STD 14, RFC 974, BBN, January 1986.
+
+   [7]  Albitz, P., C. Liu, "DNS and Bind" Help for UNIX System
+        Administrators, O'Reilly and Associates, Inc., October 1992.
+
+[8]  Reynolds, J., and J. Postel, "Assigned Numbers", STD 2,
+        RFC 1700, ISI, October 1994.
+
+
+
+
+安全事项
+   这篇文章并没有谈到任何安全问题。
+
+作者地址
+   Edgar Der-Danieliantz
+   AM Network Information Center
+   c/o Arminco Limited
+   Mashtotz Avenue 51
+   Yerevan, ARMENIA
+
+电话：+374 2 28 14 25
+传真：+374 2 28 50 82
+电子邮件：edd@acm.org
+          edd@amnic.net
+
+
+
+
+RFC2053――The AM (Armenia) Domain                               AM（美国）域
+
+
+1
+RFC文档中文翻译计划

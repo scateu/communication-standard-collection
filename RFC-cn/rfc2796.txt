@@ -1,0 +1,352 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：万怡敏（scottwan   greatgod@163.net）
+译文发布时间：2001-7-4
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                           T. Bates
+Request for Comments: 2796                                 Cisco Systems
+Updates: 1966                                                 R. Chandra
+Category: Standards Track                                        E. Chen
+                                                        Redback Networks
+                                                              April 2000
+BGP路由反射
+（BGP Route Reflection）
+
+本备忘录状态
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+版权声明
+   Copyright (C) The Internet Society (2000).  All Rights Reserved. 
+
+摘要
+BGP（边界网关协议）是一种设计用于TCP/IP因特网的AS（自治系统）间的路
+由协议。目前在因特网中，BGP部署被配置成在一个单一自治系统中的所有BGP报告
+者必须全互连，并且任意外部的路由信息必须被重新传输到在此自治系统内的所有的其
+他的路由器。这里出现了一个严厉的规模性的问题，［2,3］已经详细记录了这些问题，
+并且有一些可选择的建议。
+本文档叙述了使用和设计一种叫做“路由反射”的方法来缓和“全互连”IBGP的
+需要。
+
+
+目录
+1．简介	2
+2．设计标准	2
+3．路由反射	3
+4．术语和概念	4
+5．操作	5
+6．冗余的路由反射器	5
+7．避免路由信息环回	5
+8．实施方面的考虑	6
+9．配置和执行方面的考虑	6
+10．安全方面的考虑	7
+
+1．简介
+        目前在因特网中，BGP部署被配置成在一个单一自治系统中的所有BGP报告者必
+须全互连，并且任意外部的路由信息必须被重新传输到在此自治系统内的所有的
+其他的路由器。对于在一个自治系统中的n个BGP报告者而言，需要维护n*(n-1)/2
+个独立的IBGP对话。因为当前许多因特网网络通常存在大量的IBGP报告者，每个报
+告者间相互交换大容量的路由信息，所以“全互连”的要求明显不好调节。
+　　在［2,3］中详细记录了这个规模性问题，并有一些被用于缓解这个问题的建议。
+本文档阐述了另一种用于缓解“全互连”的可选方案叫做“路由反射”。这个方法允许
+一个BGP报告者（叫做“路由反射器”）广播IBGP学得的路由给某些IBGP对等方。
+本文档阐述了对通常理解的IBGP概念的一个改变，并且增加了两个新的可选的过渡
+BGP属性来防止在路由更新中的环回。
+　　本文档是RF1966的一个修订版，并且它包括了基于路由反射的部署经验的编辑
+修改、阐明和校正。   
+2．设计标准
+　　　　路由反射被设计为满足下列标准：
+　　　　。简单化
+　　　　任何的改变必须既易于理解又易于配置。
+　　　　。容易过渡
+　　　　必须在不需改变拓扑或自治系统的情况下，能从一个全互连配置过渡到路由
+　　　　反射。这是一项效果不好的对［3］中建议的技术的管理开支。
+　　　　。兼容性
+　　　　必须在不丢失任何BGP路由信息的情况下，可以使得不兼容RR的IBGP对等继
+续成为原始自治系统或域的一部分。
+　　　　这些标准受到有许多外部连接的一个非常大和拓扑复杂的网络的操作经验的驱动。
+3．路由反射
+路由反射的基本概念非常简单。让我们考虑下面图1中叙述的简单例子。
+
+                   +-------+        +-------+
+                   |       |  IBGP  |       |
+                   | RTR-A |--------| RTR-B |
+                   |       |        |       |
+                   +-------+        +-------+
+                         \            /
+                     IBGP \   ASX    / IBGP
+                           \        /
+                            +-------+
+                            |       |
+                            | RTR-C |
+                            |       |
+                            +-------+
+
+                    图1：　全互连IBGP
+在ASX自治系统中有三个IBGP报告者（路由器RTR-A，RTR-B，RTR-C）。根据
+现存的BGP模型，如果A收到一个外部路由且它被选为最佳路径，它必须广播此路由
+给B、C。B、C（作为IBGP报告者）将不再广播此IBGP学得的路由给其它IBGP报告
+者。
+如果此规则被放宽，C被允许广播IBGP学得的路由给IBGP对等，那么它将可以
+重播（或反射）这条从A学得得路由给B，反之亦然。这就消除了在A、B间存在IBGP
+对话得必要，如下图2所示。
+
+                  +-------+        +-------+
+                  |       |        |       |
+                  | RTR-A |        | RTR-B |
+                  |       |        |       |
+                  +-------+        +-------+
+                        \            /
+                    IBGP \   ASX    / IBGP
+                          \        /
+                           +-------+
+                           |       |
+                           | RTR-C |
+                           |       |
+                           +-------+
+
+                图2：　路由反射IBGP
+这个路由反射方案就是基于这个基本原理。
+4．术语和概念
+我们使用术语“路由反射”来叙述一个IBGP报告者广播一条IBGP学得得路由给另一
+个IBGP对等的过程。这样的一个IBGP报告者被称为一个“路由反射器“，并且这样一条
+路由被称为一个被反射的路由。
+一个路由反射器的内部对等可以被分为两个组：
+1）	客户对等
+2）	非客户对等
+一个路由反射器不仅反射这些组间的路由，还可以反射客户对等间的路由。一个路由反
+射器和它的客户对等一起构成一个簇。非客户对等必须全互连而客户对等则不必。图3画出
+的一个简例概括了使用上述注释的术语的基本路由反射器的构件。
+
+
+
+　　　　　　　　/ - - - - - - - - - - - - -  -
+                 |           Cluster           |
+                   +-------+        +-------+
+                 | |       |        |       |  |
+                   | RTR-A |        | RTR-B |
+                 | |Client |        |Client |  |
+                   +-------+        +-------+
+                 |      \            /         |
+                    IBGP \          / IBGP
+                 |        \        /           |
+                           +-------+
+                 |         |       |           |
+                           | RTR-C |
+                 |         |  RR   |           |
+                           +-------+
+                 |           /   \             |
+                  - - - - - /- - -\- - - - - - /
+                     IBGP  /       \ IBGP
+                  +-------+         +-------+
+                  | RTR-D |  IBGP   | RTR-E |
+                  |  Non- |---------|  Non- |
+                  |Client |         |Client |
+                  +-------+         +-------+
+
+                     Figure 3: 路由反射器构件
+
+5．操作
+　　　　当一个路由反射器收到一条路由时，它基于它的路径选择规则来选择最佳路径。在
+选择了最佳路径后，它必须根据它接收的最佳路径所来自的对等的类型来进行下列操
+作：
+1）	从一个非客户对等来的路由
+　　　　　　反射到全部的客户对等。
+2）	从一个客户对等来的路由
+既反射到全部的非客户对等，也反射到客户对等。（从而客户对等不需要全互
+连）。
+　　　　一个自治系统可以有许多个路由反射器。一个路由反射器将其他的路由反射器作为
+任意其他的BGP报告者对待。一个路由反射器也可以被配置为其他路由反射器的一个
+客户组或非客户组。
+　　在一个简单配置中，主干可以被分为许多个簇。每个路由反射器可以被配置作为其
+他路由反射器的非客户对等（那么全部路由反射器将是全互连）。客户仅和它们
+同一簇的路由反射器维持IBGP对话。由于路由反射，全部的BGP报告者将收到被反
+射的路由信息。
+　　在一个自治系统中可能存在不理解路由反射器概念的BGP报告者（让我们称之为
+传统的BGP报告者）。路由反射器方案允许这些传统的BGP报告者共存。传统的BGP
+报告者可以是非客户组的成员也可以是客户组的成员。这使得易于逐渐从当前IBGP模
+式过渡到路由反射模式。可以通过将单一一个路由器配置为指定的路由反射器、并且配
+置其他的路由反射器和它们的客户为普通的IBGP对等来开始产生一个簇。另外的簇也
+可以逐渐产生。
+6．冗余的路由反射器
+　　　　通常一个簇的客户只有单一一个路由反射器。在次情况下，这个簇将由这个路由反
+射器的ROUTER_ID来标识。但是，这意味着单点故障将全簇故障，因此同一簇中需
+要
+多个路由反射器。在同一簇中的全部路由反射器必须用一个4字节的CLUSTER_ID来
+配置，从而一个路由反射器可以辨认出来自同一簇的其他路由反射器的路由。
+7．避免路由信息环回
+　　　　当一条路由被反射时，它可能因为不正确的配置导致路由的再传播环回。路由反射
+方法定义了下列属性来检测和避免路由信息环回：
+
+ORIGINATOR_ID
+　　ORIGINATOR_ID是一个新的、可选的、非过渡性的类型码为9的BGP属性。这
+个属性有4字节长，将由一个路由反射器在反射一条路由时产生。这个属性将搭载本地
+自治系统中的路由的原始方的ROUTER_ID。如果一个ORIGINATOR_ID已经存在，
+BGP
+报告者将不能产生一个ORIGINATOR_ID属性。可以识别这个属性的路由器将忽略所
+接
+收的一条路由的ROUTER_ID，不将它作为ORIGINATOR_ID。
+
+CLUSTER_LIST
+　　CLUSTER_LIST是一个新的、可选的、非过渡性的类型码为10的BGP属性。这
+是一个CLUSTER_ID值的序列表，表示这条路由通过的反射路径。它被如下编码：
+
+             0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |  Attr. Flags  |Attr. Type Code|   Length      | value ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+此处Length代表字节数。
+　　当一个路由反射器反射一条路由时，它必须预先附加本地的CLUSTER_ID 给
+CLUSTER_LIST。如果CLUSTER_LIST是空的，路由反射器就必须产生一个新的
+CLUSTER_LIST。使用这个属性路由反射器就可以辨认出因为错误配置被环回到同一
+簇
+的路由信息。如果在CLUSTER_LIST中发现本地的CLUSTER_ID，将不再传播此路由
+信息。
+8．实施方面的考虑
+　　　　必须注意的是，要确保当在路由反射器和客户及非客户对等之间交换网络路由信息
+时，不是上述定义的BGP路径属性能通过配置来被修改。这些修改可能潜在的导致路由
+环回。
+　　此外，当一个路由反射器反射路由时，它将不能修改下列的路径属性：NEXT_HOP, 
+AS_PATH, LOCAL_PREF, MED。它们的修改可能潜在的导致路由环回。
+9．配置和执行方面的考虑
+　　　　BGP协议没有为一个客户提供用于将自己动态的标识为一个路由反射器的客户的
+方
+法。要达到这个目的的最简单的方法是手工配置。
+　　路由反射方法可解决规模问题的一个关键是路由反射器总结了路由信息并且仅反
+射
+它的最佳路径。
+　　MED和IGP权值都可以影响BGP路由选择。因为MED通常不可以比较而且IGP
+权值因每个路由器的不同而不同。对于某个路由反射拓扑，路由反射方法进行路由选择
+的结果可能和完全IBGP网状连接方法得到的不同。为了保证它们相同，需要保证路由
+反射器从不强制基于由于它们的客户的IGP权值不同而显著不同的IGP权值、或是基
+于
+不可比较的MED来执行BGP路由选择。前者可以通过配置簇内IGP权值而非簇间IGP
+权值来得到。后者则可以通过：
+　　。　在一个边界路由器上设置一个路由的本地选择权来反射MED值。
+　　。　或者确保当此AS_PATH长度值被用作一个路由选择标准时，来自不同的自治
+　　　　系统的AS_PATH长度值不同。
+　　。　或者通过基于这个路由反射器所用于决定最佳路径的策略来配置团体。
+　　有人会争辩说最后一个要求太严了，在一些情况下不实际。有人会进一步争辩说既
+然不会有路由环回，那么就不必强迫路由反射的路由选择结果和完全IBGP网状连接方
+法相同。
+　　为了防止路由环回和保持一致路由的目的，在设计一个路由反射拓扑时必须仔细考
+虑该网络的拓扑。通常，当对于一个前缀存在条路径时，此路由反射拓扑应该和这个网
+络拓扑相一致。一个常用的方法就是基于POP反射，每个POP在POP中维护它自己的    
+路由反射器所服务的客户，并且全部路由反射器时全互连的。此外，为了优化POP内
+路由，在每个POP中的反射器的客户常常全互连，并且POP内IGP权值被配置优于
+POP间IGP权值。
+10．安全方面的考虑
+这里对BGP属性的扩展不改变现存的IBGP内在的基本安全结论。
+
+11．鸣谢
+
+   The authors would like to thank Dennis Ferguson, John Scudder, Paul
+   Traina and Tony Li for the many discussions resulting in this work.
+   This idea was developed from an earlier discussion between Tony Li
+   and Dimitri Haskin.
+
+   In addition, the authors would like to acknowledge valuable review
+   and suggestions from Yakov Rekhter on this document, and helpful
+   comments from Tony Li, Rohit Dube, and John Scudder on Section 9, and
+   from Bruce Cole.
+
+12． 参考文献
+
+   [1]  Rekhter, Y. and T. Li, "A Border Gateway Protocol 4 (BGP-4)",
+        RFC 1771, March 1995.
+
+   [2]  Haskin, D., "A BGP/IDRP Route Server alternative to a full mesh
+        routing", RFC 1863, October 1995.
+
+   [3]  Traina, P., "Limited Autonomous System Confederations for BGP",
+        RFC 1965, June 1996.
+
+   [4]  Bates, T. and R. Chandra, "BGP Route Reflection An alternative
+        to full mesh IBGP", RFC 1966, June 1996.
+
+   [5]  Heffernan, A., "Protection of BGP Sessions via the TCP MD5
+        Signature Option", RFC 2385, August 1998.
+
+13． 作者地址
+
+   Tony Bates
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA 95134
+
+   EMail: tbates@cisco.com
+
+   Ravi Chandra
+   Redback Networks Inc.
+   350 Holger Way.
+   San Jose, CA 95134
+
+   EMail: rchandra@redback.com
+
+   Enke Chen
+   Redback Networks Inc.
+   350 Holger Way.
+   San Jose, CA 95134
+
+   EMail: enke@redback.com
+
+附录：与RFC 1966的比较 
+
+   Several terminologies related to route reflection are clarified, and
+   the reference to EBGP routes/peers are removed.
+
+   The handling of a routing information loop (due to route reflection)
+   by a receiver is clarified and made more consistent.
+
+   The addition of a CLUSTER_ID to the CLUSTER_LIST has been changed
+   from "append" to "prepend" to reflect the deployed code.
+
+   The section on "Configuration and Deployment Considerations" has been
+   expanded to address several operational issues.
+
+全部版权声明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society
+RFC2796――BGP Route Reflection                            　　　　          BGP路由反射
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,37 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者： 王翌 ( mcsewang  mcsewang@21cn.com )
+译文发布时间：2001-3-30
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group						Vint Cerf
+Request for Comments:  18					 	   UCLA
+Category: 							   September , 1969
+
+
+
+
+
+
+RFC18
+
+Link1被建议用在Host─Host的控制连接中，而link0用于IMP─IMP的控制。这样可以增强主机之间的通讯能力，同时减少由于IMP─IMP通讯而产生的延迟。
+
+
+
+
+	[This RFC has been restored to on-line status by Elmar K. Bins]
+
+
+RFC18 
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

@@ -1,0 +1,428 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王海 (javen_wang  wanghai@jbu.com.cn)
+译文发布时间：2001-8-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                       R. Pereira
+Request for Comments: 2451                        TimeStep Corporation
+Category: Standards Track                                     R. Adams
+                                                    Cisco Systems Inc.
+                                                         November 1998
+
+ESP CBC模式加密算法
+（RFC2451――The ESP CBC-Mode Cipher Algorithms）
+
+
+本备忘录状态
+ 
+    本文档讲述了一种Internet通信的标准Internet跟踪协议,并对其改进提出了讨论和建
+议。请参考最新版本的"Internet Official Protocol Standards" (STD 1) 来获得本协议的
+标准化进程和状态，此备忘录的发布不受任何限制。
+
+版权注意
+   版权归因特网协会（1998）所有，保留一切权利。
+
+摘要
+   本文档描述了在IPSec ESP（封装安全载荷）协议中如何使用CBC（加密块链接）模式的
+加密算法。它不仅清楚的规定了怎样使用某种加密算法，也规定了怎样使用所有的CBC模式
+加密算法。
+目录
+1. 导言	2
+1.1 规范要求	3
+1.2知识产权声明	3
+2. 加密算法	3
+2.1 模式	3
+2.2 密钥长度	3
+2.3 不健壮的密钥	4
+2.4 块的大小和填充	5
+2.5 Rounds	5
+2.6 背景	6
+2.7 性能	7
+3. ESP 载荷	7
+3.1 ESP 环境考虑	8
+3.2 密钥源	8
+4. 安全考虑	8
+5. 参考资料	8
+6. 感谢	10
+7. 编者的地址	10
+8. 版权声明	11
+ 
+1. 导言
+   封装安全载荷（ESP）[Kent98]为IP数据包提供机密性，来保护加密的载荷数据。本规范
+描述了在ESP中使用CBC模式的加密算法。
+   而本文档没有描述使用缺省加密算法DES，读者应该熟悉相关文档。[Madson98]
+   假定读者熟悉在“因特耐特协议安全体系结构”[Atkinson95]，“IP安全文档索引”
+[Thayer97]和“IP封装安全载荷（ESP）”[Kent98]文档中描述的相关术语和定义。
+   而且本文档和[Kent98]是相关的，必须联系它的上下文来阅读。
+
+1.1 规范要求
+   在本文档中出现的关键词“MUST”，“MUST NOT”，“REQUIRED”，“SHOULD”，“SHOULD NOT”，
+和“MAY”在[Bradner97]的描述中做了解释。
+
+1.2知识产权声明
+   关于知识产权的有效性和范围，使用本文档描述的技术的权利，或是其他可使用与否的权
+利的许可等
+，IETF不坚持自己的立场。它也没有对确定这些权利所做的努力有任何异议。关于ITIF在
+跟踪标准和相
+关标准文档中考虑这些权利的信息可以在BCP-11中找到。有关的出版和授权有效等，用户可
+以从IETF秘书
+处获得。
+
+2. 加密算法
+   所有的对称块加密算法都共享公用的特点和变量。包括模式，密钥大小，不健壮的密钥，
+块的大小和Rounds，所有的这些都在下边做了解释。
+
+   本文档举例说明了某种加密算法，象Blowfish [Schneier93], CAST-128 [Adams97], 3DES, 
+IDEA[Lai] [MOV],和 RC5 [Baldwin96]和其他任何可以和ESP一起使用的块加密算法，只要
+他们使用的所有变量都包括在本文档清晰定义的范围内。
+
+2.1 模式
+   所有在本文档中描述或涉及的对称块加密算法都使用加密块链接（BCB）模式。这种模式
+的算法需要一个和块的长度一样大小的初始化向量（IV）。使用一个随机产生的IV，防止完
+全一致的和加密算法块尺寸一样长度的第一个明文数据块产生完全一致的密文。
+   在数据加密之前，IV和第一个明文块进行XOR运算。然后对于连续的块，在当前的明文
+块加密之前，先和前一个密文块进行一次XOR运算。
+   更多的关于CBC模式的信息可以在[Schneier95]中找到。
+
+2.2 密钥长度
+   一些加密算法允许使用可变长度的密钥，而另一些只允许特定长度的密钥。密钥的长度是
+和算法的健壮性想关联的，因此较长的密钥总是比较短的密钥难于被攻击。
+   本文档规定所有的密钥长度必须是8位的整数倍。
+   本文档没有为每个加密算法指定缺省的密钥长度。密钥的长度由算法的顾问专家和考虑算
+法性能的健壮性来决定。
+   +==============+==================+=================+==========+
+   | Algorithm    | Key Sizes (bits) | Popular Sizes   | Default  |
+   +==============+==================+=================+==========+
+   | CAST-128 [1] | 40 to 128        | 40, 64, 80, 128 | 128      |
+   +--------------+------------------+-----------------+----------+
+   | RC5          | 40 to 2040       | 40, 128, 160    | 128      |
+   +--------------+------------------+-----------------+----------+
+   | IDEA         | 128              | 128             | 128      |
+   +--------------+------------------+-----------------+----------+
+   | Blowfish     | 40 to 448        | 128             | 128      |
+   +--------------+------------------+-----------------+----------+
+   | 3DES [2]     | 192              | 192             | 192      |
+   +--------------+------------------+-----------------+----------+
+   注：[1]对于CAST-128，因为CAST-128的密钥计划假设一个输入密钥是128位的，所以
+密钥少于128位时，必须在最右边填充0或是多于128位时，取重要的128位。如果你有一
+个80位长的密钥“3B5D831CFE”，就应该进行填充处理使其成为一个128位的密钥
+“3B5D831CFE000000”。
+       [2]第一个3DES密钥来自第一个64位，第二个密钥来自下一个64位，第三个密钥来
+自最后64位。在开始接受一套新的密钥的时候，实现必须考虑奇偶校验位。三个密钥中的每
+一个是实际长度是56位，包括额外的8位用做奇偶校验。
+       读者应该注意到所有上面提到的加密算法的最小密钥长度是40位长，编者强烈的建
+议实现时不要使用短于40位的密钥。
+
+2.3 不健壮的密钥
+   应该对不健壮的密钥进行检查。如果这样的密钥被发现，这个密钥应该被拒绝，并发出新
+的SA请求。一些算法有一定不能被使用的不健壮的密钥或是本质上是不健壮的密钥。
+   新的不健壮密钥可能被发现，所以对于这些算法，本文档不可能包括所有可能的不健壮密
+钥。请查看其他的密码源资料，比如[MOV]和[Schneier]，来获知更多的不健壮密钥。
+
+
+   CAST-128:
+   没有已知的不健壮密钥。
+   RC5:
+   当使用16rounds时，没有已知的不健壮密钥。
+   IDEA:
+   IDEA已经被发现存在不健壮密钥，请查看[MOV]和[Schneier]来获得更多的相关信息。
+   Blowfish:
+   对于Blowfish算法也发现了不健壮密钥。不健壮密钥就是那些对于特定的S-box产生完
+全一致的输入的密钥。
+   不幸的是，在S-box值产生之前，，没有办法对不健壮密钥进行测试。无论如何，随机产
+生这样一个密钥的机会是很小的。
+   3DES:
+   DES有64个已知的不健壮密钥，包括所谓的semi-weak密钥和possibly-weak密钥
+[Schneier95, pp 280-282]。
+   而随机的产生一个这样的密钥的可能性是可以忽略的。
+   对于DES-EDE3，没有已知的需要拒绝的不健壮或补充的密钥。由于使用了多个密钥，任
+何的不健壮性都被排除了。
+   无论如何，如果前两个或是后两个独立的64位密钥是相同的（k1 == k2或k2 == k3），
+那么3DES就和DES完全一样了。实现者必须拒绝使用有这种属性的密钥。
+   
+2.4 块的大小和填充
+
+   所有在本文档中描述的算法都使用8个8位组（64位）的块。
+   在排列载荷类型和填充长度8位组（在[Kent98]中有定义）时要使用填充。填充部分必须
+完全的排列数据
+使它满足8个8位组（64位）的加密边界要求。
+   
+2.5 Rounds
+   这个变量决定了一个块被加密多少次。然而这个变量也可以协商决定，当不使用协商解决
+的时候，缺省的值必须总是存在。
+   +====================+============+======================+
+   | Algorithm          | Negotiable | Default Rounds       |
+   +====================+============+======================+
+   | CAST-128           | No         | key<=80 bits, 12     |
+   |                    |            | key>80 bits, 16      |
+   +--------------------+------------+----------------------+
+   | RC5                | No         | 16                   |
+   +--------------------+------------+----------------------+
+   | IDEA               | No         | 8                    |
+   +--------------------+------------+----------------------+
+   | Blowfish           | No         | 16                   |
+   +--------------------+------------+----------------------+
+   | 3DES               | No         | 48 (16x3)            |
+   +--------------------+------------+----------------------+
+
+2.6 背景
+   CAST-128:
+   CAST设计程序最初是由Carlisle Adams和Stafford Tavares在Queen大学（位于加拿
+大的安大略省的Kingston）提出的，后来的改进工作由Carlisle Adams和Michael Wiener
+用了几年时间完成。CAST-128是在[Adams97]中应用CAST设计程序作为大纲的结果。
+
+   RC5:
+   RC5加密算法是由Ron Rivest为RSA数据安全公司开发的。为了满足更高的加密软硬件
+性能要求，还是选择DES。RC5是有专利的（pat.no. 5,724,428）。关于RC5的描述可以在[MOV]
+和[Schneier]中找到。
+
+   IDEA:
+   Xuejia Lai和James Massey提出了IDEA算法（International DataEncryption 
+Algorithm）。算法在[Lai], [Schneier]和[MOV]有详细的描述。
+   IDEA算法在欧洲和美国是有专利的而在日本的专利申请还没有批准。商业应用需要向
+IDEA购买许可。
+   关于专利和许可信息，请参考：
+       Ascom Systec AG, Dept. CMVV
+         Gewerbepark, CH-5506
+         Magenwil, Switzerland
+         Phone: +41 64 56 59 83
+         Fax: +41 64 56 59 90
+         idea@ascom.ch
+         http://www.ascom.ch/Web/systec/policy/normal/exhibit1.html
+
+   Blowfish:
+   Bruce Schneier提出了Blowfish块加密算法。在[Schneier93], [Schneier95]和
+[Schneier]中有关于算法的详细描述。
+
+   3DES:
+   这个DES的变形，通俗的说就是“Triple DES”或是“DES-EDE3”，处理每个块三次，每
+次都使用不同的密钥。这种使用多余一个DES过程的技术在[Tuchman79]被中提议的。
+         
+                        P1             P2             Pi
+                         |              |              |
+                  IV->->(X)    +>->->->(X)    +>->->->(X)
+                         v     ^        v     ^        v
+                      +-----+  ^     +-----+  ^     +-----+
+                  k1->|  E  |  ^ k1->|  E  |  ^ k1->|  E  |
+                      +-----+  ^     +-----+  ^     +-----+
+                         |     ^        |     ^        |
+                         v     ^        v     ^        v
+                      +-----+  ^     +-----+  ^     +-----+
+                  k2->|  D  |  ^ k2->|  D  |  ^ k2->|  D  |
+                      +-----+  ^     +-----+  ^     +-----+
+                         |     ^        |     ^        |
+                         v     ^        v     ^        v
+                      +-----+  ^     +-----+  ^     +-----+
+                  k3->|  E  |  ^ k3->|  E  |  ^ k3->|  E  |
+                      +-----+  ^     +-----+  ^     +-----+
+                         |     ^        |     ^        |
+                         +>->->+        +>->->+        +>->->
+                         |              |              |
+                         C1             C2             Ci
+
+   DES-EDE3-CBC算法是DES-CBC算法[FIPS-46]的一种简单变形。“outer”链接技术被使用。
+   在DES-EDE3-CBC中，一个初始化向量（IV）和第一个64位（8字节）的明文块（P1）进
+行“XOR”运算。键控的DES函数被反复是使用三次，先是一次加密（EK1）然后是一次解密
+（DK2）最后又是一次加密（EK3），这样就产生了这个块的密文。每次反复都使用互不相关的
+密钥：K1，K2，K3。
+   对于后续的块，前一个加密密文块和当前的明文块进行“XOR”运算，键控的DES-EDE3
+加密函数为这个块产生密文（Ci）。
+   关于解密，函数的执行顺序被翻转：用K3解密，K2加密，K1解密，并和前一个密文块进
+行“XOR”运算。
+   注意当三个密钥（K1，K2，K3）相同时，DES-EDE3-CBC就等同于DES-CBC。这种特性使
+DES-EDE3的不用更改硬件就可以执行DES模式。
+
+2.7 性能
+   关于比较评估这些或是其他加密算法的运行速度的表，请查看[Schneier97]或是关于最新
+的性能比较请查看[Bosseleaers]。
+
+3. ESP 载荷
+   ESP载荷由IV，要保护数据密文组成。因此在[Kent98]中定义的载荷区依照下面的图表被
+分割：
+       +---------------+---------------+---------------+---------------+
+   |                                                               |
+   +               初始化向量 (8 octets)                +
+   |                                                               |
+   +---------------+---------------+---------------+---------------+
+   |                                                               |
+   ~               加密载荷 (长度可变)              ~
+   |                                                               |
+   +---------------------------------------------------------------+
+    1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8
+
+   IV区域必须和使用的加密算法要求的块的长度相同。IV必须被随机选择。公认的习惯是
+使用随机数据作为第一个IV，来自一个加密处理过程的最后的加密数据块作为下一个加密处
+理过程的IV。
+   在每个数据包中包含IV确保了可以对每个接收到的数据包进行解密处理，即使一些数据
+包在传输过程中分段或是重组。
+   为了避免在不同的包中，ECB加密非常相似的明文，实现时一定不能使用计数器或是低
+hamming的距离源作为IV。
+
+3.1 ESP 环境考虑
+   当前在这些算法和ESP的其他方面之间还没有关于交互作用的已知出版物。比如使用某种
+验证摘要。
+
+3.2 密钥源
+   从密钥交换协议向ESP算法发出的最少位数一定要大于或等于这个密钥的长度。
+   加密器的加密和解密密钥来自密钥源的前<x>位，<x>又密钥长度的需要决定。
+
+4. 安全考虑
+   考虑他们特殊的硬件和软件配置，实现推荐使用他们能使用的最大长度的密钥。注意必要
+的加密在安全通道两端产生影响，所以你不只要考虑客户端，还要考虑服务器端。
+   关于使用随机值的信息请查阅[Bell97]。
+   对于更多的安全考虑，推荐读者阅读描述实际的加密算法的文档。
+
+5. 参考资料
+
+   [Adams97]   Adams, C, "The CAST-128 Encryption Algorithm",
+               RFC2144, 1997.
+
+   [Atkinson98]Kent, S. and R. Atkinson, "Security Architecture for the
+               Internet Protocol", RFC 2401, November 1998.
+
+   [Baldwin96] Baldwin, R. and R. Rivest, "The RC5, RC5-CBC, RC5-CBC-
+               Pad, and RC5-CTS Algorithms", RFC 2040, October 1996.
+
+   [Bell97]    S. Bellovin, "Probable Plaintext Cryptanalysis of the IP
+               Security Protocols", Proceedings of the Symposium on
+               Network and Distributed System Security, San Diego, CA,
+               pp. 155-160, February 1997 (also
+               http://www.research.att.com/~smb/probtxt.{ps, pdf}).
+
+   [Bosselaers]A. Bosselaers, "Performance of Pentium implementations",
+               http://www.esat.kuleuven.ac.be/~bosselae/
+
+   [Bradner97] Bradner, S., "Key words for use in RFCs to indicate
+               Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [Crypto93]  J. Daemen, R. Govaerts, J. Vandewalle, "Weak Keys for
+               IDEA", Advances in Cryptology, CRYPTO 93 Proceedings,
+               Springer-Verlag, pp. 224-230.
+
+   [FIPS-46]   US National Bureau of Standards, "Data Encryption
+               Standard", Federal Information Processing Standard (FIPS)
+               Publication 46, January 1977.
+
+   [Kent98]    Kent, S. and R. Atkinson, "IP Encapsulating Security
+               Payload (ESP)", RFC 2406, November 1998.
+
+   [Lai]       X. Lai, "On the Design and Security of Block Ciphers",
+               ETH Series in Information Processing, v. 1, Konstanz:
+               Hartung-Gorre Verlag, 1992.
+
+   [Madson98]  Madson, C. and N. Dorswamy, "The ESP DES-CBC Cipher
+               Algorithm With Explicit IV", RFC 2405, November 1998.
+
+   [MOV]       A. Menezes, P. Van Oorschot, S. Vanstone, "Handbook of
+               Applied Cryptography", CRC Press, 1997. ISBN 0-8493-
+               8523-7
+
+   [Schneier]  B. Schneier, "Applied Cryptography Second Edition", John
+               Wiley & Sons, New York, NY, 1995.  ISBN 0-471-12845-7
+   [Schneier93]B. Schneier, "Description of a New Variable-Length Key,
+               64-Bit Block Cipher", from "Fast Software Encryption,
+               Cambridge Security Workshop Proceedings", Springer-
+               Verlag, 1994, pp. 191-204.
+               http://www.counterpane.com/bfsverlag.html
+
+   [Schneier95]B. Schneier, "The Blowfish Encryption Algorithm - One
+               Year Later", Dr. Dobb's Journal, September 1995,
+               http://www.counterpane.com/bfdobsoyl.html
+
+   [Schneier97]B. Scheier, "Speed Comparisons of Block Ciphers on a
+               Pentium." February 1997,
+               http://www.counterpane.com/speed.html
+
+   [Thayer97]  Thayer, R., Doraswamy, N. and R. Glenn, "IP Security
+               Document Roadmap", RFC 2411, November 1998.
+
+   [Tuchman79] Tuchman, W, "Hellman Presents No Shortcut Solutions to
+               DES", IEEE Spectrum, v. 16 n. 7, July 1979, pp. 40-41.
+
+6. 感谢
+   本文档是多数ESP加密算法文档的整合。这使读者更容易理解所有ESP算法的共同点，并
+进一步的促进在ESP内使用这些算法的发展。
+   本文档的内容最初是基于Stephen Kent先生的的意见，后面的讨论则是来自IPSec邮件
+列表和其他的IPSec文档。
+   特别要感谢Carlisle Adams先生和Paul Van Oorschot先生，他们作为技术授权对CAST
+提供了输入和评论。
+   感谢所有先前ESP 3DES文档的编者们，他们是W.Simpson， N. Doraswamy， P. Metzger 
+和 P. Karn。
+   感谢Brett Howard，他对ESP-RC5最初的工作提供了帮助。
+   感谢Markku-Juhani Saarinen，Helger Lipmaa和Bart Preneel，他们对IDEA和其他的
+算法提供的输入。 
+
+7. 编者的地址   
+   Roy Pereira
+   TimeStep Corporation
+
+   Phone: +1 (613) 599-3610 x 4808
+   EMail: rpereira@timestep.com
+
+
+   Rob Adams
+   Cisco Systems Inc.
+
+   Phone: +1 (408) 457-5397
+   EMail: adams@cisco.com
+
+
+   Contributors:
+
+   Robert W. Baldwin
+   RSA Data Security, Inc.
+
+   Phone: +1 (415) 595-8782
+   EMail: baldwin@rsa.com or baldwin@lcs.mit.edu
+
+
+   Greg Carter
+   Entrust Technologies
+
+   Phone: +1 (613) 763-1358
+   EMail: carterg@entrust.com
+
+
+   Rodney Thayer
+   Sable Technology Corporation
+
+   Phone: +1 (617) 332-7292
+   EMail: rodney@sabletech.com
+
+   可以通过IPSec工作组的邮件列表(ipsec@tis.com)或是它的讲座，来连接
+(ipsec@tis.com)工作组。
+   Robert Moskowitz
+   International Computer Security Association
+
+   EMail: rgm@icsa.net
+   
+   Theodore Y. Ts'o
+   Massachusetts Institute of Technology
+
+   EMail: tytso@MIT.EDU
+
+8. 版权声明
+   版权归因特耐特协会所有（1998）。保留所有权利。
+   本文及其译本可以提供给其他任何人，可以准备继续进行注释，可以继续拷贝、出版、发
+布，无论是全部还是部分，没有任何形式的限制，不过要在所有这样的拷贝和后续工作中提
+供上述声明和本段文字。无论如何，本文档本身不可以做任何的修改，比如删除版权声明或
+是关于因特耐特协会、其他的因特耐特组织的参考资料等。除了是为了开发Internet标准的
+需要，或是需要把它翻译成除英语外的其他语言的时候，在这种情况下，在Internet标准程
+序中的版权定义必须被附加其中。
+   上面提到的有限授权允许永远不会被Internet协会或它的继承者或它的下属机构废除。
+   本文档和包含在其中的信息以"As is"提供给读者，Internet社区和Internet工程任务
+组不做任何担保、解释和暗示，包括该信息使用不破坏任何权利或者任何可商用性担保或特
+定目的。
+
+
+
+
+RFC2451―The ESP CBC-Mode Cipher Algorithms                  ESP CBC模式加密算法
+
+
+1
+RFC文档中文翻译计划

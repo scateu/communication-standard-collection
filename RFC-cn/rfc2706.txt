@@ -1,0 +1,397 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陆绍飞（lsf   sflu@21cn.com）
+译文发布时间：2001-3-30
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Goup                                         D. Eastlake
+Request for Comments: 2706                                           IBM
+Category: Informational                                     T. Goldstein
+                                                                  Brodia
+                                                            October 1999
+
+
+RFC2706―电子商务域名标准
+（RFC2706----ECML v1: Field Names for E-Commerce）
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+IESG Note
+
+   This document is the output of a vendor consortium, and is not the
+   output of an IETF Working Group.  Implementors of this specification
+   are warned that this data model is heavily biased toward conventions
+   used in the United States, and the English language.  As such it is
+   unlikely to be suitable for international or multilingual use in the
+   global Internet.
+
+
+摘要
+  当消费者在Internet商业网站上为了完成购买或是其它交互行为，特别是他们第一次登录时经常要输入
+大量内容的信息。定义一套标准的信息域象电子商务模块语言（ECML）第一版就很容易自动信息解决这个问题，例如钱包就能够在域里填充。甚至是手动数据输入框，消费者只需在一些标准域里输入信息，从而可以忽略大量的网站信息。
+
+致谢
+
+   The following persons, in alphabetic order, contributed substantially
+   to the material herein:
+
+           George Burne, Trintech
+
+           Joe Coco, Microsoft
+
+           Kevin Weller, Visa
+
+
+目录
+１介绍	3
+1.1 背景	3
+1.2 与其它标准的关联	4
+1.3 未来版本的延续范围	4
+2. 使用域	4
+2.1 域的介绍	4
+2.2设置域的方法和流程	5
+2.3 HTML 示例	5
+3. 域的定义	6
+4. 注释	8
+5. 安全因素	10
+６．参考	10
+
+１介绍
+1.1 背景
+   今天，越来越多的商人利用基于HTML的窗体在Internet 上成功的管理公司。在这些窗体中所用的数据格式从商家到终端用户非常的不同，这种差异使得要手动填入这些表单的过程变的单调和沉闷。这种结果导致了许多商业窗体，在填充的过程中被放弃。
+
+   被叫做电子钱包的软件产品能够解决这种状态。数字钱包就是一种应用或服务，它帮助用户用户在线交易并且允许他们存钱、购物、支付，并有优惠通知，凭借这种信息可以自动完成商业交互。这使得付款过程十分单一，并将消费者每次完成的商业表单的需要变的最小。数字钱包填充表单已经成功的建立于游览器，象游览器的应用帮手、单机应用、游览器插件和基于应用的服务器。但这种电子钱包的增殖已经受到标准缺乏的阻碍。
+
+   ECML (电子商务模块语言 <www.ecml.org>) Version 1 为WEB商人提供了一套简单的指导方针，它将能够使电子钱包从多个vendors 那里填充他们的WEB表单。导致的最终结果就是更多的消费者将发现在WEB上购物变的很容易。
+
+   在这里的这套域文档是Wallet/Merchant 标准联盟组织(www.ecml.org)所开发。按字母顺序排列如下：
+
+            American Express (www.americanexpress.com)
+            AOL (www.aol.com)
+            Brodia (www.brodia.com)
+            Compaq (www.compaq.com)
+            CyberCash (www.cybercash.com)
+            Discover (www.discovercard.com)
+            FSTC (www.fstc.org)
+            IBM (www.ibm.com)
+            Mastercard (www.mastercard.com)
+            Microsoft (www.microsoft.com)
+            Novell (www.novell.com)
+            SETCo (www.setco.org)
+            Sun Microsystems (www.sun.com)
+            Trintech (www.trintech.com)
+            Visa (www.visa.com)
+
+   这个域衍生于基于数字框架的 W3C P3P 网址为：
+
+      <http://www.w3.org/TR/WD-P3P/basedata.html>.
+
+1.2 与其它标准的关联。
+
+   ECML 版1 不是替换或代替SSL/TLS [RFC
+   2246], SET [SET], XML [XML], or IOTP [IOTP]. 这些有很重要的标准提供象无拒付交易，选择自动支付方案，支持微型卡等一系列机能。
+
+   ECML 可能用于很多支付机构。它只是允许商家发行一致的WEB表单。
+
+   不同钱包和不同的商业计划都相互支持ECML.  这是一个开放的标准。并且ECML被设计的很简单。
+
+   设计的版本 1 没有在WEB上增加新的技术。商人可以采纳 ECML 获得这些支持他们的消费者在HTML页面上更改很简单的不同钱包的支持。利用 ECML 不需要许可。
+
+1.3 未来版本的延续范围
+
+   信息域从商家到消费者中传输的标准化，考虑到商业购买卡、无卡支付机构、活动钱包、隐私、附加的支付机理和一系列的“磋商“都是在未来版本里都必须考虑的因素。隐藏域或是一些其它的重要域将会减到最小。最主要的目标就是北美消费者与商家的电子贸易。
+
+2. 使用域
+
+   为了使文档一致，域名在下面的第三部分列出。注意：这不是在用户可见的标签域里强迫一些限制，几乎他们的名字只在与商人沟通时使用。  
+
+2.1 域的介绍
+
+   域介绍的风格和顺序没有必要暗示。一些商家可能希望问许多信息，有些则省略了许多域。有些商家在一个WEB页面上的表单询问他们想要的信息，而有些则喜欢在不同时间在不同的WEB页面上询问。例如，通常先问 "运送到（ship to）"的信息，因此运送费用就在支付方法的信息前被估算。有些商家可能需要他们提供的可供选择的其它所有信息等等。
+   第一版的ECML没有办法指出那些是商家认为托管的域。 从消费者软件这一点上考虑，所有的域都是随意完成。然而，商家可能会在一些需要的域没有填上时给出一个错误或是再次请求填写的信息页面。就象在一种风格的域完成时包含的 一些错误信息。
+
+2.2设置域的方法和流程
+
+   在消费者和商家之间当商家需要指出哪些域是消费者要提供的时候有很多不同的沟通方法。大概在当前软件配置最早是使用HTML表单上的域。其它的就有可能使用 W3C P3P 协议或是IOTP 证实事务[IOTP]。
+
+   利用活动的或是出现Ecom_SchemaVersion的域是触发很容易填充的域。它需要的   Ecom_SchemaVersion 域，通常是一个隐藏域，它包含在每一个页面上。
+
+   因为网页可能装载很慢，它不可能清除在网页上完成填充域时自动域的内容。为解决这个原因，推荐Ecom_SchemaVersion 域放在WEB页面的最后。
+
+   商家需要一些能够扩充几个WEB页面的信息。没有更多的规定， 比较容易的是在每个页面上违规时重新开始，或是重现违规域的页面。正因为这个原因，   Ecom_TransactionComplete 域通常是隐藏的。 推荐出现在最后页面上来执行交易，刚好出现在Ecom_SchemaVersion域名之前，为此多网页自动域填充在逻辑上可以知道当选择这个域时可以停止整个网页的继续执行。
+ 
+
+2.3 HTML 示例
+
+   下面是一个在 HTML 中的示例：
+
+   <HTML>
+   <HEAD>
+   <title> eCom Fields Example </title>
+   </HEAD>
+   <BODY>
+    <FORM action="http://ecom.example.com/" method="POST">
+   Please enter card information:
+   <p>Your name on the card
+     <INPUT type="text" name="Ecom_Payment_Card_Name" SIZE=40>
+   <br>The card number
+     <INPUT type="text" name="Ecom_Payment_Card_Number" SIZE=19>
+   <br>Expiration date (MM YY)
+     <INPUT type="text" name="Ecom_Payment_Card_ExpDate_Month" SIZE=2>
+     <INPUT type="text" name="Ecom_Payment_Card_ExpDate_Year" SIZE=4>
+    <INPUT type="hidden" name="Ecom_Payment_Card_Protocol">
+    <INPUT type="hidden" name="Ecom_SchemaVersion"
+           value="http://www.ecml.org/version/1.0>
+   <br>
+    <INPUT type="submit" value="submit"> <INPUT type="reset">
+    </FORM>
+   </BODY>
+   </HTML>
+
+   在所有的页面被提交前，商家将返回用户和钱包交易完成的确证页面。
+
+   <HTML>
+   <HEAD>
+   <title> eCom Transaction Complete Example </title>
+   </HEAD>
+   <BODY>
+    <FORM>
+    Thank you for your order. It will be shipped in several days.
+    <INPUT type="hidden" name="Ecom_TransactionComplete">
+    <INPUT type="hidden" name="Ecom_SchemaVersion"
+           value="http://www.ecml.org/version/1.0>
+    </FORM>
+   </BODY>
+   </HTML>
+
+3. 域的定义
+
+   下面列出的域都伴随有最小的输入数据的大小。注释这些域是不同的组织用内嵌的下画线指出。适当的消费者到商家交易机构可能会利用这个来请求和发送合计。就象 Ecom_Payment_Card_ExpDate 就包含了所有的数据组件，Ecom_ShipTo 就包含了消费者提供的所有传输组件。编组和暴露这些组件象合计就需要依靠使用数据传送协议。
+
+   主要提示：在下面的表中 "MIN" 是指允许在数据输入域里的最小数据大小（ MINIMUM DATA SIZE TO ALLOW FOR ON DATA ENTRY.）。不是商家软件所必须的有效目录的最小尺寸，在大多数情况下，都要准备接受一个更长或者是更短的值。商家要考虑到处理每一个区域，例如，州/省的名称或电话号码就比下面所列出的要长，然而，在另外一些情况下，有最大的尺寸就象文档注释域一样。
+
+      域                      名称                        最小  注释
+
+   ship to title            Ecom_ShipTo_Postal_Name_Prefix      4    ( 1)
+   ship to first name       Ecom_ShipTo_Postal_Name_First       15
+   ship to middle name      Ecom_ShipTo_Postal_Name_Middle     15   ( 2)
+   ship to last name        Ecom_ShipTo_Postal_Name_Last        15
+   ship to name suffix      Ecom_ShipTo_Postal_Name_Suffix      4     ( 3)
+   ship to street line1     Ecom_ShipTo_Postal_Street_Line1        20    ( 4)
+   ship to street line2     Ecom_ShipTo_Postal_Street_Line2        20     ( 4)
+   ship to street line3     Ecom_ShipTo_Postal_Street_Line3        20     ( 4)
+   ship to city             Ecom_ShipTo_Postal_City             22
+   ship to state/province   Ecom_ShipTo_Postal_StateProv           2     ( 5)
+   ship to zip/postal code  Ecom_ShipTo_Postal_PostalCode          14    ( 6)
+   ship to country          Ecom_ShipTo_Postal_CountryCode       2    ( 7)
+   ship to phone            Ecom_ShipTo_Telecom_Phone_Number   10   ( 8)
+   ship to email            Ecom_ShipTo_Online_Email            40    ( 9)
+
+   bill to title            Ecom_BillTo_Postal_Name_Prefix          4    ( 1)
+   bill to first name       Ecom_BillTo_Postal_Name_First          15
+   bill to middle name      Ecom_BillTo_Postal_Name_Middle       15    ( 2)
+   bill to last name        Ecom_BillTo_Postal_Name_Last          15
+   bill to name suffix      Ecom_BillTo_Postal_Name_Suffix           4  ( 3)
+   bill to street line1     Ecom_BillTo_Postal_Street_Line1            20  ( 4)
+   bill to street line2     Ecom_BillTo_Postal_Street_Line2           20  ( 4)
+   bill to street line3     Ecom_BillTo_Postal_Street_Line3           20  ( 4)
+   bill to city             Ecom_BillTo_Postal_City                22
+
+   bill to state/province   Ecom_BillTo_Postal_StateProv              2  ( 5)
+   bill to zip/postal code  Ecom_BillTo_Postal_PostalCode             14  ( 6)
+   bill to country          Ecom_BillTo_Postal_CountryCode          2  ( 7)
+   bill to phone            Ecom_BillTo_Telecom_Phone_Number     10  ( 8)
+   bill to email            Ecom_BillTo_Online_Email               40  ( 9)
+
+   receiptTo title          Ecom_ReceiptTo_Postal_Name_Prefix       4  ( 1)
+   receiptTo first name     Ecom_ReceiptTo_Postal_Name_First        15
+   receiptTo middle name    Ecom_ReceiptTo_Postal_Name_Middle     15  ( 2)
+   receiptTo last name      Ecom_ReceiptTo_Postal_Name_Last        15
+   receiptTo name suffix    Ecom_ReceiptTo_Postal_Name_Suffix        4  ( 3)
+   receiptTo street line1   Ecom_ReceiptTo_Postal_Street_Line1        20   ( 4)
+   receiptTo street line2   Ecom_ReceiptTo_Postal_Street_Line2        20   ( 4)
+   receiptTo street line3   Ecom_ReceiptTo_Postal_Street_Line3        20   ( 4)
+   receiptTo city           Ecom_ReceiptTo_Postal_City             22
+   receiptTo state/province Ecom_ReceiptTo_Postal_StateProv           2    ( 5)
+   receiptTo postal code    Ecom_ReceiptTo_Postal_PostalCode       14     ( 6)
+   receiptTo country        Ecom_ReceiptTo_Postal_CountryCode     2     ( 7)
+   receiptTo phone          Ecom_ReceiptTo_Telecom_Phone_Number 10    ( 8)
+   receiptTo email          Ecom_ReceiptTo_Online_Email          40     ( 9)
+
+   name on card             Ecom_Payment_Card_Name             30  (10)
+
+   card type                Ecom_Payment_Card_Type               4  (11)
+   card number              Ecom_Payment_Card_Number           19  (12)
+   card verification value  Ecom_Payment_Card_Verification             4  (13)
+
+   card expire date day     Ecom_Payment_Card_ExpDate_Day         2  (14)
+   card expire date month   Ecom_Payment_Card_ExpDate_Month       2  (15)
+   card expire date year    Ecom_Payment_Card_ExpDate_Year         4  (16)
+
+   card protocols           Ecom_Payment_Card_Protocol            20  (17)
+
+   consumer order ID        Ecom_ConsumerOrderID                20  (18)
+
+   schema version           Ecom_SchemaVersion                  30  (19)
+
+   end transaction flag     Ecom_TransactionComplete            -      (20)
+
+      域                     名称                        最小     注释
+
+  注意事项：在下面的表中 "MIN" 是指允许在数据输入域里的最小数据大小（ MINIMUM DATA SIZE TO ALLOW FOR ON DATA ENTRY.）。不是商家软件所必须的有效目录的最小尺寸，在大多数情况下，都要准备接受一个更长或者是更短的值。商家要考虑到处理每一个区域，例如，州/省的名称或电话号码就比下面所列出的要长，然而，在另外一些情况下， 有最大的尺寸就象文档注释域一样。
+
+
+4. 注释
+
+   ( 1) 例如： Mr., Mrs., Ms., Dr. 这个域通常是不使用。
+
+   ( 2) 也可以使用中间字母
+
+   ( 3) 例如：: Ph.D., Jr. (Junior), 3rd, Esq. (Esquire). 这个域通常是不使用。
+
+   ( 4) 地址必须是按地址1，地址2，地址3...的顺序填写。
+     
+   ( 5) 对于美国和加拿大是两个字符，其他的国家可能需要更长的域。如美国就是采用邮政州的两个字符的缩写。
+
+   ( 6) 邮政编码的最小域长将基于国际市场服务的不同而变化。用5 个字符或 5+4 是美国，加拿大是用的6 个字符的邮政编码。给出的长度， 14,
+相信是在全球范围内所需要的最大长度。
+
+   ( 7) 使用标准 [ISO 3166]的两种代码。
+        国家名<http://www.din.de/gremien/nas/nabd/iso3166ma/codlstp1.html> 
+
+   ( 8) 十位数字是北美编号最小的(<http://www.nanpa.com/>, 加拿大和许多较小的加勒比海和太平洋国家(不包含古巴), 其他国家就需要更长的域。电话号码是国际访问中最复杂，在不同的国家有不同的地区/城市符号代码。
+
+   ( 9) 例如：  jsmith@example.com
+
+   (10) 持卡人的姓名。
+
+   (11) 使用前4位的协议名。象 American
+        Express=AMER; Diners Club=DINE; Discover=DISC; JCB=JCB;
+        Mastercard=MAST; Visa=VISA.
+
+   (12) 包含支票的最后数字但不包含空格或是连接号。 [ISO
+        7812].  在ISO里给出的最大容许值是 19。
+
+   (13) 一个附加的持卡证实号码打在卡上。例如American Express' CIV, MasterCard's CVC2, and Visa's CVV2 values.
+
+   (14) 这个月的日期 Values: 1-31
+
+   (15) 一年中的月份。  Jan - 1, Feb - 2, March - 3, etc.;
+        Values: 1-12
+
+   (16) 钱包中的值，通常是四位数字，象 1999,
+        2000, 2001, ...
+
+  (18) 唯一的身份标识 ID 由客户软件产生。
+
+   (19) URI 描述了这套域。通常是隐藏域。 "http://www.ecml.org/version/1.0" 
+
+   (20) A flag to indicate that this web-page/aggregate is the final one
+        for this transaction.  Usually a hidden field.
+
+5. 安全因素
+
+   被调用这些域的受保护信息在公共互联网上发送或通过其他能够注意到的通道上发送，其安全性不能不考虑。相应的机构也采取了一些措施，如加密的SSL/TLS [RFC 2246] 或是 IPSec [RFC 2411] 将有一些适当的例子。
+   用户需要控制所需要的关于用户隐私的保护信息。
+
+   任何多WEB页或是其他的多类型域填充或数据格式规定机构都应该检查数据的有效性，检查Ecom_TransactionComplete域直到所检查的域经过进一步审定才通过。
+
+６．参考
+
+   ISO 3166 - 陈述国家名称码
+              <http://www.din.de/gremien/nas/nabd/iso3166ma>
+
+   ISO 7812 - 确认卡- 确认发行者 - Part 1:
+              编号系统
+
+   HTTP4.0  - HTML 4.0 规格, <http://www.w3.org/TR/REC-html40>
+
+   RFC 2026 - Bradner, S., "The Internet Standards Process -- Revision
+              3", BCP 9, RFC 2026, October 1996.
+
+   RFC 2246 - Dierks, T. and C. Allen, "The TLS Protocol: Version 1.0",
+              RFC 2246, January 1999.
+
+   RFC 2411 - Thayer, R., Doraswany, N. and R. Glenn, "IP Security:
+              Document Roadmap", RFC 2411, November 1998.
+
+   IOTP -     Internet 开放交易协议, 在IETF贸易工作组, D. Burdett
+
+   SET -      安全电子交易
+              <http://www.setco.org/set_specifications.html>
+
+   XML -      可扩充的标记语言 (XML) 1.0,
+              <http://www.w3.org/TR/1998/REC-xml-19980210>, T. Bray, J.
+Paoli, C.  M. Sperberg-McQueen
+
+
+
+作者地址：
+
+   Donald E. Eastlake, 3rd
+   IBM, J1-N63
+   17 Skyline Drive
+   Hawthorne,  NY 10532 USA
+
+   Phone:  +1-914-784-7913
+   Fax:    +1-914-784-3833
+   EMail:  dee3@us.ibm.com
+
+   Ted Goldstein
+   Brodia Networks, Inc.
+   221 Main Street, Suite 1530
+   San Francisco,  CA 94105 USA
+
+   Phone:  +1 415-495-3100 x222
+   Fax:    +1 415-495-3177
+   EMail:  tgoldstein@brodia.com
+
+完整版权声明：
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+感谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+ RFC2706    ECML v1: Field Names for E-Commerce           电子商务域名标准
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

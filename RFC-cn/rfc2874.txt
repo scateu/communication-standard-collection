@@ -1,0 +1,366 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：邱忠辉（happyhero shoreline@263.net ）
+译文发布时间：2002-1-30
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                       M. Crawford
+Request for Comments: 2874                                     Fermilab
+Category: Standards Track                                    C. Huitema   
+                                                  Microsoft Corporation
+                                                              July 2000
+
+
+支持IPv6地址聚合和重编号的DNS扩展 
+（RFC2874 ――DNS Extensions to Support IPv6 Address Aggregation and Renumbering）
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2000).
+
+摘要
+本文档定义了对域名系统的修改以支持可重编号和可聚合IPv6寻址。这些修改包括用一种加速网络重编号和修改已有查询类型定义的方式以一种新的资源记录类型来存储IPv6地址，这些已有的查询类型返回Internet地址作为部分附加开销。
+对于侧重于IPv6地址的查找（常称为反向查找），本文档定义了一种新的区域结构，允许使用一种区域，它无需修改地址空间的相同拷贝（对多宿主供应商和站点而言）并能穿越网络重编号事件。
+
+目录
+1. 引言	2
+2. 概述	3
+2.1 域名到地址的查找	3
+2.2 反向查找的根本机制	3
+3. 特性	4
+3.1 A6记录类型	4
+3.1.1 格式	4
+3.1.2 处理	5
+3.1.3 语义表示	5
+3.1.4 域名解析过程	5
+3.2 反向查找的区域结构	5
+4. 已有查询类型的修改	6
+5. 使用说明	6
+5.1 A6记录链	6
+5.1.1 实验数据	7
+5.1.2 粘合	7
+5.1.3 变更	8
+5.2 反向映射区域	9
+5.2.2 ISP级别	9
+5.2.3站点级别	10
+5.3 查找	10
+5.4 操作注意	11
+6. RFC1886的过渡和配置注意	11
+6.1 向AAAA过渡并与A记录共存	11
+6.2 从半位元标记向二进制标记过渡	12
+7. 安全性考虑	12
+8. IANA考虑	12
+9. 鸣谢	12
+10. 参考	13
+11. 作者地址	14
+12. 版权说明	14
+致谢	15
+
+1. 引言
+维护DNS地址信息是阻碍节点和供应商在IPv4中进行重编号的难题之一。基于保持稳定的路由系统或其它目的，关于网络重编号重要性的观点可以参阅[RENUM1, RENUM2, RENUM3]。为了支持对不能阻止重编号的IPv6地址的存储，我们定义了下面的扩展。
+一种新的资源记录类型，“A6”，定义为域名到IPv6地址的映射，并规定了间接的最主要的前缀位。
+执行定位IPv4地址额外处理功能的现有查询被重新定义为既处理IPv4地址，又处理IPv6地址。
+一种新域，IP.ARPA，定义为支持基于IPv6地址的查找。
+定义了一种新的前缀授权方法，它依赖于新的DNS特性[BITLBL, DNAME]。
+这些变化都设计成与现有应用编程接口兼容，保留了对IPv4地址的支持。DNS中IPv4和IPv6地址共存相关的转换问题在[TRANS]中讨论。
+本文档提出了一种与目前实现相违背的方案并取代RFC1886中的规范。这些变化使网络重编号和多宿主操作更加方便。与IPv6地址对应的A6记录配置的域将自动产生的AAAA记录插入到区域文件中，以简化转换。相信假以时日，RFC1886有望成为历史。
+本文档将分为三个主要部分对本规范的定义与配置工具、规范内容和规范的应用案例进行描述。
+本文档中的关键字“必须”，“必须不”，“要求的”，“应该”，“不应该”，“会”，“不会”，“建议”，“或许”，“可选的”在[KWORD]中解释。关键字“推荐”表示介于或许和应该之间，通常认为多数情况下遵从“推荐”会带来切实的好处。
+
+2. 概述
+本节简述了存储IPv6地址和基于IPv6地址查找的DNS工具，包括本文档或其它文档定义的工具。
+2.1 域名到地址的查找
+IPv6地址被保存为一条或多条A6资源记录。单个A6记录或许包括一个完整IPv6地址，或者一个地址的邻近部分和产生一个以上地址前缀的信息。前缀信息包括一个前缀长度和一个域名，这个域名反过来又是一条或多条定义地址前缀的A6记录的所有者，这些地址前缀需要形成一个或多个完整IPv6地址。若前缀长度为0，则没有域名并且所有主要的地址位都是有意义的。或许存在多级间接查找，任何一级存在多个A6记录都会增加其形成的IPv6地址数量。
+查找一个IPv6地址的应用程序通常让DNS解析器访问多条A6记录，即使要查找的域名只对应一条A6记录，也可能返回多个IPv6地址。DNS安全[DNSSEC]并不直接认证返回地址的合法性。如果作了标记，自然可以认证返回地址的A6记录。
+实现必须限制解析器对应一个客户请求所需的工作量。这个原则必须扩展到限制DNS请求的产生，这些DNS请求对应域名到地址（或地址到域名）查找。
+2.2 反向查找的根本机制
+本部分描述本文档使用的DNS新特性。本部分是概述，不是这些特性的详述。更详细的细节读者可以参考对应的参考文档。
+2.2.1 专用边界的授权
+这种反向查找新机制取决于一种被称为“位串标记”[BITLBL]的新DNS标记类型。这种标记简洁地表示一种专用位串，这些位被当作一种分层次有序的单个位域标记。因此，资源记录能存储为专用位边界。
+第五部分的例子将配置后文描述的位串标记，它是[BITLBL]中定义的语法的子集。“\[“ and ”]”间包括了十六进制的基本表示“x”和有序的十六进制位。这些用数字表示的位对应了一个有序的重要性递减的单个位域标记。（如果一次只列出一位，这是它们出现的反序，但它似乎是更方便的符号。）这种位串后面有一个斜线“/”和一个十进制数。若省略十进制数部分，表明十进制位数是十六进制位数的四倍。
+连续的位串标记和单个位串标记一样（就位数字段大小限制而言）都包含了一定次序的所有连续的标记位。例如，下面的域名可以用一个“QCLASS=IN, QTYPE=PT”的查询来查找IPv6地址为3ffe:7c0:40:9:a00:20ff:fe81:2b32节点的域名。
+\[x3FFE07C0004000090A0020FFFE812B32/128].IP6.ARPA.
+\[x0A0020FFFE812B32/64].\[x0009/16].\[x3FFE07C00040/48].IP6.ARPA.
+2.2.2 可重用区域
+DNS地址空间授权不是通过区域分割和NS记录来实现，而是通过一种类似于CNAME的记录，称为DNAME资源记录[DNAME]。DNAME记录为域名空间的整个子树而不是为单个节点提供替代命名。这导致用DNAME记录的RDATA中的名字来取代一些要查询域名的后缀。
+例如，当一个提供递归查询的域名解析器或服务器查找一个a.b.c.d.e.f的QNAME时，可能会得到一条将其指向a.b.c.w.xy的DNAME记录：
+d.e.f.     DNAME     w.xy.
+3. 特性
+3.1 A6记录类型
+A6记录类型是指IN（互联网）类型和类型编号为38（十进制）的类型。
+3.1.1 格式
+A6记录的RDATA部分包括两个或三个字段。
+    +-----------+------------------+-------------------+
+    |  前缀长度 |     地址后缀     |      名字前缀     |
+    | (1 octet) |  (0..16 octets)  |  (0..255 octets)  |
+    +-----------+------------------+-------------------+
+前缀长度，用取值范围为0-128的8位无符号整数编码。
+IPv6地址后缀，按网络序号（前面的高位字节）编码。这个字段必须有足够的字节数可设置128位的前缀长度，包括0-7位填充位以使这个字段具有完整的字节数。如果出现填充位，当装载区域文件时必须置位为0，并且接收时不予处理（SIG[DNSSEC]认证除外）。
+名字前缀，编码成域名。根据[DNSIS]规则，这个名字不能被压缩。
+如果前缀长度为0，域名部分将不会出现。如果前缀长度为128，名字后缀部分将不会出现。
+建议把要用作其它A6记录前缀的A6记录地址后缀中所有可以忽略的末位都设为0。
+3.1.2 处理
+一个QTYPE为A6的查询产生对名字前缀的A6类型和NS类型附加处理开销，如果产生的话，这些名字前缀在结果部分A6记录的RDATA字段中。这个处理过程应该将A6记录名字前缀作为附加数据进行递归处理。如果应答包的大小有限制，A6记录的附加部分具有比NS记录更高的优先级。
+一个前缀长度L1>0的A6记录如果查找一个具有前缀长度L2>L1的A6记录的域名，会出现错误。如果解析器遇到这种情况，必须忽略这个具有不合法前缀长度的A6记录。如果还能从有效的A6记录得到地址，解析器的健壮性将不让这个错误出现，但建议区域维护经常检查其区域有关的所有A6记录。
+3.1.3 语义表示
+区域文件中A6资源记录RDATA部分的语义表示包括两个或三个由空格隔开的字段。
+前缀长度，表示为一个范围在0-128的十进制数。
+[AARCH]中定义的IPv6地址的语义表示（尽管一些首位和末位可能无关紧要）。
+域名，如果前缀长度不为0。
+如果前缀长度为0，域名必须为空。如果前缀长度为128，IPv6地址可能为空。就象3.1.1节描述的那样，地址前面部分等于前缀长度的位数应该隐式地（通过：：符号）或显式地设为0。
+3.1.4 域名解析过程
+为了得到IPv6地址或对应给定域名的地址，DNS客户端必须得到一个或多个完整的A6记录链，每个链以给定域名的记录开始，并包括那个记录中前缀名字对应的记录等，递归地以前缀长度为0的A6记录结束。
+如果前缀长度为0，域名必须为空。如果前缀长度为128，IPv6地址可能为空。就象3.1.1节描述的那样，地址前面部分等于前缀长度的位数应该隐式地（通过：：符号）或显式地设为0。通过从链中最初的A6记录得到每个位的具体位置，一个链能形成一个IPv6地址，这个链就象前缀长度描述的那样包括位的有效位置。给定域名的所有IPv6地址包括该域名开头的所有完全A6记录得到的地址，丢弃在3.1.2节定义的有无效前缀长度的记录。
+如果一些A6查询失败并且其它查询成功，客户端可以为一个主机得到一个非空但不完全的IPv6地址。很多情况下，这也是可以接受的。A6	记录集的完整性可以总是通过检查来确定。
+3.2 反向查找的区域结构
+事实上新方案的数据很少会在IP6.ARPA的情况下出现；仅仅第一级授权需要在那个域下出现。如果最高级授权是通过NS记录而不是DNAME记录实现，更多授权级别能够置于IP6.ARPA下，但将在TLAs[AGGR]级别重编号时产生一些开销。因此，这里认为所有地址空间授权应该通过DNAME机制而非NS机制来实现。
+此外，由于统一配置将简化地址授权的维护，建议地址和前缀信息直接以DNS标记“IP6”保存。换而言之，遵从这个建议意味着“IP6”是支持IPv6反向查找的DNAME记录中RDATA字段中第一个标记。
+当授权边界与任何保留或必须为0的位相邻时，高级别的实体必须将那些位由自己控制，并只授权给低级别实体能授权的那些位。
+为了给已知IPv6地址的节点查找域名，DNS客户端必须按名字执行一个QCLASS=IN，QTYPE=PTR的查询，这个名字是由作为一个或多个位串标记[BITLBL]的128位地址形成的，在两个标准的“IP6.ARPA”标记后。如果不能从服务器得到递归式服务，并且不能返回要得到的PTR记录，解析器必须反复地处理返回的在[DNAME]中描述的DNAME记录和[DNSCF]中描述的NS记录。
+4. 已有查询类型的修改
+所有现有执行A类附加处理的查询类型如名字服务器（NS）、邮件交换（MX）、邮箱查询类型（MB）和实验性AFS数据库（AFSDB）以及路由直通类型，必须重新定义成能执行A、A6和AAAA类附加处理，并且A类包括最高优先级，AAAA类优先级别最低。这个重定义就是说，当处理任何上述查询时，名字服务器可以增加任何有关的附加响应部分本地可用的IPv4和IPv6地址信息。A6记录的递归式包括是可选的，这些记录被包含在附加处理部分中的A6记录所引用。
+5. 使用说明
+本节举例说明前面定义的机制的使用。这里提到的所以地址和域名都是假设的，仅仅用于描述目的。为了描述的可读性，授权的例子只用4位边界。这个规范与位的排列无关。
+假设例子中用的都是IPv6可聚类地址格式[AGGR]。
+5.1 A6记录链
+让我们看一个到两个中间服务商A和B的多宿主节点的例子。服务商A本身多宿主到两个"传输"服务提供商C和D。服务商B从单个服务商E得到其传输服务。为了简单，假定C、D和E都属于相同的顶级聚合以"2345"为标识（包括格式前缀），并且ALPHA-TLA.ORG的TLA授权分别分配C、D和E下级聚合（NLA）前缀2345:00C0::/28， 2345:00D0::/28和2345:000E::/32。
+C为A分配NLA前缀2345:00C1:CA00::/40，D为A分配前缀2345:00D2:DA00::/40，E为B分配前缀2345:000E:EB00::/40。
+A为X分配订阅标识“11”，B为X分配订阅标识“22”。因此，节点X继承地得到了三个地址前缀：
+2345:00C1:CA11::/48来自A，给通过C的路由。
+2345:00D2:DA11::/48来自A，给通过D的路由。
+2345:000E:EB22::/48来自B，给通过E的路由。
+假设N是站点X的一个节点，并在该站点分配子网号1，使用接口标识1234:5678:9ABC:DEF0。在配置中，该节点将拥有三个地址：
+2345:00C1:CA11:0001:1234:5678:9ABC:DEF0
+2345:00D2:DA11:0001:1234:5678:9ABC:DEF0
+2345:000E:EB22:0001:1234:5678:9ABC:DEF0
+5.1.1 实验数据
+假设DNS中域名X.EXAMPLE标识站点X，而A、B、C、D和E分别用A.NET、B.NET、C.NET、D.NET和E.NET表示。在每个域中，假设子域IP6带有相应的前缀。节点N由N.X.EXAMPLE唯一标识。下面的记录将出现在站点X的DNS中。
+$ORIGIN X.EXAMPLE.
+N             A6  64 ::1234:5678:9ABC:DEF0  SUBNET-1.IP6
+SUBNET-1.IP6 A6 48 0:0:0:1::   IP6
+IP6           A6 48 0::0       SUBSCRIBER-X.IP6.A.NET.
+IP6           A6 48 0::0       SUBSCRIBER-X.IP6.B.NET.
+其它的地方将会出现：
+SUBSCRIBER-X.IP6.A.NET. A6 40 0:0:0011:: A.NET.IP6.C.NET.
+SUBSCRIBER-X.IP6.A.NET. A6 40 0:0:0011:: A.NET.IP6.D.NET.
+
+SUBSCRIBER-X.IP6.B.NET. A6 40 0:0:0022:: B-NET.IP6.E.NET.
+
+A.NET.IP6.C.NET. A6 28 0:0001:CA00:: C.NET.ALPHA-TLA.ORG.
+A.NET.IP6.D.NET. A6 28 0:0002:DA00:: D.NET.ALPHA-TLA.ORG.
+
+B-NET.IP6.E.NET. A6 32 0:0:EB00::    E.NET.ALPHA-TLA.ORG.
+
+C.NET.ALPHA-TLA.ORG. A6 0 2345:00C0::
+D.NET.ALPHA-TLA.ORG. A6 0 2345:00D0::
+E.NET.ALPHA-TLA.ORG. A6 0 2345:000E::
+5.1.2 粘合
+通常，当X.EXAMPLE有些或所有DNS服务器都在X.EXAMPLE自己的区域内，顶级区域EXAMPLE必须带有足够的“粘合”信息使DNS客户端能访问那些名字服务器。这在IPv4和IPv6中都是正确的。但是，A6记录给DNS管理员更多的选择。粘合剂可以是下面的任何一种：
+从X.EXAMPLE区域复制的最少的A6记录集，
+能破坏那个最小记录集结构的（可能更少的）记录，
+或者服务器中所有全局地址前缀长度为0的记录集。
+折中处理能很好地维护健壮性。通过实现第一或第二和第三种情况，最好的和最差的都可以融合在一起。为了描述粘合剂选项，假设两个名字服务器NS1.X.EXAMPLE和NS2.X.EXAMPLE都为X.EXAMPLE服务，并在子网1和子网2分别有接口标识::1:11:111:1111和::2:22:222:2222。这样，顶级区域EXAMPLE就可以包含下面一个或多个A6记录作为 粘合剂。
+$ORIGIN EXAMPLE.            ; first option
+X               NS NS1.X
+NS NS2.X
+NS1.X           A6 64 ::1:11:111:1111 SUBNET-1.IP6.X
+NS2.X           A6 64 ::2:22:222:2222 SUBNET-2.IP6.X
+SUBNET-1.IP6.X  A6 48 0:0:0:1::       IP6.X
+SUBNET-2.IP6.X  A6 48 0:0:0:2::       IP6.X
+IP6.X           A6 48 0::0            SUBSCRIBER-X.IP6.A.NET.
+IP6.X           A6 48 0::0            SUBSCRIBER-X.IP6.B.NET.
+
+$ORIGIN EXAMPLE.            ; second option
+X               NS NS1.X
+NS NS2.X
+NS1.X           A6 48 ::1:1:11:111:1111 SUBSCRIBER-X.IP6.A.NET.
+A6 48 ::1:1:11:111:1111 SUBSCRIBER-X.IP6.B.NET
+NS2.X           A6 48 ::2:2:22:222:2222 SUBSCRIBER-X.IP6.A.NET.
+A6 48 ::2:2:22:222:2222 SUBSCRIBER-X.IP6.B.NET.
+
+$ORIGIN EXAMPLE.            ; third option
+X               NS NS1.X
+NS NS2.X
+NS1.X           A6 0  2345:00C1:CA11:1:1:11:111:1111
+A6 0  2345:00D2:DA11:1:1:11:111:1111
+A6 0  2345:000E:EB22:1:1:11:111:1111
+NS2.X           A6 0  2345:00C1:CA11:2:2:22:222:2222
+A6 0  2345:00D2:DA11:2:2:22:222:2222
+A6 0  2345:000E:EB22:2:2:22:222:2222
+与服务商A.NET和B.NET的X.EXAMPLE的前缀重编号相比，第一和第二种粘合剂选项具有健壮性，但如果服务商的DNS不可访问，粘合剂选项将失效。除了EXAMPLE和X.EXAMPLE区域本身，与DNS失效相比第三种选项具有健壮性，但当站点X的地址空间重编号时，必须作相应的修改。
+如果EXAMPLE区域包括多余的粘合，例如第一种和第三种A6记录选项的融合，那么正常情况下，DNS客户端将给出复制的IPv6地址。但是如果服务商的DNS失效，仍能从前缀长度为0的记录得到地址。如果EXAMPLE区域在X.EXAMPLE重编号后边，DNS客户端得到的一半地址需要更新。
+当然，实际上将自动产生并且/或者检查前缀长度为0的粘合剂记录。
+5.1.3 变更
+在上述结构中或多或少反映了几个专用假设。根据某些有用的概念和双方的协定，需要区别所有下面选择。
+首先，站点X选择将子网信息存入单个A6记录，而不是将其并入每个节点的A6记录。
+第二，服务商A和B都将站点X当成“订阅者-X”。
+第三，站点X通过IP6.X.EXAMPLE中有可忽略位的A6记录选择间接的服务商信息。另一种选择是给每个服务商复制每条子网记录。
+第四，B和E之间与A、C和D间用的前缀命名约定稍微有些不同。每层网络实体之间必须协商命名。
+第五，以上的前缀链置于ALPHA-TLA.ORG之上。可能会有另外的级别来分配TLA的值并且保存包括那些位的A6记录。
+最后，上述结构反映了一个假设，由给定实体分配的地址字段仅仅记录在那个实体保存的A6记录中。那些位能够存入更低级别实体区域的A6记录，因此：
+IP6.X.EXAMPLE. A6 40 0:0:11::   IP6.A.NET.
+IP6.X.EXAMPLE. A6 40 0:0:22::   IP6.B.NET.
+IP6.A.NET.     A6 28 0:1:CA00:: IP6.C.NET.
+    等等。
+
+或者高级别实体既能够保存A6记录（具有不同DNS所有者名字），又能允许低级实体选择A6链的一种模式。但避免数据复制的一般规则建议，分配的值总是适合存储在给定那些值的实体。
+对区域维护而言，有可能但不是必须推荐优先考虑由A6记录提供的重编号支持，并且记录一个区域文件内的所有IPv6地址。
+5.2 反向映射区域
+假设在TLAs中分配的有前缀（001）和识别号0345、0678和09AB的地址空间，在ALPHA-TLA.ORG、BRAVO-TLA.ORG和CHARLIE-TLA.XY区域中维护，那么IP6.ARPA区域将包括：
+$ORIGIN IP6.ARPA.
+\[x234500/24]   DNAME   IP6.ALPHA-TLA.ORG.
+\[x267800/24]   DNAME   IP6.BRAVO-TLA.ORG.
+\[x29AB00/24]   DNAME   IP6.CHARLIE-TLA.XY.
+每个TLA识别号包含的末尾8个0位表示当前可聚合全球单播地址格式[AGGR]中的8个保留位。
+下面的反向数据表示了给网络服务商C、D和E的ALPHA-TLA地址分配。
+\[xC/4].IP6.ALPHA-TLA.ORG.   DNAME  IP6.C.NET.
+\[xD/4].IP6.ALPHA-TLA.ORG.   DNAME  IP6.D.NET.
+\[x0E/8].IP6.ALPHA-TLA.ORG.  DNAME  IP6.E.NET.
+5.2.2 ISP级别
+服务商A通过在其区域文件中传送下面的授权信息。
+\[x1CA/12].IP6.C.NET.  DNAME  IP6.A.NET.
+\[x2DA/12].IP6.D.NET.  DNAME  IP6.A.NET.
+\[xEB/8].IP6.E.NET.    DNAME  IP6.B.NET.
+\[x11/8].IP6.A.NET.    DNAME  IP6.X.EXAMPLE.
+\[x22/8].IP6.B.NET.    DNAME  IP6.X.EXAMPLE.
+注意有些域名会在多个DNAME记录的RDATA中出现。这样，一个区域就用来映射多个前缀。
+5.2.3站点级别
+就拿用IP6.X.EXAMPLE作地址到域名转换的用户X.EXAMPLE来说。这个域由两个不同的DNAME记录所引用，这两个记录由两个不同服务商维护。
+$ORIGIN IP6.X.EXAMPLE.
+\[x0001/16]                    DNAME   SUBNET-1
+\[x123456789ABCDEF0].SUBNET-1  PTR     N.X.EXAMPLE.
+等等。
+子网1并不需要用DNAME记录来命名；子网位可以和接口识别号联系在一起。但如果按同样的方式在A6记录和反向区域处理子网，将可能要维护区域中的每个前缀的前向和反向定义的数据。
+5.3 查找
+根据前面的描述，一个为地址2345:00C1:CA11:0001:1234:5678:9ABC:DEF0查找主机名的DNS解析器将得到确定的DNAME记录，并形成新的查询。假设从已知服务器IP6.ARPA开始处理，但没有服务器能提供递归处理，并且没有服务器有其它附加的信息缓冲，这里是查找的名字顺序和响应结果（都有QCLASS=IN, QTYPE=PTR）。
+对IP6.ARPA服务器：
+QNAME=\[x234500C1CA110001123456789ABCDEF0/128].IP6.ARPA.
+结果：
+\[x234500/24].IP6.ARPA. DNAME IP6.ALPHA-TLA.ORG.
+
+对IP6.ALPHA-TLA.ORG服务器：
+QNAME=\[xC1CA110001123456789ABCDEF0/104].IP6.ALPHA-TLA.ORG.
+结果：
+\[xC/4].IP6.ALPHA-TLA.ORG. DNAME IP6.C.NET.
+
+对IP6.C.NET.服务器：
+QNAME=\[x1CA110001123456789ABCDEF0/100].IP6.C.NET.
+结果：
+\[x1CA/12].IP6.C.NET. DNAME IP6.A.NET.
+
+对IP6.A.NET.服务器：
+QNAME=\[x110001123456789ABCDEF0/88].IP6.A.NET.
+结果：
+\[x11/8].IP6.A.NET. DNAME IP6.X.EXAMPLE.
+
+对IP6.X.EXAMPLE.服务器：
+QNAME=\[x0001123456789ABCDEF0/80].IP6.X.EXAMPLE.
+结果：
+\[x0001/16].IP6.X.EXAMPLE. DNAME SUBNET-1.IP6.X.EXAMPLE.
+\[x123456789ABCDEF0/64].SUBNET-1.X.EXAMPLE. PTR N.X.EXAMPLE.
+所以这样得到的DNAME（和NS）记录都存入缓冲，以加快逻辑上接近该地址的地址解析速度。如果要在最末的PTR记录TTL中解析N.X.EXAMPLE的另一个全球地址，那个记录不能再次得到。
+5.4 操作注意
+在5.1节描述的层次相邻实体中，比如网络服务商和客户，必须就拥有授权前缀定义的DNS名字达成一致。一个简单的约定就是使用位串标记来准确表示那些有高级实体分配给低级实体的位。例如，用“[x11/8]”取代“订阅者-X”。这把定义授权前缀的A6记录放在DNS树中与授权有关的DNAME记录同样的位置。这些简化的代价就是低级区域重编号时，必须修改其上面指出的A6记录。实际上这些代价是可以接受的。
+6. RFC1886的过渡和配置注意
+如果前缀已经用A6记录“向上授权”，DNS资源记录数目要求有由于非细节因素产生单个IPv6地址增长。典型地，那些记录并不一定来自不同的DNS区域（会因为一般原因而单独失效）。当得到多个IPv6地址时，RR数的增加将按比例减少－并且DNS应答总数甚至会减少－如果地址逻辑上是聚合的。但是，记录仍能轻易超出DNS响应中的可用空间，例如，这些响应会返回很大的RR集[DNSCLAR]给MX、NS或SRV查询。特别地，当那些授权指向其它区域的记录时，性能和DNS查找可靠性全面下降的可能性很大，并且随着授权前缀数目的增多而增大。
+DNS安全[DNSSEC]在于缓冲数据的可信赖性，这也是DNS本身固有的问题，但将其应用到IPv6地址的代价会以一个系数而线性增大。如果不同签名链必须由不同A6记录验证，这个系数可能会大于有关授权前缀的数目。如果使用了受信赖的集中式缓冲服务器（例如在[TSIG]）,代价可用分割为可接受的级别。有可能出现一种新的情况，IPv6地址可能由安全和不安全区域中的A6记录产生。
+建议授权前缀限制在一个或两个级别，直到从A6记录得到更多的配置经验。一种可行的调整机制就是从没有授权前缀（所以A6记录前缀长度为0）开始，再到在单个区域使用单个级别的授权。（如果A6记录的前缀TTL能维持在一个适当的范围，快速重编号的能力不会失效。）实验中会为子网中的主机引入更多非常灵活的授权。
+6.1 向AAAA过渡并与A记录共存
+包括A6记录区域的管理员能容易地调整那些能处理AAAA记录但不能处理A记录的解析器。通过一个模拟主机名到IPv6地址解析的处理过程，管理员能给所有具有A6记录的区域名自动产生AAAA记录（参见3.1.4节）。必须注意到，分配给AAAA记录的TTL必须小于在那个记录中形成IPv6地址的A6记录TTLs的最小值。为了全面的健壮性，应该监控不同区域中的A6记录变化（TTL或RDATA中），即使那些产生AAAA记录的区域没有任何变化。如果区域是安全的[DNSSEC]，产生的AAAA记录必须与其余区域数据一起作标记。
+特定启发式区域可以用于避免为记录前缀的A6记录产生AAAA记录，尽管过多的记录相当少见也没有害处。这些启发式实例包括删除前缀长度小于区域文件中最大值的A6记录，或者地址后缀末尾有一些位数为0的记录。
+在客户端执行查找时，A6和AAAA查询可能设置成其中的一个次序：A6到AAAA；AAAA到A6；仅仅A6；或者两者并行。缺省的次序（如不可配置，则是唯一次序）必须首先是A6，然后是AAAA。如果AAAA不可用，新的配置将改变缺省配置。
+[TRANS]描述了IPv4和IPv6地址间的优先级指南和选择。以后文档中所有涉及的AAAA记录都按上段描述次序的A6和/或AAAA记录处理。
+6.2 从半位元标记向二进制标记过渡
+遵照RFC 1886进行反向查找的实现如下：
+通过一序列点分带“.IP6.INT”后缀的半位元，IPv6地址表示成IP6.INT域中的一个名字。半位元序列安反向顺序编码，如首先编码低序半位元，然后编码高序低序半位元。每个半位元用十六进制数位表示。例如，5.3节例子中地址为2345:00C1:CA11:0001:1234:5678:9ABC:DEF0的名字按DNS名为“0.f.e.d.c.b.a.9.8.7.6.5.4.3.2.1.1.0.0.0.1.1.a.c.1.c.0.0.5.4.3.2.ip6.int.”查找。
+遵照本规范的实现将在IP6.ARPA进行二进制标记查找,如3.2节所述。建议过渡期间首先在IP6.ARPA进行二进制标记查找，如果查找失败再在IP6.INT按“半位元”查找。
+7. 安全性考虑
+为那些确定IPv6地址的A6记录的签名认证[DNSSEC]分布在多个实体中，反映了地址占有地址空间的授权路径。DNS安全性完全可用于位串标记和DNAME记录。就象在IPv4中一样，名字到地址映射认证逻辑上独立于地址到名字映射的认证。
+不管有没有DNSSEC，DNS查找的选择性干扰会产生3.1.4节所述的不完整但非空的地址。在某种情况下，如果它比DNS完全失效更有害，这种情况可以通过在客户端拒绝响应不完整的地址，或者通过在服务器端列出前缀长度为0的A6记录的所有地址得到缓解。
+8. IANA考虑
+A6资源记录被分配类型值38。
+
+9. 鸣谢
+   作者非常感谢下列人员的有价值的讨论和意见：Mark Andrews, Rob Austein, Jim Bound, Randy Bush, Brian Carpenter, David Conrad, Steve Deering, Francis Dupont,Robert Elz, Bob Fink, Olafur Gudmundsson, Bob Halley, Bob Hinden, Edward Lewis, Bill Manning, Keith Moore, Thomas Narten, Erik Nordmark, Mike O'Dell, Michael Patton and Ken Powell.
+10. 参考
+   [AAAA]   Thomson, S. and C. Huitema, "DNS Extensions to support IP
+             version 6, RFC 1886, December 1995.
+
+   [AARCH]  Hinden, R. and S. Deering, "IP Version 6 Addressing
+             Architecture", RFC 2373, July 1998.
+
+   [AGGR]   Hinden, R., O'Dell, M. and S. Deering, "An IPv6
+             Aggregatable Global Unicast Address Format", RFC 2374, July
+             1998.
+
+   [BITLBL]  Crawford, M., "Binary Labels in the Domain Name System",
+             RFC 2673, August 1999.
+
+   [DNAME]  Crawford, M., "Non-Terminal DNS Name Redirection", RFC
+             2672, August 1999.
+
+   [DNSCLAR] Elz, R. and R. Bush, "Clarifications to the DNS
+              Specification", RFC 2181, July 1997.
+
+   [DNSIS]   Mockapetris, P., "Domain names - implementation and
+             specification", STD 13, RFC 1035, November 1987.
+
+   [DNSSEC]  Eastlake, D. 3rd and C. Kaufman, "Domain Name System
+             Security Extensions", RFC 2535, March 1999.
+
+   [KWORD]   Bradner, S., "Key words for use in RFCs to Indicate
+             Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RENUM1]  Carpenter, B. and Y. Rekhter, "Renumbering Needs Work", RFC
+             1900, February 1996.
+
+   [RENUM2]  Ferguson, P. and H. Berkowitz, "Network Renumbering
+             Overview:  Why would I want it and what is it anyway?", RFC
+             2071, January 1997.
+
+   [RENUM3]  Carpenter, B., Crowcroft, J. and Y. Rekhter, "IPv4 Address
+             Behaviour Today", RFC 2101, February 1997.
+
+   [TRANS]   Gilligan, R. and E. Nordmark, "Transition Mechanisms for
+             IPv6 Hosts and Routers", RFC 1933, April 1996.
+
+   [TSIG]    Vixie, P., Gudmundsson, O., Eastlake, D. 3rd and B.
+             Wellington, "Secret Key Transaction Authentication for DNS
+             (TSIG)", RFC 2845, May 2000.
+11. 作者地址
+   Matt Crawford
+   Fermilab
+   MS 368
+   PO Box 500
+   Batavia, IL 60510
+   USA
+
+   Phone: +1 630 840-3461
+   EMail: crawdad@fnal.gov
+
+   Christian Huitema
+   Microsoft Corporation
+   One Microsoft Way
+   Redmond, WA 98052-6399
+
+   EMail: huitema@microsoft.com
+12. 版权说明
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works.  However, this document itself may not be modified in any way, such as by removing   the copyright notice or references to the Internet Society or other Internet organizations, except as needed for the purpose of developing Internet standards in which case the procedures for copyrights defined in the Internet Standards process must be followed, or as required to translate it into languages other than English.
+
+The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+
+This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+
+RFC2874--DNS Extensions to Support IPv6 Address Aggregation and Renumbering                  支持IPv6地址聚合和重编号的DNS扩展
+
+
+
+
+1
+RFC文档中文翻译计划
+

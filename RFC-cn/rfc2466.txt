@@ -1,0 +1,541 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2002-2-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group
+D. Haskin
+Request for Comments：2466
+S. Onishi
+Category：Standards Track
+Bay Networks，Inc.
+
+December 1998
+关于IPv6 ICMPv6类的MIB
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的”Internet架构委员会正式协议标准”来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1998)。版权所有。
+摘要
+这个文档是定义了多种IPv6 MIB对象组的一系列文档中的一个。特别是在这个文档中定义了它描述了ICMPv6组。
+这个文档定义了用于管理基于IPv6 Internet的网络管理协议的管理信息数据库(Management Information Base，缩写为MIB)的一部分。
+在某种意义上，这个文档定义了一个MIB模块，它既适用于SNMPv2 SMI，也在语义上和对等体SNMPv1的定义相同。
+1. SNMPv2网络管理框架
+SNMPv2网络管理框架目前包括三个主要部分。它们是：
+o SMI，在RFC1902 [1]中描述――用于为管理目的描述和命名对象的机制。
+o MIB-II，STD 17，RFC1213 [2]――Internet协议组的管理对象核心集。
+o RFC 1157/STD 15 [4]和RFC 1905 [5]――定义了两个用于访问管理对象的协议版本。
+框架允许出于实验和评估目的来定义新对象。
+1.1. 对象定义
+管理对象通过一个称为管理信息库或MIB的虚拟信息库来访问。MIB中的对象用抽象语法标记（ASN.1）的子集（定义在SMI中）定义。特别地，每个对象类型命名为一个对象标识符（OBJECT IDENTIFIER）（一个管理指配名）。对象类型和对象实例一起唯一地标识一个特定的实例化对象。为方便起见，通常使用一个文本字符串，称为描述符，指向对象类型。
+2. 综述
+这个文档是定义了多种IPv6 MIB对象组的一系列文档中的一个。特别是在这个文档中定义了它描述了ICMPv6组。这些组是一致的基本单位：如果把组的语义应用于应用程序，那么必须在组中执行所有对象。例如，如果它在IPv6协议上执行TCP的话，应用程序必须执行TCP组。最少，应用程序必须执行和在这个文档中定义的ICMPv6组以及IPv6通用组（General group）[9]。
+这个文档定义了IPv6 MIB的ICMPv6组。
+3. ICMPv6类
+IPV6-ICMP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+模块标识符，对象类，
+来自SNMPv2-SMI的mib-2，32位计数器
+来自SNMPv2-CONF的对象组模块依从关系
+来自IPV6-MIB的ipv6IfEntry；
+
+ipv6IcmpMIB模块标识符
+最新的更新“9801082155Z”
+组织“IETF IPv6 Working Group”
+联系信息
+“Dimitry Haskin
+Postal：Bay Networks，Inc.
+660 Techology Park Drive.
+Billerica，MA  01821
+US
+Tel：+1-978-916-8124
+E-mail：dhaskin@baynetworks.com
+
+Steve Onishi
+Postal：Bay Networks，Inc.
+3 Federal Street
+Billerica，MA 01821
+US
+Tel：+1-978-916-3816
+E-mail：sonishi@baynetworks.com”
+描述
+“执行ICMPv6实体的MIB模块。”
+::= { mib-2 56 }
+
+--ICMPv6组
+
+ipv6IcmpMIBObjects 对象标识符 ::= { ipv6IcmpMIB  1 }
+
+-- 各个接口的ICMPv6状态表
+
+ipv6IfIcmpTable对象类
+语法：Ipv6IfIcmpEntry的序列
+最大访问权限：不可访问
+状态：现行
+描述
+“IPv6 ICMP的统计。这个表包含了实体收到和发出的ICMPv6消息的统计。”
+::= { ipv6IcmpMIBObjects 1 }
+
+ipv6IfIcmpEntry对象类
+语法：Ipv6IfIcmpEntry
+最大访问权限：不可访问
+状态：现行
+描述
+“一个ICMPv6统计表项，包含着在一个真正的IPv6接口上的对象。注意：接收接口是给定ICMPv6消息编址的接口，对于消息的输入接口不一定必须。同样地，发送接口是源于给定的ICMP消息的接口，这个消息一般有输出接口，但是这不是必须的。”
+增量{ ipv6IfEntry }
+::= { ipv6IfIcmpTable 1 }
+
+Ipv6IfIcmpEntry ::= 序列{
+ipv6IfIcmpInMsgs
+32位计数器，
+ipv6IfIcmpInErrors
+32位计数器，
+ipv6IfIcmpInDestUnreachs
+32位计数器，
+ipv6IfIcmpInAdminProhibs
+32位计数器，
+ipv6IfIcmpInTimeExcds
+32位计数器，
+ipv6IfIcmpInParmProblems
+32位计数器，
+ipv6IfIcmpInPktTooBigs
+32位计数器，
+ipv6IfIcmpInEchos
+32位计数器，
+ipv6IfIcmpInEchoReplies
+32位计数器，
+ipv6IfIcmpInRouterSolicits
+32位计数器，
+ipv6IfIcmpInRouterAdvertisements
+32位计数器，
+ipv6IfIcmpInNeighborSolicits
+32位计数器，
+ipv6IfIcmpInNeighborAdvertisements
+32位计数器，
+ipv6IfIcmpInRedirects
+32位计数器，
+ipv6IfIcmpInGroupMembQueries
+32位计数器，
+ipv6IfIcmpInGroupMembResponses
+32位计数器，
+ipv6IfIcmpInGroupMembReductions
+32位计数器，
+ipv6IfIcmpOutMsgs
+32位计数器，
+ipv6IfIcmpOutErrors
+32位计数器，
+ipv6IfIcmpOutDestUnreachs
+32位计数器，
+ipv6IfIcmpOutAdminProhibs
+32位计数器，
+ipv6IfIcmpOutTimeExcds
+32位计数器，
+ipv6IfIcmpOutParmProblems
+32位计数器，
+ipv6IfIcmpOutPktTooBigs
+32位计数器，
+ipv6IfIcmpOutEchos
+32位计数器，
+ipv6IfIcmpOutEchoReplies
+32位计数器，
+ipv6IfIcmpOutRouterSolicits
+32位计数器，
+ipv6IfIcmpOutRouterAdvertisements
+32位计数器，
+ipv6IfIcmpOutNeighborSolicits
+32位计数器，
+ipv6IfIcmpOutNeighborAdvertisements
+32位计数器，
+ipv6IfIcmpOutRedirects
+32位计数器，
+ipv6IfIcmpOutGroupMembQueries
+32位计数器，
+ipv6IfIcmpOutGroupMembResponses
+32位计数器，
+ipv6IfIcmpOutGroupMembReductions
+32位计数器
+}
+
+ipv6IfIcmpInMsgs对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP消息的总数，包括由ipv6IfIcmpInErrors累计的所有数字。注意：这个接口是对ICMP消息编址的接口，对于这个消息，输入接口不是必须的。”
+::= { ipv6IfIcmpEntry 1 }
+
+ipv6IfIcmpInErrors对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到并检测到带有特定的ICMP错误(ICMP校验错、长度错误等等)的ICMP消息的数量。”
+::= { ipv6IfIcmpEntry 2 }
+
+ipv6IfIcmpInDestUnreachs对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口上收到的目的地址不可达的ICMP消息（Destination Unreachable message）的数量。”
+::= { ipv6IfIcmpEntry 3 }
+
+ipv6IfIcmpInAdminProhibs对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP源地址不可达/通讯管理禁止（destination unreachable/communication administratively prohibited）消息的数量。”
+::= { ipv6IfIcmpEntry 4 }
+
+ipv6IfIcmpInTimeExcds对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP超时（Time Exceeded）消息的数量。”
+::= { ipv6IfIcmpEntry 5 }
+
+ipv6IfIcmpInParmProblems对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP参数问题（Parameter Problem）消息的数量。”
+::= { ipv6IfIcmpEntry 6 }
+
+ipv6IfIcmpInPktTooBigs对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP数据包太大（Packet Too Big）消息的数量。”
+::= { ipv6IfIcmpEntry 7 }
+
+ipv6IfIcmpInEchos对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP Echo（必要的）消息的数量。”
+::= { ipv6IfIcmpEntry 8 }
+
+ipv6IfIcmpInEchoReplies对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP Echo应答（Echo Reply）消息的数量。”
+::= { ipv6IfIcmpEntry 9 }
+
+ipv6IfIcmpInRouterSolicits对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP路由器请求（Router Solicit）消息的数量。”
+::= { ipv6IfIcmpEntry 10 }
+
+ipv6IfIcmpInRouterAdvertisements对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP路由器通告（Router Advertisement）消息的数量。”
+::= { ipv6IfIcmpEntry 11 }
+
+ipv6IfIcmpInNeighborSolicits对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP相邻节点请求（Neighbor Solicit）消息的数量。”
+::= { ipv6IfIcmpEntry 12 }
+
+ipv6IfIcmpInNeighborAdvertisements对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP相邻节点通告（Neighbor Advertisement）消息的数量。”
+::= { ipv6IfIcmpEntry 13 }
+
+ipv6IfIcmpInRedirects对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的重定向（Redirect）消息的数量。”
+::= { ipv6IfIcmpEntry 14 }
+
+ipv6IfIcmpInGroupMembQueries对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP v6组成员查询（Group Membership Query）消息的数量。”
+::= { ipv6IfIcmpEntry 15}
+
+ipv6IfIcmpInGroupMembResponses对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP v6组成员响应（Group Membership Response）消息的数量。”
+::= { ipv6IfIcmpEntry 16}
+
+ipv6IfIcmpInGroupMembReductions对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口收到的ICMP v6组成员还原（Group Membership Reduction）消息的数量。”
+::= { ipv6IfIcmpEntry 17}
+
+ipv6IfIcmpOutMsgs对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“这个接口尝试发送的ICMP消息的总数。注意这个累计数字包含了所有由icmpOutErrors累计的次数。”
+::= { ipv6IfIcmpEntry 18 }
+
+ipv6IfIcmpOutErrors对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“由于在ICMP中发现了诸如缓存缺乏导致的问题而不能发送的ICMP消息的数量。这个数值不包括在ICMP层之外发现的错误，例如IPv6路由失效而产生的数据报。在某些应用程序中，可能有一些形成计数器数值的错误类型。”
+::= { ipv6IfIcmpEntry 19 }
+
+ipv6IfIcmpOutDestUnreachs对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP目的地址不可达（Destination Unreachable）消息的数量。”
+::= { ipv6IfIcmpEntry 20 }
+
+ipv6IfIcmpOutAdminProhibs对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“发送的ICMP源地址不可达/通讯管理禁止（dest unreachable/communication administratively prohibited）消息的数量。”
+::= { ipv6IfIcmpEntry 21 }
+
+ipv6IfIcmpOutTimeExcds对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP超时（Time Exceeded）消息的数量。”
+::= { ipv6IfIcmpEntry 22 }
+
+ipv6IfIcmpOutParmProblems对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP参数问题（Parameter Problem）消息的数量。”
+::= { ipv6IfIcmpEntry 23 }
+
+ipv6IfIcmpOutPktTooBigs对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP数据包太大（Packet Too Big）消息的数量。”
+::= { ipv6IfIcmpEntry 24 }
+
+ipv6IfIcmpOutEchos对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP Echo (请求)消息的数量。”
+::= { ipv6IfIcmpEntry 25 }
+
+ipv6IfIcmpOutEchoReplies对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP Echo应答消息的数量。”
+::= { ipv6IfIcmpEntry 26 }
+
+ipv6IfIcmpOutRouterSolicits对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP路由器请求消息的数量。”
+::= { ipv6IfIcmpEntry 27 }
+
+ipv6IfIcmpOutRouterAdvertisements对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP 路由器通告消息的数量。”
+::= { ipv6IfIcmpEntry 28 }
+
+ipv6IfIcmpOutNeighborSolicits对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP 相邻节点请求消息的数量。”
+::= { ipv6IfIcmpEntry 29 }
+
+ipv6IfIcmpOutNeighborAdvertisements对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“接口发送的ICMP相邻节点（Neighbor Advertisement）消息的数量。”
+::= { ipv6IfIcmpEntry 30 }
+
+ipv6IfIcmpOutRedirects对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“发送的重定向消息的数量。对于主机来讲，这个对象总是0，因为主机不发送重定向。” 
+::= { ipv6IfIcmpEntry 31 }
+
+ipv6IfIcmpOutGroupMembQueries对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“发送的ICMPv6组成员查询（Group Membership Query）的数量。”
+::= { ipv6IfIcmpEntry 32}
+
+ipv6IfIcmpOutGroupMembResponses对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“发送的ICMPv6组成员响应（Group Membership Response）的数量。”
+::= { ipv6IfIcmpEntry 33}
+
+ipv6IfIcmpOutGroupMembReductions对象类
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述
+“发送的ICMPv6组成员复位（Group Membership Reduction）的数量。”
+::= { ipv6IfIcmpEntry 34}
+
+--一致性消息
+
+ipv6IcmpConformance 对象标识符 ::= { ipv6IcmpMIB 2 }
+
+ipv6IcmpCompliances
+对象标识符 ::= { ipv6IcmpConformance 1 }
+ipv6IcmpGroups
+对象标识符 ::= { ipv6IcmpConformance 2 }
+
+-- 依从关系声明
+
+ipv6IcmpCompliance 模块依从关系
+状态：现行
+描述
+“执行ICMPv6的SNMPv2实体的依从关系声明。”
+MODULE  -- this module
+强制性组{ ipv6IcmpGroup }
+::= { ipv6IcmpCompliances 1 }
+
+ipv6IcmpGroup对象类
+对象{
+ ipv6IfIcmpInMsgs，
+ ipv6IfIcmpInErrors，
+ ipv6IfIcmpInDestUnreachs，
+ ipv6IfIcmpInAdminProhibs，
+ ipv6IfIcmpInTimeExcds，
+ ipv6IfIcmpInParmProblems，
+ ipv6IfIcmpInPktTooBigs，
+ ipv6IfIcmpInEchos，
+ ipv6IfIcmpInEchoReplies，
+ ipv6IfIcmpInRouterSolicits，
+ ipv6IfIcmpInRouterAdvertisements，
+ ipv6IfIcmpInNeighborSolicits，
+ ipv6IfIcmpInNeighborAdvertisements，
+ ipv6IfIcmpInRedirects，
+ ipv6IfIcmpInGroupMembQueries，
+ ipv6IfIcmpInGroupMembResponses，
+ ipv6IfIcmpInGroupMembReductions，
+ ipv6IfIcmpOutMsgs，
+ ipv6IfIcmpOutErrors，
+ ipv6IfIcmpOutDestUnreachs，
+ ipv6IfIcmpOutAdminProhibs，
+ ipv6IfIcmpOutTimeExcds，
+ ipv6IfIcmpOutParmProblems，
+ ipv6IfIcmpOutPktTooBigs，
+ ipv6IfIcmpOutEchos，
+ ipv6IfIcmpOutEchoReplies，
+ ipv6IfIcmpOutRouterSolicits，
+ ipv6IfIcmpOutRouterAdvertisements，
+ ipv6IfIcmpOutNeighborSolicits，
+ ipv6IfIcmpOutNeighborAdvertisements，
+ ipv6IfIcmpOutRedirects，
+ ipv6IfIcmpOutGroupMembQueries，
+ ipv6IfIcmpOutGroupMembResponses，
+ ipv6IfIcmpOutGroupMembReductions
+  }
+状态：现行
+描述
+“提供消息细节给ICMPv6的对象的ICMPv6组。”
+::= { ipv6IcmpGroups 1 }
+
+END
+4. 致谢
+这个文档取材于IETF在基于IPv4的Internet方面的MIB作品。
+我们对下列朋友的建设性的和有价值的建议：
+Mike Daniele，
+Margaret Forsythe，
+Jean-Pierre Roch，
+Juergen Schoenwaelder，
+Vivek Venkatraman.
+5. 参考文献
+[1]SNMPv2 Working Group，Case，J.，McCloghrie，K.，Rose，M.，and S.  Waldbusser，“Structure of Management Information for Version 2 of the Simple Network Management Protocol (SNMPv2)”，RFC 1902，January 1996。
+[2]SNMPv2 Working Group，Case，J.，McCloghrie，K.，Rose，M.，and S. Waldbusser，“Textual Conventions for Version 2 of the Simple Network Management Protocol (SNMPv2)”，RFC 1903，January 1996。
+[3]McCloghrie，K.，and M. Rose，Editors，“Management Information Base for Network Management of TCP/IP-based internets：MIB-II”，STD 17，RFC 1213，March 1991。
+[4]Case，J.，Fedor，M.，Schoffstall，M. and J.  Davin，“A Simple Network Management Protocol (SNMP)”，STD 15，RFC 1157，May 1990。
+[5]SNMPv2 Working Group，Case，J.，McCloghrie，K.，Rose，M. and S. Waldbusser，“Protocol Operations for Version 2 of the Simple Network Management Protocol (SNMPv2)”，RFC 1905，January 1996。
+[6]McCloghrie，K. and F. Kastenholz，“Evolution of the Interfaces Group of MIB-II”，RFC 1573，January 1994。
+[7]Deering，S. and R. Hinden，Editors，“Internet Protocol，Version 6 (IPv6) Specification”，RFC 2460，December 1998。
+[8]Conta，A. and S. Deering，“Internet Control Message Protocol (ICMPv6) for the Internet Protocol Version 6 (IPv6) Specification”，RFC 2463，December 1998。
+[9]Haskin，D.，and S. Onishi，“Management Information Base for IP Version 6：Textual Conventions and General Group”，RFC 2465，December 1998。
+6. 需要考虑的安全问题
+在某些网络环境中，认为在这个MIB中定义的某些管理信息是很敏感的。
+因此，在这种环境下，对收到的SNMP请求和控制访问权限的管理信息进行认证是非常必要的。
+7. 作者地址
+Dimitry Haskin
+Bay Networks，Inc.
+600 Technology Park Drive
+Billerica，MA 01821
+EMail：dhaskin@baynetworks.com
+
+Steve Onishi
+Bay Networks，Inc.
+3 Federal Street
+Billerica，MA 01821
+EMail：sonishi@baynetworks.com
+8. 完整的版权声明
+Copyright (C) The Internet Society (2000)。版权所有。
+本文档及其译文可以拷贝和提供给他人，且其衍生物，如评论、解释或帮助实施的作品可以全部或部分地定制、拷贝、出版和发布，对此我们不加任何限制，前提是上述版权声明，及本段内容包含在所有的拷贝和派生作品中。然而，本文档本身不允许以任何方式修改，例如删除Internet社团或其他Internet组织的版权声明或参考，除非是为了开发Internet标准的需要。即便在这种情况下，也需要添加Internet标准中定义的版权声明，或者根据需要把他翻译成英语以外的其他语言。
+上述准许的有限许可是永久性的， 无论是Internet社团以及其继承者或代理者都将不会废止这些许可。
+本文档及其中包含的信息基于“AS IS”提供，而且INTERNET社团和IETF拒绝所有授权、表达或影射，包括但不限于任何这里使用的消息的授权将不会违背任何版权或者隐含的商业性授权或对特定的合理目的。
+
+RFC2466――关于IPv6 ICMPv6类的MIB
+
+
+
+
+1
+RFC文档中文翻译计划
+

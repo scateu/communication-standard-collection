@@ -1,0 +1,25 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                             A. Bhushan
+Request for Comments # 148                        MIT -- Project MAC
+NIC # 6751                                        7 May 1971
+Categories: D.1
+
+RFC 123 的注释
+（Comments on RFC #123）
+对于一些36位计算机上，对于严格要求字节长度‘s’是32位的原始连接是很迫切的。例如，在我们的PDP-10(DMCG- ITS) NCP中，目前我们还没有发送和接受32位数据的恰当方法。数据既可以按照映射（image）方式(36位字节)传输，也可以按照ASCII方式(第8位为0的8位字符)传输。也许我们应该允许服务器发送的长度大于32位(比如说72位)，在保留位上可以添0。对于连接的字节长度‘s’可以固定为8位。
+[这个RFC文档是由BBN公司在Alex McKenzie指导下以计算机可读的文件格式归档到在线RFC文档库的。12/96]
+
+RFC148――Comments on RFC #123                                               RFC 123 的注释
+
+
+
+
+1
+RFC文档中文翻译计划
+

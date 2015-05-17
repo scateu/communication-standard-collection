@@ -1,0 +1,42 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                         UCSB Computer
+NIC #9928                                     Research Lab.
+RFC #335                                      Roland F. Bryan
+                                              1 May 1972
+
+
+
+               
+
+新接口 - IMP/360  
+（RFC335――NEW INTERFACE-IMP/360） 
+
+我们的360-75上的老一代网络接口已经被与NASA-AMES 和USC版本类似工作部件所替
+代。此控制器已于1972年5月1日投入使用。
+
+网络用户门，如果你们在操作UCSB时遇到任何困难的话，这可能与这一工作部件有关，
+请您告诉我们，我们会很高兴。
+谢谢！
+
+
+       [ This RFC was put into machine readable form for entry ]
+       [ into the online RFC archives by BBN Corp. under the   ]
+       [ direction of Alex McKenzie.                   12/96   ]
+
+
+
+RFC335――NEW INTERFACE-IMP/360                        新界面 - IMP/360    
+
+
+1
+RFC文档中文翻译计划

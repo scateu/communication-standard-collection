@@ -1,0 +1,314 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：mailto:ouyang@china-pub.com
+译者：（）
+译文发布时间：2001-11-4
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                            S. Floyd
+Request for Comments: 2582                                          ACIRI
+Category: Experimental                                         T. Henderson
+                                                           U.C. Berkeley
+April 1999
+
+
+TCP快速恢复算法NewReno修正
+（RFC2582――The NewReno Modification to TCP's Fast Recovery Algorithm）
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+摘要： 
+RFC 2001 [RFC2001]讲述了以下四种相互作用的TCP拥塞控制算法：慢启动，拥塞避免，
+快速重传，以及快速恢复。RFC 2581 [RFC2581]明确地允许对这些算法进行某些改动，包括
+如下改动，使用TCP选择确认（SACK）选项[MMFR96],以及在没有SACK的情况下响应“部分
+确认”(在检测到数据丢失时，新数据的ACKs，而不是发送的所有数据的ACKs)。这篇文档
+描述了响应部分确认的一个特定算法，称为NewReno。对部分确认的响应由Janey Hoe在
+[Hoe95]中首次提出。
+
+
+                             目录
+1.介绍	2
+2.定义	2
+3.NewReno中的快速重传和快速恢复算法	2
+4.重设重传定时器	4
+5.避免多次快速重传	4
+6.数据接收端的实现问题	5
+8.总结	6
+9.致谢	6
+10.参考文献	6
+11.安全考虑	7
+12.作者地址	7
+13.完全版权说明	8
+
+1.介绍
+对[RFC2581]（在1990年的BSD Reno发行版中首次实现，在[FF96]称之为Reno算法）
+中描述的TCP快速恢复算法的典型实现，TCP数据发送端在发生一个超时重传时仅仅重传一
+个数据包，或者当三个重复确认到达时触发快速重传算法。单单一个超时重传可能导致许多
+数据包的重传，但是每次Reno快速重传算法的启用仅仅导致一个数据包的重传。
+因此，当多个数据包从一个数据窗口中丢失并且触发快速重传和快速恢复算法时，问题
+就会产生。在这种情况下，如果SACK选项可用，TCP发送端在快速恢复期间就有足够的信
+息来决定重传哪个数据包，不重传哪个数据包。这篇文档仅对不能使用TCP选择确认（SACK）
+选项的TCP连接适用。
+在没有SACK的情况下，TCP发送端在快速恢复期间只能得到很少的信息来作出重传决
+定。从三个重复确认中，发送端推断出一个数据包丢失了，并且重传那个声明了数据包。在
+这之后，数据发送端可能接收到另外的重复确认，因为在发送端进入快速重传时，数据端确
+认已经发送的附加数据包。
+在多个数据包从一个数据窗口中丢失这种情况下，当发送端从对重传的数据包（就是第
+一次进入快速重传时重传的数据包）的一个确认时，它获得第一条可用新信息。如果只有一
+个数据包丢失了，对这个重传的数据包的确认将确认所有进入快速重传（在没有重新排序的
+情况下）之前发送的数据包。但是，当有多个数据包丢失时，对此重传数据包的确认将仅确
+认一些而不是所有在快速重传之前发送的数据包。我们称这个包是一个部分确认。
+和许多其它的建议一起，[Hoe95]建议在快速恢复期间TCP数据发送端通过推断声明的
+数据包已经丢失和重传那个数据包的方式响应一个部分确认。这篇文档描述了对Reno TCP
+里的快速恢复算法的一个修正，Reno TCP包括了快速恢复期间对接收到的部分确认的一个
+响应。我们称这处修正过的快速恢复算法为NewReno，因为它与基础的Reno算法有一些细
+小但是很重要的不同。这篇文档没有讨论[Hoe95]和[Hoe96]中的其它建议，比如在慢启动期
+间ssthresh参数的一个变化，及在快速恢复期间为每两个重复确认发送一个新数据包的建
+议。这篇文档里的NewReno方案也使用了文献[LM97]中的NewReno的讨论。
+    我们没有说对于不能使用SACK的TCP，这里描述的快速恢复的NewReno方案是响
+应部分确认的一个可选修正。根据我们在NS模拟器上的NewReno修正经验，我们相信这个
+修正在很多地方都改善了快速重传和快速恢复的性能，我们仅仅是为了IETF团体的利益而
+将它文档化。我们鼓励使用对快速恢复的这一修正，并且我们还鼓励反馈关于此修正或相关
+修正的操作经验。
+2.定义
+这篇文档假设读者熟悉[RFC2581]中定义的术语：最大段尺寸(MSS), 拥塞窗口(cwnd),
+和传送尺寸（FlightSize）。传送尺寸在[RFC2581] 中是如下定义的：
+传送尺寸：已经发送但还没有确认的数据量。
+3.NewReno中的快速重传和快速恢复算法
+标准的快速重传和快速恢复算法实现在[RFC2581]给出。这些算法的NewReno修正在下
+面给出。NewReno修正[RFC2581]里的实现的不同仅在于步骤1中的变量“recover”的引入，
+以及步骤5中对一个部分或新的确认的响应。修正定义了一个“快速恢复过程”，它在接收
+到三个重复ACK时开始，并在一个超时重传发生或一个确认所有在快速恢复过程开始后发送
+的数据的ACK到达时结束。
+1.当收到第三个重复ACK并且发送端还没有处于快速恢复过程时，设置ssthresh不大
+于下面等式1中给出的值。（这是[RFC2581]中的等式3）。
+ssthresh = max (FlightSize / 2, 2*MSS)           (1)
+用变量“recover”记录传送的最大序列号。
+2.重传丢失的段并设置cwnd为ssthresh乘以3*MSS。这将人为地按已经离开网络的报
+文段数目（3）和接收端缓冲数据量来扩充拥塞窗口。
+3.对每个接收到的额外的重复ACK，将cwnd增大SMSS字节。这将人为地扩充拥塞窗口
+以反映已经离开网络的附加数据段。
+4.发送一个数据段，如果cwnd和接收端的通知窗口的值允许的话。
+5.当一个确认新数据的ACK到达时，此ACK可能是由步骤2中的重传引发的确认，或者
+是由稍后的一次重传引起的。
+  如果这个ACK确认了直到并包含“recover”的数据，那么这个ACK确认了所有在丢
+失段的原始传送和第三个重复ACK接收之间的段。设置cwnd为（1）
+min(ssthresh,FlightSize+MSS)；或者(2)ssthresh,这里的ssthresh是步骤1中设置的值；
+这称为“deflating”窗口。（我们注意到步骤1中“FlightSize”指的是当进入快速恢复时
+步骤1中发送的数据量，步骤5中的“FlightSize”指的是当退出快速恢复时发送的数据量。）
+如果选择了另一个选项，实现应该采取措施避免可能的数据爆发，万一向网络中发送的数据
+量远小于新拥塞窗口允许的量[HTH98]的话。退出快速恢复过程。
+如果这个ACK不确认所有并包含到“recover”的数据的话，就产生一个部分ACK。在
+此种情况下，重传第一个没有确认的数据段。按确认的新数据量来减小拥塞窗口，然后加回
+一个MSS并发送一个新数据段，如果cwnd的新值允许的话。这个“部分窗口缩减”试图确
+定这一点，当快速恢复最终结束时，大约ssthresh数量的数据还在向网络中传送。不要退
+出快速恢复过程（也就是说，如果任何重复ACK随后到达，执行上面的步骤3和4）。
+对在快速恢复期间第一个到达的部分ACK，也要重设重传定时器。
+注意到在步骤5中，拥塞窗口在一个部分确认收到时减小。拥塞窗口在部分确认收到时
+可能已经大幅膨胀。另外，根据丢失数据包的类型，部分确认可能确认将近一个窗口的数据。
+在这种情况下，如果拥塞窗口没有减小，数据端可能能够紧接着发送将近一个窗口的数据。
+上面描述的对部分确认的简单响应可能有许多变形。首先，一个问题是部分确认之后何
+时重设定时器。这在下面的第4节进一步讨论。
+一个相关的问题是在每一个部分确认之后，重传多少数据包。上面描述的算法在每个部
+分确认之后重传一个数据包。这是最保守的选择，因为这种办法最没有可能导致一个没有必
+要重传的数据包。有效地慢启动也是一个变形，它能从丢失了许多数据包的窗口中更快地恢
+复过来，但是要求从丢失了N个数据包 [Hoe96]的恢复必须少于N来回时间。对部分确认采
+用这种稍微激烈一点的响应的话，在每个重传之后重设重传定时器就会很有利。因为我们还
+没有在我们的模拟器上试验这种变形，我们在这篇文档中不会进一步对此进行讨论。
+第三个问题是避免由接收端已经到的数据包的重传引起的多次快速重传。这在下面的第
+5节中讨论。避免多次快速重传在对部分确认采用更激烈的响应的情况下特别重要，因为在
+这种情况下，发送端更可能重传接收端已经接收的数据包。
+最后，我们考察一下没有SACK选项的情况，数据发送端在没有足够信息的情况下工作。
+一个发送端可能花很长时间仔细考虑在这种情况哪个快速恢复的变形对这种环境是最优的。
+因为从丢失了多个数据包的一个窗口中恢复的问题特别重要，所以最好的选择是使用SACK
+选项。
+4.重设重传定时器
+第3节的算法仅在第一个部分ACK之后重设重传定时器。在这种情况下，如果很多数据
+包从一个窗口中丢失了，TCP数据发送端的重传定时器最终将超时，接着TCP数据发送端将
+调用慢启动。（这在[F98]在12页中被例证。）我们称此为NewReno的Impatient变形。
+相反地，[FF96]中的NewReno模拟例证了上面描述的算法，不同的是重传定时器在每个
+部分确认之后都要重设。我们称此为Slow-but-Steady变形。在这种情况下，对于一个丢失
+了大量数据包的窗口来说，TCP数据发送端每个来回时间至少发送一个数据包。（这种行为
+在[FF96]中的NewReno TCP模拟和[F98]的11页中被例证。）
+对于超时重传值（RTO）一般不大于往返时间（RTT）的TCP实现来说，Impatient变形
+即使在只有少量数据包丢失的情况下也会导致一个超时重传。对于超时重传值（RTO）一般
+远大于往返时间(RTT)的TCP实现来说，Slow-but-Steady变形当多个数据包从一个窗口中
+丢失时能够长时间维持快速恢复。这些变形没有一个是最优的；一个更优的算法可能是某个
+从多个数据包丢失中迅速恢复，并且在重设重传定时器时与Slow-but-Steady进行混合的算
+法。然而我们注意到，在没有SACK选项的情况下，对潜在性能有个限制。
+5.避免多次快速重传 
+    在没有SACK选项时，一个重复确认没有携带任何有关信息，这种信息是用来确定TCP
+数据接收端触发重复确认的一个或多个数据包的。TCP数据发送端不能把区分重复确认是由
+数据包丢失或延时引起的，还是由发送端重传了一个TCP接收端已经接收到的数据包引起
+的。由于这个原因，一个窗口的多个数据段丢失某些时候能导致不必要的多次重传（以及拥
+塞窗口的多次缩减）[Flo94]。
+    在Reno或NewReno TCP中使用了快速重传和快速恢复算法的话，由多次快速重传引起
+的性能问题就相对小一些（和Tahoe TCP的潜在问题相比，它没有实现快速恢复）。然而，
+Reno或NewReno TCP也会发生不必要的快速重传，特别是如果快速恢复期间发生了一个重
+传超时的话。（这在［F98］第6页中作为Reno的例证，第8页中作为NewReno的例证。）有
+NewReno的话，数据发送端一直处于快速恢复，直到发生一个超时重传，或者快速重传时发
+送的所有数据都已得到确认。因此有了NewReno，多次快速重传的问题只有在一个超时重传
+后才发生。
+    接下来对第3节中算法的修正消除了多次快速重传的问题。（这个修正在[F98]中称为
+“bugfix”，在第7和第9页中说明。）这个修正使用了一个新变量“send_high”，它的初始
+值是最初发送的序列号。每次超时重传之后，到目前为止发送的最大序列号记录到
+“send_high”变量中。
+    如果在一个超时重传之后，TCP数据发送端重传了三个连续的数据包，而这此数据包数
+据接收端已经接收到了，这样的话TCP数据发送端就将接收到三个重复确认，这此确认并没
+有确认“send_high”号数据包。在这种情况下，重复确认并不能表明又发生了拥塞。它们
+只是表明发送端没有必要地重传了至少三个数据包。
+    我们注意到如果如果TCP数据发送端接收到三个重复确认，而这些重复确认并没有确认
+“send_high”号数据包，这样发送端就不知道这此重复确认是否是由一个新数据包的丢失
+引起的。对一个实现了这节描述的用来避免多次快速重传的bugfix的TCP而言，发送端在
+这些情况下并不会由重复确认推断出一个数据包丢失了。和往常一样，重传定时器在这种情
+况又成了推断数据包丢失的支持机制。
+    为避免多次快速重传而对快速重传作的修正用下面的步骤1A代了第3节中的步骤1。
+另外，此修正增加了下面的步骤6：
+1A.当接收到第三个重复ACK并且发送端还没有进入快速恢复过程时，检查并且看看这
+些重复ACK有没有确认“send_high”号数据包。如果有,设置ssthresh的值不大于等式1
+中给出的值,在变量"recover"中记录发送的最大序列号,然后转到步骤2.如果重复ACK没
+有确认"send_high"号数据包,就什么也不做。也就是不要进入快速重传和快速恢复过程,
+不要改变ssthresh值,不要转到步骤2以重传"丢失的"数据段,并且不要在下一个重复ACK
+到之前不要执行步骤3。
+步骤2-5和第三节的步骤一样。
+6.一个超时重传之后,在变量"send_high"中记录发送的最大序列号,并退出快速恢复
+过程,如果可以的话。
+上面的1A步骤中检查重复ACK是否确认"send_high"以后的数据包,这是对此算法的
+careful变形。另一个可能的改变会是简单地要求三个重复确认在开始另一个快速重传之前
+确认"send_high"号数据包。我们称之为对快速重传的less careful变形。
+在两种个别情况下,TCP发送端能接收到确认"send_high"号数据包的重复确认,但对
+大于"send_high"号的数据包不确认。一种情况是数据发送端发送了四个序列号大于
+"send_high"的数据包,第一个数据包丢失在网络中,接下来的三个数据包触发了三个重复
+确认,这些确认确认了"send_high"号数据包。第二种情况是发送端不必要地重传了三个序
+列号小于"send_high"的数据包,并且这三个数据包触发了三个确认了"send_high"号数
+据包的重复确认。在没有SACK选项的情况下,TCP发送端不能区分这两种情况。
+对快速重传的Careful变形而言,数据发送端在第一种情况下必须等待一个超时重传,
+但在第二种情况下不会产生不必要的快速重传。对快速重传的less Careful变形而言,数据
+发送端会按第一种情况的需要快速重传,并且在第二种情况下会不必要地快速重传。NS模拟
+器已经实现了NewReno的Less Careful变形,Sun的Solaris 7上的TCP实现实现了Careful
+变形.这篇文档推荐上面的1A步骤给出的Careful变形。
+6.数据接收端的实现问题
+[RFC2001]阐述说“次序混乱的数据段应该迅速确认，以触发快速重传算法。” Neal 
+Cardwell已经指出，一些数据接收端在发送一个部分确认时不迅速发送一个确认，而是首
+先等待它们的延迟确认定时器超时[C98]。正如[C98]指出的，这严重限制了来自NewReno的
+效益，因为它延迟了数据发送端部分确认的接收。我们的建议是，数据接收端为一个次序混
+乱的数据段迅速发送一个确认，即使当次序混乱的段在缓冲区中时也一样。
+7.模拟
+有NewReno的模拟在NS模拟器上用用效性测试"tcl/test/test-all-newreno"来例
+证。命令“../../ns test-suite-newreno.tcl reno”显示了Reno TCP的一个模拟，例证
+了数据发送端缺乏对一个部分确认的响应。相反地，命令“../../ns test-suite-newreno.tcl 
+newreno_B”显示了这篇文档描述的使用NewReno算法的相同情境的模拟。
+测试“../../ns test-suite-newreno.tcl newreno1_B0”和“../../ns 
+test-suite-newreno.tcl newreno1_B”分别显示了NewReno的Slow-but-Steady变形和
+Impatient变形。
+8.总结
+我们的建议是TCP实现包括第3节给的快速恢复算法的NewReno修正，以及第5节给的
+用来避免多次快速重传的修正。第3节给的NewReno修正即使对支持SACK选项的TCP实现
+也是很重要的，因为SACK选项只有当两个TCP结点都支持SACK选项时才能使用。第3节给
+的NewReno修正实现了NewReno的Impatient而不是Slow-but-Steady修正。
+尽管这篇文档提到了许多NewReno算法的可能的变化，但是我们没有对所有这些可能的
+变化进行探讨，所以不能提出和其中一些有关的建议。我们相信，任何两个NewReno变形之
+间的不同比Reno和NewReno之间的不同要小。也就是说，重要的是实现NewReno而不是Reno，
+对一个没有SACK的TCP调用来说，具体NewReno的哪个变形被实现并不重要。
+9.致谢
+感谢Anil Agarwal, Mark Allman, Vern Paxson, Kacheong Poon,和 Bernie Volz关于
+这篇文档的细致的反馈。
+10.参考文献
+    [C98]         Neal Cardwell, "delayed ACKs for retransmitted packets:
+                 ouch!". November 1998.  Email to the tcpimpl mailing
+                 list, Message-ID "Pine.LNX.4.02A.9811021421340.26785-
+              100000@sake.cs.washington.edu", archived at
+                 "http://tcp-impl.lerc.nasa.gov/tcp-impl".
+   [F98]         Sally Floyd.  Revisions to RFC 2001.  Presentation to
+                 the TCPIMPL Working Group, August 1998.  URLs
+                 "ftp://ftp.ee.lbl.gov/talks/sf-tcpimpl-aug98.ps" and
+                 "ftp://ftp.ee.lbl.gov/talks/sf-tcpimpl-aug98.pdf".
+   [FF96]        Kevin Fall and Sally Floyd.  Simulation-based
+                 Comparisons of Tahoe, Reno and SACK TCP.  Computer
+                 Communication Review, July 1996.  URL
+                 "ftp://ftp.ee.lbl.gov/papers/sacks.ps.Z".
+
+   [Flo94]       S. Floyd, TCP and Successive Fast Retransmits.
+                 Technical report, October 1994.  URL
+                 "ftp://ftp.ee.lbl.gov/papers/fastretrans.ps".
+   [Hen98]       Tom Henderson, Re: NewReno and the 2001 Revision.
+
+                 September 1998.  Email to the tcpimpl mailing list,
+                 Message ID "Pine.BSI.3.95.980923224136.26134A-
+                 100000@raptor.CS.Berkeley.EDU", archived at
+                 "http://tcp-impl.lerc.nasa.gov/tcp-impl".
+   [Hoe95]       J. Hoe, Startup Dynamics of TCP's Congestion Control
+                 and Avoidance Schemes. Master's Thesis, MIT, 1995.  URL
+                 "http://ana-www.lcs.mit.edu/anaweb/ps-papers/hoe-
+                 thesis.ps".
+   [Hoe96]       J. Hoe, "Improving the Start-up Behavior of a
+                 Congestion Control Scheme for TCP",  In ACM SIGCOMM,
+                 August 1996.  URL
+                 "http://www.acm.org/sigcomm/sigcomm96/program.html".
+   [HTH98]       Hughes, A., Touch, J.  and J. Heidemann, "Issues in TCP
+                 Slow-Start Restart After Idle", Work in Progress, March
+                 1998.
+   [LM97]        Dong Lin and Robert Morris, "Dynamics of Random Early
+                 Detection", SIGCOMM 97, September 1997.  URL
+                 "http://www.acm.org/sigcomm/sigcomm97/program.html".
+   [MMFR96]      Mathis, M., Mahdavi, J., Floyd, S. and A. Romanow, "TCP
+                 Selective Acknowledgement Options", RFC 2018, October
+                 1996.
+   [NS]          The UCB/LBNL/VINT Network Simulator (NS). URL
+                 "http://www-mash.cs.berkeley.edu/ns/".
+   [RFC2001]     Stevens, W., "TCP Slow Start, Congestion Avoidance,
+                 Fast Retransmit, and Fast Recovery Algorithms", RFC
+                 2001, January 1997.
+   [RFC2581]     Stevens, W., Allman, M. and V. Paxson, "TCP Congestion
+                 Control", RFC 2581, April 1999.
+11.安全考虑
+    RFC2581讨论了有关TCP拥塞控制的一般安全考虑。这篇文档描述了一个特殊算法，它
+符合RFC2581的拥塞控制要求，因此那些考虑也适用此算法。已知的还没有其它关于这个特
+殊算法的安全考虑。
+12.作者地址
+Sally Floyd
+   AT&T Center for Internet Research at ICSI (ACIRI)
+   Phone: +1 (510) 642-4274 x189
+   EMail: floyd@acm.org
+   URL:  http://www.aciri.org/floyd/
+   Tom Henderson
+   University of California at Berkeley
+   Phone: +1 (510) 642-8919
+   EMail: tomh@cs.berkeley.edu
+   URL: http://www.cs.berkeley.edu/~tomh/
+13.完全版权说明
+    Copyright (C) The Internet Society (1999).  All Rights Reserved.
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+RFC2582-The NewReno Modification to TCP's Fast Recovery Algorithm  TCP快速恢复算法NewReno修正
+
+
+1
+RFC文档中文翻译计划 

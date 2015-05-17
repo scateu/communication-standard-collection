@@ -1,0 +1,152 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-8-3
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                  L. McLaughlin III
+Request for Comments: 1132                          The Wollongong Group
+                                                           November 1989
+
+
+802．2分组在IPX网络上传输的标准
+(RFC1132――A Standard for the Transmission of 802.2 Packets over IPX Networks)
+
+本备忘录的状态
+本备忘录描述了在支持Novell Internet分组交换协议[2]（IPX）的网络上封装802.2[1]分
+组的方法。本文废止了关于Internet分组在IPX网络上传输的原来的文档，与这些早期文档的
+区别在于，这种方法允许在IPX上进行多种网络协议的传输，以及通过IPX桥传输分组。
+目录
+简介	1
+描述	2
+最大传输单元	2
+地址映射	2
+字节序	2
+广播地址	2
+单播地址	3
+校验和	3
+保留值	3
+实现	3
+参考	4
+安全问题	4
+作者地址：	5
+
+简介
+本规范的目的在于在IPX网络上实现兼容和共用的Internet分组传输，如Internet协议[3]
+（IP）、地址解析协议[4]（ARP）以及无连接方式的网络协议[5]（CLNP）。
+IPX是Novell继承Xerox的Internet数据报协议[6]（IDP）而开发的私有标准。按照RFC 
+1042[7]的描述，以另外的802.X物理层标准为基础，通过定义在IPX上IEEE802.2数据链路
+层标准的封装可以传输IP数据报。本文档主要讨论这一RFC在IPX网络上的实现。
+
+描述
+一般而言，本规范使IPX网络可以支持任何能够使用IEEE802.2数据链路层规范的网络
+协议。
+更明确地讲，IPX网络可以用于支持IP网络和任何类型的子网。通过把IP数据报封装进
+IPX数据报，并且为IPX网络上的主机分配IP号，这些主机也可以支持基于IP的应用。具
+有在802.IPX数据报内封装IP分组能力的IP网关允许IPX网络上的这些主机与Internet通讯。
+
+最大传输单元
+IPX数据报的最大数据尺寸是546个字节。因为802.2LLC和SNAP头的结合大小是8
+个字节，这样最大传输单元（MTU）就是538个字节。
+
+地址映射
+从Internet协议地址到802.IPX地址的映射通过地址解析协议完成，与其他的IEE802.IPX
+物理地址方式一样。但是，802.IPX物理地址的长度是10个字节，而不是2个或6个。这10
+个字节的物理地址包括4个字节的IPX网络地址和后面6个字节的IPX节点地址。
+
+字节序
+字节的传输按照“big-endian”字节序[8]。
+
+广播地址
+通过把IPX头中的分组类型字段设为0x14，目标网络字段设为本地网络号，目标节点号
+设为0xffffff，IPX事件控制块的直接地址字段设为0xffffff，可以实现IPX分组的广播。
+
+单播地址
+实现IPX分组的单播，必须把IPX头中的分组类型字段设为0x04，目标网络字段和目标
+节点字段设为地址解析的结果值，IPX事件控制块的直接地址字段设为目标节点或者相应的
+IPX桥的物理地址。
+
+校验和
+类似于大多数IPX应用，本规范不使用IPX校验和。
+
+保留值
+NOVELL保留IPX socket 0x8060用于本协议的实现。
+
+实现
+IPX网络中的Internet分组封装被证明是非常有用的。因为IPX接口把物理层的问题从应
+用中隔离出来，IPX上的802.2可以在任何物理层上工作。IPX中的IP通常如下所示：
+
+                              --------------------
+                    N 个字节  |       物理头     |
+                              |------------------|
+                   30 个字节  |       IPX 头     |
+                              |------------------|
+                    8 个字节  |      802.2 头    |
+                              |------------------|
+             通常 20 个字节   |       IP 头      |
+                              |------------------|
+             通常 20 个字节   |       TCP 头     |
+                              |------------------|
+             最多498个字节   |      TCP 数据    |
+                              --------------------
+在支持IPX程序接口的工作站上，本规范的实现是非常简单的。唯一的变更是修改现有
+的地址解析协议代码使缓冲项的长度能够超出硬件地址的长度。这样做是为了给直接地址留
+下足够的空间，因为除了目标节点和网络地址以及给定的IP地址外，还可能需要插入IPX桥。
+到目前为止，还没有试图在不支持IPX程序接口的系统上实现这一规范（比如专用的路
+由器），但是可以提出几点注意事项。首先，此类实现显然需要区分IPX分组和其他分组，这
+一过程依赖于使用的介质。其次要注意，如果事先没有从主机2到主机1的广播分组，就不
+会出现从主机1到主机2的单播分组，因为只能从先前的广播分组物理头中了解在主机1和
+主机2之间直接地址是否需要插入IPX桥。第三，任何此类实现都需要从NOVELL桥或者文
+件服务器中取得本地IPX网络号。尽管存在这样的机制，但是它们使用的文档通常是不可访
+问的。
+
+参考
+
+  [1]  IEEE, "IEEE Standards for Local Area Networks: Logical Link
+       Control", IEEE, New York, 1985.
+
+  [2]  Novell, Inc., "Advanced NetWare V2.1 Internetwork Packet Exchange
+       Protocol (IPX) with Asynchronous Event Scheduler (AES)", October
+       1986.
+
+  [3]  Postel, J., "Internet Protocol", RFC-791, USC/Information
+       Sciences Institute, September 1981.
+
+  [4]  Plummer, D., "An Ethernet Address Resolution Protocol", RFC-826,
+       November 1982.
+
+  [5]  ISO DIS 8473: "Information Processing Systems - Data
+       Communications - Protocol for Providing the Connectionless-mode
+       Network Service".
+
+  [6]  Xerox Corporation, "Xerox Network Systems Architecture", XNSG
+       068504, April 1985.
+
+  [7]  Postel, J., and J. Reynolds, "A Standard for the Transmission of
+       IP Datagrams over IEEE 802 Networks", RFC-1042, USC/Information
+       Sciences Institute, February 1988.
+
+  [8]  Cohen, D., "On Holy Wars and a Plea for Peace", Computer, IEEE,
+       October 1981.
+
+安全问题
+   本备忘录没有涉及安全性问题。
+
+作者地址：
+
+   Leo J. McLaughlin III
+   The Wollongong Group
+   1129 San Antonio Road
+   Palo Alto, CA 94303
+   Phone: (415) 962-7100
+   EMail: ljm@TWG.COM
+
+RFC1132――A Standard for the Transmission of 802.2 Packets over IPX Networks                                       
+802．2分组在IPX网络上传输的标准
+
+
+
+1
+RFCz文档中文翻译计划

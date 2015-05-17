@@ -1,0 +1,2511 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：（  ）
+译文发布时间：2002-1-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                       D. McDonald
+Request for Comments: 2367                                      C. Metz
+Category: Informational                                         B. Phan
+                                                              July 1998
+
+
+PF_KEY Key Management API, Version 2
+（RFC2367――PF_KEY Key Management API, Version 2）
+
+本备忘录状态
+
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+版权声明
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+摘要
+
+       本文档提出的通用密钥管理API不但为IP安全[Atk95a][Atk95b][Atk95c]而且
+   为其它网络安全提供服务。做为可以自由发布和使用的美国海军研究实验室设计实
+   现的IPv6和IPsec的一部分，在4.4-Lite BSD内部实现了这个API的第一版。这里编
+   辑成档有助于其他人采用这个API，这些规定增强了密钥管理应用程序的可移植性(
+   例如：手工设置程序，ISAKMP守护进程，GKMP守护进程，Photuris守护进程或者SKIP
+   证书发现协议守护进程)。
+
+目录
+
+1 介绍	3
+1.1 术语	3
+1.2 总体模型	4
+1.3 PF_KEY套接口定义	6
+1.4 PF_KEY消息行为概述	7
+1.5 共同的PF_KEY操作	7
+1.6 PF_KEY和PF_ROUTE之间的区别	8
+1.7 名称空间	8
+1.8 手工密钥	9
+2. PF_KEY消息格式	9
+2.1 基本消息头格式	9
+2.2 消息头位对齐和扩展头	11
+2.3 附加的消息域	11
+2.4 消息格式的图例	22
+3 符号名	26
+3.1 消息类型	26
+3.2 安全关联标志	35
+3.3 安全关联状态	35
+3.4 安全关联类型	36
+3.5 算法类型	37
+3.6 扩展头值	37
+3.7 身份扩展值	38
+3.8 敏感度扩展值	39
+3.9 提议扩展值	39
+4 发展趋势	39
+5. 实例	40
+5.1 简单的IP安全例子	40
+5.2 代理IP安全例子	42
+5.3 OSPF安全例子	44
+5.4 其它	45
+6 安全考虑	45
+致谢	46
+参考	46
+放弃声明	48
+作者地址	48
+附录A：混杂模式发送/接收消息扩展	49
+附录B：被动转换消息扩展	50
+附录C：密钥管理专用数据扩展	51
+附录D：头文件样本	52
+附录E：修改记录	57
+附录F：版权声明	60
+
+
+
+1 介绍
+       PF_KEY是一个新的套接口协议族，用于可信赖的有特权的密钥管理程序和操作
+   系统内部的密钥管理(这里指“密钥引擎”或者安全关联数据库(SADB))的通信。密
+   钥引擎和它的构件是一个会话安全属性的具体表现，也是“安全关联”的实例。“
+   安全关联”(SA)的概念在RFC2401(原文为RFC1825现已被代替)中说明。这里所说的
+   PF_KEY和密钥引擎引用多于加密密钥，传统术语“密钥管理”为了一致性予以保留。
+
+       PF_KEY源于BSD的路由套接字PF_ROUTE([Skl91])的一部分。本文档说明了PF_KEY
+   的第二版本。第一版本为4.4-Lite BSD UNIX和Cisco ISAKMP/Oakley密钥管理守护
+   进程在NRL IPv6+IPsec Software Distribution的最初的五个alpha测试版中实现。
+   版本2扩充和精制了接口。理论上，本文档定义的消息可以在无套接口的环境应用(
+   例如：在两个直接通信的应用层程序之间)，但是这种可能性这里不做详细讨论。
+
+       安全策略在这个接口中慎重地忽略。PF_KEY不是协调全系统安全策略的机制，
+   也不想要实施任何密钥管理策略。PF_KEY的开发者认为把安全机制(如PF_KEY)和安
+   全策略分离是很重要的，这样允许一个机制很容易的支持多个策略。
+
+
+1.1 术语
+
+       尽管本文档不打算成为实际的因特网标准，本接口用来说明独特功能的重要性
+   的关键词通常大写。这些词中的一部分，包括MUST, MAY和SHOULD在文档RFC2119中
+   详细说明。
+
+   - 一致和符合
+
+       一致和符合在本规范中具有相同的含义。无论在那种情形，强制执行或者MUST
+   指定的条款必须完全贯彻。如果任一强制条款没有贯彻，那么具体实现就不符合本
+   规范。
+
+       本规范也使用很多通常在网络安全方面使用的术语，其它文档提供了很多定义
+   和背景资料[VK83, HA94, Atk95a]。两个术语在这里专门提及：
+
+   - (加密/认证)算法
+
+       PF_KEY的目的是指一个算法无论是加密还是认证，包含一系列完成SA类型所指
+   出的数据包加密或认证的操作。一个PF_KEY算法可以由多个加密算法构成。另一种
+   可能，同一基本加密算法可以应用于不同的操作模式或者一些其它不同的实现。这
+   些区别，今后命名为“_算法识别码_”，以区别不同的PF_KEY算法和同一算法的选
+   项。算法识别码将导致根本不同的安全性质。
+
+       例如，DES和3DES使用相同的加密算法，但是它们用法不同并且具有不同的安
+   全性质。DES的三次应用被认为是一个算法识别，因此分为PF_KEY算法DES和3DES。
+   Keyed-MD5和HMAC-MD5使用相同的散列函数，但是构成它们的消息认证编码不同，
+   HAMC的用途就是一个算法识别码。DES-ECB和DES-CBC是相同的加密算法，但是使用
+   不同的模式。模式(例如：链式对编码书)就是一个算法识别。然而，128位密钥的
+   Blowfish与384位密钥的Blowfish相似，因为除了算法的工作方式其它相同，因此
+   密钥长度不是算法识别码。
+
+       在IP安全方面，一个首要规则就是无论什么标记“加密”于ESP变换的部分可
+   能就是一个PF_KEY加密算法；无论什么标记“认证”于AH或者ESP变换的部分可能
+   就是一个PF_KEY认证算法。
+
+
+1.2 总体模型
+
+       这一节描述实现PF_KEY密钥管理应用程序接口的操作系统的总体模型。这一节
+   将要提供有用的背景资料以便理解本文档的其余部分。总体模型的介绍不会强迫一
+   个PF_KEY具体实现严格遵循这一小节讨论的概念上的组件。
+
+       大多数密钥管理通常部分或者全部在应用层实现。例如：IPsec的密钥管理提
+   案ISAKMP/Oakley、 GKMP和Photuris都是应用层协议；手动调节也是在应用层完成；
+   甚至部分SKIP协议层密钥管理提案能够在应用层实现。图1说明了密钥管理守护进
+   程和PF_KEY之间的关系。密钥管理守护进程使用PF_KEY与密钥引擎通信，并且使用
+   PF_INET（在IPv6下用PF_INET6）通过网络与远端的密钥管理程序通信。
+
+       “密钥引擎”或者“安全关联数据库（SADB）”在内核是一个逻辑实体，可以
+   为不同的安全协议存储、更新和删除安全关联数据。内核中的安全协议（例如：IP
+   Security、aka IPsec）利用内核内部的逻辑接口请求并且获得安全关联。
+
+       在IPsec的情况下，如果按照策略一个特殊的输出包需要处理，IPsec通过内核
+   内部接口从密钥引擎请求一个合适的安全关联；如果密钥引擎有一个合适的SA就分
+   配给IPsec使用；如果密钥引擎没有，但是密钥管理程序已经预先指出（通过PF_KEY
+   SADB_REGISTER消息）了IPsec可以获得的安全关联簇，那么密钥引擎请求并建立一个
+   安全关联（通过PF_KEY SADB_ACQUIRE消息）。当密钥管理守护进程建立一个新的安全
+   关联就会保存在密钥引擎中以备将来使用。
+
+
+                     +----------------+
+                     |密钥管理守护进程|
+                     +----------------+
+                       |           |
+                       |           |
+                       |           |                   应用程序
+               ======[PF_KEY]====[PF_INET]==========================
+                       |           |                   系统内核
+               +------------+   +-----------------+
+               |  密钥引擎  |   |     TCP/IP      |
+               |    或者    |---|      包括       |
+               |    SADB    |   |     IPsec       |
+               +------------+   +-----------------+
+                                        |
+                                   +----------+
+                                   | 网络接口 |
+                                   +----------+
+
+              图1: 密钥关联程序和PF_KEY的关系
+
+
+       为了获得好的性能，一些安全协议（如：IP安全）通常会在操作系统内核中实
+   现。其它的安全协议（如：OSPFv2密码认证）在内核外可信的特权程序中实现。图
+   2说明了一个可信的特权路由守护进程使用PF_INET同远端路由守护进程传递路由信
+   息，并且使用PF_KEY请求、获得和删除路由协议使用的安全关联。
+
+
+                     +---------------+
+                     |  路由守护进程 |
+                     +---------------+
+                       |           |
+                       |           |
+                       |           |                   应用程序
+               ======[PF_KEY]====[PF_INET]==========================
+                       |           |                   系统内核
+               +------------+   +-----------------+
+               |  密钥引擎  |   |                 |
+               |    或者    |---|     TCP/IP      |
+               |    SADB    |   |                 |
+               +------------+   +-----------------+
+                                        |
+                                   +----------+
+                                   | 网络接口 |
+                                   +----------+
+
+        图2: 可信的程序和PF_KEY的关系
+
+
+       当一个在自身内部实现安全协议的可信的特权程序使用密钥引擎时，操作有所
+   不同。在这种情况下，当程序需要安全关联时向密钥引擎发送一个PF_KEY SADB_ACQUIRE
+   消息，密钥引擎返回错误或者发送同样的SADB_ACQUIRE消息到一个或者多个可以建
+   立所需安全关联的密钥管理程序。如以前，密钥管理守护进程把安全关联存储在密
+   钥引擎，可信的特权程序使用一个SADB_GET消息获得安全关联。
+
+       在一些实现中，策略可能在用户层实现，尽管如此，实际的加密处理还是在内
+   核发生。这样，策略通信在内核之间，并且用户层策略可以通过PF_KEY扩展实现，
+   或者其它类似机制。本文档对这样扩展不做详细说明。本文档规定的PF_KEY不支持
+   使用PF_KEY配置整个系统的策略。
+
+       不可信的客户端，如：用户的WEB浏览器或者Telnet客户端不需要使用PF_KEY。
+   这里没有规定这些不可信客户端程序请求操作系统的安全服务（例如IPsec）的机
+   制。出于安全原因，只有可信的特权程序可以打开PF_KEY套接口。
+
+
+1.3 PF_KEY套接口定义
+
+       PF_KEY协议族定义在<sys/socket.h>中，与其它的协议族同样的风格。应用程
+   序使用PF_KEY不能依靠关键字AF_KEY是否可用，但是内核的实现最好定义AF_KEY。
+
+     密钥管理套接字的建立如下：
+
+     #include <sys/types.h>
+     #include <sys/socket.h>
+     #include <net/pfkeyv2.h>
+
+     int s;
+     s = socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
+
+       PF_KEY守护进程目前只能支持SOCK_RAW套接字。协议域必须设置为PF_KEY_V2，
+   否则将返回错误EPROTONOSUPPORT。只有可信的特权进程能够建立PF_KEY套接字。
+   UNIX系统的惯例，特权进程是指用户标识符为零的进程。在分离式工作站（CMWs）
+   或者其它声称提供多级安全（MLS）的系统上，一个进程必须拥有“密钥管理特权”
+   才能打开PF_KEY套接字[DIA]。当前没有上述特权的MLS系统为了符合本规范必须增
+   加上述特权给PF_KEY。一些系统，尤其是在一些流行的个人电脑上，没有普通用户
+   的概念。这些系统应该设法限制应用程序访问PF_KEY API。
+
+
+1.4 PF_KEY消息行为概述
+
+       一个进程使用PF_KEY套接字发送和接受消息与密钥引擎相互作用，通过一系列
+   预先定义的消息安全关联信息可以被插入和检索内核的安全关联表。在正常情况下，
+   所有正确的消息发送至内核并被返回到包括发送者在内的所有打开的PF_KEY套接字。
+   格式错误的消息将会造成错误，一个实现必须在返回消息给合适的监听者之前检查
+   消息的正确格式。与路由套接字不同，PF_KEY在返回消息中发送错误，不是write()
+   或者send()错误时的错误号字段。PF_KEY消息发送不被保证，尤其在内核或者套接
+   字缓存耗尽时，并且消息被丢弃。
+
+       一些消息由操作系统产生指出需要那些动作，没必要响应用户的任何消息。这
+   样的消息不被所有的PF_KEY套接字接收。这些消息是特定的，因为它们发生在预期
+   的频率。同样，一个实现可能更希望限制从内核返回的消息，因为不是所有的PF_KEY
+   套接字在同样可信的守护进程中。
+
+       许多标准的BSD套接字调用在PF_KEY套接字中没有定义，包括：bind(), connect(),
+   socketpair(), accept(),getpeername(), getsockname(), ioctl(), and listen()。
+
+
+1.5 共同的PF_KEY操作
+
+       将一个新的安全关联加入内核有两种基本途径。最简单的方法是从应用程序发
+   送一个包含所有安全关联信息的SADB_ADD消息至内核的密钥引擎。这种方法特别适
+   用于手工密钥管理，这对于IPsec和其它安全协议是必需的。
+
+       第二种方法是：应用程序首先使用SADB_GETSPI消息从内核请求一个安全参数
+   索引（SPI）值，然后发送一个包含安全关联数据的SADB_UPDATE消息消息。这种方
+   法适用于密钥管理守护进程，但SPI值需要先于全部安全关联数据获得（这样SPI值
+   能够指出密钥管理会话的对端）。
+
+       使用SADB_DELETE消息可以删除单个的安全关联；删除一类安全关联或者整个
+   内核的安全关联表用SADB_FLUSH消息。
+
+       可信的应用层进程（如routed(8)或者gated(8)）可以用SADB_GET消息从内核
+   的密钥引擎获得一个安全关联（如RIP SA或者OSPF SA）。
+
+       内核或者应用层程序可以使用SADB_ACQUIRE消息请求一个某些应用层密钥管理
+   进程建立并通过SADB_REGISTER消息在内核登记的安全关联。这个ACQUIRE消息拥有
+   一个相关联的序列号。这个序列号必须在随后的SADB_GETSPI、SADB_UPDATE和SADB_ADD
+   消息中使用，目的是明了那一个请求获得了它的密钥素材。系列号（下面详述）类
+   似于一个远程调用的处理标识符。
+
+       当一个安全关联的“软件周期”或者“硬件周期”期满时，从内核发送SADB_EXPIRE
+   消息至密钥管理程序。密钥管理程序以收到的SADB_EXPIRE消息中的软件周期为提
+   示协商一个替代的安全关联，这样在内核使用之前替代的安全关联已准备好。
+
+       SADB_DUMP消息主要是为了PF_KEY实现程序的调试，并且不能用于平常的PF_KEY
+   操作。
+
+
+1.6 PF_KEY和PF_ROUTE之间的区别
+
+       下面指出路由套接字和PF_KEY之间的区别。曾用路由套接字的程序员将会发现
+   两者之间的差别。
+
+   * PF_KEY消息错误通常在PF_KEY消息中返回，代替说明write()错误的错误号。这
+     意味着其它PF_KEY套接字监听者可以知道别的进程的请求失败，这可用于审计。
+     这也意味着读PF_KEY消息错误不能做错误检查。
+
+     具体实现可以返回write()操作失败导致的EINVAL、ENOMEM和ENOBUFS错误，也可
+     以返回错误号。这是最佳处理对于普通错误，这样可以不被其它进程检测到并接
+     收错误。应用程序不能依赖于write()调用设置的错误，但是应该检查这些错误，
+     并用适当的方式处理。
+
+   * 全部消息不是总是有返回消息。SADB_ADD消息就是一个例子。
+
+   * PID不是由内核设定。发起消息的进程必须把sadb_msg_pid设置成自己的PID。如
+     果内核发起一个消息，sadb_msg_pid必须设置为0。源消息的应答应该有源消息的
+     PID（如：内核对SADB_ADD的响应，PID应设置成源SADB_ADD消息的PID值）。
+
+
+1.7 名称空间
+
+       全部PF_KEYv2预定义和结构定义在头文件<net/pfkeyv2.h>中说明，有一个例
+   外：“PF_KEY”（如果包括“AF_KEY”有两个）在头文件<sys/socket.h>中说明。
+   所有的PF_KEYv2预定义以前缀“SADB_”开始，所有的结构名以“sadb_”开始，有
+   两个例外：“PF_KEY_V2”和“PFKEYV2_REVISION”。
+
+       “PFKEYV2_REVISION”是一个日期编码值就像由POSIX和X/Open定义的固定
+   值，当前值是199806L，1998是年，06是月份。
+
+       本文档没有描述的符号或结构没有作者的明确许可，在<net/pfkeyv2.h>中的
+   定义不能使用PF_KEYv2的命名空间，任何本规范没有描述的使用PF_KEYv2名称空间
+   的符号或结构必须以“SADB_X_”或“sadb_x_”开始。一个未能遵从这些规则的实
+   现是不适应本规范的并且不能有什么要求。这些规则也适用于任何可能包含
+<net/pfkeyv2.h>
+   的文件。这个规定可以保证实现者不会遇到定义冲突。
+
+
+1.8 手工密钥
+
+       与4.4-Lite BSD的PF_ROUTE套接口相同，本接口允许一个程序从头到尾完全支
+   配内核中的安全关联来实现PF_KEY。PF_KEY的实现必须具有一些手工接口，能提供
+   这里描述的PF_KEY接口的所有功能。
+
+
+2. PF_KEY消息格式
+
+       PF_KEY消息由一个基本的消息头和一些可选的附加数据段组成，附加的数据段
+   格式由消息类型决定。
+
+       PF_KEY消息目前不要求任何具体非网络的多字节数据段的顺序。除非其它指定
+   （如SPI）数据段必须是主机字节序。
+
+
+2.1 基本消息头格式
+
+       PF_KEY消息由基本消息头和随后的安全关联的具体数据组成，数据段的类型和
+   长度由统一的类型长度编码指定。
+
+       基本消息头使用POSIX类型，格式如下。为了直观，各字段对齐排列。
+
+           struct sadb_msg {
+                   uint8_t sadb_msg_version;
+                   uint8_t sadb_msg_type;
+                   uint8_t sadb_msg_errno;
+                   uint8_t sadb_msg_satype;
+                   uint16_t sadb_msg_len;
+                   uint16_t sadb_msg_reserved;
+                   uint32_t sadb_msg_seq;
+                   uint32_t sadb_msg_pid;
+           };
+           /* sizeof(struct sadb_msg) == 16 */
+
+   sadb_msg_version
+                   PF_KEY消息的版本号，必须设置为PF_KEY_V2。否则，write()调
+                   用将失败并报参数错误（EINVAL）。另外，应用程序不能理解从
+                   内核收到的消息的格式，运行状态将无法确定。
+
+   sadb_msg_type   标识消息的类型。有效的消息类型稍后说明。
+
+   sadb_msg_errno  消息的发送者应设置此项为零。如果出现错误，消息的应答者在
+                   此存放错误码。包括应用层的消息应答（如：应用层协商失败，
+                   将返回错误号）。
+
+   sadb_msg_satype 标识安全关联的类型。有效的安全关联类型在<net/pfkeyv2.h>
+                   中定义。本文档稍后列举目前的安全关联类型。
+
+   sadb_msg_len    包含消息的整个长度，64位字对齐，包括基本头长度和附加数据，
+                   并包括可能存在的任何填充和额外空间。除非其它情况，所有其
+                   它长度字段也是64位字对齐。
+
+                   用户到内核的消息，这一项必须检验。如果检验失败必须返回错
+                   误EMSGSIZE。内核到用户的消息，大小不匹配就像用户未提供足
+                   够的缓存。在这种情况下，用户程序可以丢弃这个消息，但是应
+                   努力析取超出的数据。                   
+
+   sadb_msg_reserved
+                   保留值。消息发送者必须设置为零。本文档中所有的保留值含义
+                   与此相同。
+
+   sadb_msg_seq    包含消息的序列号。这一项必须连同sadb_msg_pid唯一确定一个
+                   进程的请求。发送者负责设置这一项并负责匹配一个请求的
+sadb_msg_seq
+                   （如：SADB_ACQUIRE）。
+
+                   这一项就像一个同远端程序调用实现的交易ID
+
+   sadb_msg_pid    识别消息的发起进程或者消息的目的进程。例如：如果ID未2112
+                   的进程发送一个SADB_UPDATE消息至内核，必须设置本项为2112，
+                   并且内核在自己的应答消息中设置本项为2112。本项连同
+sadb_msg_seq
+                   能够唯一确定一个进程的请求。
+
+                   通常用一个32位值保存操作系统的进程ID。
+
+
+2.2 消息头位对齐和扩展头
+
+       基本的消息头长度是64位的倍数，如果头是64位对齐紧随其后在内存中的数据
+   也是64位对齐。一些随后的扩展头具有64位域，结果需要64位值的环境中进行对齐。
+
+       PF_KEY版本2的算法和长度的基本单位是64比特。所以：
+
+     * 所有的扩展头，包括sadb_ext覆盖域，必须是64比特的整数倍。
+
+     * 所有可变的数据长度必须适当填充，从而使消息长度是64比特的整数倍。
+
+     * 所有的长度字段，除非特别指定，以64比特为单位。
+
+     * 执行程序可以安全的以8和64比特为单位直接存取消息而没有定位错误的风险。
+
+       所有PF_KEYv2结构封装并且已经有意进行填充。具体实现不能往本文档定义的
+   结构中插入任何额外字段，包括隐藏的填充。并且禁止未改变扩展头类型就“扩展”
+   和“增强”已存在的结构头。本文档所定义的每一个结构已标明字节大小，防备无
+   声明的填充。具体实现中的结构必须符合所列出的结构大小。
+
+
+2.3 附加的消息域
+
+       基本消息头后的附加数据由一系列长度-类型值字段组成。开始的32比特固定
+   格式如下：
+
+           struct sadb_ext {
+                   uint16_t sadb_ext_len;
+                   uint16_t sadb_ext_type;
+           };
+           /* sizeof(struct sadb_ext) == 4 */
+
+   sadb_ext_len    扩展头64位字对齐的长度。
+                   
+   sadb_ext_type   扩展头类型。具体值稍后详述，零为保留值。
+
+       扩展头的类型包括：安全关联、生存期、地址、密钥、身份、敏感度、提议和
+   支持项。一个消息中必须只能有一个扩展类型的实例（例如：基本头、密钥、生存
+   期，密钥是禁止的）。如果一个消息中有两个扩展类型将返回EINVAL错误。具体实
+   现可以给“扩展头值”一节介绍的扩展项排序。
+
+       如果遇到一个未知的扩展类型，必须忽略该扩展项。应用程序使用本文档未说
+   明的扩展头必须有其它的系统组件不做处理的准备。同样，如果应用程序遇到一个
+   从内核来的未知扩展，必须有能力正常运转。而且内核产生额外的扩展头类型不能
+   指望应用程序也能理解额外的扩展头类型。
+
+       所有的扩展项定义包括两个字段（长度和类型），因为它们代表一类扩展（就
+   像sockaddr_in和sockaddr_in6代表一类套接字地址）。在一个消息中sadb_ext头
+   最少含有4字节的扩展头数据，只有4字节也没问题。
+
+       在一个PF_KEY具体实现中，本节所列的扩展项必须全部实现。
+
+
+2.3.1 安全关联扩展项
+
+       安全关联扩展项说明了单个安全关联的详细数据。当传递的是控制消息（例如
+   SADB_FLUSH或SADB_REGISTER）中没有这个扩展项，并且SADB_ACQUIRE消息中也没有。
+
+           struct sadb_sa {
+                   uint16_t sadb_sa_len;
+                   uint16_t sadb_sa_exttype;
+                   uint32_t sadb_sa_spi;
+                   uint8_t sadb_sa_replay;
+                   uint8_t sadb_sa_state;
+                   uint8_t sadb_sa_auth;
+                   uint8_t sadb_sa_encrypt;
+                   uint32_t sadb_sa_flags;
+           };
+           /* sizeof(struct sadb_sa) == 16 */
+
+   sadb_sa_spi     安全关联的安全参数索引。尽管是一个32位的字段，某些类型的
+                   安全关联的SPI或密钥标识长度可能少于32位。在这种情况下，将
+                   存储有意义的位，不需要的位清零。本字段必须是网络字节序。
+
+   sadb_sa_replay  如果不为零表示重放窗口大小，如果为零表示没有重放窗口在使
+                   用。
+
+   sadb_sa_state   安全关联状态。稍后详述。
+
+   sadb_sa_auth    安全关联将要使用的认证算法。有效的认证算法稍后详述。如果
+                   为零表示不使用认证算法。
+
+   sadb_sa_encrypt 安全关联将要使用的加密算法。有效的加密算法稍后详述。如果
+                   为零表示不使用加密算法。
+
+   sadb_sa_flags   按位操作的安全关联选项。稍后详述。
+
+       内核必须检查这些值的正确性。例如：IPsec AH没有认证算法可能是一个错误。
+
+       在一些消息中，安全关联扩展项的一些字段的值应当忽略。
+
+
+2.3.2 生存期扩展项
+
+       生存期扩展项说明了安全关联的一个或多个生存周期变量。如果生存期扩展项
+   不存在，则安全关联是永久有效的。安全关联应具有某种生存期，生存期分三种：
+   HARD指硬件限定期满；SOFT指软件限定期满；CURRENT指特定的安全关联的当前状
+   态。生存期扩展项的结构如下：
+
+           struct sadb_lifetime {
+                   uint16_t sadb_lifetime_len;
+                   uint16_t sadb_lifetime_exttype;
+                   uint32_t sadb_lifetime_allocations;
+                   uint64_t sadb_lifetime_bytes;
+                   uint64_t sadb_lifetime_addtime;
+                   uint64_t sadb_lifetime_usetime;
+           };
+           /* sizeof(struct sadb_lifetime) == 32 */
+
+   sadb_lifetime_allocations
+                   对于CURRENT，安全关联分配的不同的连接数、端点或流量；对
+                   于HARD和SOFT，指在期满前安全关联可以分配的连接数、端点或
+                   流量。
+                   
+
+   sadb_lifetime_bytes
+                   对于CURRENT，使用这个安全关联处理了多少个字节；对于HARD
+                   和SOFT，在期满之前，可以处理的字节数。
+
+   sadb_lifetime_addtime
+                   对于CURRENT，指安全关联建立时的时间，以秒计；对于HARD和
+                   SOFT，指安全关联建立后在期满之前的时间。
+                   
+                   对于这样的时间字段，系统假定64位可以足够存放POSIX时间类
+                   型值。如果不够，这个字段必须重新修订。
+
+   sadb_lifetime_usetime
+                   对于CURRENT，指安全关联第一次使用的时间，以秒计；对于HARD
+                   和SOFT，指安全关联第一次使用后在期满之前的时间。
+
+       安全关联的各项生存期指的关系是逻辑或，这意味着如果字节和时间值，或者
+   多项时间值被检查，第一个符合范围的值将导致生存期期满。
+
+
+2.3.3 地址扩展项
+
+       地址扩展项说明一个或多个与安全关联有关的地址。当安全关联扩展项存在时
+   源和目的地址的扩展项必须存在。地址扩展项的格式如下：
+
+           struct sadb_address {
+                   uint16_t sadb_address_len;
+                   uint16_t sadb_address_exttype;
+                   uint8_t sadb_address_proto;
+                   uint8_t sadb_address_prefixlen;
+                   uint16_t sadb_address_reserved;
+           };
+           /* sizeof(struct sadb_address) == 8 */
+
+           /* 紧跟的是一些sockaddr结构格式的地址 */
+
+       sockaddr结构应该系统实现的PF_KEY的sockaddr结构相一致。如果系统有sa_len
+   消息中的sockaddrs也应有；如果没有sa_len字段，sockaddrs也不应有。sockaddrs
+   中的非地址信息，像AF_INET sockaddrs的sin_zero和AF_INET6 sockaddrs的sin6_
+   flowinfo必须大于零。所有的消息的端口值（如sin_port和sin6_port）必须为零，
+   除了SADB_ACQUIRE消息，其发起者应填入相对应的TCP或UDP会话者的端口号。如果
+   端口号非零，那么sadb_address_proto字段，通常为零，必须填入传输协议值。如
+   果sadb_address_prefixlen非零，那么地址有一个指定长度的前缀（常常用在KM访
+   问控制决策）。这些附加字段有利于密钥关联程序。
+
+       在一个消息中，安全关联的源和目的地址必须在同一个协议族，必须同时有或
+   没有。代理地址可以在不同的协议族，并且对于多数的安全协议，代表实际的包的
+   发起者（例如：内部信息包的源地址在隧道中）。
+
+       源地址必须是单播地址或者是非指定地址（如：INADDR_ANY）。目的地址可以
+   是任一有效地址（单播、多播或广播）。代理地址应是单播地址（这里是试验性的
+   安全协议，代理可以不同于以上描述）。
+
+
+2.3.4 密钥扩展项
+
+       密钥扩展项说明了一个或多个与安全关联有关的密钥。由于安全原因，消息中
+   的密钥扩展项不是永远存在。其格式如下：
+
+           struct sadb_key {
+                   uint16_t sadb_key_len;
+                   uint16_t sadb_key_exttype;
+                   uint16_t sadb_key_bits;
+                   uint16_t sadb_key_reserved;
+           };
+           /* sizeof(struct sadb_key) == 8 */
+
+           /* 紧跟的是密钥 */
+
+   sadb_key_bits   位数，有效的密钥长度。如果为零将导致错误。
+
+       密钥扩展项有两种.认证密钥（如：IPsec AH，OSPF MD5）和加密密钥（如：
+   IPsec ESP）。PF_KEY只处理符合格式的密钥，不处理密钥素材。例如，当使用
+   ISAKMP/Oakley时，密钥关联进程总是负责在将Diffie-Hellman算法的计算结果通
+   过PF_KEY发送至内核之前转换成要求的格式。制定这项规则的原因是PF_KEY被设计
+   成支持多种安全协议（不仅仅是IP安全）和多种密钥管理机制，包括没有“密钥素
+   材”概念的手工管理。一个清晰的不受协议约束的接口可以支持不同的操作系统和
+   不同的安全协议。
+
+       如果一个算法的密钥定义了奇偶位（如：DES），那么PF_KEY使用的密钥也必须
+   包含奇偶位。这意味着一个DES密钥永远是64位长。
+
+       当一个安全协议只需要一个认证密钥及?或一个加密密钥时，使用适当的密钥
+   扩展进行完全格式转换。当一个安全协议的同一个函数需要多个密钥（如：3DES使
+   用2或3个密钥和非对称算法），这两个完全格式的密钥必须按顺序连在一起以便输
+   出包处理。在这种情况下，算法必须能够根据提供的信息确定每个密钥的长度。密
+   钥的总长度（当与使用的算法的知识相结合）通常提供足够的信息去做出确定。
+
+       密钥始终通过PF_KEY接口按序传递以便输出包的处理。对于输入包的处理，密
+   钥的顺序可能与PF_KEY接口使用的规范级连顺序不同。具体实现负责使用正确的密
+   钥顺序处理输入和输出包。
+
+       例如，两个单播地址的节点使用ESP、3个密钥的3DES安全关联通信。在发送节
+   点的输出SA和接收节点的输入SA各自的加密密钥扩展项中都依次包含key-A、key-B、
+   key-C。输出SA依次使用key-A、key-B、key-C加密，输入SA依次使用key-C、key-B、
+   key-C解密（注意：3DES实际上是加密-解密-加密）。3DES使用的规范的顺序key-A、
+   key-B、key-C已文档化。规范的“加密”顺序如同这个例子。[Sch96]
+
+       密钥数据位的有效位从高到低排列。例如：22位密钥将占3个字节，最低的两
+   位不包含密钥素材，5个额外的填充字节用来64位边界对齐。
+
+       这里有一个关于奇数位16进制密钥的用户接口问题，与PF_KEY不是直接有关。
+   考虑以下16位数：
+
+           0x123
+
+       需要两个字节储存。如果没有其它信息，不清楚究竟是存储为：
+
+           01 23           或              12 30
+
+       作者的看法是样板（0x123 == 0x0123）是解释这个多义性的最好方法。附加
+   信息（如：写成0x0123或0x1230，或者说明那只是12位数字）将解决这个问题。
+
+
+2.3.5 身份扩展项
+
+       身份扩展项包含了端点的身份特征。这些信息被密钥管理程序用来选择协商中
+   使用的身份证书。出于访问控制的目的，内核也可以提供这些信息给网络安全程序
+   去鉴别远端实体。如果这个扩展项不存在，密钥管理必须以地址扩展项中的地址作
+   为安全关联的唯一身份。其格式如下：
+
+           struct sadb_ident {
+                   uint16_t sadb_ident_len;
+                   uint16_t sadb_ident_exttype;
+                   uint16_t sadb_ident_type;
+                   uint16_t sadb_ident_reserved;
+                   uint64_t sadb_ident_id;
+           };
+           /* sizeof(struct sadb_ident) == 16 */
+
+           /* 紧跟身份字符串，如果存在 */
+
+   sadb_ident_type 紧跟的身份信息的类型。稍后详述。
+
+   sadb_ident_id   身份字符串不存在时使用的标识符。POSIX用户标识符将使用这
+                   个字段。稍后详述。
+
+       文本表示的身份信息包含在一个C字符串中紧跟在sadb_ident扩展项后。字符
+   串的格式由sadb_ident_type的值确定，稍后详述。
+
+
+2.3.6 敏感度扩展项
+
+       敏感度扩展包含安全关联的安全标签信息。如果这个扩展项不存在，就不能从
+   安全关联获得敏感度关联的数据；如果存在，数据包上的外在安全标签的需求被回
+   避。其格式如下：
+
+           struct sadb_sens {
+                   uint16_t sadb_sens_len;
+                   uint16_t sadb_sens_exttype;
+                   uint32_t sadb_sens_dpd;
+                   uint8_t sadb_sens_sens_level;
+                   uint8_t sadb_sens_sens_len;
+                   uint8_t sadb_sens_integ_level;
+                   uint8_t sadb_sens_integ_len;
+                   uint32_t sadb_sens_reserved;
+           };
+           /* sizeof(struct sadb_sens) == 16 */
+
+           /* 紧跟:
+                   uint64_t sadb_sens_bitmap[sens_len];
+                   uint64_t sadb_integ_bitmap[integ_len]; */
+
+   sadb_sens_dpd   说明可以判读等级和间隔位图的保护进程。
+   sadb_sens_sens_level
+                   敏感度等级
+   sadb_sens_sens_len
+                   敏感度位图的长度，64位字对齐。
+   sadb_sens_integ_level
+                   完整性等级
+   sadb_sens_integ_len
+                   完整性位图的长度，64位字对齐。
+
+       敏感度扩展设计来支持分离式或多级别安全系统的Bell-LaPadula[BL74]安全
+   模型、Clark-Wilson[CW87]商业安全模型及/或Biba完整模型[Biba77]。这些正式
+   的模型常用来实现各种各样的安全策略。详细的安全策略定义超出本文档的讨论范
+   围。每一个位图必须64位边界对齐。
+
+
+2.3.7 提议扩展项
+
+       提议扩展项包含了可选择的算法参数，其格式如下：
+
+           struct sadb_prop {
+                   uint16_t sadb_prop_len;
+                   uint16_t sadb_prop_exttype;
+                   uint8_t sadb_prop_replay;
+                   uint8_t sadb_prop_reserved[3];
+           };
+           /* sizeof(struct sadb_prop) == 8 */
+
+           /* 紧跟:
+              struct sadb_comb sadb_combs[(sadb_prop_len *
+                  sizeof(uint64_t) - sizeof(struct sadb_prop)) /
+                  sizeof(struct sadb_comb)]; */
+
+       结构头后是按优先排序的提议的参数联合列表。如果一个联合被选择，那么各
+   字段值将存入相同定义的各字段中。
+
+       注意：某些安全协议中的部分算法有IV长度变量，
+
+   联合的格式如下：
+
+           struct sadb_comb {
+                   uint8_t sadb_comb_auth;
+                   uint8_t sadb_comb_encrypt;
+                   uint16_t sadb_comb_flags;
+                   uint16_t sadb_comb_auth_minbits;
+                   uint16_t sadb_comb_auth_maxbits;
+                   uint16_t sadb_comb_encrypt_minbits;
+                   uint16_t sadb_comb_encrypt_maxbits;
+                   uint32_t sadb_comb_reserved;
+                   uint32_t sadb_comb_soft_allocations;
+                   uint32_t sadb_comb_hard_allocations;
+                   uint64_t sadb_comb_soft_bytes;
+                   uint64_t sadb_comb_hard_bytes;
+                   uint64_t sadb_comb_soft_addtime;
+                   uint64_t sadb_comb_hard_addtime;
+                   uint64_t sadb_comb_soft_usetime;
+                   uint64_t sadb_comb_hard_usetime;
+           };
+
+           /* sizeof(struct sadb_comb) == 72 */
+
+   sadb_comb_auth  如果联合被接受，其值将存入sadb_sa_auth中。
+
+   sadb_comb_encrypt
+                   如果联合被接受，其值将存入sadb_sa_encrypt中。
+
+   sadb_comb_auth_minbits;
+   sadb_comb_auth_maxbits;
+                   最小和最大认证密钥长度，位数。如果sadb_comb_auth为零，这
+                   两个字段的值必须为零；如果sadb_comb_auth非零，其值必须非
+                   零。如果联合被接受，KEY_AUTH的sadb_key_bits字段值将在两
+                   者之间。最小字段值不能大于最大字段值。
+
+   sadb_comb_encrypt_minbits;
+   sadb_comb_encrypt_maxbits;
+                   最小和最大加密密钥长度，位数。如果sadb_comb_encrypt为零，
+                   这两个字段的值必须为零；如果sadb_comb_encrypt非零，其值
+                   必须非零。如果联合被接受，KEY_ENCRYPT的sadb_key_bits字段
+                   值将在两者之间。最小字段值不能大于最大字段值。
+
+   sadb_comb_soft_allocations
+   sadb_comb_hard_allocations
+                   如果联合被接受，其值将分别存入SOFT和HARD生存期的
+sadb_lifetime_allocations
+                   中。
+
+   sadb_comb_soft_bytes
+   sadb_comb_hard_bytes
+                   如果联合被接受，其值将分别存入SOFT和HARD生存期的
+sadb_lifetime_bytes
+                   中。
+
+   sadb_comb_soft_addtime
+   sadb_comb_hard_addtime
+                   如果联合被接受，其值将分别存入SOFT和HARD生存期的
+sadb_lifetime_addtime
+                   中。
+
+   sadb_comb_soft_usetime
+   sadb_comb_hard_usetime
+                   如果联合被接受，其值将分别存入SOFT和HARD生存期的
+sadb_lifetime_usetime
+                   中。
+
+       每一个联合有一个认证和加密算法，也可以没有，值为零。联合的标志位同安
+   全关联扩展项的标志位相同。最小和最大密钥长度（位数）来自先验的策略判断，
+   依赖于基本的算法特性。
+
+
+2.3.8 支持算法扩展项
+
+       支持算法扩展项包含系统所支持的算法列表，密钥管理程序可以协商使用。可
+   用的认证算法在SUPPORTED_AUTH扩展中列出，可用的加密算法在SUPPORTED_ENCRYPT
+   扩展中列出。这些扩展的格式如下：
+
+           struct sadb_supported {
+                   uint16_t sadb_supported_len;
+                   uint16_t sadb_supported_exttype;
+                   uint32_t sadb_supported_reserved;
+           };
+           /* sizeof(struct sadb_supported) == 8 */
+
+           /* 紧跟：
+              struct sadb_alg sadb_algs[(sadb_supported_len *
+                  sizeof(uint64_t) - sizeof(struct sadb_supported)) /
+                  sizeof(struct sadb_alg)]; */
+
+       扩展头后是一个或多个算法描述，其格式如下：
+
+           struct sadb_alg {
+                   uint8_t sadb_alg_id;
+                   uint8_t sadb_alg_ivlen;
+                   uint16_t sadb_alg_minbits;
+                   uint16_t sadb_alg_maxbits;
+                   uint16_t sadb_alg_reserved;
+           };
+           /* sizeof(struct sadb_alg) == 8 */
+
+   sadb_alg_id    算法标识。如果算法被选择，其值将存在sadb_sa_auth和
+sadb_sa_encrypt
+                  中。
+
+   sadb_alg_ivlen 初始化向量长度。如果IV不需要，其值必须为零。
+
+   sadb_alg_minbits
+                  可接受的最小密钥长度，位数。零无效。
+
+   sadb_alg_maxbits
+                  可接受的最大密钥长度，位数。零无效。最小值不能大于最大值。
+
+
+2.3.9 SPI范围扩展项
+
+       SADB_GETSPI消息需要一个可接受的SPI范围，这项扩展完成这个功能。
+
+           struct sadb_spirange {
+                   uint16_t sadb_spirange_len;
+                   uint16_t sadb_spirange_exttype;
+                   uint32_t sadb_spirange_min;
+                   uint32_t sadb_spirange_max;
+                   uint32_t sadb_spirange_reserved;
+           };
+           /* sizeof(struct sadb_spirange) == 16 */
+
+   sadb_spirange_min
+                   可接受的最小SPI值。
+
+   sadb_spirange_max
+                   可接受的最大SPI值。最大值必须大于最小值。
+
+
+2.4 消息格式的图例
+
+       下面展示PF_KEY消息的各字节安排，各选项也如此说明。
+
+   基本消息头如下：
+
+     0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
+    +---------------+---------------+---------------+---------------+
+    |  ...version   | sadb_msg_type | sadb_msg_errno| ...msg_satype |
+    +---------------+---------------+---------------+---------------+
+    |          sadb_msg_len         |       sadb_msg_reserved       |
+    +---------------+---------------+---------------+---------------+
+    |                         sadb_msg_seq                          |
+    +---------------+---------------+---------------+---------------+
+    |                         sadb_msg_pid                          |
+    +---------------+---------------+---------------+---------------+
+
+       基本消息头后紧跟一个或多个扩展项，基于基本消息头的不同的值。扩展项应
+   按下面介绍的顺序出现。
+
+       一个扩展项不能重复出现。如果出现重复的情形，将会引起作者的注意。
+
+   安全关联扩展项
+
+       0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
+       +---------------+---------------+---------------+---------------+
+       |          sadb_sa_len          |        sadb_sa_exttype        |
+       +---------------+---------------+---------------+---------------+
+       |                          sadb_sa_spi                          |
+       +---------------+---------------+---------------+---------------+
+       |   ...replay   | sadb_sa_state | sadb_sa_auth  |sadb_sa_encrypt|
+       +---------------+---------------+---------------+---------------+
+       |                         sadb_sa_flags                         |
+       +---------------+---------------+---------------+---------------+
+
+   生存期扩展项
+
+       +---------------+---------------+---------------+---------------+
+       |         sadb_lifetime_len     |    sadb_lifetime_exttype      |
+       +---------------+---------------+---------------+---------------+
+       |                   sadb_lifetime_allocations                   |
+       +---------------+---------------+---------------+---------------+
+       |                    sadb_lifetime_bytes                        |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+       |                    sadb_lifetime_addtime                      |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+       |                    sadb_lifetime_usetime                      |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+
+   地址扩展项
+
+       +---------------+---------------+---------------+---------------+
+       |       sadb_address_len        |     sadb_address_exttype      |
+       +---------------+---------------+---------------+---------------+
+       | _address_proto| ..._prefixlen |     sadb_address_reserved     |
+       +---------------+---------------+---------------+---------------+
+       >     Some form of 64-bit aligned struct sockaddr goes here.    <
+       >     一些64位对齐的sockaddr结构                                <
+       +---------------+---------------+---------------+---------------+
+
+   密钥扩展项
+
+       +---------------+---------------+---------------+---------------+
+       |         sadb_key_len          |         sadb_key_exttype      |
+       +---------------+---------------+---------------+---------------+
+       |        sadb_key_bits          |        sadb_key_reserved      |
+       +---------------+---------------+---------------+---------------+
+       >    A key, padded to 64-bits, most significant bits to least.  >
+       >    密钥，填充至64位                                           >
+       +---------------+---------------+---------------+---------------+
+
+   身份扩展项
+
+       +---------------+---------------+---------------+---------------+
+       |        sadb_ident_len         |      sadb_ident_exttype       |
+       +---------------+---------------+---------------+---------------+
+       |        sadb_ident_type        |      sadb_ident_reserved      |
+       +---------------+---------------+---------------+---------------+
+       |                         sadb_ident_id                         |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+       >  A null-terminated C-string which MUST be padded out for      >
+       <  64-bit alignment.                                            <
+       >  以空结束的C字符串，必须填充至64位对齐                        >
+       +---------------+---------------+---------------+---------------+
+
+   敏感度扩展项
+
+       +---------------+---------------+---------------+---------------+
+       |         sadb_sens_len         |      sadb_sens_exttype        |
+       +---------------+---------------+---------------+---------------+
+       |                         sadb_sens_dpd                         |
+       +---------------+---------------+---------------+---------------+
+       | ...sens_level | ...sens_len   |..._integ_level| ..integ_len   |
+       +---------------+---------------+---------------+---------------+
+       |                       sadb_sens_reserved                      |
+       +---------------+---------------+---------------+---------------+
+       >    The sensitivity bitmap, followed immediately by the        <
+       <    integrity bitmap, each is an array of uint64_t.            >
+       >    敏感度位图，紧跟完整性位图，64位排列                       <
+       +---------------+---------------+---------------+---------------+
+
+   提议扩展项
+
+       +---------------+---------------+---------------+---------------+
+       |         sadb_prop_len         |       sadb_prop_exttype       |
+       +---------------+---------------+---------------+---------------+
+       |...prop_replay |           sadb_prop_reserved                  |
+       +---------------+---------------+---------------+---------------+
+       >     One or more combinations, specified as follows...         <
+       >     一个或多个联合                                            <
+       +---------------+---------------+---------------+---------------+
+
+       联合
+       +---------------+---------------+---------------+---------------+
+       |sadb_comb_auth |sadb_comb_encr |        sadb_comb_flags        |
+       +---------------+---------------+---------------+---------------+
+       |    sadb_comb_auth_minbits     |     sadb_comb_auth_maxbits    |
+       +---------------+---------------+---------------+---------------+
+       |   sadb_comb_encrypt_minbits   |    sadb_comb_encrypt_maxbits  |
+       +---------------+---------------+---------------+---------------+
+       |                       sadb_comb_reserved                      |
+       +---------------+---------------+---------------+---------------+
+       |                   sadb_comb_soft_allocations                  |
+       +---------------+---------------+---------------+---------------+
+       |                   sadb_comb_hard_allocations                  |
+       +---------------+---------------+---------------+---------------+
+       |                      sadb_comb_soft_bytes                     |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+       |                      sadb_comb_hard_bytes                     |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+       |                     sadb_comb_soft_addtime                    |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+       |                     sadb_comb_hard_addtime                    |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+       |                     sadb_comb_soft_usetime                    |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+       |                     sadb_comb_hard_usetime                    |
+       |                           (64 bits)                           |
+       +---------------+---------------+---------------+---------------+
+
+   支持算法扩展项
+
+       +---------------+---------------+---------------+---------------+
+       |      sadb_supported_len       |     sadb_supported_exttype    |
+       +---------------+---------------+---------------+---------------+
+       |                    sadb_supported_reserved                    |
+       +---------------+---------------+---------------+---------------+
+
+      紧跟一个或多个算法描述
+
+       +---------------+---------------+---------------+---------------+
+       |  sadb_alg_id  | sadb_alg_ivlen|       sadb_alg_minbits        |
+       +---------------+---------------+---------------+---------------+
+       |        sadb_alg_maxbits       |       sadb_alg_reserved       |
+       +---------------+---------------+---------------+---------------+
+
+   SPI范围扩展项
+
+       +---------------+---------------+---------------+---------------+
+       |       sadb_spirange_len       |     sadb_spirange_exttype     |
+       +---------------+---------------+---------------+---------------+
+       |                      sadb_spirange_min                        |
+       +---------------+---------------+---------------+---------------+
+       |                      sadb_spirange_max                        |
+       +---------------+---------------+---------------+---------------+
+       |                    sadb_spirange_reserved                     |
+       +---------------+---------------+---------------+---------------+
+
+
+3 符号名
+
+       这一节定义了PF_KEY使用的各种符号和其含义。为了可移植性，应用程序必须
+   使用这些符号名。这里定义的数字只是起说明作用，可以与其它系统不同，除非有
+   其它明确规定。所有符合的执行必须保持符号名一致。
+
+
+3.1 消息类型
+
+       PF_KEY使用的消息类型，在文件<net/pfkeyv2.h>中定义。如下：
+
+           #define SADB_RESERVED    0
+           #define SADB_GETSPI      1
+           #define SADB_UPDATE      2
+           #define SADB_ADD         3
+           #define SADB_DELETE      4
+           #define SADB_GET         5
+           #define SADB_ACQUIRE     6
+           #define SADB_REGISTER    7
+           #define SADB_EXPIRE      8
+           #define SADB_FLUSH       9
+
+           #define SADB_DUMP        10   /* 通常不用 */
+
+           #define SADB_MAX         10
+
+       每个消息的行为包括最初的消息传播（如：用户层到内核）和随后预期的动作。
+   消息内容如下：
+
+   <base, REQUIRED EXTENSION, REQ., (OPTIONAL EXT.,) (OPT)>
+
+       安全关联扩展项有时候只使用它的SPI字段，如果其它字段必须被忽略，就表
+   示为“SA(*)”。
+
+       生存期扩展项表示为一到三个字母跟在单词“lifetime”后，H代表硬件、S
+   代表软件、C代表当前。
+
+       地址扩展项表示为一到三个字母跟在单词“address”后，S代表源地址、D代
+   标目的地址、P代表代理地址。
+
+       注意：一些安全关联类型不使用源地址作为SA认证，而一些使用。这可导致一
+             些不报告冲突的SA类型的EEXIT错误。希望程序作者充分了解安全关联
+             类型以便理解这些差别。
+
+       密钥扩展项表示为一到两各字母跟在单词“key”后，A代表认证、E代表加密。
+
+       身份扩展项表示为一到两各字母跟在单词“identity”后，S代表源、D代表目
+   的。
+
+       当出现错误时，只返回基本消息头。
+
+       注意任何消息都可以返回任何标准错误。
+
+       代表性的，它们既可以是一个消息的说明中详细列出的一种错误，也可以是下
+   列错误的一种：
+
+           EINVAL  可以表示各种错误，包括SPI范围不对。
+           ENOMEM  内存不够。
+           ENOBUFS 缓存不够。
+           EMSGSIZ 消息长度错误。
+
+
+3.1.1 SADB_GETSPI
+
+       SADB_GETSPI消息允许一个进程根据安全关联类型、源和目的地址获得唯一的
+   SPI值。它和紧跟的SADB_UPDATE消息是创建一个安全关联的一种方法（SADB_ADD是
+   另外一种方法）。进程在基本消息头中指定类型，在地址扩展项中指定源和目的地
+   址。如果SADB_GETSPI消息响应内核产生的SADB_ACQUIRE消息，那么sadb_msg_seq
+   必须和SADB_ACQUIRE消息一致。应用程序也可以指定SPI值，当内核使用SPI范围扩
+   展选定SPI值范围。应用程序设置相同的最高和最低值可以指定单一的通过验证的
+
+   SPI值。允许指定范围是因为内核能够根据已使用的SPI值分配SPI值。内核将分配
+   的SPI值保存在安全关联扩展的spi字段，然后返回同一个消息。分配的SPI（和目
+   的地址）指出一个LARVAL期的安全关联。随后的SADB_UPDATE消息利用请求的SPI值
+   增加整个安全关联项目。
+
+       如果使用SADB_GETSPI消息建立的安全关联没有使用SADB_UPDATE消息更新，应
+   该定期自动删除。这样保存的SA不会混乱。
+
+     SADB_GETSPI消息机制：
+
+        用户进程发送SADB_GETSPI消息到内核。
+
+        <base, address, SPI range>
+
+        内核返回SADB_GETSPI消息给所有的监听进程。
+
+        <base, SA(*), address(SD)>
+
+     错误：
+
+        EEXIST  请求的SPI值或SPI范围值不可用或已经使用。
+
+
+3.1.2 SADB_UPDATE
+
+       SADB_UPDATE消息允许一个进程更新已存在的安全关联的信息。由于SADB_GETSPI
+   不允许设置一些参数，所以SADB_UPDATE消息需要完全构建由SADB_GETSPI建立的状
+   态为SADB_SASTATE_LARVAL的安全关联。SADB_UPDATE消息的格式由一个基本消息头、
+   安全关联头和几个可选的扩展头组成。内核根据消息中指定的类型、SPI、源和目的
+   地址搜索相同的安全关联并用消息中的内容更新。
+
+       内核可以不接受SADB_UPDATE消息，除非消息由建立安全关联的套接字发出。
+   这样可以避免意外修改正在使用的安全关联。恶意的可信程序仍然可以发出SADB_FLUSH
+   或SADB_DELETE消息，但是安全关联的删除可以很容易的发现，而不像意外出现的
+   错误SADB_UPDATE消息。相反的意见是当用户层的密钥管理程序出现错误并重启，
+   新的实例和安全关联建立者不会有相同的套接字。
+
+       内核必须在更新数据库中的SA之前对SADB_UPDATE消息提交的有效值做安全检
+   查，如果任何值无效必须返回EINVAL错误。例如:应检查DES密钥的奇偶位、密钥长
+   度、已知的指定算法的弱密钥、已知的指定算法不兼容的标志或参数。
+
+       只有状态为SADB_SASTATE_MATURE的SA可以接受SADB_UPDATE消息。如果SA的状
+   态为SADB_SASTATE_LARVAL，那么可以修改除了源地址、目的地址和SPI以外的值。
+   如果SA的状态为SADB_SASTATE_DEAD，任何更新尝试必将返回EINVAL错误。对已确
+   定的密钥或算法信息进行修改而不修改SPI是无效的，那样与其修改一个已存在的SA
+   不如请求建立一个新的SA。一旦SA的密钥和算法信息商定，那么地址和身份信息也
+   已确定。所以，如果状态为SADB_SASTATE_MATURE或DYING的SA，只有SA头的
+sadb_sa_state
+   和生存期（硬件、软件和当前）可以修改，其它修改必将返回EINVAL错误。
+
+     SADB_UPDATE消息机制：
+
+        Send an SADB_UPDATE message from a user process to the kernel.
+        用户进程发送SADB_UPDATE消息到内核。
+
+        <base, SA, (lifetime(HSC),) address(SD), (address(P),)
+          key(AE), (identity(SD),) (sensitivity)>
+
+        内核返回SADB_UPDATE消息给所有的监听进程。
+
+        <base, SA, (lifetime(HSC),) address(SD), (address(P),)
+          (identity(SD),) (sensitivity)>
+
+       密钥素材将不在从内核到监听套接字的消息中返回，因为监听者不一定有特权。
+
+     错误：
+     
+         ESRCH   要更新的安全关联没有找到。
+         EINVAL  其它可能错误，如果参数健全检查（如密钥）错误返回此值。
+         EACCES  权限不够。发送SADB_UPDATE消息的套接字不是建立者。
+
+
+3.1.3 SADB_ADD
+
+       SADB_ADD消息除了不需要预先呼叫SADB_GETSPI消息，其它与SADB_UPDATE消息
+   相同。SADB_ADD消息用于手工密钥管理程序，在其它情况下唯一的SPI可以立即知
+   道。
+
+       SADB_ADD消息也用于协商结束后一对安全关联中的第二个安全关联的增加，SPI
+   值由对端机器决定。sadb_msg_seq必须设置成内核产生的SADB_ACQUIRE消息中的值，
+   这样两个安全关联绑定同一个ACQUIRE请求。
+
+       内核必须在增加SA至数据库之前对所有SADB_ADD消息中提交的字段进行健全检
+   查，如果任何值无效，必须返回EINVAL错误。
+
+       只有状态为SADB_SASTATE_MATURE的SA可以在SADB_ADD消息中提交。状态为
+   SADB_SASTATE_LARVAL的SA由SADB_GETSPI建立，并且在DYING或SADB_SASTATE_DEAD
+   状态下增加新的SA是不明智的。因此，所有提交的SA的sadb_sa_state字段值必须
+   是SADB_SASTATE_MATURE，否则内核必须返回错误。
+
+     SADB_ADD消息机制如下：
+
+        Send an SADB_ADD message from a user process to the kernel.
+        用户进程发送SADB_ADD消息到内核。
+
+        <base, SA, (lifetime(HS),) address(SD), (address(P),)
+          key(AE), (identity(SD),) (sensitivity)>
+
+        内核返回SADB_ADD消息给所有的监听进程。
+
+        <base, SA, (lifetime(HS),) address(SD), (identity(SD),)
+          (sensitivity)>
+
+       密钥素材将不在从内核到监听套接字的消息中返回，因为监听者不一定有特权。
+
+     错误：
+
+        EEXIST  要增加的安全关联已经存在。
+        EINVAL  其它可能错误，如果参数健全检查（如密钥）错误返回此值。
+
+
+3.1.4 SADB_DELETE
+
+       SADB_DELETE消息导致内核从密钥表中删除安全关联。删除消息包含基本消息
+   头和安全关联扩展、源和目的地址扩展。内核删除与消息中的类型、SPI、源和目
+   的地址相匹配的安全关联。
+
+     SADB_DELETE消息机制如下：
+
+        用户进程发送SADB_DELETE消息到内核。
+
+        <base, SA(*), address(SD)>
+
+        内核返回SADB_DELETE消息给所有的监听进程。
+
+        <base, SA(*), address(SD)>
+
+
+3.1.5 SADB_GET
+
+       SADB_GET允许一个进程从内核密钥表中获得一个安全关联的拷贝。GET消息由
+   基本消息头和有关的扩展项组成。内核将返回与消息中的类型、SPI、源和目的地
+   址相匹配的安全关联。
+
+      SADB_GET消息机制如下：
+
+         用户进程发送SADB_GET消息到内核。
+
+         <base, SA(*), address(SD)>
+
+         内核返回SADB_GET消息给发送者的套接字。
+
+         <base, SA, (lifetime(HSC),) address(SD), (address(P),) key(AE),
+           (identity(SD),) (sensitivity)>
+
+     错误：
+
+         ESRCH   没有找到匹配的安全关联
+
+
+3.1.6 SADB_ACQUIRE
+
+       SADB_ACQUIRE消息典型的应用是由内核发送至已登记（见SADB_REGISTER消息）
+   的密钥套接字监听者。SADB_ACQUIRE消息可以被应用层用户的安全关联发送（像使
+   用OSPF安全的OSPFv2实现）。SADB_ACQUIRE消息由基本消息头连同地址扩展、可选
+   的身份扩展和提议扩展组成。提议包含想用的算法列表，如果算法在基本消息头中
+   不可用。基本消息头中的字段和紧跟的安全关联数据指出监听进程企图获得的安全
+   关联的特性。如果消息从内核发出（sadb_msg_pid为0），随后的SADB_GETSPI消息
+   和SADB_UPDATE消息必须使用sadb_msg_seq的值，或者随后的SADB_ADD消息用来绑
+   定一个安全关联的请求。这样可以避免需要唯一安全关联的两个IP主机之间的两个
+   TCP连接的竞争，可以避免一个使用另一个安全关联。监听进程应忽略sadb_msg_errno
+   和sadb_msg_state字段。
+
+       当内核密钥表中没有输出包需要的可用的安全关联时触发SADB_ACQUIRE消息。
+   如果包可以被多个算法或可选联合充分保护，SADB_ACQUIRE消息必须按序优先使
+   用提议扩展中的选项。
+
+       SADB_ACQUIRE消息有三种机制。第一种是内核需要一个安全关联（如IPsec）。
+
+     内核发送SADB_ACQUIRE消息至已注册的套接字。
+
+        <base, address(SD), (address(P)), (identity(SD),) (sensitivity,)
+          proposal>
+
+        注意：  地址（源和目的）扩展的端口字段必须填入需要密钥会话的端口号。
+
+       第二种：由于某些原因，密钥关联失败，可以发送一个带有非零错误号与最初
+   的ACQUIRE消息相同sadb_msg_seq值的ACQUIRE消息。
+
+        发送SADB_ACQUIRE指出密钥管理失败。
+
+        <base>
+
+       第三种：安全关联的应用层用户（如：OSPFv2或RIPv2守护进程）需要一个安
+   全关联。
+
+        用户进程发送SADB_ACQUIRE消息至内核。
+
+        <base, address(SD), (address(P),) (identity(SD),) (sensitivity,)
+          proposal>
+
+        内核返回一个SADB_ACQUIRE消息至已注册的套接字。
+
+        <base, address(SD), (address(P),) (identity(SD),) (sensitivity,)
+          proposal>
+
+        应用层用户等待特殊类型SADB_UPDATE或SADB_ADD消息后，使用SADB_GET消息
+        可以获得使用安全关联。
+
+   错误：
+   
+       EINVAL  无效的ACQUIRE请求。
+       EPROTONOSUPPORT
+               没有密钥管理程序注册到密钥引擎能够获得请求的SA类型，于是请求
+               的SA不能被获得。
+
+
+3.1.7 SADB_REGISTER
+
+       SADB_REGISTER消息允许程序注册自己密钥套接字，从而能获得新的安全关联。
+   SADB_REGISTER消息允许套接字接收SADB_ACQUIRE消息，对于sadb_msg_satype中指
+   定类型的安全关联。程序指定安全关联的类型可以从内核中注册消息的类型字段获
+   得。如果应用程序可以获得多个类型，必须分别注册每个类型。密钥管理程序可以
+   注册内核未知的类型，因为应用层用户可以识别（如OSPFv2安全）。
+
+       SADB_REGISTER消息的应答包含一个支持算法扩展，列出支持的算法，一个占一
+   个字节。这样可以使密钥管理程序知道内核支持的算法。
+
+       在算法可以动态装载和卸载的环境，可以产生异步的SADB_REGISTER应答。支
+   持的算法列表必须完全列出，这样应用程序能够注释和添加。
+
+     SADB_REGISTER消息机制如下：
+
+        用户进程发送SADB_REGISTER消息至内核。
+
+        <base>
+
+        内核返回SADB_REGISTER消息至注册的套接字，在支持算法字段指出内核支持
+        的算法。
+
+        <base, supported>
+        
+        注意： 这个消息可以异步到达，当算法可以装载和卸载的动态联接内核。
+
+
+3.1.8 SADB_EXPIRE
+
+       操作系统内核负责跟踪在内核中执行的安全协议的SA有效期。如果内核中执行
+   的安全协议的一个安全关联的软件限制或硬件限制期满，内核必须发送SADB_EXPIRE
+   消息给所有的密钥套接字监听者。如果用户层安全协议的一个安全关联的软件限制
+   或硬件限制期满，用户层协议应发送SADB_EXPIRE消息。
+
+       消息由基本消息头、源和目的地址、可能存在的内部套接字地址和可能存在的
+   一个或两个间隔位图。
+
+       SADB_EXPIRE消息的生存期扩展指出哪一个到期。如果包含HARD生存期扩展，
+   说明HARD生存期期满，这意味着安全关联可能已从SADB中删除。如果包含SOFT生存
+   期扩展，说明SOFT生存期期满。CURRENT生存期扩展将指出当前状态，并且对照HARD
+   或SOFT生存期将指出哪一个到达。HARD生存期必须优先于SOFT生存期，如果HARD和
+   SOFT生存期相同，消息中将包含HARD生存期。如果HARD生存期比SOFT生存期短，SOFT
+   生存期将永远不会到期。
+
+     SADB_EXPIRE消息机制如下：
+
+        当安全关联的软件限制期满，内核发送SADB_EXPIRE消息至所有的监听者。
+
+           <base, SA, lifetime(C and one of HS), address(SD)>
+
+       注意，SADB_EXPIRE消息只能由内核发送至密钥管理守护进程。它是一个单向
+   的通报消息，没有应答。
+
+
+3.1.9 SADB_FLUSH
+
+       SADB_FLUSH消息导致内核删除密钥表中确定的sadb_msg_satype的所有的条目。
+   消息中只有基本消息头。如果sadb_msg_satype包含指定值，只有改类型的安全关
+   联被删除；如果值为SADB_SATYPE_UNSPEC，所有的安全关联被删除。
+
+     SADB_FLUSH消息机制如下：
+
+           用户进程发送SADB_FLUSH消息至内核。
+
+           <base>
+
+           内核返回SADB_FLUSH消息至所有的套接字监听者。
+
+           <base>
+
+           应答消息只有在实际的安全关联刷新执行后发送。
+
+
+3.1.10 SADB_DUMP
+
+       SADB_DUMP消息导致内核输出系统的整个密钥表至发出请求的密钥套接字。像
+   SADB_FLUSH消息，如果消息中的sadb_msg_satype值指定，只输出类型匹配的安全
+   关联；如果值为SADB_SATYPE_UNSPEC，所有的安全关联被输出。每个安全关联在自
+   己的SADB_DUMP消息中返回。SADB_DUMP消息的sadb_seq为零指输出结束。这个消息
+   只是用于调试，不必在程序中使用。
+
+       在将来的PF_KEY版本中SADB_DUMP消息可能不支持。密钥管理程序的基本操作
+   不能依赖于这个消息。
+
+     SADB_DUMP消息机制如下：
+
+           用户进程发送SADB_DUMP消息至内核。
+
+           <base>
+
+           几个SADB_DUMP消息将从内核返回至发送者的套接字。
+
+           <base, SA, (lifetime (HSC),) address(SD), (address(P),)
+             key(AE), (identity(SD),) (sensitivity)>
+
+
+3.2 安全关联标志
+
+       安全关联的标志是一个按位操作的字段。这些标志也出现在提议扩展的间隔中。
+   为了程序的可移植性，下面定义的相关符号应使用。
+
+     #define SADB_SAFLAGS_PFS 1    /* 完美向前保密 */
+
+       SADB_SAFLAGS_PFS标志指出一个安全关联用它的密钥进行完全向前保密。（也
+   就是说，任何特定会话密钥不能被以前的会话密钥破解或某个万能密钥确定）。
+
+
+3.3 安全关联状态
+
+       安全关联状态是一个描述状态的整数指。如下：
+
+     #define SADB_SASTATE_LARVAL   0
+     #define SADB_SASTATE_MATURE   1
+     #define SADB_SASTATE_DYING    2
+     #define SADB_SASTATE_DEAD     3
+
+     #define SADB_SASTATE_MAX      3
+
+       状态为SADB_SASTATE_LARVAL的安全关联由SADB_GETSPI消息建立。状态为
+   SADB_SASTATE_MATURE的安全关联由SADB_UPDATE消息更新或由SADB_ADD消息添加。
+   状态为SADB_SASTATE_DYING的安全关联指其软件生存期期满。状态为SADB_SASTATE_DEAD
+   的安全关联指其硬件生存期期满，但是还未被系统碎片收集。如果一个用户的安全
+   关联扩展其正常周期（如：OSPF安全），必须只设置安全关联的软件生存期。
+
+
+3.4 安全关联类型
+
+
+       安全关联类型说明了消息中安全关联的类型。类型的符号名总是相同，甚至在
+   不同的实现中。为了不同实现间的移植，程序应使用这些在<net/pfkeyv2.h>中定
+   义的符号名。
+      
+     #define SADB_SATYPE_UNSPEC        0
+
+     #define SADB_SATYPE_AH            2  /* RFC-1826 */
+     #define SADB_SATYPE_ESP           3  /* RFC-1827 */
+
+     #define SADB_SATYPE_RSVP          5  /* RSVP认证 */
+     #define SADB_SATYPE_OSPFV2        6  /* OSPFv2认证 */
+     #define SADB_SATYPE_RIPV2         7  /* RIPv2认证 */
+     #define SADB_SATYPE_MIP           8  /* 移动IP认证 */
+
+     #define SADB_SATYPE_MAX           8
+
+   SADB_SATYPE_UNSPEC 意味着安全关联无指定类型。这个类型从未被PF_KEY安全关
+                      联使用。
+
+   SADB_SATYPE_AH 用于IP认证头[Atk95b]。
+
+   SADB_SATYPE_ESP 用于IP安全载荷[Atk95c]。
+
+   SADB_SATYPE_RSVP 用于RSVP完整对象。
+
+   SADB_SATYPE_OSPFV2 用于OSPFv2加密认证[Moy98]。
+
+   SADB_SATYPE_RIPV2 用于RIPv2加密认证[BA97]。
+
+   SADB_SATYPE_MIP 用于移动IP的认证扩展[Per97]
+
+   SADB_SATYPE_MAX 永远设置成最大的有效值。
+
+
+3.5 算法类型
+
+       算法类型与上面定义的安全关联类型上下关联。其值可能在不同实现中有区别，
+   但是符号名必须相同。为了不同实现间的移植，程序应使用这些符号名。
+
+       下面定义的一些算法类型可能是不标准的或者将来可能不支持。想得到一个分
+   配的符号名，联系作者。
+
+     下面的符号在<net/pfkeyv2.h>中定义。
+
+           /* 认证算法 */
+           #define SADB_AALG_NONE          0
+           #define SADB_AALG_MD5HMAC       2
+           #define SADB_AALG_SHA1HMAC      3
+           #define SADB_AALG_MAX           3
+
+           /* 加密算法 */
+           #define SADB_EALG_NONE          0
+           #define SADB_EALG_DESCBC        2
+           #define SADB_EALG_3DESCBC       3
+           #define SADB_EALG_NULL          11
+           #define SADB_EALG_MAX           11
+
+       SADB_AALG_MD5_HMAC算法在[MG98a]中定义。SADB_AALG_SHA1HMAC算法在[MG98b]
+   定义。SADB_EALG_DESCBC算法在[MD98]中定义。SADB_EALG_NULL指空加密算法，在
+   [GK98]中定义。SADB_EALG_NONE在任何安全关联中不使用，除非没有加密算法（如
+   IPsec认证）。
+
+
+3.6 扩展头值
+
+       简短的扩展头值摘要表：
+
+           #define SADB_EXT_RESERVED          0
+           #define SADB_EXT_SA                1
+           #define SADB_EXT_LIFETIME_CURRENT  2
+           #define SADB_EXT_LIFETIME_HARD     3
+           #define SADB_EXT_LIFETIME_SOFT     4
+           #define SADB_EXT_ADDRESS_SRC       5
+           #define SADB_EXT_ADDRESS_DST       6
+           #define SADB_EXT_ADDRESS_PROXY     7
+           #define SADB_EXT_KEY_AUTH          8
+           #define SADB_EXT_KEY_ENCRYPT       9
+           #define SADB_EXT_IDENTITY_SRC      10
+           #define SADB_EXT_IDENTITY_DST      11
+           #define SADB_EXT_SENSITIVITY       12
+           #define SADB_EXT_PROPOSAL          13
+           #define SADB_EXT_SUPPORTED_AUTH    14
+           #define SADB_EXT_SUPPORTED_ENCRYPT 15
+           #define SADB_EXT_SPIRANGE          16
+
+           #define SADB_EXT_MAX               16
+
+
+3.7 身份扩展值
+
+       每一个身份有确定的类型。
+
+           #define SADB_IDENTTYPE_RESERVED  0
+           #define SADB_IDENTTYPE_PREFIX    1
+           #define SADB_IDENTTYPE_FQDN      2
+           #define SADB_IDENTTYPE_USERFQDN  3
+
+           #define SADB_IDENTTYPE_MAX       3
+
+       PREFIX身份字符串由网络地址斜线和前缀长度组成。网络地址是与协议族相匹
+   配的可打印的数字格式。前缀长度是一个大于等于零并小于网络地址位数的十进制
+   数字，指出网络地址的有效位数；若网络地址的所有位无意义必须设置为零。注意，
+   具体实现必须将可打印的地址解析成二进制格式用于比较，因为在很多协议族中同
+   一地址可以表示多种格式的可打印字符串（例如，一些允许以零开始，一些则不是）。
+   PREFIX身份的例子：“199.33.248.64/27”和“3ffe::1/128”。如果源和目的地
+   址是PREFIX身份，用于SA（分别）的源和目的地址必须在前缀范围内。对于这个身
+   份类型sadb_ident_id的值为零。
+
+       FQDN身份字符串包含正式域名。FQDN身份的例子：“ministry-of-truth.inner.net”。
+   对于这个身份类型sadb_ident_id的值为零。
+
+       UserFQDN身份字符串由因特网标准的电子邮件格式的文本字符串组成。格式为：
+   用户名，中间是“@”字符，接着是正式域名。它指定了用户名和与之相关的FQDN。
+   这里没必要指定一个SMTP或其它电子邮件应用的有效邮箱。这个身份有利于面向用
+   户的协议支持的密钥管理。这是一个满意的格式，因为安全的DNS扩展可以用于分
+   发签名的公钥，通过用合适的MB DNS档案记录关联的KEY和SIG。UserFQDN身份的例
+   子：“julia@ministry-of-love.inner.net”。sadb_ident_id字段包含POSIX用户
+   标识，缺省是身份字符串，这样用户层程序能够使用getpwuid{,_r}()获得文本的
+   用户注册ID。如果存在，在sadb_ident_id field字段应返回匹配的数字值；如果
+   不匹配，字符串应覆盖数字值。
+
+
+3.8 敏感度扩展值
+
+       在敏感度扩展中目前定义的字段只有sadb_sens_dpd，表示了数据保护域。敏
+   感度扩展的其它数据不基于sadb_sens_dpd值。
+
+       DP/DOI的定义与IP安全的DOI规范[Pip98]中的“Labeled Domain Identifier
+   Value”相同。如同规范中的注释：0x80000000和0xffffffff之间的值保留给私人
+   使用，0x00000001到0x7fffffff分配给IANA。全零的DP/DOI值永远表示：没有DP/DOI
+   在使用。
+
+
+3.9 提议扩展值
+
+       这些已在算法类型和安全关联标志中提及。
+
+
+4 发展趋势
+
+       当前说明敏感度和完整标注的规范相信足够全面，如果出现使用当前规范不能
+   工作的情况，将在PF_KEY的未来版本中改正。
+
+       同样地，PF_KEY可能需要扩展以便适用于未来其它种类地安全关联。像这样地
+   扩展将是向后兼容的方式。
+
+       当获得更多的证书管理经验后，可能身份扩展将允许证书身份。
+
+
+5. 实例
+
+       下面的例子图解PF_KEY怎样使用。第一个例子是一个IP安全例子，安全关联的
+   用户在操作系统内核内部。第二个例子是一个OSPF安全例子，说明用户层用户的安
+   全关联。第三个例子包含头两个例子没有提及的情况。真实系统可以符合这些例子
+   的一种，或者一部分。这些例子完全是说明性的，不想要求详细的实现方法。
+
+
+5.1 简单的IP安全例子
+
+                     +---------------+    +-------------+
+                     |   密钥管理    |    |    应用     |
+                     |   守护进程    |    |    程序     |
+                     +---------------+    +-------------+
+                       |           |     /
+                       |           |    /
+                       |           |    |              应用程序
+               ======[PF_KEY]====[PF_INET]==========================
+                       |           |    |              系统内核
+               +------------+   +-----------------+
+               |  密钥引擎  |   |    TCP/IP       |
+               |   或者     |   |    包括         |
+               |   SADB     |---|    IPsec        |
+               +------------+   |                 |
+                                +-----------------+
+
+       当密钥管理守护进程（KMd）开始，必须告诉PF_KEY将要接收消息用于IPsec的
+   两个服务，AH和ESP。通过发送两个SADB_REGISTER消息完成这些。
+
+     KMd->Kernel:         SADB_REGISTER for ESP
+     Kernel->Registered:  SADB_REGISTER for ESP, Supported Algorithms*
+     KMd->Kernel:         SADB_REGISTER for AH
+     Kernel->Registered:  SADB_REGISTER for AH, Supported Algorithms
+
+       每一个REGISTER消息将导致一个应答给所有分别注册到ESP和AH的PF_KEY套接
+   字（包括请求发送者）。
+
+       假设IPsec当前可使用的安全关联不存在，认为一个网络程序开始传送数据（
+   例如一个TCP的SYN）。因为策略关系，或者程序的要求，内核IPsec模块需要一个
+   AH安全关联用于这些数据。由于不存在，产生以下消息：
+
+     Kernel->Registered:  SADB_ACQUIRE for AH, addrs, ID, sens,
+                          proposals
+
+       KMd读取ACQUIRE消息，尤其是sadb_msg_seq值。在开始协商前，发送含有相同
+   sadb_msg_seq值的SADB_GETSPI消息。内核返回GETSPI的结果给所有的监听套接字。
+
+     KMd->Kernel:         SADB_GETSPI for AH, addr, SPI range
+     Kernel->All:         SADB_GETSPI for AH, assoc, addrs
+
+       KMd可以完成第二个GETSPI操作，如果它需要双向的IPsec SPI值，KMd得到SPI
+   后，开始协商。在派生出密钥素材，并协商其它参数后，发送一个（或多个）包含
+   同一sadb_msg_seq值的SADB_UPDATE消息。
+
+       如果在协商中KMd出现任何错误，将发送：
+
+     KMd->Kernel:         SADB_ACQUIRE for AH, assoc (with an error)
+     Kernel->All:         SADB_ACQUIRE for AH, assoc (same error)
+
+       如果成功，将发送：
+
+     KMd->Kernel:         SADB_UPDATE for AH, assoc, addrs, keys,
+                          <etc.>
+     Kernel->All:         SADB_UPDATE for AH, assoc, addrs, <etc.>
+
+       UPDATE的结果（去掉实际的密钥）发送给所有的监听套接字。如果只有SPI值
+   在本地确定，其它SPI（由于IPsec的SA是单向的）必须用SADB_ADD增加。
+
+     KMd->Kernel:         SADB_ADD for AH, assoc, addrs, keys, <etc.>
+     Kernel->All:         SADB_ADD for AH, assoc, addrs, <etc.>
+
+       如果扩展项中有生存期扩展，当生存期中的一项期满，将收到SADB_EXPIRE消
+   息。
+
+     Kernel->All:         SADB_EXPIRE for AH, assoc, addrs,
+                          Hard or Soft, Current, <etc.>
+
+       KMd可以使用以这个消息为线索开始协商，或者，如果对策略有发言权，发送
+   带生存期扩展的SADB_UPDATE消息。
+
+
+5.2 代理IP安全例子
+
+       很多人对在“代理”或“防火墙”结构中使用IP安全感兴趣，那样中间系统可
+   以为“内部”主机提供安全服务。在这些环境下，中间的系统可以使用PF_KEY通过
+   密钥管理程序通信就像实际的终端。在这种情况下，PF_KEY的消息机制同前面的例
+   子相同，但是地址信息稍微不同。
+
+     考虑这种情况：
+
+                     A ========= B --------- C
+
+     说明：
+               A           "outside" host that implements IPsec
+               A           执行IPsec的“外部”主机
+               B           "firewall" that implements IPsec
+               B           执行IPsec的“防火墙”
+               C           "inside" host that does not implement IPsec
+               C           没有执行IPsec的“内部”主机
+
+               ===         IP_{A<->B} ESP [ IP_{A<->C} ULP ]
+               ---         IP_{A<->C} ULP
+
+
+       A是一个单一系统，想要和“内部”系统C通信。B是一个“防火墙”在C和外部
+   世界之间，为C的利益做ESP和隧道保护。A发现它需要通过B发送话务利用这里没有
+   描述的方法（使用DNS的KX记录可能是一种方法）。
+
+       当信息包由左至右传输，A和B需要的IPsec安全关联：
+
+           SA类型为ESP隧道模式
+           支配A的源身份（例如：A的地址）
+           支配B的目的身份（例如：B的地址）
+           源地址A
+           目的地址B
+
+       当信息包由右至左传输，A和B需要的IPsec安全关联：
+
+           SA类型为ESP隧道模式
+           支配C的源身份
+           支配A的目的身份
+           源地址B
+           目的地址A
+           代理地址C
+
+       对于第二个SA（信息包由C到A），节点A必须检验SA使用的源身份控制的内部
+   源地址。否则，攻击者可以用任意的源身份伪造信息包，并代替IPsec保护的原包。
+
+     现在考虑稍微复杂的情况：
+
+               A_1 --|                  |-- D_1
+                     |--- B ====== C ---|
+               A_2 --|                  |-- D_2
+
+     说明：
+               A_n     "inside" host on net 1 that does not do IPsec.
+               A_n     子网1的“内部”主机，没有IPsec
+               B       "firewall" for net 1 that supports IPsec.
+               B       子网1的“防火墙”，支持IPsec
+               C       "firewall" for net 2 that supports IPsec.
+               C       子网2的“防火墙”，支持IPsec
+               D_n     "inside" host on net 2 that does not do IPsec.
+               D_n     子网2的“内部”主机，没有IPsec
+               ===     IP_{B<->C} ESP [ IP_{A<->C} ULP ]
+               ---     IP_{A<->C} ULP
+
+           当A_1发送包至D_1，B和C需要的SA：
+
+                   SA类型为ESP
+                   支配A_1的源身份
+                   支配C的目的身份
+                   源地址B
+                   目的地址C
+                   代理地址A_1
+
+           当D_1发送包至A_1，C和B需要的SA：
+
+                   SA类型为ESP隧道模式
+                   支配D_1的源身份
+                   支配B的目的身份
+                   源地址C
+                   目的地址B
+                   代理地址D_1
+
+       注意，A_2和D_2可以分别替换A_1和D_1；SA和一对特定的终端或群组相结合是
+   B及/或C上的一个策略决议，并且对于密钥管理不是必需的功能。出于同样的原因，
+   在这种情况下依靠内部IP地址的源身份检查必须履行。
+
+       关于在复杂环境下使用IP安全的更多的详细的讨论，请看[Atk97]。
+
+     注意：身份支配的概念可能不熟悉。假设H代表节点；Hn代表H的正式域名；Ha代
+     表H的地址；Hs代表包含Ha的IP子网；Hd代表H的上一级节点的正式域名；M代表
+     UserFQDN身份，它的后面是Hn或Ha。
+
+         在上面的例子中，无论M、Hn、Ha、Hs和Hd被认为支配H。Hs支配地址在IP地
+     址范围内的任一节点。Hd支配域名在其正式域名下面的任一节点。
+
+
+5.3 OSPF安全例子
+
+           +---------------+    +-------------+
+           |   密钥管理    |    |    OSPF     |
+           |   守护进程    |    |  守护进程   |
+           +---------------+    +-------------+
+             |           |     /    /        |
+             |    /------|----+    /         |
+             |   /       |    +---+          |           应用程序
+     ======[PF_KEY]====[PF_INET]===========[PF_ROUTE]================
+             |           |    |              |           系统内核
+     +------------+   +-----------------+  +---------+
+     |  密钥引擎  |   |    TCP/IP       |  |         |
+     |  或者      |---|    包括         |--| 路由表  |
+     |  SADB      |   |    IPsec        |  |         |
+     +------------+   |                 |  +---------+
+                      +-----------------+
+
+       像前面的例子中，KMd通过PF_KEY注册到密钥引擎。尽管如此，安全关联的使
+   用者在用户层，PF_KEY和密钥引擎的执行能够储存SA和转发消息。
+
+       当OSPF进程需要同对端进行安全通信，就发出SADB_GET消息并得到合适的安全
+   关联：
+
+     OSPFd->Kernel:       SADB_GET of OSPF, assoc, addrs
+     Kernel->OSPFd:       SADB_GET of OSPF, assoc, addrs, keys, <etc.>
+
+       如果GET操作失败，OSPFd可能需要获取新的安全关联。这个交互过程如下：
+
+     OSPFd->Kernel:       SADB_ACQUIRE of OSPF, addrs, <ID, sens,>
+                          proposal
+     Kernel->Registered:  SADB_ACQUIRE of OSPF, <same as sent message>
+
+       KMd理解这些消息并完成操作与前面的例子相似。一个区别：当UPDATE消息返
+   回，OSPFd将执行一个GET操作去获取更新SA的所有参数。
+
+
+5.4 其它
+
+       一些消息只有在系统维护程序中用到，如调试或审计。在系统混乱时，像发现
+   危及安全，将发送指定类型或所有SA类型的SADB_FLUSH消息。
+
+     Program->Kernel:     SADB_FLUSH for ALL
+     <Kernel then flushes all internal SAs>
+     Kernel->All:         SADB_FLUSH for ALL
+
+       一些SA可能需要删除，可能被KMd，也可能被系统维护程序。
+
+     Program->Kernel:     SADB_DELETE for AH, association, addrs
+     Kernel->All:         SADB_DELETE for AH, association, addrs
+
+       SADB_DUMP消息的普通操作被放弃，然而，出于调试目的，它还是很有用的。
+   DUMP的输出应迅速读取，以免套接字缓冲溢出。
+
+     Program->Kernel:     SADB_DUMP for ESP
+     Kernel->Program:     SADB_DUMP for ESP, association, <all fields>
+     Kernel->Program:     SADB_DUMP for ESP, association, <all fields>
+     Kernel->Program:     SADB_DUMP for ESP, association, <all fields>
+     <ad nauseam...>
+
+
+6 安全考虑
+
+      本文档讨论在一个操作系统中建立、读取、修改和删除安全关联。只有可信的、
+   特权用户和进程能够执行这些操作。现在还不清楚，在没有可信的特权用户概念的
+   操作系统中，这个机制能否提供任何安全。
+
+       如果无特权用户能够执行任何上述操作，那么操作系统实际上不能提供安全服
+   务。如果攻击者知道使用的密钥和算法，那么加密不能提供任何保护。
+
+       这个机制不是万能药，但是可以成为建立安全网络的重要的操作系统组件。
+
+       用户应该知道，本规范的具体实现提供的安全质量是完全依赖于操作系统的全
+   面安全，PF_KEY实现的正确性，连接PF_KEY的程序的安全和正确性。当实现PF_KEY
+   和相关的操作系统的安全关联组件时，应使用更高质量保证的开发技术。
+
+
+致谢
+
+   The authors of this document are listed primarily in alphabetical
+   order.  Randall Atkinson and Ron Lee provided useful feedback on
+   earlier versions of this document.
+
+   At one time or other, all of the authors worked at the Center for
+   High Assurance Computer Systems at the U.S.  Naval Research
+   Laboratory. This work was sponsored by the Information Security
+   Program Office (PMW-161), U.S.  Space and Naval Warfare Systems
+   Command (SPAWAR) and the Computing Systems Technology Office, Defense
+   Advanced Research Projects Agency (DARPA/CSTO). We really appreciate
+   their sponsorship of our efforts and their continued support of
+   PF_KEY development. Without that support, PF_KEY would not exist.
+
+   The "CONFORMANCE and COMPLIANCE" wording was taken from [MSST98].
+
+   Finally, the authors would like to thank those who sent in comments
+   and questions on the various iterations of this document. This
+   specification and implementations of it are discussed on the PF_KEY
+   mailing list. If you would like to be added to this list, send a note
+   to <pf_key-request@inner.net>.
+
+
+参考
+
+   [AMPMC96] Randall J. Atkinson, Daniel L. McDonald, Bao G. Phan, Craig
+   W. Metz, and Kenneth C. Chin, "Implementation of IPv6 in 4.4-Lite
+   BSD", Proceedings of the 1996 USENIX Conference, San Diego, CA,
+   January 1996, USENIX Association.
+
+   [Atk95a] Atkinson, R., "IP Security Architecture", RFC 1825, August
+   1995.
+
+   [Atk95b] Atkinson, R., "IP Authentication Header", RFC 1826, August
+   1995.
+
+   [Atk95c] Atkinson, R., "IP Encapsulating Security Payload", RFC 1827,
+   August 1995.
+
+   [Atk97] Atkinson, R., "Key Exchange Delegation Record for the Domain
+   Name System", RFC 2230, October 1997.
+
+   [BA97] Baker, F., and R. Atkinson, "RIP-2 MD5 Authentication", RFC
+   2082, January 1997.
+
+   [Biba77] K. J. Biba, "Integrity Considerations for Secure Computer
+   Systems", MTR-3153, The MITRE Corporation, June 1975; ESD-TR-76-372,
+   April 1977.
+
+   [BL74] D. Elliot Bell and Leonard J. LaPadula, "Secure Computer
+   Systems: Unified Exposition and Multics Interpretation", MTR 2997,
+   The MITRE Corporation, April 1974. (AD/A 020 445)
+
+   [Bra97] Bradner, S., "Key words for use in RFCs to Indicate
+   Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [CW87] D. D. Clark and D. R. Wilson, "A Comparison of Commercial and
+   Military Computer Security Policies", Proceedings of the 1987
+   Symposium on Security and Privacy, pp. 184-195, IEEE Computer
+   Society, Washington, D.C., 1987.
+
+   [DIA] US Defense Intelligence Agency (DIA), "Compartmented Mode
+   Workstation Specification", Technical Report DDS-2600-6243-87.
+
+   [GK98] Glenn, R., and S. Kent, "The NULL Encryption Algorithm and Its
+   Use with IPsec", Work in Progress.
+
+   [HM97a] Harney, H., and C. Muckenhirn, "Group Key Management Protocol
+   (GKMP) Specification", RFC 2093, July 1997.
+
+   [HM97b] Harney, H., and C. Muckenhirn, "Group Key Management Protocol
+   (GKMP) Architecture", RFC 2094, July 1997.
+
+   [MD98] Madsen, C., and N. Doraswamy, "The ESP DES-CBC Cipher
+   Algorithm With Explicit IV", Work in Progress.
+
+   [MG98a] Madsen, C., and R. Glenn, "The Use of HMAC-MD5-96 within ESP
+   and AH", Work in Progress.
+
+   [MG98b] Madsen, C., and R. Glenn, "The Use of HMAC-SHA-1-96 within
+   ESP and AH", Work in Progress.
+
+   [MSST98] Maughan, D., Schertler, M., Schneider, M., and J. Turner,
+   "Internet Security Association and Key Management Protocol (ISAKMP)",
+   Work in Progress.
+
+   [Moy98] Moy, J., "OSPF Version 2", STD 54, RFC 2328, April 1998.
+
+   [Per97] Perkins, C., "IP Mobility Support", RFC 2002, October 1996.
+
+   [Pip98] Piper, D., "The Internet IP Security Domain of Interpretation
+   for ISAKMP", Work in Progress.
+
+   [Sch96] Bruce Schneier, Applied Cryptography, p. 360, John Wiley &
+   Sons, Inc., 1996.
+
+   [Skl91] Keith Sklower, "A Tree-based Packet Routing Table for
+   Berkeley UNIX", Proceedings of the Winter 1991 USENIX Conference,
+   Dallas, TX, USENIX Association. 1991.  pp. 93-103.
+
+
+放弃声明
+
+   The views and specification here are those of the editors and are not
+   necessarily those of their employers.  The employers have not passed
+   judgment on the merits, if any, of this work.  The editors and their
+   employers specifically disclaim responsibility for any problems
+   arising from correct or incorrect implementation or use of this
+   specification.
+
+
+作者地址
+
+   Daniel L. McDonald
+   Sun Microsystems, Inc.
+   901 San Antonio Road, MS UMPK17-202
+   Palo Alto, CA 94303
+
+   Phone: +1 650 786 6815
+   EMail: danmcd@eng.sun.com
+
+
+   Craig Metz
+   (for Code 5544)
+   U.S. Naval Research Laboratory
+   4555 Overlook Ave. SW
+   Washington, DC 20375
+
+   Phone: (DSN) 754-8590
+   EMail: cmetz@inner.net
+
+
+   Bao G. Phan
+   U. S. Naval Research Laboratory
+
+   EMail: phan@itd.nrl.navy.mil
+
+
+附录A：混杂模式发送/接收消息扩展
+
+       内核支持PF_KEY，出于开发和调试目的，可以实现一些扩展。如果这样做，必
+   须按这里的规定实现。具体实现可以要求程序具有额外的特权去执行混杂模式的发
+   送、接收操作。
+
+       SADB_X_PROMISC消息允许一个程序在“混杂模式”下发送和接收消息。该消息
+   有两种格式：控制和数据。控制格式只包含一个消息头，用于触发混杂接收功能。
+   sadb_msg_satype的值为1启动混杂消息接收，值为0禁止。
+
+       第二种格式是数据格式，用于发送或接收未处理的消息。数据格式的消息由两
+   个消息头组成：一个是SADB_X_PROMISC消息头，一个是截获的消息。
+
+       发自应用程序的数据消息，发送至由sadb_msg_seq值（非零）指定进程的任一
+   套接字，或者发送至所有PF_KEY套接字，如果sadb_msg_seq值为零。这些消息没有
+   被PF_KEY接口做任何处理（包括健全检查）。混杂发送功能允许应用程序像内核一
+   样发送消息，也允许发送错误消息。
+
+       如果混杂接收功能启动，能够接收其它程序或内核通过PF_KEY发送的消息，在
+   被PF_KEY接口处理之前（包括健全检查）。混杂接收功能允许应用程序接收所有其
+   它使用PF_KEY发送的消息。
+
+     SADB_X_PROMISC消息机制如下：
+
+         用户进程发送控制格式的SADB_X_PROMISC消息至内核。
+
+         <base>
+
+         内核返回SADB_X_PROMISC消息至所有监听进程。
+
+         <base>
+
+         用户进程发送数据格式的SADB_X_PROMISC消息至内核。
+
+         <base, base(, others)>
+
+         内核发送封装消息至目标进程。
+
+         <base(, others)>
+
+         如果混杂接收启动，内核将封装和发送所有通过PF_KEY接口发送的消息的副
+         本。
+
+         <base, base(, others)>
+
+     错误：
+
+         EPERM 没有执行请求的操作的权利。
+         ESRCH （数据格式的发送）sadb_msg_seq中指定的目标进程不存在或者没有
+               打开的PF_KEYv2套接字。
+
+
+附录B：被动转换消息扩展
+
+       SADB_X_PCHANGE消息是在被动方（aka，“监听者”或“接收者”）与SADB_ACQUIRE
+   相似的消息。当被动方会话偏离整个系统默认的安全服务时，这个消息有利于密钥
+   管理程序有效的操纵输入的密钥管理请求。如果被动会话请求只允许某些级别的安
+   全服务，SADB_X_PCHANGE消息向已注册的PF_KEY套接字表示服务已改变。与SADB_ACQUIRE
+   不同，这个消息纯粹是报告性质，守护进程与PF_KEY没有其它的交互作用。
+
+       SADB_X_PCHANGE消息可以被终端请求的安全服务改变或指定服务的取消触发。
+   对于前者，SADB_X_PCHANGE如同SADB_ACQUIRE消息，消息中包含sadb_proposal扩
+   展指出首选的算法、生存期和其它属性。当被动会话取消或者还原成默认行为，将
+   发出由_no_ sadb_proposal扩展构成的SADB_X_PCHANGE消息，指出系统异常取消。
+
+       SADB_X_PCHANGE消息有两种机制。第一种由内核发起：
+
+        内核发送SADB_X_PCHANGE消息至注册的套接字。
+
+        <base, address(SD), (identity(SD),) (sensitivity,) (proposal)>
+
+        注意： 地址（SD）扩展必须有会话所需的端口号。
+
+        第二种用于用户层使用者的SA。
+
+        用户进程发送SADB_X_PCHANGE消息至内核。
+
+        <base, address(SD), (identity(SD),) (sensitivity,) (proposal)>
+
+        内核返回SADB_X_PCHANGE消息至已注册的套接字。
+
+        <base, address(SD), (identity(SD),) (sensitivity,) (proposal)>
+
+
+附录C：密钥管理专用数据扩展
+
+       密钥管理专用数据扩展依附于SADB_ADD或SADB_UPDATE消息，用于连接安全关
+   联上任意的一段数据。也可以用于密钥管理程序，如果系统崩溃后需要重启或恢复
+   可以用于SADB_DUMP或SADB_GET消息获得额外的情况。
+
+           #define SADB_X_EXT_KMPRIVATE 17
+
+           struct sadb_x_kmprivate {
+                   uint16_t sadb_x_kmprivate_len;
+                   uint16_t sadb_x_kmprivate_exttype;
+                   uint32_t sadb_x_kmprivate_reserved;
+           };
+           /* sizeof(struct sadb_x_kmprivate) == 8 */
+
+           /* 紧跟任意数据 */
+
+
+       sadb_x_kmprivate扩展后可以是任意数据，存贮格式与安全关联在内核中的格
+   式相同，必须是64位边界对齐。
+
+
+附录D：头文件样本
+
+   /*
+   This file defines structures and symbols for the PF_KEY Version 2
+   key management interface. It was written at the U.S. Naval Research
+   Laboratory. This file is in the public domain. The authors ask that
+   you leave this credit intact on any copies of this file.
+   */
+   #ifndef __PFKEY_V2_H
+   #define __PFKEY_V2_H 1
+
+   #define PF_KEY_V2 2
+   #define PFKEYV2_REVISION        199806L
+
+   #define SADB_RESERVED    0
+   #define SADB_GETSPI      1
+   #define SADB_UPDATE      2
+   #define SADB_ADD         3
+   #define SADB_DELETE      4
+   #define SADB_GET         5
+   #define SADB_ACQUIRE     6
+   #define SADB_REGISTER    7
+   #define SADB_EXPIRE      8
+   #define SADB_FLUSH       9
+   #define SADB_DUMP        10
+   #define SADB_X_PROMISC   11
+   #define SADB_X_PCHANGE   12
+   #define SADB_MAX         12
+
+   struct sadb_msg {
+     uint8_t sadb_msg_version;
+     uint8_t sadb_msg_type;
+     uint8_t sadb_msg_errno;
+     uint8_t sadb_msg_satype;
+     uint16_t sadb_msg_len;
+     uint16_t sadb_msg_reserved;
+     uint32_t sadb_msg_seq;
+     uint32_t sadb_msg_pid;
+   };
+
+   struct sadb_ext {
+     uint16_t sadb_ext_len;
+     uint16_t sadb_ext_type;
+   };
+
+   struct sadb_sa {
+     uint16_t sadb_sa_len;
+     uint16_t sadb_sa_exttype;
+     uint32_t sadb_sa_spi;
+     uint8_t sadb_sa_replay;
+     uint8_t sadb_sa_state;
+     uint8_t sadb_sa_auth;
+     uint8_t sadb_sa_encrypt;
+     uint32_t sadb_sa_flags;
+   };
+
+   struct sadb_lifetime {
+     uint16_t sadb_lifetime_len;
+     uint16_t sadb_lifetime_exttype;
+     uint32_t sadb_lifetime_allocations;
+     uint64_t sadb_lifetime_bytes;
+     uint64_t sadb_lifetime_addtime;
+     uint64_t sadb_lifetime_usetime;
+   };
+
+   struct sadb_address {
+     uint16_t sadb_address_len;
+     uint16_t sadb_address_exttype;
+     uint8_t sadb_address_proto;
+     uint8_t sadb_address_prefixlen;
+     uint16_t sadb_address_reserved;
+   };
+
+   struct sadb_key {
+     uint16_t sadb_key_len;
+     uint16_t sadb_key_exttype;
+     uint16_t sadb_key_bits;
+     uint16_t sadb_key_reserved;
+   };
+
+   struct sadb_ident {
+     uint16_t sadb_ident_len;
+     uint16_t sadb_ident_exttype;
+     uint16_t sadb_ident_type;
+     uint16_t sadb_ident_reserved;
+     uint64_t sadb_ident_id;
+   };
+
+   struct sadb_sens {
+     uint16_t sadb_sens_len;
+     uint16_t sadb_sens_exttype;
+     uint32_t sadb_sens_dpd;
+     uint8_t sadb_sens_sens_level;
+     uint8_t sadb_sens_sens_len;
+     uint8_t sadb_sens_integ_level;
+     uint8_t sadb_sens_integ_len;
+     uint32_t sadb_sens_reserved;
+   };
+
+   struct sadb_prop {
+     uint16_t sadb_prop_len;
+     uint16_t sadb_prop_exttype;
+     uint8_t sadb_prop_replay;
+     uint8_t sadb_prop_reserved[3];
+   };
+
+   struct sadb_comb {
+     uint8_t sadb_comb_auth;
+     uint8_t sadb_comb_encrypt;
+     uint16_t sadb_comb_flags;
+     uint16_t sadb_comb_auth_minbits;
+     uint16_t sadb_comb_auth_maxbits;
+     uint16_t sadb_comb_encrypt_minbits;
+     uint16_t sadb_comb_encrypt_maxbits;
+     uint32_t sadb_comb_reserved;
+     uint32_t sadb_comb_soft_allocations;
+     uint32_t sadb_comb_hard_allocations;
+     uint64_t sadb_comb_soft_bytes;
+     uint64_t sadb_comb_hard_bytes;
+     uint64_t sadb_comb_soft_addtime;
+     uint64_t sadb_comb_hard_addtime;
+     uint64_t sadb_comb_soft_usetime;
+     uint64_t sadb_comb_hard_usetime;
+   };
+
+   struct sadb_supported {
+     uint16_t sadb_supported_len;
+     uint16_t sadb_supported_exttype;
+     uint32_t sadb_supported_reserved;
+   };
+
+   struct sadb_alg {
+     uint8_t sadb_alg_id;
+     uint8_t sadb_alg_ivlen;
+     uint16_t sadb_alg_minbits;
+     uint16_t sadb_alg_maxbits;
+     uint16_t sadb_alg_reserved;
+   };
+
+   struct sadb_spirange {
+     uint16_t sadb_spirange_len;
+     uint16_t sadb_spirange_exttype;
+     uint32_t sadb_spirange_min;
+     uint32_t sadb_spirange_max;
+     uint32_t sadb_spirange_reserved;
+   };
+
+   struct sadb_x_kmprivate {
+     uint16_t sadb_x_kmprivate_len;
+     uint16_t sadb_x_kmprivate_exttype;
+     uint32_t sadb_x_kmprivate_reserved;
+   };
+
+   #define SADB_EXT_RESERVED             0
+   #define SADB_EXT_SA                   1
+   #define SADB_EXT_LIFETIME_CURRENT     2
+   #define SADB_EXT_LIFETIME_HARD        3
+   #define SADB_EXT_LIFETIME_SOFT        4
+   #define SADB_EXT_ADDRESS_SRC          5
+   #define SADB_EXT_ADDRESS_DST          6
+   #define SADB_EXT_ADDRESS_PROXY        7
+   #define SADB_EXT_KEY_AUTH             8
+   #define SADB_EXT_KEY_ENCRYPT          9
+   #define SADB_EXT_IDENTITY_SRC         10
+   #define SADB_EXT_IDENTITY_DST         11
+   #define SADB_EXT_SENSITIVITY          12
+   #define SADB_EXT_PROPOSAL             13
+   #define SADB_EXT_SUPPORTED_AUTH       14
+   #define SADB_EXT_SUPPORTED_ENCRYPT    15
+   #define SADB_EXT_SPIRANGE             16
+   #define SADB_X_EXT_KMPRIVATE          17
+   #define SADB_EXT_MAX                  17
+   #define SADB_SATYPE_UNSPEC    0
+   #define SADB_SATYPE_AH        2
+   #define SADB_SATYPE_ESP       3
+   #define SADB_SATYPE_RSVP      5
+   #define SADB_SATYPE_OSPFV2    6
+   #define SADB_SATYPE_RIPV2     7
+   #define SADB_SATYPE_MIP       8
+   #define SADB_SATYPE_MAX       8
+
+   #define SADB_SASTATE_LARVAL   0
+   #define SADB_SASTATE_MATURE   1
+   #define SADB_SASTATE_DYING    2
+   #define SADB_SASTATE_DEAD     3
+   #define SADB_SASTATE_MAX      3
+
+   #define SADB_SAFLAGS_PFS      1
+
+   #define SADB_AALG_NONE        0
+   #define SADB_AALG_MD5HMAC     2
+   #define SADB_AALG_SHA1HMAC    3
+
+   #define SADB_AALG_MAX         3
+
+   #define SADB_EALG_NONE        0
+   #define SADB_EALG_DESCBC      2
+   #define SADB_EALG_3DESCBC     3
+   #define SADB_EALG_NULL        11
+   #define SADB_EALG_MAX         11
+
+   #define SADB_IDENTTYPE_RESERVED   0
+   #define SADB_IDENTTYPE_PREFIX     1
+   #define SADB_IDENTTYPE_FQDN       2
+   #define SADB_IDENTTYPE_USERFQDN   3
+   #define SADB_IDENTTYPE_MAX        3
+
+   #define SADB_KEY_FLAGS_MAX 0
+   #endif /* __PFKEY_V2_H */
+
+
+附录E：修改记录
+
+   The following changes were made between 05 and 06:
+
+   * Last change before becoming an informational RFC.  Removed all
+     Internet-Draft references.  Also standardized citation strings.
+     Now cite RFC 2119 for MUST, etc.
+
+   * New appendix on optional KM private data extension.
+
+   * Fixed example to indicate the ACQUIRE messages with errno mean
+     KM failure.
+
+   * Added SADB_EALG_NULL.
+
+   * Clarified proxy examples to match definition of PROXY address being
+     the inner packet's source address.  (Basically a sign-flip.  The
+     example still shows how to protect against policy vulnerabilities
+     in tunnel endpoints.)
+
+   * Loosened definition of a destination address to include broadcast.
+
+   * Recommended that LARVAL security associations have implicit short
+     lifetimes.
+
+   The following changes were made between 04 and 05:
+
+   * New appendix on Passive Change message.
+
+   * New sadb_address_prefixlen field.
+
+   * Small clarifications on sadb_ident_id usage.
+
+   * New PFKEYV2_REVISION value.
+
+   * Small clarification on what a PROXY address is.
+
+   * Corrected sadb_spirange_{min,max} language.
+
+   * In ADD messages that are in response to an ACQUIRE, the
+     sadb_msg_seq MUST be the same as that of the originating ACQUIRE.
+
+   * Corrected ACQUIRE message behavior, ACQUIRE message SHOULD send up
+     PROXY addresses when it needs them.
+
+   * Clarification on SADB_EXPIRE and user-level security protocols.
+
+   The following changes were made between 03 and 04:
+
+
+   * Stronger language about manual keying.
+
+   * PFKEYV2_REVISION, ala POSIX.
+
+   * Put in language about sockaddr ports in ACQUIRE messages.
+
+   * Mention of asymmetric algorithms.
+
+   * New sadb_ident_id field for easier construction of USER_FQDN
+     identity strings.
+
+   * Caveat about source addresses not always used for collision
+     detection. (e.g. IPsec)
+
+   The following changes were made between 02 and 03:
+
+
+   * Formatting changes.
+
+   * Many editorial cleanups, rewordings, clarifications.
+
+   * Restrictions that prevent many strange and invalid cases.
+
+   * Added definitions section.
+
+   * Removed connection identity type (this will reappear when it is
+     more clear what it should look like).
+
+   * Removed 5.2.1 (Why involve the kernel?).
+
+   * Removed INBOUND, OUTBOUND, and FORWARD flags; they can be computed
+     from src, dst, and proxy and you had to anyway for sanity checking.
+
+   * Removed REPLAY flag; sadb_sa_replay==0 means the same thing.
+
+   * Renamed bit lengths to "bits" to avoid potential confusion.
+
+   * Explicitly listed lengths for structures.
+
+   * Reworked identities to always use a string format.
+
+   * Removed requirements for support of shutdown() and SO_USELOOPBACK.
+
+   * 64 bit alignment and 64 bit lengths instead of 32 bit.
+
+   * time_t replaced with uint64 in lifetimes.
+
+   * Inserted Appendix A (SADB_X_PROMISC) and Appendix B (SAMPLE HEADER
+     FILE).
+
+   * Explicit error if PF_KEY_V2 not set at socket() call.
+
+   * More text on SO_USELOOPBACK.
+
+   * Made fields names and symbol names more consistent.
+
+   * Explicit error if PF_KEY_V2 is not in sadb_msg_version field.
+
+   * Bytes lifetime field now a 64-bit quantity.
+
+   * Explicit len/exttype wording.
+
+   * Flattening out of extensions (LIFETIME_HARD, LIFETIME_SOFT, etc.)
+
+   * UI example (0x123 == 0x1230 or 0x0123).
+
+   * Cleaned up and fixed some message behavior examples.
+
+   The following changes were made between 01 and 02:
+
+   * Mentioned that people COULD use these same messages between user
+     progs. (Also mentioned why you still might want to use the actual
+     socket.)
+
+   * Various wordsmithing changes.
+
+   * Took out netkey/ directory, and make net/pfkeyv2.h
+
+   * Inserted PF_KEY_V2 proto argument per C. Metz.
+
+   * Mentioned other socket calls and how their PF_KEY behavior is
+     undefined.
+
+   * SADB_EXPIRE now communicates both hard and soft lifetime expires.
+
+   * New "association" extension, even smaller base header.
+
+   * Lifetime extension improvements.
+
+   * Length now first in extensions.
+
+   * Errors can be sent from kernel to user, also.
+
+   * Examples section inserted.
+
+   * Some bitfield cleanups, including STATE and SA_OPTIONS cleanup.
+
+   * Key splitting now only across auth algorithm and encryption
+     algorithm. Thanks for B. Sommerfeld for clues here.
+
+   The following changes were made between 00 and 01:
+
+   * Added this change log.
+
+   * Simplified TLV header syntax.
+
+   * Splitting of algorithms. This may be controversial, but it allows
+     PF_KEY to be used for more than just IPsec. It also allows some
+     kinds of policies to be placed in the KMd easier.
+
+   * Added solid definitions and formats for certificate identities,
+     multiple keys, etc.
+
+   * Specified how keys are to be layed out (most-to-least bits).
+
+   * Changed sequence number semantics to be like an RPC transaction ID
+     number.
+
+
+附录F：版权声明
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+RFC2367――PF_KEY Key Management API, Version 2            PF_KEY Key Management API, Version 2
+
+
+1
+RFC文档中文翻译计划

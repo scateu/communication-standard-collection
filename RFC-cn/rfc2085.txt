@@ -1,0 +1,170 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：（）
+译文发布时间：2001-11-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本
+文档的翻译及版权信息。
+
+
+Network Working Group                                         M. Oehler
+Request for Comments: 2085                                          NSA
+Category: Standards Track                                      R. Glenn
+                                                                   NIST
+February 1997
+
+
+重复性攻击保护的HMAC-MD5 IP 认证
+（RFC2085――HMAC-MD5 IP Authentication with Replay Prevention）
+本文作用
+本文详细说明了一种互联网标准传输协议，本文需要讨论和改进的建议。要得到规定和本协议
+的状态，请参考最新版的"Internet Official Protocol Standards" (STD 1)，本文的散布不受限制。
+摘要
+本文讲述了一种用在IP认证报头（IP Authentication Header）上的keyed-MD5转换，这种特殊
+的转换基于[HMAC-MD5]，另外还详细说明了一种防止重复攻击的选项。
+
+目录
+   
+1. 绪论	1
+1.1 术语	1
+1.2 Keys	2
+1.3 数据长度	2
+2. 数据包格式	2
+2.1重复攻击防护	3
+2.2认证数据计算	3
+3. 安全考虑	4
+致谢	4
+参考文献	4
+作者地址	4
+
+1. 绪论
+认证报头（AH）[RFC-1826]提供了IP数据包的完整性检查和认证，本文中指出的变换使用一
+种keyed-MD5机制[HMAC-MD5]，本机制用到了一种 (key-less) MD5的散列函数，它能够产生报
+文摘要。当它和认证报头密钥(AH 密钥)结合时，就能产生认证数据，此值放在AH的认证数据字
+段，它也是AH协议提供的完整性检查的基础。
+为了防止重复性攻击，必须含有一个重复性攻击防护字段作为变换式选项，此字段是用来防止
+一种攻击的，在这种攻击中，消息会保存并且在后来还会被重复利用，代替或者重复原始消息。安
+全参数索引（SPI）[RFC-1825]用来决定是否包含AH。
+需要熟悉以下下文献："Security Architecture for the Internet Protocol"(Internet协议安全结构) 
+[RFC-1825], "IP Authentication Header"（IP认证报头） [RFC-1826],以及"HMAC-MD5: Keyed-MD5 
+for Message Authentication"（HMAC-MD5：Keyed-MD5消息认证） [HMAC-MD5]。
+所有要符合或同“IP认证报头”一致的应用必须（MUST）执行HMAC-MD5转换。
+1.1 术语
+本文中用来定义每一个需求的重要性的单词都用大写表示，包括：
+-	MUST
+它和"REQUIRED"表示此条款在规定中是绝对需要的。
+
+      - SHOULD
+它和"RECOMMENDED"表示在某些特定的环境下有有效的原因可以忽略此条款，但是必须知
+道充足的含义，并且在采取不同的方法前必须慎重考虑。  
+1.2 Keys
+“认证报头（AH）密钥”是通讯双方共享的秘密，这种“密钥”不是传统意义上的“密钥”，
+认证报头密钥同传输的数据一起进行散列运算，以确保侵犯者不能复制认证数据。
+即使认证报头密钥不是一种密钥，但是仍然涉及了密钥的基本应用，考虑到算法和用以产生输
+出的大部分数据是公开的，转换的强度就决定于密钥的独立映射（需要很健壮）以及认证数据IP
+包，因此应用中就需要尽可能多次的改变认证报头密钥，密钥需要随机的选择或者由一个随机的种
+子在一个强大的密钥随机发生器中产生。[HMAC-MD5]
+所有的支持AH协议的应用都必须（MUST）支持128位或短一些地密钥长度，应用能够
+（SHOULD）支持更长的密钥将会更好。推荐密钥长度选择为输出散列值长度，在MD5中是128
+位，定为其它长度则必须考虑下面提到的相关的事项。
+零长度的密钥是禁止使用的，应用中必须防止在变换式中使用它，因为零长度的密钥必能提供
+有效的认证。密钥长度小于128位的也强烈被阻止使用，因为这会降低函数的安全性能，大于128
+位的也可以使用，但是增长的部分不一定会增加函数的安全性能。在密钥产生的随机性有怀疑的情
+况下推荐使用长于128位的密钥。MD5是在64字节的分组上操作的，长于64字节的密钥第一次
+是通过MD5进行散列运算的，结果散列值用来计算认证数据。
+1.3 数据长度
+MD5产生一个128位的散列值用作认证数据，它自然的64位一行，这样对那些双字长的机器
+就不需要任何的补位。
+2. 数据包格式
+
+     +---------------+---------------+---------------+---------------+
+     | Next Header   | Length        |           RESERVED            |
+     +---------------+---------------+---------------+---------------+
+     |                              SPI                              |
+     +---------------+---------------+---------------+---------------+
+     |                     Replay Prevention                         |
+     |                                                               |
+     +---------------+---------------+---------------+---------------+
+     |                                                               |
+     +                     Authentication Data                       |
+     |                                                               |
+     +---------------+---------------+---------------+---------------+
+      1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8 1 2 3 4 5 6 7 8
+
+Next Header(下个报头), RESERVED（保留）, 和SPI（安全参数索引） 字段在[RFC-1826]中讲
+述了。Length（长度） 字段是Replay Prevention（重复防护）字段和32位字的认证数据的长度。
+2.1重复攻击防护
+Replay Prevention（重复攻击）字段是一个64位的字段，用以确保通讯双方交换的每个数据包
+没有重复，每一个IPsec安全协会指定自己协会中是否使用重复性攻击防护，如果不用，那么
+Authentication Data（认证数据）字段将直接跟在SPI字段后面。Replay Prevention字段是一个以1
+开头的加法计数器。
+共享密钥不能用太长的时间以至于计数器超值，也就是使用同一个密钥传输的超过2^64个数
+据包，接收时，重复值会增长，应用程序可能会收到的杂乱的包，杂乱包的数量是一个应用细节，
+如果支持“杂乱窗口”，应用程序会确定所有的包以前没有收到过，也就是，应用程序最多只会收
+到一次数据包。
+当目的地址是多点传送地址时，重复性攻击防护在使用，对此多点传送地址不只一个遵循同一
+个IPsec安全协会规定的发送者，那么重复性攻击保护功能就不应该（SHOULD NOT）激活，在此
+情况下如果要求重复性攻击保护，每个发送者应该有他自己的IPsec安全联盟。
+[ESP-DES-MD5]中提供了一个执行32位包的重复窗口的例子的代码，并提供了展示了工作流
+程。
+2.2认证数据计算
+认证数据是认证算法（MD5）的输出值，此值是在整个IP数据报上计算的结果，数据报在转
+变中可变的字段和认证数据字段本身必须包含计算前的所有的0 [RFC-1826]，如果重复性攻击字段
+采用，那它就包含在计算中。MD5的定义和参考程序在[RFC-1321]中讲述了，用‘text’表示
+HMAC-MD5要用到的数据，K表示通讯方共享的信息认证私钥，如果K长度超过64字节，那它
+必须（MUST）先用MD5进行散列运算，这样，K就是最终的散列值。
+我们定义两个固定的不同字符串ipad和opad，（‘i’，‘o’代表输入和输出）如下所示：
+ipad=字节0x36重复64次
+opad=字节0x5C重复64次
+为了计算‘text’的HMAC-MD5，我们执行
+MD5(K XOR opad, MD5(K XOR ipad, text))
+即：
+(1)	在K后面补0，使得K的长度是64字节（如果K长16字节，那么       要补48
+个0字节0x00）
+(2)	用ipad异或(XOR) 第一步中产生的64字节的值
+(3)	在第二步中产生的64字节的字符串后面不上‘text’
+(4)	对第三步产生的值进行MD5运算
+(5)	用opad异或第一步中产生的64字节的字符串
+(6)	第5步中产生的字符串后面补上第4步中的运算结果
+(7)	对第6步中产生的结果进行MD5散列运算，输出结果
+在[HMAC-MD5]中对此计算进行了很细致的描述，并带有例子程序代码和性能改进，执行者应
+该参考[HMAC-MD5]以得到更多的加密散列函数的技术信息。
+3. 安全考虑
+此变换的安全性取决于MD5的强度，应用算法的正确性，密钥处理机制和它的应用的安全性，
+关联的秘密密钥的强度，还取决于所有特殊系统中应用程序的强度，[HMAC-MD5]中对MD5的优
+缺点进行了细致的讨论。   
+致谢
+本文的完成很大程度地基于Hugo Krawczyk.写的文章，使用的格式来源于William Simpson 和 
+Perry的文章，重复性攻击保护直接引自Jim Hughes的文章。
+参考文献
+   [RFC-1825]    Atkinson, R., "Security Architecture for the Internet
+                 Protocol", RFC 1852, Naval Research Laboratory,
+                 July 1995.
+   [RFC-1826]    Atkinson, R., "IP Authentication Header",
+                 RFC 1826, August 1995.
+   [RFC-1828]    Metzger, P., and W. Simpson, "IP Authentication using
+                 Keyed MD5", RFC 1828, August 1995.
+   [RFC-1321]    Rivest, R., "The MD5 Message-Digest Algorithm",
+                 RFC 1321, April 1992.
+   [HMAC-MD5]    Krawczyk, H., Bellare, M., and R. Canetti,
+                 "HMAC: Keyed-Hashing for Message Authentication",
+                 RFC 2104, February 1997.
+   [ESP-DES-MD5] Hughes, J., "Combined DES-CBC, MD5, and Replay
+                 Prevention Security Transform", Work in Progress.
+作者地址
+   Michael J. Oehler
+   National Security Agency
+   Atn: R23, INFOSEC Research and Development
+   9800 Savage Road
+   Fort Meade, MD 20755
+   EMail: mjo@tycho.ncsc.mil
+   Robert Glenn
+   NIST
+   Building 820, Room 455
+   Gaithersburg, MD 20899
+   EMail: rob.glenn@nist.gov
+RFC2085――HMAC-MD5 IP Authentication with Replay Prevention      重复性攻击保护的HMAC-MD5 IP 认证
+
+
+2
+RFC文档中文翻译计划

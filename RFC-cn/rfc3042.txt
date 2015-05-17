@@ -1,0 +1,211 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划(http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：安智平（fivestar   anzp@xanet.edu.cn）
+译文发布时间：2001－4－4
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          M. Allman
+Request for Comments: 3042                                  NASA GRC/BBN
+Category: Standards Track                                H. Balakrishnan
+                                                                     MIT
+                                                                S. Floyd
+                                                                   ACIRI
+                                                            January 2001
+
+
+
+
+RFC3042  利用限制传输改善TCP的丢包恢复率
+（RFC3042 Enhancing TCP's Loss Recovery Using Limited Transmit）
+
+
+本备忘录的状态
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+版权声明
+Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+这篇文章提出了一种新的传输控制协议（TCP），可以用来有效地恢复由于拥塞窗口太小或者在单窗口中丢失的大量数据段。发送端在收到前两个重复的应答后，就使用限制传输算法发送一个新的数据段。跟使用超时重传机制相比，使用快速重传算法发送这些数据段，提高了TCP恢复数据段的可能性。限制传输可以和TCP选择应答机制一起使用，也可以单独使用。
+目录
+1 序言	2
+1．1术语	3
+2 限制传输算法	3
+3 相关工作	4
+4 安全问题	4
+致谢	5
+参考资料	5
+作者地址	7
+版权说明	8
+鸣谢	8
+
+1 序言
+很多研究人员已经发现当拥塞窗口太小时，TCP丢失数据段的恢复就无法正常进行。例如，在只有有限的一点数据要发送，或者由于接收方广播的窗口大小造成的限制，或者由低带宽产品上建立的连接的端到端拥塞控制所造成的限制，都可能导致数据段丢失的恢复无法进行。检测到TCP数据包丢失后，就会使用下面两种方法中的一种进入恢复阶段。
+第一：如果一个数据段的应答在指定的时间内没有返回，就认为重发超时，这个数据段就会被重新发送[RFC793,PA00]。第二：当三个相同的应答到达发送方时，‘快速重发’算法重新发送一个数据段[Jac88,RFC2581]。然而，由于数据包在Internet上的重新排序会引发来自接收端的重复的ACK数据段，因此，发送端等待三个重复的应答数据段来区分数据重新排序还是数据段丢失。在数据恢复阶段，有很多种技术可以用来进行恢复，例如慢启动恢复，快速恢复（[RFC2581], NewReno [RFC2582]）和基于选择性应答的恢复（SACKs）[RFC2018,FF96]。
+TCP重传定时(RTO)是根据发送方和接收方的往返时延（RTT）衡量的（在[PA00]中有说明）。为了防止有时候数据段的发送只是延迟了以下，而并未丢失所造成的无意义的重发，RTO保守地定为最小1秒。因此，在网路空闲时，它可以保证网络不需要过长的超时就可以尽可能地发现数据段的丢失。然而，如果没有足够的应答数据段(ACK)从接收端返回，快速重传算法就不会启动，这种情况发生在拥塞控制窗口太小或者在一个窗口内丢失了很多的数据段。例如，假设有一个大小为3的拥塞控制窗口（cwnd）。如果一个数据段被网络丢弃，那么在发送端最多返回两个应答数据段。由于需要三个重复的应答数据段，快速恢复算法才能被触发运行，所以将会发生超时，重发丢失的数据段。
+[BPS+97]发现对于一个Web服务器而言，大约56％的重传是在重传定时之后，而44％由快速恢复算法来处理。而且，仅仅4%的超时重传能够通过SACKs来避免，当然SACKs还得继续判断是数据段重新排序了还是数据段丢失。相反，使用本文档和[Bal98]中所讲述的技术可以避免25%由于超时引起的重传。
+文档的下一个部分讲述了针对TCP的一点改动，这些改动减小了对重传定时器的依赖，从而提高了快速重传算法没有启动时的TCP性能。在其它环境下，这些改变也不会对TCP性能由负面影响，也不会影响其它的连接。
+1．1术语
+In this document, he key words "MUST", "MUST NOT", "REQUIRED",   "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY",   AND "OPTIONAL" are to be interpreted as described in RFC 2119 [1] and   indicate requirement levels for protocols.
+
+2 限制传输算法
+当一个TCP发送端有以前未发送出去的数据时，他应该使用限制传输算法，它在接受到连续的两个重复ACKs时如果满足下列条件时，就让一个TCP发送端发送新的数据：
+1：接收端建议的窗口允许这个数据段的传输。
+2：未完成的数据段数小于或者等于拥塞控制窗口的大小加2。也就是说，发送端只能发送比拥塞控制窗口(cwnd)多两个的数据段。
+当新的数据段在发送时，拥塞控制窗口不能被改变。假入这些发送的新数据段和相应的应答数据段（ACKs）未丢失，这个过程允许发送端使用标准快速传输阈值（3个重复的应答）来推断数据段的丢失[RFC2581]。对于排过序的分组，比起碰到第一或者第二个重复的应答就重发旧的数据分组，这样更可靠一些。
+注意：如果连接使用有选择应答[RFC2018]，而且到达的ACK不包含新的SACK信息，数据发送端绝对不能发送新的数据段来响应它，因为非法的接收方可以产生ACKs信息来触发不正当的数据传输。有关通过非法接收方进行攻击的讨论见[SCWA99]。
+限制传输遵循分组保持拥塞控制原则。前两个重复的ACKs中的每一个都表明数据段已经离开了网络。而且，发送端无法确定数据段是否丢失，因而没有理由能够认为目前的拥塞控制是错误的。因此，发送数据段没有违背TCP拥塞控制原则的精髓。[BPS99]表明数据分组重新排序在并不是稀有的网络事件。[RFC2581]中没有为到达发送端的前两个重复的ACKs准备发送数据。这样就导致当一个新数据段ACK紧在跟数据分组排序后到达时，大量的数据被发送。使用限制传输，进入的ACKs限制数据包的发送，因此不会出现突然大量的数据被发送。
+注意：限制传输在ns模拟器中得以实现[NS]。研究人员希望进一步研究这种机制，希望能够得以实现，使得可以使能指定连接的"singledup_"。
+3 相关工作
+显式拥塞通知（ECN）[Flo94,RFC2481]，可能对小窗口连接很有益处[SA00]。ECN提供一种把拥塞通知给连接端而不丢弃数据段的方法。虽然有些数据段有可能被丢弃，但是ECN还是可能提高小窗口TCP连接的性能，因为发送端可以避免很多的快速恢复和用来发现数据段丢失的超时重发。
+当一个带有ECN功能的TCP连接和不带ECN功能的TCP连接竞争信道时，带有ECN功能的连接性能要高出30％。对于大多数发送端而言，当一个数据段往返时间发送3－4个数据段，ECN能够获得最大的效益[ZQ00]。这是限制传输对网路性能影响的一个较好的估计，因为ECN和限制传输都减小了为了发现拥塞而对重传定时的依赖。
+速率减半拥塞控制算法MSML99]就是一种限制传输，它在发送端每收到连个重复的应答，就发送一个数据段。这个算法，总是在拥塞时把发送的数据减少一半。然而，跟限制传输算法相类似，速率减半拥塞控制算法总是在接收到两个重复的应答才发送新的数据。
+4 安全问题
+本文档的建议中所隐含的安全问题跟当前版本中的缺陷相比是微不足道的。潜在的问题可能来源于虚假的重复应答造成的端对端拥塞控制混乱。虚假的重复应答就是并不是为了通知新数据到达而引起的应答。虚假的重复应答可能来源于网络中应答的自我复制，也可能来源于故意破坏端对端拥塞控制的非法接收端[SCWA99,RFC2581]。
+当TCP数据接收端同意使用SACK选项时，TCP数据发送端对于虚假的重复应答有着极强的防护。特别是使用SACK时，到达发送端用来通知接受到新数据的应答同时报告了新数据段的段序号。因此，使用SACK，TCP发送端能够在接受到应答后发送新的数据之前验证到达的重复的应答是否表明未被确认到达的数据段的到达。为了进一步提高防护，TCP发送端可以记录发送数据的边界，尽大可能识别合法的数据分组（例如：在第一个应答中报告接收到的数据分组的序号）。
+每个人都可以想出许多非SACK TCP连接中防护虚假应答的方法，在这个连接中发送端记录着已发送的数据分组数，并且尽可能的识别每一个确认应答从而发送新的数据。然而，统计发送会给发送端造成很大的麻烦，似乎不大必要。
+最重要的是要防护来自于端对端拥塞控制的虚假应答。有两个独立的情况需要注意：当TCP发送端接受到的重复应答数量少于阈值，当TCP发送端接受到的重复应答数量多于或者等于阈值。在后一种情况下，使用限制传输的连接从行为上看跟没有使用的连接一样，拥塞窗口减小一半，并且丢失恢复程序启动。
+当TCP发送端接受到的重复应答数量少于阈值，非法的接收端可以在每一个正常的应答后面发送两个重复的应答。有人可能认为，发送端会以所允许速度的三倍发送数据。然而，使用第二部分所描述的限制传输算法，发送端发送的数据超过窗口的数量不允许超过阈值，所以并不会为每一个重复的应答发送新数据。
+致谢
+   感谢Bill Fenner, Jamshid Mahdavi和传输工作组对本文档早期版本提供的珍贵的反馈信息。
+参考资料
+
+   [Bal98]   Hari Balakrishnan.  Challenges to Reliable Data Transport
+             over Heterogeneous Wireless Networks.  Ph.D. Thesis,
+             University of California at Berkeley, August 1998.
+
+   [BPS+97]  Hari Balakrishnan, Venkata Padmanabhan, Srinivasan Seshan,
+             Mark Stemm, and Randy Katz.  TCP Behavior of a Busy Web
+             Server:  Analysis and Improvements.  Technical Report
+             UCB/CSD-97-966, August 1997.  Available from
+             http://nms.lcs.mit.edu/~hari/papers/csd-97-966.ps.  (Also
+             in Proc. IEEE INFOCOM Conf., San Francisco, CA, March
+             1998.)
+
+   [BPS99]   Jon Bennett, Craig Partridge, Nicholas Shectman.  Packet
+             Reordering is Not Pathological Network Behavior.  IEEE/ACM
+             Transactions on Networking, December 1999.
+
+   [FF96]    Kevin Fall, Sally Floyd.  Simulation-based Comparisons of
+             Tahoe, Reno, and SACK TCP.  ACM Computer Communication
+             Review, July 1996.
+
+   [Flo94]   Sally Floyd.  TCP and Explicit Congestion Notification.
+             ACM Computer Communication Review, October 1994.
+
+   [Jac88]   Van Jacobson.  Congestion Avoidance and Control.  ACM
+             SIGCOMM 1988.
+
+   [LK98]    Dong Lin, H.T. Kung.  TCP Fast Recovery Strategies:
+             Analysis and Improvements.  Proceedings of InfoCom, March
+             1998.
+
+   [MSML99]  Matt Mathis, Jeff Semke, Jamshid Mahdavi, Kevin Lahey.  The
+             Rate Halving Algorithm, 1999. URL:
+             http://www.psc.edu/networking/rate_halving.html.
+
+   [Mor97]   Robert Morris.  TCP Behavior with Many Flows.  Proceedings
+             of the Fifth IEEE International Conference on Network
+             Protocols.  October 1997.
+
+   [NS]      Ns network simulator.  URL: http://www.isi.edu/nsnam/.
+
+
+   [PA00]    Paxson, V. and M. Allman, "Computing TCP's Retransmission
+             Timer", RFC 2988, November 2000.
+
+   [Riz96]   Luigi Rizzo.  Issues in the Implementation of Selective
+             Acknowledgments for TCP.  January, 1996.  URL:
+             http://www.iet.unipi.it/~luigi/selack.ps
+
+   [SA00]    Hadi Salim, J. and U. Ahmed, "Performance Evaluation of
+             Explicit Congestion Notification (ECN) in IP Networks", RFC
+             2884, July 2000.
+
+   [SCWA99]  Stefan Savage, Neal Cardwell, David Wetherall, Tom
+             Anderson.  TCP Congestion Control with a Misbehaving
+             Receiver.  ACM Computer Communications Review, October
+             1999.
+
+   [RFC793]  Postel, J., "Transmission Control Protocol", STD 7, RFC
+             793, September 1981.
+
+   [RFC2018] Mathis, M., Mahdavi, J., Floyd, S. and A. Romanow, "TCP
+             Selective Acknowledgement Options", RFC 2018, October 1996.
+
+   [RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+             Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RFC2481] Ramakrishnan, K. and S. Floyd, "A Proposal to Add Explicit
+             Congestion Notification (ECN) to IP", RFC 2481, January
+             1999.
+
+   [RFC2581] Allman, M., Paxson, V. and W. Stevens, "TCP Congestion
+             Control", RFC 2581, April 1999.
+
+   [RFC2582] Floyd, S. and T. Henderson, "The NewReno Modification to
+             TCP's Fast Recovery Algorithm", RFC 2582, April 1999.
+
+   [ZQ00]    Yin Zhang and Lili Qiu, Understanding the End-to-End
+             Performance Impact of RED in a Heterogeneous Environment,
+             Cornell CS Technical Report 2000-1802, July 2000.  URL
+             http://www.cs.cornell.edu/yzhang/papers.htm.
+
+作者地址
+
+   Mark Allman
+   NASA Glenn Research Center/BBN Technologies
+   Lewis Field
+   21000 Brookpark Rd.  MS 54-5
+   Cleveland, OH  44135
+
+   Phone: +1-216-433-6586
+   Fax:   +1-216-433-8705
+   EMail: mallman@grc.nasa.gov
+   http://roland.grc.nasa.gov/~mallman
+
+
+   Hari Balakrishnan
+   Laboratory for Computer Science
+   545 Technology Square
+   Massachusetts Institute of Technology
+   Cambridge, MA 02139
+
+   EMail: hari@lcs.mit.edu
+   http://nms.lcs.mit.edu/~hari/
+
+   Sally Floyd
+   AT&T Center for Internet Research at ICSI (ACIRI)
+   1947 Center St, Suite 600
+   Berkeley, CA 94704
+
+   Phone: +1-510-666-2989
+   EMail: floyd@aciri.org
+   http://www.aciri.org/floyd/
+
+版权说明
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works.  However, this document itself may not be modified in any way, such as by removing the copyright notice or references to the Internet Society or other Internet organizations, except as needed for the purpose of developing Internet standards in which case the procedures for copyrights defined in the Internet Standards process must be followed, or as required to translate it into languages other than   English.
+
+   The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+鸣谢
+感谢Internet协会给予RFC编辑部门的资金。
+RFC3042 Enhancing TCP's Loss Recovery Using Limited Transmit   利用限制传输改善TCP丢失数据的恢复
+
+
+
+
+8
+RFC中文文档翻译计划
+

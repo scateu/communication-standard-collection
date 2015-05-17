@@ -1,0 +1,136 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郑培华（yufeng   51flowing@163.com）
+译文发布时间：2002-4-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                                          L. Berger
+Request for Comments:2379                                                      FORE Systems
+BCP: 24                                                                           August 1998
+Category: Best Current Practice
+
+RSVP通过ATM执行的指导方针
+（RSVP over ATM Implementation Guidelines）
+本备忘录的状态
+该文档详细说明了Internet团体的标准协议，和需要为改进而进行的备忘录的分类是无约束的。尚需要用于改进的进一步的讨论和建议这份备忘录定义了一个应用于Internet业界的通用的惯例，尚需要得到用于改进的进一步的讨论和建议。本备忘录的分发是没有限制的。
+版权声明
+Copyright (C) The Internet Society (1998)。所有权被保留。
+摘要
+该备忘录详细介绍了RSVP通过ATM执行的交换虚拟电路的执行向导。概括的问题在[6]中讨论。执行要求在[2]中讨论.对ATM服务计划的综合服务在[3]中阐述。整个文档提供了需要执行综合服务的背景和信息及基于ATM的RSVP。
+1.绪论
+该备忘录论述了运行通过ATM（异步传输模式）的IP的一个环境，该环境中SVC被用于支持QoS流程、RSVP被用于interent水平QoS信号协议。它适用于用CLIP/ION, LANE2.0 和MPOA方法来支持通过ATM执行的IP。通常的出版物叙述的运行RSVP[4]通过ATM已经被很多论文论述过，包括[6]和其他早期的作品。该文档可作为[6,2]的一个伙伴或一个对执行者的向导。读者应该熟悉这两种文档。
+该文档提供了一套推荐用ATM UNI3.x 或 4.0来执行的功能，同时允许用更多的诡辩的方法。我们期待一些卖主会提供一些更诡辩的方法，可描述在[6]中和一些仅使用这样方法的网络中。这种被推荐的功能要确保在不同执行时刻，具有可预言性和互用性。RSVP通过ATM执行的需要在[2]中执行。
+该文档应用在[2]中陈述的相同的术语和设想。同时，在该文档关键词“MUST”、“MUST NOT”、“REQUIRED”、“SHALL”、“SHALL NOT”、“SHOULD”、“SHOULD NOT”、“RECOMMENDED”、“MAY”和“OPTIONAL”将和在RFC 2119[5]中被描述过的一样。
+2.执行建议
+这部分提供了通过ATM执行RSVP的执行向导，对全部的单点传送和多点传送的回复时间来说，很多建议是公用的。当然，也有对单点传送和多点传送的回复时间类型的独特建议。
+2.1 RSVP信息VC（电路）用法 
+一般讲述对于VC应该用于RSVP信息的出版物在[6]中提到。它讨论了许多执行选项，包括：混合控制和数据，单一控制VC（电路）每一回复时间，单一控制电路 (VC)多元的回复时间，和多元控制电路(VC)多元的回复时间。为控制VC的QoS也被讨论。概括性的讨论不在这里重复，在[6]中会回顾细节的信息。
+RSVP通过ATM执行应该通过最优的数据线，来发送RSVP控制信息，如图1。
+                                 Data Flow ==========>
+
+                                   QoS VCs
+                    +-----+    -------------->   +----+
+                    |     |  -------------->     |    |
+                    | Src |                      | R1 |
+                    |     |   Best Effort VC(s)  |    |
+                    +-----+  <-----------------> +----+
+                                 /\
+                                 ||
+                                 ||
+                             RSVP Control
+                               Messages
+
+图1: RSVP 控制信息的 VC 用法
+它允许使用者不考虑这一行为。为了确定RSVP对话时期和发起RSVP预约，需要存在最好的数据线，因此，也就需要有特定的方法使VC（电路）最小化。被用于RSVP的特定最佳的方法是：对单点传送来说，相同的VC用于到达单点传送目的地；对多点传送来说，相同的VC用于为去往IP 的最大交通量的多点传送组。为了信息的多点传送，还有其他用于通信对话期间传送数据的好的VC。比如，为多点传送组及协议和端口匹配对话期间的数据。
+这种方法的缺点在于最优的VC可能不会提供RSVP所需的可靠性。然而，被期望的最好方法是在许多网上能满足RSVP的可靠性需求。尤其是RSVP允许遗失一定数量信息包，去无任何同步状态遗失。
+2.2集合
+正如[6]中讨论的，数据联系多重RSVP处理时间能够用同一个共享VC。执行这样的“集合体”模型仍然一项待研究的问题。因此，通过ATM执行RSVP应该用为每个RSVP保留的独立的VC。
+2.3短切口
+短切口允许ATM附上路由器和主机通过LIS边界来直接安置点对点的VC。例如，VC末端有不同的IP子网。短切口支持已在[7]和[1]中详细说明过的单点传输。短切口的功能和RSVP相互运行已经上升为一个通用的问题。所关心的范围是用于处理不均匀的短接口的能力。尤其是RSVP如何处理下位机短接口不能跟上位机短接口匹配的问题。在这种情况下，正如图2中所示，PATH和RESV信息有各自不同的路径。
+                       ______
+                      /      \
+           +-------- / Router \ <-------+
+           |         \        /         |   <....... RESVs Follow
+           |          \______/          |            Hop-by-hop Path
+           |                            |
+           |                            |
+           V           QoS VCs          |
+        +-----+    ==============>   +----+
+        |     |  ==============>     |    |
+        | Src |                      | R1 |
+        |     |   Best Effort VC(s)  |    |
+        +-----+  <=================> +----+
+
+                     /\
+                     ::                        Data Paths:
+                     ::                        ----> Hop-by-hop (routed)
+               PATHs and Data                  ====> Short-cut
+              Follow Short-cut
+                     Path
+
+图2: Asymmetric RSVP Message Forwarding With ATM Short-Cuts
+RSVP的检查显示：协议已经包括允许支持不均匀路径的机械装置。该机械装置同样用于支持RSVP信息到达错误的路由器或错误的接口。RSVP信息只有到达正确的接口才被处理。当信息到达错误的接口时，将会被RSVP转寄。正确的接口会在NHOP信息中显示。所以，现有的RSVP机械装置将会支持当用短接口时能够运行的不均匀路径。
+但用RSVP运行时，VC设施的短接口模型仍会造成很多的问题。主要问题是处理已设置的最佳短接口。一旦设置短接口，QoS只是短接口。这些问题需要通过RSVP 执行来寻址。
+RSVP通过ATM执行的寻址的关键问题是为QoS数据流设置一个短接口。RSVP通过ATM执行SHOULD完全跟随最佳的通信量。当一个短接口被设置为到一个目的文件或下一个目的地的最佳通信量时，应该应用同样的终端，来设置RSVP触发的VC，使QoS通信量到同样的目的文件或下一个目的地。当路径信息被通过最佳短接口转寄时，这些将自动的进行。在这种方法中，若最佳短接口从未设置，RSVP触发的QoS短接口将同样不会被设置。
+2.4不均匀性处理时间的数据VC处理
+不均匀性处理时间只是在处理通过多点传送时需要考虑。这一观点与数据不均匀性处理时间的VC管理相关联，这些在[6]中详细介绍过了，本文档中就不再重复。总之，当接收器要求具有不同水平的单一时间的QoS或当一些接收器不需要任何QoS时，将发生不同成分。两种不同成分如图3中所示。
+
+                                     +----+
+                           +------> | R1 |
+                           |        +----+
+                           |
+                           |        +----+
+              +-----+ -----+   +--> | R2 |
+              |     | ---------+    +----+        Receiver Request Types:
+              | Src |                             ---->  QoS 1 and QoS 2
+              |     | .........+    +----+        ....>  Best-Effort
+              +-----+ .....+   +..> | R3 |
+                           :        +----+
+                       /\  :
+                       ||  :        +----+
+                       ||  +......> | R4 |
+                       ||           +----+
+                     Single
+                  IP Mulicast
+                     Group
+
+图 3: 多播接收器的类型
+[6]提供四种处理不均匀性的模式：完全不均匀模式、有限不均匀模式、均匀的和改进的均匀模式。关键的问题是从事通过一次执行提供被请求的下位机QoS。其中之一，或一些组合，讨论模式[6]可能用于提供被请求的QoS。不幸的是，上述描述模式并不是对所有的案例的正确回答。对一些网络，例如，公众广域网，可能很需要有限不均匀模式或混合的有限-完全不均匀模式。对于其它网络，比如局域网，可能很需要改进的均匀模式。
+既然没有一种模式使所有的案例满足，执行应该贯彻有限不均匀模式改进的均匀模式。执行应该支持方法和提供能力来选择事实上应该被使用，但却没要求这样做的那种方法。
+3. 安全考虑
+同样的事项在应用于该文档的[4]和[8]中被陈述过，在该文档中没有提出追加保证金的问题。
+4. 鸣谢
+该作品是基于ISSLL工作组早期的草案和注释而作的，作者真心感谢他们的贡献，特别是Steve Berson，他参与著作了这些草案的部分工作。
+5.作者地址
+Lou Berger
+FORE Systems
+1595 Spring Hill Road
+5th Floor
+Vienna, VA 22182
+Phone: +1 703-245-4527
+EMail: lberger@fore.com
+参考书目
+[1] The ATM Forum，“MPOA Baseline Version 1”，May 1997。
+[2] Berger，L.，“RSVP over ATM Implementation Requirements”，RFC 2380，August 1998。
+[3] Borden，M.，和M. Garrett，“Interoperation of Controlled-Load and Guaranteed-Service with ATM”，RFC 2381，August 1998。
+[4] Braden，R.，Zhang，L.，Berson，S.，Herzog，S.和S. Jamin，“Resource ReSerVation Protocol (RSVP) -- Version 1 Functional Specification”，RFC 2205，September 1997。
+[5] Bradner，S.，“Key words for use in RFCs to Indicate Requirement Levels”，BCP 14，RFC 2119，March 1997。
+[6] Crawley，E.，Berger，L.，Berson，S.，Baker, F., Borden, M., and J. Krawczyk, “A Framework for Integrated Services and RSVP over ATM”，RFC 2382，August 1998。
+[7] Luciani，J., Katz，D.，Piscitello，D.和B. Cole，“NBMA Next Hop Resolution Protocol (NHRP)”，RFC 2332，April 1998。
+[8] Perez，M.，Liaw，F.，Grossman，D.，Mankin，A.，Hoffman，E.和A. Malis，“ATM Signalling Support for IP over ATM”，RFC 1755，February 1995。
+完整的版权声明
+Copyright (C) The Internet Society (2000)。版权所有。
+本文档及其译文可以拷贝和提供给他人，且其衍生物，如评论、解释或帮助实施的作品可以全部或部分地定制、拷贝、出版和发布，对此我们不加任何限制，前提是上述版权声明，及本段内容包含在所有的拷贝和派生作品中。然而，本文档本身不允许以任何方式修改，例如删除Internet社团或其他Internet组织的版权声明或参考，除非是为了开发Internet标准的需要。即便在这种情况下，也需要添加Internet标准中定义的版权声明，或者根据需要把他翻译成英语以外的其他语言。
+上述准许的有限许可是永久性的， 无论是Internet社团以及其继承者或代理者都将不会废止这些许可。
+本文档及其中包含的信息基于“AS IS”提供，而且INTERNET社团和IETF拒绝所有授权、表达或影射，包括但不限于任何这里使用的消息的授权将不会违背任何版权或者隐含的商业性授权或对特定的合理目的。
+致谢
+目前，RFC编者活动的基金由Internet社团提供。
+
+RFC2379―RSVP over ATM Implementation Guidelines                 RSVP通过ATM执行的指导方针
+
+
+
+
+1
+RFC文档中文翻译计划
+

@@ -1,0 +1,169 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王顺（zhenm2000   wangs97@263.net）
+译文发布时间：2001-3-30
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+
+网络工作组															  A.Coates
+RFC:3085															   Reuters
+类别：信息类															 IPTC
+D.Rivers-Moore
+Rivco
+2001年3
+
+RFC3804―新闻型标记语言（NewsML）资源的URN名字空间
+本备忘录的状态
+本文档为Internet社区提供信息，不指定Internet标准。本备忘录的发布不受任何限制。
+版权声明	
+Copyright  (C)  The Internet Society  (2001).  All Rights Reserved.
+本文件全部版权属于The Internet Society (2001)。
+摘要
+本文档描述了用于确认新闻型标记语言新闻条目（NewsML NewsItems）的URN（统一资源名）名字空间，新闻条目是可用NewsML元素来表达的信息资源，而NewsML元素则必须来自遵照IPTC为NewsML所创建的文档类型定义(DTD)的NewsML文档之中。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+目录
+1.引言	2
+2.模板规范	2
+3.实例	5
+4.安全性考虑	5
+5．参考文献	5
+6．作者地址	6
+7．完整版权声明	6
+8．致谢	7
+
+
+1.引言
+NewsML是扩展标记语言（XML）用于包装多媒体新闻资源的一种格式。它已经在国际新闻界电信会议（IPTC）的赞助下被创建，而且版本1.0已经于2000年10月6日被IPTC批准。
+用同样合理的新闻条目（NewsItem）可能存在于多个物理位置。NewsML规范允许NewsItems存在于多个统一资源定位器(URLs)；但是只能有一个统一资源名(URN)，以次来保证资源名字的唯一性。
+名字空间的规范适用于一个正式的名字空间。
+2.模板规范
+名字空间标识符：
+      需要"newsml"。
+登记信息：
+      登记版本号: 1
+      登记日期: 2000-11-07
+名字空间已申报的登记者：
+      David Allen
+      ho73@dial.pipex.com
+      IPTC
+      Royal Albert House
+      Sheet Street
+      Windsor
+      SL4 1BE
+结构说明：
+标识符具有如下ABNF[6]规格：
+      NSS = ProviderId ":" DateId ":" NewsItemId ":" RevisionId Update
+      ProviderId = string（字符串型）
+      DateId = date（日期型）
+      NewsItemId = string（字符串型）
+      RevisionId = posint（正整数型）
+      Update = 0*1( "A" / "U" )
+      date = century year month day
+      century = ( "0" posdig ) / ( posdig DIGIT )
+      year = 1*2DIGIT
+      month = ( 0 posdig ) / ( "1" ( "0" "1" "2" ) )
+      day = ( 0 posdig ) / ( ( "1" / "2" ) DIGIT ) / "30" / "31"
+      string = 1*char
+      char = ALPHA / DIGIT / symbol / escape
+      symbol = "(" / ")" / "+" / "," / "-" / "." / "=" / "@" / ";" /
+        "$" / "_" / "!" / "*" / "'"
+      escape = "%" HEXDIG HEXDIG
+      posint = posdig *DIGIT
+      posdig = "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9"
+
+提供者标识符必须为一个Internet域名，同时它也必须为创建新闻型标记语言资源的组织所承认，并被该组织分配了一定的URN。日期通过日期标识符来鉴别，日期标识符为ISO 8601基本格式，即CCYYMMDD(世纪年月日)型，而且必须与分配URN的组织承认提供者表示符所标记的域名的日期一致。
+同一提供者所分发的新闻条目中，每个新闻跳目标识符必须是唯一的，而且它们应该具有相同的日期标识符。
+修订版标识符为正整数型，用来说明该新闻条目为第几次修订版本，所有的正整数都可能出现，但如果两个实例具有相同的提供者标识符、日期标示符和新闻条目标识符，必须满足下列情形：数值较大的那个标识符所对应的修订版必须是距现在更近一些的版本。版本标识符的值不可以取为0。
+如果该新闻条目中出现“Update”部分，则Update位必须设置为字符“U”；如果新闻条目仅由新闻管理数据的替换集组成，则Update必须设为“A”；如果两者都不是，则不必标出Update。
+相关文档：
+无
+标识符唯一性考虑：
+提供者标识符与日期标识符的结合唯一地确定了获得该URN的组织，该组织有保证日期标识符、新闻条目标识符和版本标识符结合为唯一的责任。
+标识符持续性考虑：
+一个新闻标记语言URN可以被一个拥有Internet域名的组织分配。这个URN标识了该组织获得本域名的日期，日期和域名的结合在任何时刻都唯一的标识了该组织。
+标识符分配过程：
+由提供者标识符、日期标识符结合而确定的组织负责分配该日期标识符对应的新闻条目标识符，并保证其唯一性。
+标识符解析过程：
+新闻标记语言提供者负责对其已分配的提供者标识符和日期标识符结合有效的NewsML URNs提供URN的解析服务。
+词汇等价规则：
+如果提供者标识符、日期标识符、新闻条目标识符和版本标识符(不区分大小写比较) 都是完全相同的，则URNs的词汇等价，即为同一条。
+与URN语法的一致性：
+相比之下，在语法的描述上并没有特别的考虑。
+生效机制：
+分配NewsML URNs的组织负责对其已分配的有效ProviderID/DateID结合的URNs提供一个URN的生效服务。
+范围：
+全球
+3.实例
+下面是NewsML URNs的有代表性的例子，但并不一定涉及真实的资源：
+   urn:newsml:iptc.org:20001006:NewsMLv1.0:1
+   urn:newsml:reuters.com:20000206:
+              IIMFFH05643_2000-02-06_17-54-01_L06156584:1U
+4.安全性考虑
+除了通常地把它与URNs的使用和解析联系在一起外，并没有给出额外的安全性考虑。
+5．参考文献
+   [1]  Rivers-Moore, D., "NewsML Version 1.0 Functional Specification",
+        November 2000,
+        <http://www.iptc.org/NewsML/specification/NewsMLv1.0.pdf>.
+
+   [2]  Rivers-Moore, D., "NewsML Version 1.0 DTD", November 2000,
+        <http://www.iptc.org/NewsML/DTD/NewsMLv1.0.dtd>.
+   [3]  W3C, XML WG, "Extensible Markup Language (XML) 1.0", February
+        1998, <http://www.w3.org/TR/REC-xml>.
+   [4]  Moats, R., "URN Syntax", RFC 2141, May 1997.
+   [5]  Daigle, L., van Gulik, D., Iannella, R. and P. Faltstrom, "URN
+        Namespace Definition Mechanisms", RFC 2611, June 1999.
+   [6]  Crocker, D. and P. Overell, "Augmented BNF for Syntax
+        Specifications: ABNF", RFC 2234, November 1997.
+6．作者地址
+   Anthony B. Coates
+   Reuters
+   85 Fleet St
+   London  EC4P 4AJ
+   United Kingdom
+   Phone: +44 20 75 42 21 65
+   EMail: tony.coates@reuters.com
+   David Allen
+   IPTC
+   Royal Albert House
+   Sheet Street
+   Windsor  SL4 1BE
+   United Kingdom
+   Phone: +44 17 53 70 50 51
+   EMail: ho73@dial.pipex.com
+   Daniel Rivers-Moore
+   Rivcom
+   Lotmead Business Village
+   Swindon  SN4 0UY
+   United Kingdom
+   Phone: +44 17 93 79 20 00
+   EMail: daniel.rivers-moore@rivcom.com
+
+7．完整版权声明
+本文件及其译文可以复制并对外提供。可以部分或全部编著、复制、出版、分发与其有关的评议、解释和有助于实施的派生著作，没有任何限制，但要求在复制文件和派生著作中包括上述版权警告及本节版权声明内容。但是，本文件的内容不允许做任何形式的修改，诸如删除版权警告或者关于Internet Society或者其他Internet组织的介绍，除非为了开发Internet标准或翻译成英语以外的其他语言的需要，即使在这种情况下，也仍然必须遵循Internet标准过程中确定的版权程序。
+上述许可是永久性的，不会由The Internet Society，它的继承者或转让者予以废除。
+本文件及其提供的信息以“现状”为基础，The Internet Society与IETF(因特网工程任务小组)否认所有的保证明示或暗示，包含但并不限于任何保证。所含信息的使用将不会侵犯具有特殊目的的商用性或者适用性的任何权利或隐含的保证。
+8．致谢
+感谢The Internet Society顺利地提供了本RFC编辑执行基金。
+RFC3085   URN Namespace for NewsML Recourses
+
+
+
+
+1
+RFC文档中文翻译计划
+

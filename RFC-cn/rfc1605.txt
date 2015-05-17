@@ -1,0 +1,86 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：alen8110（alen8110   ）
+译文发布时间：2001-12-28
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                    W. Shakespeare
+Request for Comments: 1605                         Globe Communications
+Category: Informational                                    1 April 1994
+
+
+SONET to Sonnet翻译
+（RFC1605――SONET to Sonnet Translation）
+ 
+这个备忘录的状况
+    这个备忘录提供为了互连网社会的信息。这备忘录不会指定一个任何性质的互连网标准。
+这备忘录的发行是无限的。
+摘要
+    如果SONET在字节的结构内传送数据，它是相当的容易去想象压缩SONET结构的方法来
+产出更高的带宽在一个给予的光纤上。这备忘录描述了一个详细的方法，超过这新奇的英语
+翻译的SONET（SONNET）。
+协议概述
+    简单扼要的，SONET是一种为了压缩810字节（9行90字节）SONET OC-1结构到大约400
+字节（十音节的14行）的英文sonnet。这压缩计划产出的一个大约50%的平均压缩，和因而
+SONNET压缩速率是被指定的OCH-#，在‘h’显示50%（一半）压缩和这#是未压缩的连接速
+度。这缩写词是这明确的“owch”。
+    这2**704可能的SONET有效载荷的计划是通过每个可能有效载荷的模式拥有的相等的
+Cerf星表号数来完成。（见（1），那些在英语中列于一个巨大的sonnets的数字，还有许多
+是真正的极坏的但是满足这个备忘录的目的）。
+基本的传送规则
+    这基本的传送规则是非常简单的。这基本的SONET OC-1结构是被代替在传送的最后中被
+修改的从这sonnet到SONET的接受者的最后的相应sonnet.这样，例如，SONET结构12是这
+样被传送的：
+             
+        When do I count the clock that tells the time
+        And see the brave day sunk in hideous night;
+        When I behold the violet past prime,
+        And sable curls,...
+
+    因为这速率比OC-1更高，所以这OOC-1结构也许会即交叉存取又和大量的结构连接。在
+SONNET转换规则下，交叉存取结构有它们相应的表现的交叉存取。这样SONET结构33，29
+以及138在一个OC-3结构里将被修改这次序：
+       Full many a glorious morning have I seen
+       When, in disgrace with fortune and men's eyes,
+       When my loves swears that she is made of truth
+       Flatter the mountain-tops with sovereign eye
+       I all alone beweep my outcast state,
+       I do believe her, though I know she lies
+       Kissing with golden face...
+    在一个OC-3结构里，这个别的OC-1结构连接着，接连的，也就是:
+
+        Full many a glorious morning have I seen Flatter the mountain-
+        tops with sovereign eye Kissing with golden face...
+
+        When, in disgrace with fortune and men's eyes, I all alone
+        beweep my outcast state,...
+
+        When my loves swears that she is made of truth I do believe her,
+        though I know she lies...
+    (这个例子，也许，将变的更有条理使数据通信专家考虑连接SONET更加有效率和愉快）
+预定问题
+    在一个结构里面这个转换方案来维持这一致的调速是非常危急的。假如SONET结构或者
+修改的sonnets办法是及时的，这个SONET修改诗音步，或者更坏的，可受到损害。
+参考
+   [1] Cerf, B., "A Catalog of All Published English Sonnets to 1950",
+       Random House, 1953. (Now out of print.)
+安全考虑
+    安全问题不在这个备忘录被讨论。
+作者地址
+    William Shakespeare
+    Globe Communications
+    London, United Kingdom
+
+    Any suggestions that this, or any other work by this author, might be the work 
+of a third party such as C. Marlow, R. Bacon, orC. Partridge or based on a previously 
+developed theme by P.V. Mockapetris are completely spurious.
+RFC1605――SONET to Sonnet Translation                                SONET to Sonnet翻译
+
+
+1
+RFC文档中文翻译计划

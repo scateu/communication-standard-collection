@@ -1,0 +1,401 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：黄亨沛（airshadow   airwolf2000@263.net）
+译文发布时间：2001-8-14
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                        G. Armitage
+Request for Comments: 2492                              Lucent Technologies
+Category: Standards Track                                        P. Schulter
+                                                  BrightTiger Technologies
+                                                                M. Jork
+                                                  Digital Equipment GmbH
+                                                            January 1999
+
+IPv6通过ATM网络
+（RFC2492--Ipv6 over ATM Networks）
+
+备忘录：
+本文档为整个因特网指定了一个标准跟踪协议，并为其改进展提供了一些讨论和建议。请参
+考最新版的"Internet官方协议标准" (STD1)来获得本协议的标准化程度和状态。本备忘录的
+传播不受任何限制。
+
+版权声明：
+Copyright (C) The Internet Society (1999). All Rights Reserved.
+
+摘要：
+本文档《Ipv6 通过非广播多通路（NBMA）网络》是ION工作组的结构文档之一。它提供
+了怎样应用Ipv6通过NBMA结构到异步传输模式（ATM）网络的详细资料。该结构允许常
+规的Ipv6临近计算机发现协议的主机-分机操作，同时也支持已建立的短程ATM传送路径
+以及通过行政管理配置的点到点PVC的操作。
+
+目录
+1. 绪论	2
+2. 规范术语	3
+3. PVC环境	3
+3.1 系统设定数据封装格式	3
+3.2 选择性空封装	3
+3.3  PPP封装	4
+3.4  PVC环境下MTU	4
+3.5  PVC环境下的接口令牌格式	4
+4. SVC环境	4
+4.1  SVC特殊代码点	4
+4.1.1 SVC环境下的ATM适配层封装	4
+4.1.2 单点传送数据封装	4
+4.1.3 多点传送数据封装	5
+4.1.4 选择性空封装	5
+4.1.5 MARS控制信息	5
+4.1.6 NHRP控制信息	6
+4.1.7 临近计算机协议消息	6
+4.2 UNI 3.0/3.1 信号发布 （SVC模式）	7
+5. 接口令牌	7
+5.1 基于ESI值的接口令牌	7
+5.2 基于48位MAC值的接口令牌	8
+5.3 基于EUI-64值的接口令牌	8
+5.4 基于当地E.164地址的接口令牌	8
+5.5 无唯一标识符节点	8
+5.6 单一接口的多逻辑链接	8
+6. 结论和公开发行	9
+7. 安全考虑	9
+感谢：	9
+作者联系方式：	9
+参考书目：	10
+Full Copyright Statement	11
+
+1. 绪论
+本文档《Ipv6通过NBMA网络》规范是ION工作组对ATM的详细说明文档。至于术语和
+结构的描述这里将不再重复。
+
+ATM可提供点到点的PVC服务，或者更加灵活的点到点和点到多点的SVC服务，本文档
+涵盖了ATM的这些应用。
+
+一个最低限度符合标准的Ipv6/ATM驱动应至少能支持PVC模式的操作。而一个Ipv6/ATM
+驱动支持完全的SVC模式同时也将支持PVC模式的操作。
+
+2. 规范术语
+本文档中，"MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT","SHOULD", 
+"SHOULD NOT", "RECOMMENDED",  "MAY", 以及"OPTIONAL"等关键词的含义请参阅
+RFC2119文档。
+
+3. PVC环境
+当ATM网络用于PVC模式时，每一条PVC将精确的连接两个节点且临近计算机发现和其
+他的Ipv6的特殊功能将受到限制。Ipv6/ATM接口在每一条链路上只有一个邻居接口。既然
+在一单一的ATM标准的操作中不能进行多点传送和广播操作，因而MARS和NHRP协议
+不再必须。动态的发现的传送捷径不被支持。
+
+接下来的章节提供关于封装，MTU和链接令牌产生的详细资料。
+
+PVC链路的这种应用既不授权也不阻止在临近计算机发现协议中扩展名的使用，这可由
+PVC连接中的任一普通使用而发现。
+
+既然ATM网络中PVC链接不使用链路层的地址，那么任何的网络指导消息中都不能包含
+链路层的地址操作。一旦在某一网络指导消息中出现链路层地址操作，那么该操作将被忽略。
+
+一最低限度符合标准的Ipv6/ATM驱动将应至少能支持PVC模式操作。这种单一执行PVC
+的结构并不要求支持任何的SVC模式操作。
+
+3.1 系统设定数据封装格式
+下面内容可参考RFC 1483文档[2]，AAL5为默认的适配层服务协议，（LLC/SNAP）封装为
+系统设定的适用于通过点到点的PVC链路的数据的封装。如[1]中所定义，系统默认的Ipv6
+的数据封装格式为：
+[0xAA-AA-03][0x00-00-00][0x86-DD][IPv6 packet]
+  (LLC)       (OUI)     (PID)
+
+3.2 选择性空封装
+Ipv6/ATM驱动有可能也支持空封装作为一项可配置操作。当空封装被激活，Ipv6数据直接
+通过到ALL5层。PVC链路的两端应同时配置使用空封装。PVC不会被除Ipv6以外的其他
+协议所用到。
+
+3.3  PPP封装
+本规范文档不包含Ipv6通过PPP和PPP通过ALL5的虚拟电路的串联。
+
+3.4  PVC环境下MTU
+默认的PVC链路的IP MTU 长度为9180字节。详细说明参看[7]。其他的IP MTU值也可
+能被应用。
+
+3.5  PVC环境下的接口令牌格式
+当ATM网络用于PVC模式时，接口令牌应当用第5节中所记述的方法产生。在PVC链路
+的两个节点之间接口令牌必须是唯一的。
+
+4. SVC环境
+
+4.1  SVC特殊代码点
+
+4.1.1 SVC环境下的ATM适配层封装
+
+下面可参考RFC 1483原文。ALL5为默认的适配层服务协议，（LLC/SNAP）封装为系统设
+定的适用于通过SVC链路的单点传送和多点传送数据的封装。
+
+4.1.2 单点传送数据封装
+如[1]中所定义，默认的Ipv6单点传送数据封装为：
+[0xAA-AA-03][0x00-00-00][0x86-DD][IPv6 packet]
+   (LLC)       (OUI)     (PID)
+
+4.1.3 多点传送数据封装
+如[1]中所定义，默认的Ipv6 多点传送数据封装为：
+[0xAA-AA-03][0x00-00-5E][0x00-01][pkt$cmi][0x86DD][IPv6 packet]
+   (LLC)       (OUI)     (PID)    (mars encaps)
+
+IPv6/ATM驱动的群体成员ID需要记录在pkt$cmi段的2个8位字节优先传送。
+
+4.1.4 选择性空封装
+IPv6/ATM驱动也可能支持空封装做为一项可配置操作。空封装只能被用作从一个IPv6/ATM
+驱动传送IPv6包到另一个。空封装不能被用在在IPv6/ATM驱动和当地MARS之间的点到
+点SVC操作。
+
+如果空封装被激活，IPv6包直接被传送到AAL5层。在呼叫建立阶段，SVC的两端口必须
+同意使用空封装。使用IPv6以外的协议SVC将不可利用。
+
+如果在路由器之间的数据SVC中有空封装，则中间路由的NHRP通信必须利用一独立平行
+的SVC。
+
+当IPv6/ATM和MARS/NHRP/ND一起使用时（参见[1]），不鼓励使用空封装。
+
+4.1.5 MARS控制信息
+MARS控制信息（在MARS和MARS客户端之间）的封装如RFC 2022 [3]中所示：
+[0xAA-AA-03][0x00-00-5E][0x00-03][MARS control message]
+   (LLC)       (OUI)     (PID)
+
+关键控制字段值如下：
+
+mar$afn段保持为 0x0F （ATM地址）
+
+mar$pro段应为 0x86DD （IPv6）
+
+mar$op.version段保持为 0x00（MARS）
+
+mar$spln和mar$tpln段为0（空消息）或16（全IPv6协议地址）
+
+ATM地址如何保存沿用了RFC 2022 [3]中的方法。
+
+4.1.6 NHRP控制信息
+NHRP控制信息的封装如RFC 2332[4]：
+[0xAA-AA-03][0x00-00-5E][0x00-03][NHRP control message]
+    (LLC)       (OUI)     (PID)
+
+关键字段的值如下：
+
+ar$afn段保持 0x0F（ATM地址）
+
+ar$pro段应为 0x86DD（IPv6）
+
+ar$op.version段保持 0x01 （NHRP）
+
+ar$spln和ar$tpln段为0（空消息）或16（全IPv6协议地址）
+
+ATM地址如何保存沿用了RFC 2022 [3]中的方法。
+
+4.1.7 临近计算机协议消息
+[1]中5.2节描述了ND链路层地址选项。对于IPv6/ATM驱动，子字段需按如下方法编码：
+
+[NTL]定义ATM数值的类型和长度，紧接为[STL]字段。格式如下：
+            7 6 5 4 3 2 1 0
+            +-+-+-+-+-+-+-+-+
+            |0|x|  length   |
+            +-+-+-+-+-+-+-+-+
+
+第一有效位保留并需至为零。第二有效位（x）是一个ATM数值是否在其中的标志：
+
+ATM论坛AESA格式 （x=0）.
+本地的 E.164格式 （x=1）.
+
+末端的6位为一无符号整数指出8位字节段中关联的ATM地址段的长度。
+
+[STL]格式同[NTL]段。如果其存在，则定义子地址段的长度。如果其不存在则这个8位字
+节段必须全为零。如果子地址存在则将为AESA格式，所以标记x应为零。
+
+[NBMA Number]是一个包含面向链路层ATM地址的变长字段。它总是存在的。
+
+[NBMA Subaddress]是一个包含面向链路层ATM子地址的变长字段。它可能存在，也可能
+不存在。当它不存在的时候，选项于[NBMA Number]（或者其他为填满8位队列的附加字
+节）之后结束。
+
+[NBMA Number]段和[NBMA Subaddress]段中8位字节的顺序于它们用在MARS和NHRP
+控制消息中时相同。
+
+4.2 UNI 3.0/3.1 信号发布 （SVC模式）
+当一个IPv6节点向另一个IPv6节点发出一条呼叫，必须遵循[6][7]中的程序。如[7]中所记
+述，默认的LL算法上的IP MTU长度为9180字节。
+ 
+注意：当[7]中的程序仍然应用到ATM上的IPv6时，节点和路由使用IPv6路径MTU发现
+[8]胜于IPv4 MTU发现。另外，当IPv6节点不需要实现路径MTU发现时，IPv6/ATM节点
+将应实现它。所以，既然IPv6节点将为每一个VC协商一适当的MTU，当两节点没有接收
+到过大的以至触发路径MTU发现的数据包时路径MTU将不被触发。当节点中的通讯通过
+一个或多个路由时，路径MTU发现将按传统网络的方法来使用。
+
+5. 接口令牌
+对于无论PVC或是SVC模式操作，按[1]中5.1节所要求的必须使用下列方法产生接口令牌。
+
+5.1 基于ESI值的接口令牌
+当潜在的ATM接口被ATM末端系统地址（AESA）识别出时，接口令牌可能由AESA中的
+ESI和SEL值构成。如下：
+[0x00][ESI][SEL]
+
+[0x00]是一个总设为0的8位字段。
+注意： 这个和EUI-64的 全局/局部 标志位相应的位总是置0表明这不地址不是一全局唯
+一的IPv6接口令牌。
+
+[ESI]是一6个8位字节字段。
+该段总包含6个8位字节的ESI值，AESA以此寻IPv6/ATM的接口地址。
+
+[SEL]为一个8位字节
+该段总包含6个8位字节的SEL值，AESA以此寻IPv6/ATM的接口地址。
+
+5.2 基于48位MAC值的接口令牌
+当潜在的ATM NIC 驱动已读取一或多ATM NIC特有的48位MAC值，IPv6/ATM接口可
+应用这些值建立一特定的接口令牌，如[10]中所述。
+
+5.3 基于EUI-64值的接口令牌
+当潜在的ATM NIC 驱动已读取一或多ATM NIC特有的64位EUI-64值，IPv6/ATM接口可
+应用这些值，反置全局/局部标识符，建立一特定的接口令牌。
+
+当EUI-64值用于IPv6接口令牌，从NIC读取的字节串中唯一允许改动为倒置 全局/局部 标
+识位。
+
+5.4 基于当地E.164地址的接口令牌
+当一接口应用当地E.164地址时，E.164值可用于产生接口令牌如下：
+[D14][D13D12][D11D10][D9D8][D9D6][D5D4][D3D2][D1D0]
+
+[D14]：一单一的8位字节包含半8位字节表示最重要的E.164数位左移4位到8位字节中
+最重要的4位。低四位必须置0。注意EUI-64全局/局部 标识符置0表示这是一个全局特定
+IPv6接口令牌。
+
+[D13D12]：一单一的8位字节包含半8位字节表示次重要的E.164数位[D13]左移4位到8
+位字节中最重要的4位，第三重要的半8字节在8位字节中最次要的4位中。
+
+[D11D10] - [D1D0]：每一个均包含两个E.164数位的8位字节组，两个E.164数位中，其一
+在最重要的4位字节中，另一在最次要的4位字节中。
+
+5.5 无唯一标识符节点
+如果接口令牌的产生中没有用到MAC,EUI-64,AESA或E.164值，则接口令牌的产生必须按
+照[10]中附录A所述。
+
+5.6 单一接口的多逻辑链接
+一个单一的ATM接口可能于一个普通AESA前缀中的不同SEL段相关联，或者一组完全独
+立的ESI可能被当地ATM注册用于交换建立特定AESA域。
+
+识别每一个逻辑ATM接口至少须知它们的ESI+SEL组合。
+
+如[1]中5.1.2节对虚拟主机的描述，虚拟主机需要从64位数值队列中选择一个可应用到ATM 
+NIC的不同的接口令牌。每一台虚拟主机必须实现IPv6/ATM接口按下面的方式：不可存在
+两台或两台以上的虚拟主机向同一LL终止通告同一接口令牌。（为了顺应这一要求，可选
+择不同的SEL值或（和）ESI值。）
+
+6. 结论和公开发行
+本文档《Ipv6通过NBMA网络》规范是ION工作组对ATM的详细说明文档。它详细说明
+了定态配置PVC和动态制订SVC操作模式的码点。
+
+There are no major open issues. Comments to the ION mailing list are solicited (ion@nexen.com).
+
+7. 安全考虑
+本提议不引入任何新的安全机制，故所有当前的IPv6安全机构的运行无需针对ATM加以修
+正。这包含临近计算机发现协议的确认和加密，如IPv6数据包的交换。
+
+感谢：
+最初的IPv6/ATM著作由G. Armitage在受雇于Bellcore期间完成。第四节借鉴了MAtt 
+Crawford的备忘录《IPv6通过以太网》。
+
+这里作者要对Kazuhiko Yamamoto, Kenjiro Cho,Yoshinobu Inoue, Hiroshi Esaki, Yoshifumi 
+Atarashi, Atsushi Hagiwara等对实际PVC实现所做出的贡献表示感谢。
+
+作者联系方式：
+   Grenville Armitage
+   Bell Laboratories, Lucent Technologies
+   101 Crawfords Corner Road
+   Holmdel, NJ 07733
+   USA
+
+   EMail: gja@lucent.com
+
+
+   Peter Schulter
+   BrightTiger Technologies
+   125 Nagog Park
+   Acton, MA 01720
+
+   EMail: paschulter@acm.org
+
+
+   Markus Jork
+   European Applied Research Center
+   Digital Equipment GmbH
+   CEC Karlsruhe
+   Vincenz-Priessnitz-Str. 1
+   D-76131 Karlsruhe
+   Germany
+
+   EMail: jork@kar.dec.com
+
+参考书目：
+[1] Armitage, G., Schulter, P., Jork, M. and G. Harter, "IPv6 over
+       Non-Broadcast Multiple Access (NBMA) networks", RFC 2491, January
+       1999.
+
+   [2] Heinanen, J., "Multiprotocol Encapsulation over ATM Adaption
+       Layer 5", RFC 1483, July 1993.
+
+   [3] Armitage, G., "Support for Multicast over UNI 3.1 based ATM
+       Networks", RFC 2022, November 1996.
+
+   [4] Luciani, J., Katz, D., Piscitello, D., Cole, B. and N. Doraswamy,
+       "NBMA Next Hop Resolution Protocol (NHRP)", RFC 2332, April 1998.
+
+   [5] "64-Bit Global Identifier Format Tutorial",
+       http://standards.ieee.org/db/oui/tutorials/EUI64.html.
+
+   [6] Perez, M., Liaw, F., Mankin, A., Hoffman, E., Grossman, D. and A.
+       Malis, "ATM Signalling Support for IP over ATM", RFC 1755,
+       February 1995.
+
+   [7] Atkinson, R., "Default IP MTU for use over ATM AAL5", RFC 1626,
+       May 1994.
+
+   [8] McCann, J., Deering, S. and J. Mogul, "Path MTU Discovery for IP
+       version 6", RFC 1981, August 1996.
+
+   [9] ATM Forum, "ATM User Network Interface (UNI) Specification
+       Version 3.1", ISBN 0-13-393828-X, Prentice Hall, Englewood
+       Cliffs, NJ, June 1995.
+
+   [10] Hinden, B. and S. Deering, "IP Version 6 Addressing
+        Architecture", RFC 2373, July 1998.
+
+   [11] Narten, T., Nordmark, E. and W. Simpson, "Neighbor Discovery for
+        IP Version 6 (IPv6)", RFC 2461, December 1998.
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+RFC2492――Ipv6 over ATM Networks                           IPv6通过ATM网络
+
+
+1
+RFC文档中文翻译计划

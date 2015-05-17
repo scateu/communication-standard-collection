@@ -1,0 +1,38 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+NETWORK WORKING GROUP                           J. Melvin
+Request for Comments #124                       NIC
+NIC #5840                                       19 April 1971
+
+               
+
+在 RFC 107 中有印刷错误 
+（RFC124――Typographical Error in RFC 107） 
+
+Catagories:  C
+RFCs Obsoleted:  none
+RFCs Updated:  106
+
+          在RFC 107第7页，RTS (1.)应为STR。
+
+
+       [ This RFC was put into machine readable form for entry ]
+       [ into the online RFC archives by BBN Corp. under the   ]
+       [ direction of Alex McKenzie.                   12/96   ]
+
+
+
+RFC124――Typographical Error in RFC 107              在 RFC 107 中有印刷错误  
+
+
+1
+RFC文档中文翻译计划

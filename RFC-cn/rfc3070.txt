@@ -1,0 +1,248 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：prince1680（prince1680  prince1680@163.com）
+译文发布时间：2001-5-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                           V. Rawat
+Request for Comments: 3070                             ONI Systems, Inc.
+Category: Standards Track                                         R. Tio
+                                                                S. Nanji
+                                                  Redback Networks, Inc.
+                                                                R. Verma
+                                                     Deloitte Consulting
+February 2001
+
+
+
+基于帧中继的第二层隧道协议
+（RFC3070 Layer Two Tunneling Protocol (L2TP) over Frame Relay）
+
+本备忘录的状态
+
+   本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+
+版权声明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+概要
+
+   二层隧道协议 (L2TP) 描述了点到点会话的机制，该协议已被设计为独立于其运行的媒
+体，基本规范描述了它怎样运于在用户数据报 (UDP) 和网际协议 (IP) 之上的实现。本文档
+描述了 L2TP 怎样运行在帧中继永久虚电路 (PVCs) 和交换虚电路 (SVCs) 之上的。
+
+适用性
+
+   本规范的目的是实现 L2TP 所定义的易用工具，且仅供帧中继点到点电路使用。
+
+1.0 介绍
+
+   L2TP [1] 定义了在各种媒体之上实现 PPP 隧道的常规目的的机制。按照设计，它使 L2TP 
+操作与要操作媒体的详细细节分隔开来。基本协议规范阐明了 L2TP 在 IP 环境下如何使用
+的方法。该文档说明了基于原始帧中继和地址有关问题的封装。
+
+2.0 约定
+
+   本文档中所用的关键字 "MUST"，"MUST NOT"，"REQUIRED"，"SHALL"，"SHALL NOT"，
+"SHOULD"，"SHOULD NOT"，"RECOMMENDED"，"MAY" 和 "OPTIONAL" 已在 RFC 2119 [2] 中阐
+明。
+
+3.0 问题空间回顾
+
+   本节我们将从问题的高层来描述。拓扑图：
+         +------+           +---------------+          |
+         | PSTN |           |               |          |
+   用户--|      |----LAC ===|    帧中继云   |=== LNS --+ LANs
+         | ISDN |           |               |          |
+         +------+           +---------------+          |
+
+   L2TP 访问集中器 (LAC) 是附加在交换网络结构上 (例如 PSTN 和 ISDN) 或处于可以处
+理 L2TP 协议的 PPP 端系统上的一个设备。LAC 只需提供将 L2TP 在一个或多个网络间传送
+的媒体实现，它可以为 PPP 中携带的任何协议提供隧道。
+
+   L2TP 网络服务器 (LNS) 可以在任何能够实现 PPP 终结的平台上操作。LNS 处理 L2TP 
+的服务器端协议，L2TP 具有连接导向。LNS 和 LAC 维护接入到 LAC 的每个用户的状态。当
+一个用户与 LNS 之间试图建立一个端到端的 PPP 连接时，将建立一个对话。基于该对话的
+数据流交通过 LAC 和 LNS 间的隧道发送。隧道是由一个 LNS-LAC 对定义的。 隧道在LAC 
+和 LNS 间传送 PPP 数据流。
+
+   L2TP 协议是在携带它的特定媒体的上层操作的。然而，到媒体连接的某些细节需要能够
+允许共同实现。基于 IP/UDP 的L2TP 已在基本 L2TP 规范 [1] 中描述。有关基于帧中继的 
+L2TP 问题将在本文档稍后的章节中再讨论。
+
+4.0 封装和包的格式
+
+   L2TP 必须（MUST）能够与其他协议共享同一个帧中继虚电路 (VC)。数据包的帧中继头格
+式需要进行定义以标识包中所携带的协议。帧中继网络可以不明白这些格式。
+
+   所有通过该电路的协议必须（MUST）将它们的包封装进 Q.922 帧中。帧必须另外包含必
+需的信息，以标识在帧中继协议数据单元 (PDU) 中所携带的协议，这样才可使接收方正确处
+理接收的包。
+
+   L2TP 的帧必须（MUST）是在 RFC 1490 [6] and FRF3.1 [3] 中定义的 SNAP 封装。SNAP 
+格式使用后跟组织唯一标识符和 PID 的 NLPID。
+
+   NLPID
+
+   该单字节的标识符提供了一种机制，可以对协议进行简单标识。在 SNAP 头中使用 0x80 
+值来表示 L2TP NLPID。
+
+   OUI & PID
+
+   三字节的组织唯一标识符 (OUI) 0x00-00-5E 用来标识 IANA，IANA 用来管理协议标识符 
+(PID) 0x0007。它们共同标识出特定的协议。
+
+   封装在帧中继中的 L2TP 帧格式如图 1 所示。
+
+          八进制                      1
+                 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+            1   |         Q.922 Address         |
+                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+            3   | Control  0x03 | pad   0       |
+                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+            5   | NLPID 0x80    |  OUI  0x00    |
+                +-+-+-+-+-+-+-+-+               +
+            7   | OUI     0x00-5E               |
+                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+            9   | PID     0x0007                |
+                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                |                               |
+                |          L2TP packet          |
+                |                               |
+                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                |              FCS              |
+                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+           图 1  封装在帧中继中的 L2TP 帧格式
+
+
+5.0 MTU 考虑
+
+   FRF.12 [5] 是帧中继分段实现协议。如果不支持分段，两个帧中继端点必须（MUST）支
+持不小于 1526 的 MTU，它的大小应该是 PPP 最大接收单元 (Max-Receive-Unit)的大小加
+上 PPP 头大小加上 L2TP 最大的头的大小加上帧中继头的大小 (PPP 头的大小是协议字段
+大小加上 L2TP 所要求的 HDLC 帧字节数)。为避免包在帧中继接口上被丢弃，在 PPP 缺省 
+MRU 为 1500 的情况下，推荐（RECOMMENDED）的缺省帧中继 MTU 为 1564，意思是要确保实
+现这些 MTU 设置。
+
+6.0 QOS 问题
+
+   通常，QoS 机制用来粗略提供 LAC 和 LNS 之间局部的私有机制。QoS 的考虑不在本文档
+的范围之内。
+
+7.0 帧中继和 L2TP 的交互性
+
+   在帧中继 SVC 的情况下，当 L2TP 试图建立隧道时，将会触发连接的建立。详细的触发
+机制将留待以后实现。在 L2TP 发出信号时，帧中继 SVC 不应当（SHALL NOT）有任何变化。
+在帧中继 SVC 的情况下，L2TP 隧道的终点必须（MUST）由 X.121/E.164 的地址来指明。这
+些地址可能包含在 [4] 中定义的一个用户隧道终点中。在 PVC 下, 携带 L2TP 的虚电路流
+量可以进行管理配置。隧道的终点必须由 DLCI 标识， DLCI 是在配置时指定给 PVC 的。DLCI 
+可以作为在 [4] 中定义的用户隧道终点包含进来。
+
+   在 PPP 和帧中继之间应当不存在帧的问题。从远端用户由 LAC 接收到的 PPP 帧去掉 
+CRC，链接帧和透明字节，封装进 L2TP，并通过帧中继隧道传送出去。
+
+8.0 安全考虑
+
+   尽管帧中继论坛正在讨论帧中继秘密协定，当前还没有帧中继安全标准规范。依照这项工
+作，稍后的一段时间要检查安全性，检查基于帧中继的 L2TP 规范 [1] 是否仍需要保护机制。
+在过渡期内，将在基本 L2TP 规范中讨论基本的安全性。
+
+9.0 致谢
+
+   感谢 Ken Pierce (3Com 公司) 和 Rick Dynarski (3Com 公司) 对本文档的编辑工作。
+
+10.0 参考资料
+
+   [1]  Townsley, W., Valencia, A., Rubens, A., Pall, G., Zorn, G. and
+        B. Palter "Layer Two Tunneling Protocol 'L2TP'", RFC 2661,
+        August 1999.
+
+   [2]  Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+
+   [3]  Multiprotocol Encapsulation Implementation Agreement, FRF.3.1 ,
+        Frame Relay Forum Technical Committee, June 1995.
+
+   [4]  Zorn, G., Leifer, D., Rubens, A., Shriver, J., Holdrege, M. and
+        I. Goyret, "RADIUS Attributes for Tunnel Protocol Support", RFC
+        2868, June 2000.
+
+   [5]  Frame Relay Fragmentation Implementation Agreement, FRF.12,
+        Frame Relay Forum Technical Committee, December 1997.
+
+   [6]  Bradley, T., Brown, C. and A. Malis, "Multiprotocol Interconnect
+        over Frame Relay", RFC 1490, July 1993.
+
+11.0 作者地址
+
+   Vipin Rawat
+   ONI Systems, Inc.
+   166 Baypointe Parkway
+   San Jose CA 95134
+
+   EMail: vrawat@oni.com
+
+
+   Rene Tio
+   Redback Networks, Inc.
+   300 Holger Way
+   San Jose, CA 95134
+
+   EMail: tor@redback.com
+
+
+   Rohit Verma
+   Deloitte Consulting
+   180 N. Stetson Avenue
+   Chicago Illinois 60601
+
+   EMail: rverma@dc.com
+
+
+   Suhail Nanji
+   Redback Networks, Inc.
+   300 Holger Way
+   San Jose, CA 95134
+
+   EMail: suhail@redback.com
+
+12.0  完整的版权声明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to others, and 
+derivative works that comment on or otherwise explain it or assist in its 
+implementation may be prepared, copied, published and distributed, in whole or in 
+part, without restriction of any kind, provided that the above copyright notice and 
+this paragraph are included on all such copies and derivative works.  However, this 
+document itself may not be modified in any way, such as by removing the copyright 
+notice or references to the Internet Society or other Internet organizations, except 
+as needed for the purpose of developing Internet standards in which case the 
+procedures for copyrights defined in the Internet Standards process must be followed, 
+or as required to ranslate it into languages other than English.
+
+   The limited permissions granted above are perpetual and will not be revoked by 
+the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an "AS IS" basis 
+and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL 
+WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE 
+USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES 
+OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+感谢
+
+   Funding for the RFC Editor function is currently provided by the Internet Society.
+RFC3070 Layer Two Tunneling Protocol (L2TP) over Frame Relay    基于帧中继的第二层隧道协
+
+
+1
+RFC文档中文翻译计划

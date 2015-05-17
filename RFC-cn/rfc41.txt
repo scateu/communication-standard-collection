@@ -1,0 +1,49 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：yh_2001（yh_2001   sflu@netbig.com）
+译文发布时间：2001-4-2
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                           John Melvin
+Request for Comments: 41                        SRI/ARC
+                                                30 March 1970
+
+
+
+
+
+
+   RFC41    IMP/IMP打字电报通讯
+（RFC41  IMP/IMP Teletype Communication）
+
+
+     我有时候在自己的电传打印机上发现从某个站点X发过来的消息，但是我却弄不清楚这条消息所发过来的具体时间和日期。
+
+      因为应答消息的时间可能是小于一个小时，也可能是几个小时时，我发现这非常恼人， 这种情况不能改进跨越美国所有的时间段里已存在的站点之间直接的通信。
+
+       这就需要每一个人标记IMP到IMP的电报消息来解决在收到IMP时没有响应。
+
+        传送IMP的站点需要在时区上指定24小时的时间。 
+
+
+
+
+
+
+
+
+
+   [ This RFC was put into machine readable form for entry ]
+   [ into the online RFC archives by Larry Campbell 7/97   ]
+RFC41 IMP/IMP Teletype Communication                     RFC41  IMP/IMP打字电报通讯
+
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

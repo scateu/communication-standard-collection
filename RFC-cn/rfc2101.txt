@@ -1,0 +1,352 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：司亮亮（sihaitian   sihaitian@163.net）
+译文发布时间：2002-1-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                               B. Carpenter
+Request for Comments: 2101                                           J. Crowcroft
+Category: Informational                                                 Y. Rekhter
+                                                                         IAB
+February 1997
+
+IPv4今日地址行为
+（RFC 2101―― IPv4 Address Behaviour Today）
+
+本备忘录的状态
+本备忘录提供Internet通讯所需的信息，它并不指定Internet的某一方面的标准。本备
+忘录的发布不受任何限制。
+版权声明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+摘要
+这个注释的主要作用是使网络现有的对32位IPv4地址空间的解释更清楚，自从它最初
+被定义后，它的意义已经发生了本质的改变。将有一小节介绍IPv6与IPv4地址的主要的相
+似点和不同点。
+
+目录
+1. 介绍	2
+2. 术语	2
+3. 标准的属性	3
+4. 纵览IPv4地址空间的现状	3
+4.1. 地址不再全局唯一定位	4
+4.2. 地址不再全是临时唯一.	5
+4.3. 多播和广播.	5
+4.4. 小结	6
+5. IPv6 讨论	6
+附录：	7
+对IPv4地址分配和路由的正确实践。	7
+安全性讨论	8
+鸣谢	8
+参考书	8
+作者地址	10
+
+1. 介绍
+这个注释的主要作用是使网络现有的对32位IPv4地址空间的解释更清楚，自从它最初
+在1981年[RFC 791]被定义后，它的意义已经发生了本质的改变。
+这个解释将有助于协议设计者，产品制造商，Internet服务提供商和用户站点。它 的目
+的是随着Internet近几年的成指数级的增长所带来的实质上的改变，避免大家对IP地址的误
+解。将有一小节介绍IPv6与IPv4地址的主要的相似点和不同点。
+2. 术语
+在计算机网络中，目录，命名，网络地址和路由的概念是显然不同的，必须被独立的分
+析 [RFC 1498]。然而，“网络地址”（从这里开始缩写为“地址”）的定义可以被细分为至少
+两个的观点也是很重要的，命名“标示”和“定位”，在rfc791出版以前这个可能是少为人
+知的。
+在这篇文档中，术语“主机”指 是产生或终止IPv4包的系统，“路由”指的是一些转
+发IPv4包从从一个主机或路由到其它主机或路由 的系统。
+就这篇文档的目的，一个“identifier”是贯穿两个主机之间一次交流会话的整个生存时
+间的位串，去标示其中的一个主机就如讨论的另一个一样。一个标示用于验证输入包的源（主
+机）对交流的另一方是真正毫无疑问的，例如：在伪TCP 头[RFC793] 或在IP安全协会
+[RFC1825]。习惯上，在每一个数据包中的源IPv4地址中都用于此目的。
+注意有时另一个“identifier”的定义被使用。这篇文档不着重讨论。结束点标示符的一
+些事情。
+就这篇文档而言，“locator”是一个位串，用于确认在什么地方一个特定的包必须不同。
+例如：它的服务器在网络拓扑结构中去定位可联结目标主机的位置。习惯上 ，在每一个数
+据包中的IPv4目标地址都用于此用途。IP路由协议说明了 IPv4地址作为定位和路由表的
+组成是基于那些分配路径的（它们有自己的定位）要求去知道一条通往特定主机定位的路径。
+标示和定位都需要唯一性，但彼此的需要是不同的，一般认为标示必须在一系列互相交
+流的主机中保持唯一，而定位必须在每一个互相交流的路由（我们叫它路由区域）中保持唯
+一。同时定位必须在一个给定的 路由区域中保持唯一，这种唯一性（不是可路由性）可以
+扩展到更多的区域。这样相对于一系列定位不唯一（复用）的区域，我们更容易区分一系列
+唯一定位的区域。
+标示和定位都需要生存时间，但它们的需要是不同的。标示必须在两个互相交流的主机
+的最大生存时间内有效。定位只要在路由的机械设备需要的时候有效就可以（在一次通讯中
+它可以比生存时间短或长一些）。
+还有一个历史的偶然的事实必须注意，在RFC 791和RFC 793中标示和定位在IP头（源
+和目的地址）中都用同样的地址空间和字段表示，在传统的Internet主机中，标示可以用定
+位来表示，这正如空间的唯一性（单一的）和暂时的唯一性（永恒不变的）。
+这些唯一性条件在路由（IPv4的定位可用的基础）和传输协议（一些依赖IP进行连接
+的）的设计和假设中起了很大的影响。一个地址的空间唯一性是说它为接口标示和一个主机
+的标示服务，就好象关键字对路由表的作用。一个地址的暂时的唯一性是说对于TCP实现
+来说不象IP地址一样，需要保持关于远端的状态。所以IP地址可以被用于端到端的IP安
+全性和绑定到上层会话。
+一般来说，IPv4地址用做定位比用做标示更加重要，无论什么时候，在两种使用之间
+发生冲突时，定位的使用是主要的。也就是说，在分发一个数据包时它已经被认为更加有效。
+接着该担心提供一个不能被分发的数据包时如何去标示端点。换句话说，在路由协议中这将
+是集中工作，在地址习惯用法的其它方面几乎没有什么具体的工作。
+3. 标准的属性
+无论上面提到的什么规范，很容易理解标示和定位的标准的属性。标示应该在一开始就
+分配，永不改变，永不被重用。定位用于描述主机在网络拓扑结构上的位置，无论什么时候
+都可以随着拓扑的改变而改变。
+不幸的是没有一个上述的标准可以在IPv4地址中看到。这篇文档其余部分将对现在流
+行的现状做简要介绍。
+4. 纵览IPv4地址空间的现状
+事实上，IPv4地址不再是全局唯一的，也不是都有无限的生存时间。
+4.1. 地址不再全局唯一定位
+RFC 1918显示公司的网络是如何工作的，a.k.a.内部局域网，也许适当的重用一个
+IPv4地址空间的子集来形成多路由区域是有必要的。在两个（或更多）的路由区域边
+界，我们可以找到一个用于使区域之间的交流可用的设备的范围。
+在一个范围的结尾是一个纯粹的应用层网关（ALG），这样的设备作为应用层数据
+流的端点，对终端用户是可见的。例如：当在路由区域A的终端用户Ua想与在路由区
+域B的终端用户Ub交流的时候，Ua首先明确的同A与B 之间交流的ALG建立连接，
+只有经过这样Ua可以和Ub建立通信。我们称呼这样的网关为“不透明的”ALG.
+另一种形式的ALG与终端用户的通讯是透明的。用上面的例子，在一个透明的
+ALG，在开始和Ub通信前，Ua将不需要明确的和ALG建立连接。这样将建立对Ua
+透明的连接 ，使的Ua 将只可以看到与Ub的连接。
+为了完成的目的，注意经过ALG的通讯并不是导致网络头的改变的必要的原因，
+一个ALG 仅仅用于在一个会话开始时的认证，在离开ALG后，通讯将自然的继续进
+行。
+不透明和透明的ALG都需要（通过定义）理解应用数据流的对象和语义。从网络
+层结构看来，ALG是很简单的，在每一个区域中它们将表现为Internet主机，例如：它
+们作为通讯的始端和终端。
+在系列的另一方面是关于网络地址转换（NAT）[RFC1631]。在这个文档中我们定
+义NAT作为一个设备，它仅仅修改网络层和传输层头，但它不清楚应用层数据流的对
+象/语义（用我们的术语也就是描述在RFC1631上的一个同时具有 NAT 和ALG 的功
+能设备。）。
+作为一个标准，NAT被用在使用私有地址的公司网络 [RFC1918]和使用公用地址
+的Internet之间，NAT改变发往Internet的数据包的源IPv4地址，也改变来自Internet
+的数据包的目 的IPv4地址。当一个NAT采用地址复用技术用在互相联络的路由区域
+时，例如：在两个内部网的直线连接时，NAT将修改双方的IP头中的地址。既然NAT
+修改IP头中的地址，NAT同样也修改传输（例如：TCP,UDP）伪头的效验和。经过观
+察可以发现，当互相联络的路由区域采用地址复用时，在网络和传输头的一系列操作被
+NAT完成同时做为一个透明的ALG完成在网络层和传输层的一系列操作的子集。
+通过定义，NAT不清楚一个应用数据流的对象和语义。因此，NAT 不支持在应用
+层传输IP地址的应用（例如：FTP 的PORT 或者PASV 命令[RFC 959]）。另一方面，
+NAT 可以支持一些不在应用层传输IP地址的应用。比较而言， ALG只支持应用代码。
+可以断定NAT 和ALG 都有自己的限制，这个可以限制它们的用处，把NAT 和
+ALG 的功能合用在一个简单的设备可以克服一些，但不是全部限制。这个设备可以用
+NAT功能进行不传输IP地址的应用，当处理传输IP地址的应用时则依赖ALG功能。
+例如：一个这样的设备将用NAT 功能去处理FTP数据连接，同时用ALG功能去处理
+FTP控制连接。然而，这样一个设备将不能完全处理一个传输IP地址的应用，当设备
+不支持经过ALG功能的应用时，宁愿处理它用NAT功能。
+通过ALG或NAT的通信也包括改变网络头（特指源和目的地址），同样转换传输
+头。既然IP安全认证头假设在网络头的地址是被端到端的预先保留，通过ALG或NAT
+我们不清楚在通信的一对主机中该如何支持基于安全的IP认证。既然IP是安全的，当
+用于信任时加密端到端的整个传输层，还是不清楚ALG和NAT是如何根据它们的要求
+修改加密数据包的。换句话说，在用于认证和信任时，ALG和NAT在两个不同的IP
+安全域中 都被强制分界，除非设计了用于此目的特殊的增强的 IP安全策略。
+经过ALG 和NAT进行中间连接的路由区域依赖DNS[RFC 1035]。特别的，对于
+一个给定的（中间连接）路由区域，哪怕在整个系列中网络层地址不再是唯一的，高质
+量的域名服务需要唯一性的存在于整个系列中。然而，一个运行NAT 和ALG 的站点
+可能需要两个DNS服务器，一个是NAT 或ALG内部的，一个是其外部的，对标示的
+查询给出不同的答案。更详细的讨论看[kre]。DNS 安全[RFC 2065] ，同时假设动态
+DNS更新[dns2] 在NAT/ALG边界不在有效，所以，我们必须假设外部的DNS服务器
+通过其它的机器获得了至少一部分的路由表。
+作为总结，自从RFC 1918，我们还没有真正的改变过地址空间的唯一性，就好象
+公认是有多个空间，例如：通过NAT或ALG（看上面的讨论）每个空间一直是个路由
+区域比如是个内部网，可能连接到别的内部网，或者是Internet ，地址的暂时的唯一性
+在RFC1918中仍没有改变。
+4.2. 地址不再全是临时唯一.
+注意，一旦地址的意义在地址空间的某个地方改变，在每个地方都会有一些现象改
+变。事实上这个已经发生了。
+IPv4地址块是为许多年分配的年代史，例如：在网络拓扑更为有效。这个导致路
+由表的持续的增长；难以伸缩。今天阶级路由(CIDR [RFC 1518], [RFC 1519])作为一个
+在路由区域中提高路由的伸缩性的设备。尤其是在Internet中。（附录对CIDR 有详细
+的解释）。
+可伸缩性的CIDR基于地址分配对网络拓扑的最大影响的假设，地址信息集合的边
+界不再需要用一个简单的组织填充，--他们可能跨过多个组织（例如：提供者和他的用
+户）。因此，如果一个用户改变他的供给者，然后可以避免在Internet路由系统中添加
+附加的头，用户需要被重新编号。
+改变提供者只是被重新编号的一个可能。信息文档[RFC1900] 显示为什么重新编
+号是一个不断增长的事件。在DHCP [RFC154] 和PPP [RFC]中升级了动态地址分配的
+使用。
+总而言之，随着DHCP 和PPP 的发展和进化，而且重新编号好象是将成为一个一
+般事件，IP地址的意义已经深深的被改变了。空间 的唯一性也将一样，只要地址一直
+是有效的定位。不能再保证暂时的的唯一性，它可能非常的短，很有可能比一个TCP
+连接时间还短。就这方面看，IP 地址不再是一个好的标示。这将对端到端的安全有些
+影响，而且将破坏通用的TCP形式。
+4.3. 多播和广播.
+既然我们讨论多播 [RFC1112]，我们必须把对 IP地址意义的争论转化为对源和目
+标地址的意义的思考。一个目的多播地址（例如：一个拓扑中的的扩展到主机组的定位）
+可以经过一个NAT，而且它不必限定在一个内部网（或者在公共Internet）。它的生存
+时间也很短。
+一个 广播 地址的概念具有语义上定位任何施行相等的功能的一组系统的一个地
+址。，它永远不可能作为一个在本文定义的标示来服务，所以它不是唯一的标示主机。
+就这一方面来说，暂时的的唯一性，或有用的生存时间对一个IP地址的影响将是比建
+立一个TCP连接更短的时间。
+在这里，我们已经用TCP简单的描述了一个联合的想法―许多基于应用的UDP 
+（或在IP 之上的别的系统层）在接受或发送第一个数据包以前分配状态，基于源和/
+或目标。所有的都被暂时唯一性的存在所影响，而仅仅只有路由结构受空间唯一性改变
+的影响。
+4.4. 小结
+网络的经常的重组 取决于动态地址的分配和不断的增长，IPv4地址的暂时的唯一
+性将不再是全局授权，而只是将他们的使用作为标示放在服务请求中。空间在路由区域
+中的唯一性根据内部网的增加来决定不再授权，中间路由区域经过ALG或者NAT而逐
+渐完善。在这种规则下，这样的相互连接比直接连接的内部网将有更少的功能。实践中，
+功能的不同可能是也可能不是什么事情，依赖于分散的环路。
+5. IPv6 讨论
+正如暂时的的唯一性的讨论（好象标示的行为），IPv6的模型与IPv4的模型很相似，只
+不过多了些。IP6将在IPv6主机中提供自动配置IPv6地址的机制。前缀的改变，需要全局
+所有的主机的IPv6地址在一个给定的前缀下改变，这是可以想象的。因此，IPv6将扩大这
+个存在的问题：去寻找稳定的标示用于端到端的安全和如TCP状态会话绑定。
+IAB 感觉这是不幸运的，而且到IPv6的转换将是提供端到端的暂时的唯一标示的高层
+协议一个理想的原因。这些标识符的准确的天性要求更深的学习。
+正如对 空间唯一（好似定位的行为）关心，IPv6地址空间是如此的大以致于地址的短
+缺，查询接近于RFC1918的类似地址转换，是难于想象的。虽然并不缺少IPv6地址，在
+IPv6[RFC 1884，第2.4.8节]仍然有一个定义好的机制去包容硬件-本地地址和网站-本地地
+址。IPv6的这些属性不能阻止从IPv6中分离路由区域，如果这样描述（在多安全域的结果）。
+在现有情形下，我们不能标示一个在多IPv6路由区域中将需要的原因，它也很难于给定一
+个预先定义的答案对是否将只有一个，或者多于一个IPv6路由区域。如果假设将有多于一
+个的IPv6路由区域，这种区域将通过ALG 和NAT 互相连接。考虑到在IPv4中，这样ALG 
+和NAT 表现为标示。
+附录：
+对IPv4地址分配和路由的正确实践。
+初始化IP地址结构，同时IP路由将围绕网络数目分类的想法来设计（A/B/C类网）
+[RFC 790]。在Internet 90年代早期的 成长要求了两个方面的重要性的改进，在Internet 
+路由系统的可伸缩性上，就好象对IP地址空间的利用。IP地址空间的类结构化和路由
+按类分配导致相对需要得到不充分的结果，所以，在1992-1993年代，Internet接受了
+无阶级的内部域路由（CIDR）[RFC 1380]，[RFC 1518]，[RFC 1519]。CIDR 成就了一
+个新的地址分配方案，新的路由协议，和一个新的IP地址结构。
+CIDR 通过在独立子网和网络的基础上扩展了阶级路由的想法来提高Internet 路
+由系统的伸缩性。允许路由信息的集合不只停留在独立子网和网络的层次上。同时在独
+立站点的层次上，就比如在ISP（Internet 服务提供商）的层次上。所以一个组织（站
+点）能在组织以内为所有目的充当一个集成者。同样的，一个提供者在他的用户内可以
+成为所有的目标的集成者（建立到提供者的直接连接）。
+扩展阶级路由的想法到独立的站点和提供者层次，允许站点和提供者作为路由信息
+（需要改变地址分配过程）和路由协议的集成者。在早期的CIDR中，在独立网络数字
+层的基础上分配个站点地址时没有对地址集成的需要做任何考虑，基于CIDR的地址分
+配建议地址分配时应该这样做：用站点和提供者去作为地址信息的集成者，这样的分配
+是“基于集成”。为了从“基于集成”的地址分配方案受益，CIDR介绍了一个中间域
+路由协议(BGP-4) [RFC 1771,  RFC 1772]在独立站点和提供者层次上提供路由信息集
+成的性能。
+CIDR 由消除网络类的观点改进地址空间利用，并且用连续的可变尺寸( 2 的力量 ) 
+的地址块代替它 。在需要大量的地址空间而且已经提供了大量的地址空间的情况下，
+提供一个好的对比 [RFC 1466]。它也便于基于集合的地址分配。消除网络分类的想法
+需要在路由协议中建立新的兼容性（内部和外部域之间都是），IP转发。特殊的CIDR
+兼容的协议需要处理到达的用不同长度的地址前缀表示的（地址）信息，而且，转发需
+要实现最长长度的匹配”算法。在[RFC1817]中描述了CIDR 对路由协议的影响。
+CIDR 的伸缩性基于地址分配对网络拓扑的最大影响的假设，尤其是在站点层次
+上，与提供者的相互连接，使得站点和提供者形成一个集合。如果一个站点改变它的提
+供者，然后去避免在Internet 路由系统添加附加的头，站点需要去重新编号。同时，CIDR 
+不需要每一个站点通过改变它的提供者来实现重新编号，这一点反应很重要：如果没有
+一个改变它的提供者的站点重新编码，Internet路由系统当处理大量需要处理的路由信
+息时有可能崩溃。
+包括“基于集合”的地址分配（升级路由系统的可伸缩性），和支持站点性能的需
+要去改变它们的提供者（去完成升级）需要对重编站点来说要求实践解决。在迅速增长
+的Internet路由系统对包括头的需要好象使重新编号越来越普遍[RFC1900]。
+对Internet 路由系统伸缩性的需要，和用CIDR作为伸缩性的主要机制，是对
+Internet的地址分配和管理政策所作出的进一步结果。加上“借地址”政策的进化作为
+一个可提供的“地址私有”政策的进一步结果[RFC2008]。
+自从IP地址的第一次指定[RFC791]，IP地址和路由不停的进化。一些地址和路由
+规则已经遭到反对，一些规则已经被保留，同时新规则也被推出。现在的Internet路由
+和地址（基于CIDR）是一个进化的步骤，趋向于使用层次去包括全球Internet路由表。
+安全性讨论
+IP 地址模型在安全方面的影响以在这篇文档的4.1小节和第五节讨论。
+鸣谢
+This document was developed in the IAB. Constructive comments were received from 
+Ran Atkinson, Jim Bound, Matt Crawford, Tony Li, Michael A. Patton, Jeff Schiller. Earlier 
+private communications from Noel Chiappa helped to clarify the concepts of locators and 
+identifiers.
+参考书
+[RFC 791] Postel, J., "Internet Protocol", STD 5, RFC 791, September 1981.
+
+   [RFC 790] Postel, J., "Assigned Numbers", September 1981.
+
+   [RFC 959] Postel, J., and J. Reynolds, "File Transfer Protocol", STD9, RFC 959, October 
+1985.
+
+   [RFC 1035] Mockapetris, P., "Domain Names - Implementation and Specification", STD 
+13, RFC 1035, November 1987.
+
+   [RFC 1112] Deering, S., "Host Extensions for Ip Multicasting", STD 5,RFC 1112, 
+September 1989.
+
+   [RFC 1380] Gross, P., and P. Almquist, "IESG Deliberations on Routing and Addressing", 
+RFC 1380, November 1992.
+
+   [RFC 1466] Gerich, E., "Guidelines for Management of Ip Address Space", RFC 1466, 
+May 1993.
+
+   [RFC 1498] Saltzer, J., "On the Naming and Binding of Network Destinations", RFC 
+1498, August 1993 (originally published 1982).
+
+   [RFC 1518] Rekhter, Y., and T. Li, "An Architecture for Ip Address Allocation with 
+CIDR", RFC 1518, September 1993.
+
+   [RFC 1519] Fuller, V., Li, T., Yu, J., and K. Varadhan, "Classless Inter-Domain Routing 
+(CIDR): an Address Assignment and Aggregation Strategy", RFC 1519, September 
+1993.
+
+   [RFC 1541] Droms, R., "Dynamic Host Configuration Protocol", RFC 1541, October 
+1993.
+
+   [RFC 1661] Simpson, W., "The Point-to-Point Protocol (PPP)", STD 51, RFC 1661, July 
+1994.
+
+   [RFC 1771] Rekhter, Y., and T. Li, "A Border Gateway Protocol 4 (BGP-4)", RFC 1771, 
+March 1995.
+
+   [RFC 1772] Rekhter, Y., and P. Gross, "Application of the Border Gateway Protocol in 
+the Internet", RFC 1772, March 1995.
+
+   [RFC 1817] Rekhter, Y., "CIDR and Classful Routing", RFC 1817, September 1995.
+
+   [RFC 1825] Atkinson, R., "Security Architecture for the Internet Protocol", RFC 1825, 
+September 1995.
+
+   [RFC 1900] Carpenter, B., and Y. Rekhter, "Renumbering Needs Work", RFC 1900, 
+February 1996.
+
+   [RFC 1918] Rekhter, Y.,  Moskowitz, B., Karrenberg, D., de Groot, G. J., and E. Lear, 
+"Address Allocation for Private Internets", RFC 1918, February 1996.
+
+   [RFC 1933] Gilligan, R., and E. Nordmark, "Transition Mechanisms for IPv6 Hosts and 
+Routers", RFC 1933, April 1996.
+
+   [RFC 2008] Rekhter, Y., and T. Li, "Implications of  Various Address Allocation 
+Policies for Internet Routing", RFC 2008, October 1996.
+
+   [kre] Elz, R., et. al., "Selection and Operation of Secondary DNS Servers", Work in 
+Progress.
+
+   [RFC 2065] Eastlake, E., and C. Kaufman, "Domain Name System Security Extensions", 
+RFC 2065, January 1997.
+
+   [dns2] Vixie, P., et. al., "Dynamic Updates in the Domain Name System (DNS 
+UPDATE)", Work in Progress.
+
+作者地址
+
+   Brian E. Carpenter
+   Computing and Networks Division
+   CERN
+   European Laboratory for Particle Physics
+   1211 Geneva 23, Switzerland
+
+   EMail: brian@dxcoms.cern.ch
+
+   Jon Crowcroft
+   Dept. of Computer Science
+   University College London
+   London WC1E 6BT, UK
+
+   EMail: j.crowcroft@cs.ucl.ac.uk
+
+   Yakov Rekhter
+   Cisco systems
+   170 West Tasman Drive
+   San Jose, CA, USA
+
+   Phone: +1 914 528 0090
+   Fax: +1 408 526-4952
+   EMail: yakov@cisco.com
+
+RFC 2101―― IPv4 Address Behaviour Today                                    IPv4今日地址行为
+
+
+1
+RFC文档中文翻译计划                                                                       

@@ -1,0 +1,169 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-8-2
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但
+必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                         E. Guttman
+Request for Comments: 3059                              Sun Microsystems
+Category: Standards Track                                     February 2001
+
+
+服务定位协议的属性列表扩展
+（RFC3059――Attribute List Extension for the Service Location Protocol）
+
+本备忘录的状态
+本备忘录为Internet协会描述了一种Internet标准跟踪协议，需要讨论和建议以便改
+进。请参考“Internet正式协议标准”（STD1）了解本协议的标准化进程和状态。本备忘录
+的发布不受限制。
+版权公告
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+摘要
+服务定位协议第二版（SLPv2）提供了一种机制，可以通过一次信息交换揭示某项服务。
+这一信息交换目前不包含任何服务属性。本文档描述了一种SLPv2扩展机制，可以把用户代
+理（UA）对服务属性的请求作为服务应答消息的扩展信息包含进来。这样做可以减少UA为了
+获得全部服务信息而进行消息往返的次数。
+
+           
+目录
+1	简介	2
+1.1	术语	2
+1.2	符号约定	2
+2	属性列表扩展	2
+3	IANA方面的问题	3
+4	国际化方面的问题	3
+5	安全性的问题	3
+6	感谢	3
+7	参考	4
+8	作者地址	4
+9	版权声明	4
+10  鸣谢	5
+
+1	 简介
+服务定位协议第二版提供了一种机制，可以通过一次信息交换解释某项服务。UA发送一
+个服务请求消息，DA或者SA（视具体情况而定）则发送服务应答消息。
+如果能够一次获取全部服务信息显然是有利的。服务定位协议对取得不同类型信息的消
+息进行了区分。这里描述的扩展机制可以优化基本的消息交换，这种交换目前在服务应答消
+息中不包含服务属性。
+本文档描述的SLPv2扩展机制允许服务应答消息中包含UA请求的服务属性。这样有助于
+减少UA为了获取全部服务信息进行的消息往返的次数。
+如果DA或者SA不支持这种属性列表扩展，则仅仅返回服务应答（不包含扩展信息）。对
+这一扩展的支持是可选的。现有的实现将忽略属性列表扩展，因为它所分配的标识号所在的
+范围表明接收方必须忽略无法识别的扩展（参见RFC 2608[3]）。
+如果UA受到的服务应答消息不含属性列表扩展信息，则应假定SA或者DA不支持这种扩
+展。这种情况下，UA必须对在服务应答消息中得到的每个URL发送属性请求以取得这些服务
+的属性。   
+1.1	 术语
+   用户代理（User Agent，UA）
+在用户方运行以便与某些服务建立联系的进程。UA从服务代理或目录代理获取服
+务信息。
+   服务代理（Service Agent，SA）
+       在一个或多个服务方运行以提供服务信息的进程。
+   目录代理（Directory Agent，DA）
+       搜集服务广告信息的进程，在一个给定的主机上只能有一个DA。 
+1.2	 符号约定
+本文档中的关键字“必须”、“不得”、“要求”“应”、“不应”、“将”、“不必”、“建议”、
+“可以”和“可选”的解释参见RFC 2119[2]。
+
+2	 属性列表扩展
+属性列表的扩展如下所示：
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |      扩展 ID = 0x0002         |     下一扩展的偏移量          |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   续偏移量    |      服务URL的长度           |  服务URL     |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     属性列表长度              |            属性列表           |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |# of AttrAuths |(if present) Attribute Authentication Blocks...|
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+扩展ID为 0x0002.
+下一扩展偏移表示下一扩展信息的位置，从SLP消息的开始计算偏移量。如果下一扩展
+偏移值为0，则说明消息中再没有其他的扩展信息系了。
+UA在服务请求中发送属性列表扩展，此时服务URL长度和属性列表长度两个字段被设为
+0，并忽略服务URL和属性列表字段。因此，通过在服务请求中包括这样的“空”属性列表扩
+展，UA可以向SA或者DA请求在其服务应答消息中加入属性列表扩展。
+支持属性列表扩展的SA或者DA为服务应答消息中的每个URL项返回一个属性属性扩展。
+属性列表扩展。属性列表扩展的顺序应该应该与服务应答中URL相出现的顺序一致。
+服务URL[4]标志相应的URL项。
+属性列表字段是服务的全部属性列表。
+这些属性必须使用服务请求消息指定的语言。
+如果服务请求消息包含SLP SPI字符串，属性列表扩展必须包含验证块。如果服务请求
+包含SLP SPI，而SA或者DA不支持或者无法返回验证块，那么SA或者DA不能返回属性列
+表扩展。验证块的格式与属性应答或者服务注册消息中的验证块完全一样。
+
+3	 IANA方面的问题
+IANA已经为属性列表扩展分配了扩展ID号 0x0002。
+
+4	 国际化方面的问题
+服务定位协议第二版包含一种机制，允许在传输属性时包含明确的语言标签[6]。该机制
+同样适用于这一协议扩展。
+
+5	安全性的问题
+服务定位协议第二版包含一种机制，可以把验证码与属性列表一起返回，从而使UA能够
+对取得的属性中的数字签名进行验证。带有属性列表扩展的SLPv2并不会降低其安全性。   
+6	 感谢
+   作者在与Charlie Perkins就这一扩展的初步交谈中受到启发。
+
+7	参考
+   [1] Bradner, S., "The Internet Standards Process -- Revision 3", BCP
+       9, RFC 2026, October 1996.
+   [2] Bradner, S., "Key Words for Use in RFCs to Indicate Requirement
+       Levels", BCP 14, RFC 2119, March 1997.
+   [3] Guttman, E., Perkins, C., Veizades, J. and M. Day, "Service
+       Location Protocol, Version 2", RFC 2608, June 1999.
+   [4] Guttman, E., Perkins, C. and J. Kempf, "Service Templates and
+       service: Schemes", RFC 2609, June 1999.
+   [5] Narten, T and H. Alvestrand, "Guidelines for Writing an IANA
+       Considerations Section in RFCs", BCP 26, RFC 2434, October 1998.
+   [6] Alvestrand, H., "Tags for the Identification of Languages", BCP
+       47, RFC 3066, January 2001.
+8	作者地址
+   Erik Guttman
+   Sun Microsystems
+   Eichhoelzelstr. 7
+   74915 Waibstadt
+   Germany
+   Phone:    +49 6227 356 202
+   EMail:    Erik.Guttman@sun.com
+
+9	  版权声明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+10	  鸣谢
+  Funding for the RFC Editor function is currently provided by the
+  Internet Society.
+
+RFC3059――Attribute List Extension for the Service Location Protocol
+ 服务定位协议的属性列表扩展
+
+RFC中文翻译计划
+
+

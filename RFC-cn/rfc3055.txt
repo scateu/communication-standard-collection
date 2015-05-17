@@ -1,0 +1,810 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：boniter（boniter   boniter@etang.com）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留
+本文档的翻译及版权信息。
+
+
+Network Working Group                                    M. Krishnaswamy
+Request for Comments: 3055                                Photuris, Inc.
+Category: Standards Track                                   D. Romascanu
+                                                     Avaya Communication
+                                                           February 2001
+
+PINT服务体系结构管理信息基础
+(RFC3055――Management Information Base for the PINT Services Architecture)
+本备忘录的状态
+    这篇文档为Internet社会详细说明了一个Internet标准追踪协议，并需要进一步的探
+讨和研究。请参阅最新版本的“Internet官方协议标准”（STD1）来了解此协议的标准化
+规定和状况。
+版权通告
+    Copyright (C) The Internet Society (2001).  All Rights Reserved.
+摘要
+    这个备忘录描述了一个被提议的PSTN/Internet Interworking(PINT)服务体系结构管
+理信息基础。
+目录
+1.导论	2
+2.SNMP管理框架	2
+3.监测MIB的PINT服务体系的需求	2
+4.PINT MIB总述	3
+5.定义	3
+6.承谢	15
+7.安全考虑	16
+8.IANA考虑	16
+9.知识产权	16
+10.参考书目	17
+11.作者地址	18
+12.完整版权说明	19
+感谢	19
+
+1.导论
+    PINT服务是以新兴的Internet趋势，基于在Internet上传输的对于PSTN（公共交换
+电话网络）的声音（和传真）请求的应用。RFC  2548［1］给出了一个很好的关于(预先标
+准)PINT体系机构和服务的介绍。同样它也提供了某些pre-PINT的早期执行的例子。
+    这篇文章定义了MIB,它包含了监测以服务为基础的PINT性能的原理.MIB由在各种各样
+标准下测量四种基本PINT服务和它们的表现统计的详细资料构成。
+    有助于PINT网络化原理的管理并不是MIB的目的。我们关心的仅是PINT特定的执行参
+数。在它则是懂得紧密把PINT服务运行与主机和网络运行联系起来,他们并不从事于此。
+2.SNMP管理框架
+    SNMP架构目前与五个主要部分构成:
+    O在RFC 2571 [2] 中所描绘的全面体系机构。
+    O描述和命名管理目的的对象和事件机制.这个管理信息结构(SMI)的最初版本命名为
+SMIv1并在STD 16, RFC 1155 [3], STD 16, RFC 1212 [4] 和 RFC 1215 [5]中有所描述.
+第二个版本被命名为SMIv2并在STD 58,RFC 2578 [6], RFC 2579 [7] 和 RFC 2580 [8]中
+有所描述。
+    O传输管理信息的通信协议。SNMP通信协议的最初版本被命名为SNMPv1并在STD 15, 
+RFC 1157 [9]中有所描述。SNMP通信协议的第二个版本，它并不是Internet标准追踪协议，
+被称为SNMPv2c并在RFC 1901 [10] 和 RFC 1906 [11]中有所描述。通信协议的第三个版
+本被称为SNMPv3并在RFC 1906 [11], RFC 2572 [12] 和 RFC 2574 [13]。
+    O访问管理信息的协议操作。协议的操作和与PDU相关的格式的最初设置在STD 15, RFC 
+1157 [9]中有所描述。协议的操作和与PDU相关的格式的第二个设置在RFC 1905 [14]中有
+所描述。
+    O基本应用程序的设置在RFC 2573 [15]中有所描述，基于访问的存取控制机制在RFC 
+2575 [16]中有所描述。
+    在RFC 2570 [17]中有更多关于通用SNMP管理框架的详尽描述。
+    通过有效的信息存储来访问管理对象，被称为管理信息基础或MIB。在MIB中的对象是
+使用在SMI中已定义的机制来定义的。
+    这篇备忘录详细说明了符合SMIv2的MIB模式。符合SMIv1的MIB能通过适当的转换进
+行制造。作为转换结果的MIB必须在语义上等价，除非对象和事件因为没有转换的可能而被
+省略（使用Counter64）。在SMIv2中一些可用计算机处理的信息在转换进行时，会被转变
+成SMIv1中的文本描述。尽管如此，这些可用计算机处理的信息的丢失并不认为会改变MIB
+的语义。
+3.监测MIB的PINT服务体系的需求
+    传统的声音（和传真）请求在PSTN网络中发生和终止。这个网络在有效性和安全性
+的条件下，因处理请求的强大功能而出名。但是，当请求在Internet上产生时，会在某些
+问题方面涉及到用户方和提供方，就像在各种网络条件下对于PINT网关的可靠的呼叫请求，
+客户/主机验证，用户信息的安全操作等等。在PINT服务通过多重管理域（或供应商），执
+行和安全管理就变得至关重要。
+    这种MIB是对需要在用户，PINT客户端，PINT服务器和PINT网关基础进行监控的已详
+细列出的参量的一种尝试。
+    （PINT服务，它们的方法/协议和涉及到安全的PINT体系机构在[18]中有详细讨论）。
+4.PINT MIB总述
+    下面给出了一个列表，包含了我们已选择来建立的MIB定义的一些说明。
+    O这种MIB的基本目的是从执行和安全观点监控PINT服务的使用权。信息可能适合于
+某一个用户或是他/她的系统（PINT客户端）或是提供PINT服务的系统（PINT服务器）或
+是PINT网关，是对于PSTN的前方命令。
+    O我们选择建立一个结构表，作为应用MIB的扩展-使用增加结构的RFC 2287 [19]。服
+务器的位置和联系可能会从标准的MIB-II sysLocation和sysContact对象中获得。但是，
+PINT管理员可能与具有全局职责的sysadmin不是同一个人，因此定义了一个
+pintSysContact对象。
+    O我们选择从PINT服务器来监测网关的连接。当代理在PINT服务器上运行时，通过网
+关的连接可能需要被监测，以便知道它的运行情况。我们把它们置于一个独立的MIB组，通
+过使用MODULE-COMPLIANCE条款，代理如果不能实现这种填充，那它将不被委托。
+    O在MIB模块并不带有随身的定义。注意，通过使用由Remote Monitoring MIB定义的
+标准机制，计数器的开始就始终有可能，在此作为参考。一些事件可能有以下机制来定义：
+?	客户端或用户接收到的持续的注册/验证错误或拒绝
+?	由同一用户对一个号码发出的恶意地重复（在一个特定时期内）请求
+    O客户端和用户的执行平台可能对了代理执行的资源过分苛求。在一些MIB里，比如
+Remote Monitoring (RMON) MIB，建立了控制机制以便激活需求上的统计值。如果需要的话，
+一个分类（“topN”）协议能被建立，这样以来一个客户端和用户的分类表就阻止了高级别
+的错误的产生。
+    O我们建立了一个时间分布状态，试图覆盖短暂的和长的sessions（1-10秒，10秒-1
+分钟，1-15分钟，15分钟-24小时，甚至更长）。
+    OPintServerClientAddress被定义成SnmpAdminString。它可能包含一个IpAddress
+以及/或名字，但是我们宁愿减少这个进程中的指标数，并同时保留人可读的格式。
+    O我们把PintServerUserIdName定义为UserId。这个UserId通过多重的PINT服务器
+和网关（依赖于体系机构）而是唯一的，并映射为SessionId。达到唯一性的一种途径就是
+在发送给PINT服务器以前，在UserId字符串中添加clientId。SessionId就可能是这个新
+的UserId和timestamp的组合。
+5.定义
+    PINT-MIB DEFINITIONS ::= BEGIN
+
+         IMPORTS
+          OBJECT-TYPE, Counter32, MODULE-IDENTITY, mib-2
+         FROM   SNMPv2-SMI
+         TEXTUAL-CONVENTION
+         FROM SNMPv2-TC
+         MODULE-COMPLIANCE, OBJECT-GROUP
+         FROM SNMPv2-CONF
+         sysApplInstallPkgEntry
+         FROM SYSAPPL-MIB
+         SnmpAdminString
+         FROM SNMP-FRAMEWORK-MIB;  -- RFC 2571 [2]
+
+         pintMib MODULE-IDENTITY
+         LAST-UPDATED "200102010000Z" -- 1 Feb 2001
+
+ORGANIZATION "IETF PINT Working Group"
+CONTACT-INFO "
+        Chairs:  Steve Bellovin
+                    E-mail: smb@research.att.com
+
+                    Igor Faynberg
+                    E-mail: faynberg@lucent.com
+
+        Authors: Murali Krishnaswamy
+                     Postal: 20 Corporate Place South
+                                Piscataway, NJ 08854
+                                Tel:    +1 (732)465-1000
+
+                           E-mail: murali@photuris.com
+
+                                Dan Romascanu
+                                Postal: Atidim Technology Park, Bldg 3
+                                Tel Aviv, Israel
+                                Tel:    +972 3 6458414
+                                E-mail: dromasca@avaya.com
+
+        General Discussion:pint@lists.bell-labs.com
+        To Subscribe: pint-request@lists.bell-labs.com
+        In Body: subscribe your-email-addres
+        Archive: http://www.bell-labs.com/mailing-lists/pint/
+        "
+
+DESCRIPTION
+    “MIB定义了监控PINT服务所需的对象。”
+
+-- Revision history
+REVISION "200102010000Z" -- 1 Feb 2001
+DESCRIPTION
+    “初始版本, 在RFC 3055中发布。”
+::= { mib-2 93 }
+
+PintServiceType ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION
+           “这个TC描述了PINT服务的类型。”
+        SYNTAX  INTEGER {
+                r2C(1),     -- Request-to-Talk
+                r2F(2),     -- Request-to-Fax
+                r2FB(3),    -- Request-to-Fax-Back
+                r2HC(4)     -- Request-to-Hear-Content
+        }
+
+PintPerfStatPeriod ::= TEXTUAL-CONVENTION
+STATUS      current
+DESCRIPTION
+    “这个TC描述了统计时段。注意被值SinceReboot(4)变址的计数器的值,能受到计数
+器转滚法的潜在影响。使用这种对象的应用程序的职责是需要重视每当计数器到达一个值
+（2**32-1）的时候，它就会被清零。”
+SYNTAX  INTEGER {
+last30sec(1),   -- Performance Statics for the last 30 sec
+last15min(2),   --    15 min
+last24Hr(3),    --    24 Hour
+sinceReboot(4)  --    Since the time the pint server was
+--      last rebooted
+}
+
+pintServerConfig        OBJECT IDENTIFIER ::= { pintMib 1 }
+pintServerMonitor       OBJECT IDENTIFIER ::= { pintMib 2 }
+pintMibConformance      OBJECT IDENTIFIER ::= { pintMib 3 }
+
+-- pintServerConfig - PINT configuration MIB variables
+
+pintReleaseNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+     “由代理支持的PINT协议译本的指示。”
+    ::= { pintServerConfig 1 }
+
+pintSysContact           OBJECT-TYPE
+    SYNTAX        SnmpAdminString
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+     “与PINT服务管理有关的联系信息。”
+    ::= { pintServerConfig 2 }
+
+pintApplInstallPkgTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF PintApplInstallPkgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “安装PINT应用程序的描述平台。”
+    ::= { pintServerConfig 3 }
+
+pintApplInstallPkgEntry OBJECT-TYPE
+    SYNTAX      PintApplInstallPkgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “访问每一个PINT应用。”
+    AUGMENTS { sysApplInstallPkgEntry }
+    ::= { pintApplInstallPkgTable 1 }
+
+PintApplInstallPkgEntry ::= SEQUENCE {
+pintApplInstallPkgDescription    SnmpAdminString
+}
+
+pintApplInstallPkgDescription OBJECT-TYPE
+    SYNTAX        SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS        current
+    DESCRIPTION
+     “安装PINT应用程序的原文描述。”
+    ::= { pintApplInstallPkgEntry 1 }
+
+pintRegisteredGatewayTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF PintRegisteredGatewayEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “描述已注册的网路应用程序的平台。”
+    ::= { pintServerConfig 4 }
+
+pintRegisteredGatewayEntry OBJECT-TYPE
+    SYNTAX      PintRegisteredGatewayEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “访问每一个已注册的网路应用。”
+AUGMENTS { sysApplInstallPkgEntry  }
+    ::= { pintRegisteredGatewayTable 1 }
+
+PintRegisteredGatewayEntry ::= SEQUENCE {
+pintRegisteredGatewayName       SnmpAdminString,
+pintRegisteredGatewayDescription SnmpAdminString
+}
+
+pintRegisteredGatewayName OBJECT-TYPE
+    SYNTAX        SnmpAdminString
+    MAX-ACCESS read-only
+    STATUS        current
+    DESCRIPTION
+     “注册网路的名称。”
+    ::= { pintRegisteredGatewayEntry 1 }
+
+pintRegisteredGatewayDescription OBJECT-TYPE
+    SYNTAX        SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS        current
+    DESCRIPTION
+     “已注册网路的原文描述。”
+    ::= { pintRegisteredGatewayEntry 2 }
+-- pintServerMonitor - PINT monitoring statistics MIB variables
+
+pintServerGlobalPerf    OBJECT IDENTIFIER ::= {pintServerMonitor 1 }
+pintServerClientPerf    OBJECT IDENTIFIER ::= {pintServerMonitor 2 }
+pintServerUserIdPerf    OBJECT IDENTIFIER ::= {pintServerMonitor 3 }
+pintServerGatewayPerf   OBJECT IDENTIFIER ::= {pintServerMonitor 4 }
+
+pintServerGlobalStatsTable      OBJECT-TYPE
+    SYNTAX      SEQUENCE OF PintServerGlobalStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “展示监控全局服务器统计的平台。”
+    ::= { pintServerGlobalPerf 1 }
+
+pintServerGlobalStatsEntry OBJECT-TYPE
+    SYNTAX      PintServerGlobalStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “进入全局统计平台。每一次访问被定义为各自的监控服务类型和运行统计托收期。”
+    INDEX {pintServerServiceTypeIndex, pintServerPerfStatPeriodIndex}
+    ::= { pintServerGlobalStatsTable 1 }
+
+PintServerGlobalStatsEntry      ::=  SEQUENCE {
+pintServerServiceTypeIndex                           PintServiceType,
+pintServerPerfStatPeriodIndex                        PintPerfStatPeriod,
+pintServerGlobalCallsReceived                        Counter32,
+pintServerGlobalSuccessfulCalls                      Counter32,
+pintServerGlobalDisconnectedCalls                    Counter32,
+pintServerGlobalDisCUAutFCalls                       Counter32,
+pintServerGlobalDisServProbCalls                     Counter32,
+pintServerGlobalDisGatProbCalls         Counter32
+}
+
+pintServerServiceTypeIndex OBJECT-TYPE
+    SYNTAX     PintServiceType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+     “监控服务的唯一标识符。”
+    ::= { pintServerGlobalStatsEntry 1 }
+
+pintServerPerfStatPeriodIndex OBJECT-TYPE
+    SYNTAX     PintPerfStatPeriod
+    MAX-ACCESS not-accessible
+
+    STATUS     current
+    DESCRIPTION
+     “PINT服务器的运行统计需求时期。”
+    ::= { pintServerGlobalStatsEntry 2 }
+
+pintServerGlobalCallsReceived OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “接收到的全局访问数量。”
+    ::= { pintServerGlobalStatsEntry 3 }
+
+pintServerGlobalSuccessfulCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “全部成功访问的数量。”
+    ::= { pintServerGlobalStatsEntry 4 }
+
+pintServerGlobalDisconnectedCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     "全部断开（失败）的访问数量。"
+    ::= { pintServerGlobalStatsEntry 5 }
+
+pintServerGlobalDisCUAutFCalls
+OBJECT-TYPE
+SYNTAX     Counter32
+MAX-ACCESS read-only
+STATUS     current
+DESCRIPTION
+    “由于客户端或用户的验证错误而断开的全部访问数量”
+::= { pintServerGlobalStatsEntry 6 }
+
+pintServerGlobalDisServProbCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “由于服务器问题而断开的全部访问数量。”
+    ::= { pintServerGlobalStatsEntry 7 }
+pintServerGlobalDisGatProbCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “由于网路问题而断开的全部访问数量。”
+    ::= { pintServerGlobalStatsEntry 8 }
+
+pintServerClientStatsTable      OBJECT-TYPE
+    SYNTAX      SEQUENCE OF PintServerClientStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+    “监控服务器客户端统计的展示平台。”
+    ::= { pintServerClientPerf 1 }
+
+pintServerClientStatsEntry OBJECT-TYPE
+    SYNTAX      PintServerClientStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “进入客户服务器统计平台。通过名字鉴别，监测服务类型和运行统计托收期，把每
+一次访问定义为各自的用户。”
+    INDEX {pintServerClientAddress, pintServerServiceTypeIndex,
+    pintServerPerfStatPeriodIndex}
+    ::= { pintServerClientStatsTable 1 }
+
+PintServerClientStatsEntry      ::=  SEQUENCE {
+pintServerClientAddress                              SnmpAdminString,
+pintServerClientCallsReceived                           Counter32,
+pintServerClientSuccessfulCalls                         Counter32,
+pintServerClientDisconnectedCalls                       Counter32,
+pintServerClientDisCAutFCalls                           Counter32,
+pintServerClientDisEFProbCalls                          Counter32
+}
+
+pintServerClientAddress OBJECT-TYPE
+    SYNTAX     SnmpAdminString
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+     “由字符串描绘的地址所鉴别的监控客户端的唯一标识符。”
+    ::= { pintServerClientStatsEntry 1 }
+pintServerClientCallsReceived OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “接受到特殊客户端的访问数。”
+    ::= { pintServerClientStatsEntry 2 }
+
+pintServerClientSuccessfulCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “客户端完全成功访问数。”
+    ::= { pintServerClientStatsEntry 3 }
+
+pintServerClientDisconnectedCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “断开（失败）的客户端访问数。”
+    ::= { pintServerClientStatsEntry 4 }
+
+pintServerClientDisCAutFCalls
+OBJECT-TYPE
+SYNTAX     Counter32
+MAX-ACCESS read-only
+STATUS     current
+DESCRIPTION
+    “由于客户端验证失败而断开的客户端访问数。”
+::= { pintServerClientStatsEntry 5 }
+
+pintServerClientDisEFProbCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “由于出口设备问题而断开的客户端访问数。”
+    ::= { pintServerClientStatsEntry 6 }
+
+pintServerUserIdStatsTable      OBJECT-TYPE
+    SYNTAX      SEQUENCE OF PintServerUserIdStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+DESCRIPTION
+     “监控PINT服务用户统计的展示平台。”
+    ::= { pintServerUserIdPerf 1 }
+
+pintServerUserIdStatsEntry OBJECT-TYPE
+    SYNTAX      PintServerUserIdStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “进入用户统计平台。通过名字鉴别，监测服务类型和运行统计托收期，把每一次访
+问定义为各自的用户。假定PINT服务器的性能足够容纳在此平台上的访问数。如果使用老
+化的机制来避免可量测性的问题，这就成了本地服务器的执行问题。”
+    INDEX {pintServerUserIdName, pintServerServiceTypeIndex,
+    pintServerPerfStatPeriodIndex}
+    ::= { pintServerUserIdStatsTable 1 }
+
+PintServerUserIdStatsEntry      ::=  SEQUENCE {
+pintServerUserIdName                                   SnmpAdminString,
+pintServerUserIdCallsReceived                           Counter32,
+pintServerUserIdSuccessfulCalls                         Counter32,
+pintServerUserIdDisconnectedCalls                       Counter32,
+pintServerUserIdDiscUIdAFailCalls                       Counter32,
+pintServerUserIdEFProbCalls                             Counter32
+}
+
+pintServerUserIdName OBJECT-TYPE
+    SYNTAX     SnmpAdminString (SIZE(0..64))
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+     “通过名字识别的监控用户的唯一标识符。”
+    ::= { pintServerUserIdStatsEntry 1 }
+
+pintServerUserIdCallsReceived OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “接收到的特定用户的访问数。”
+    ::= { pintServerUserIdStatsEntry 2 }
+
+pintServerUserIdSuccessfulCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “接收到用户完全成功访问数。”
+    ::= { pintServerUserIdStatsEntry 3 }
+
+pintServerUserIdDisconnectedCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     "接收到用户断开（失败）的访问数。"
+    ::= { pintServerUserIdStatsEntry 4 }
+
+pintServerUserIdDiscUIdAFailCalls
+OBJECT-TYPE
+SYNTAX     Counter32
+MAX-ACCESS read-only
+STATUS     current
+DESCRIPTION
+    “由于用户验证失败而断开的用户访问数。”
+::= { pintServerUserIdStatsEntry 5 }
+
+pintServerUserIdEFProbCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “由于出口设备问题而断开的用户访问数。”
+    ::= { pintServerUserIdStatsEntry 6 }
+
+pintServerGatewayStatsTable     OBJECT-TYPE
+    SYNTAX      SEQUENCE OF PintServerGatewayStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+     “监控网路统计的展示平台。”
+    ::= { pintServerGatewayPerf 1 }
+
+pintServerGatewayStatsEntry OBJECT-TYPE
+    SYNTAX      PintServerGatewayStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+
+    DESCRIPTION
+     “进入网路平台。通过名字，各自的监控服务类型和运行统计托收期，每一次访问被
+定义为各自的网路。”
+    INDEX { pintRegisteredGatewayName, pintServerServiceTypeIndex,
+    pintServerPerfStatPeriodIndex }
+    ::= { pintServerGatewayStatsTable 1 }
+
+PintServerGatewayStatsEntry     ::=  SEQUENCE {
+pintServerGatewayCallsReceived                  Counter32,
+pintServerGatewaySuccessfulCalls                Counter32,
+pintServerGatewayDisconnectedCalls              Counter32
+}
+
+pintServerGatewayCallsReceived OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “接收到特定网路的访问数。”
+    ::= { pintServerGatewayStatsEntry 1 }
+
+pintServerGatewaySuccessfulCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “在特定网络完全成功的访问数。”
+    ::= { pintServerGatewayStatsEntry 2 }
+
+pintServerGatewayDisconnectedCalls OBJECT-TYPE
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+     “在特定网路断开（失败）的访问数。”
+    ::= { pintServerGatewayStatsEntry 3 }
+
+--
+-- Notifications Section
+-- (none defined)
+--
+
+--
+-- Conformance Section
+--
+
+pintMibCompliances OBJECT IDENTIFIER ::= { pintMibConformance 1 }
+pintMibGroups      OBJECT IDENTIFIER ::= { pintMibConformance 2 }
+
+pintMibCompliance MODULE-COMPLIANCE
+STATUS  current
+DESCRIPTION
+    “描述与PINT MIB相适应的需求。”
+MODULE  -- this module
+MANDATORY-GROUPS { pintMibConfigGroup, pintMibMonitorGroup }
+::= { pintMibCompliances 1 }
+
+pintMibConfigGroup OBJECT-GROUP
+OBJECTS {
+pintReleaseNumber,
+pintSysContact,
+pintApplInstallPkgDescription,
+pintRegisteredGatewayName,
+pintRegisteredGatewayDescription
+}
+STATUS  current
+DESCRIPTION
+    “对PINT服务器提供配置信息的对象。”
+::= { pintMibGroups 1 }
+
+pintMibMonitorGroup OBJECT-GROUP
+OBJECTS {
+pintServerGlobalCallsReceived,
+pintServerGlobalSuccessfulCalls,
+pintServerGlobalDisconnectedCalls,
+pintServerGlobalDisCUAutFCalls,
+pintServerGlobalDisServProbCalls,
+pintServerGlobalDisGatProbCalls,
+pintServerClientCallsReceived,
+pintServerClientSuccessfulCalls,
+pintServerClientDisconnectedCalls,
+pintServerClientDisCAutFCalls,
+pintServerClientDisEFProbCalls,
+--pintServerUserIdName,
+pintServerUserIdCallsReceived,
+pintServerUserIdSuccessfulCalls,
+pintServerUserIdDisconnectedCalls,
+pintServerUserIdDiscUIdAFailCalls,
+pintServerUserIdEFProbCalls,
+pintServerGatewayCallsReceived,
+pintServerGatewaySuccessfulCalls,
+pintServerGatewayDisconnectedCalls
+}
+STATUS  current
+DESCRIPTION
+    “对PINT服务器提供监控信息的对象。”
+    ::= { pintMibGroups 2 }
+
+END
+6.承谢
+   作者要特别感谢Igor Faynberg，由于他对完成这篇作品的鼓励。
+7.安全考虑
+    在这种MIB中只定义了唯一的一个管理对象，它包含MAX-ACCESS读-写子句
+（pintSysContact）。没有读-创建对象。这种读-写对象可能在某些网络环境中可能十分敏
+感或易受攻击。在没有适当保护的不安全环境中对SET操作的支持在网络运行上有消极的作
+用。
+    在这种MIB中有一定数量的管理对象，可能包含对商业前景敏感的信息。其一可能就是
+顾客的验证（UserIdName）。同样的，PINT服务运行的信息自身需要受到监控。因此，当
+通过SNMP在网络上发送时，对于这些对象的适当GET存取或者对于这些对象的值的合理加
+密的控制就变得十分重要。不是所有的SNMP译文都提供这样的安全环境特色。
+    SNMPv1自身并不是一个安全环境。尽管网络本身是安全的（例如使用IPSec），即使那
+样，它并不包含对于在安全网络上谁被允许存取和GET/SET（读/更改/创建/删除）在这种
+MIB中的对象的控制。
+    建议执行者像SNMPv3框架那样考虑安全特性。特别是， 推荐使用User-based Security 
+Model RFC 2574 [13] 和 View-based Access Control Model RFC 2575 [16]。
+    确认SNMP实体给出了对这种MIB存取的实例就变成了客户/使用者的职责，合理地配置
+那些仅对于某些首要的（用户）存取这些对象，并且他们确实有权限真正的GET或SET（更
+改/创建/删除）它们。
+8.IANA考虑
+    所有在这种MIB中列出的值的扩展必须通过在RFC 2434 [20]中定义的标准行为过程。
+9.知识产权
+The IETF takes no position regarding the validity or scope of any
+   intellectual property or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; neither does it represent that it
+   has made any effort to identify any such rights.  Information on the
+   IETF's procedures with respect to rights in standards-track and
+   standards-related documentation can be found in BCP-11.  Copies of
+   claims of rights made available for publication and any assurances of
+   licenses to be made available, or the result of an attempt made to
+   obtain a general license or permission for the use of such
+   proprietary rights by implementors or users of this specification can
+   be obtained from the IETF Secretariat.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights which may cover technology that may be required to practice
+   this standard.  Please address the information to the IETF Executive
+   Director.
+10.参考书目
+[1]  Lu, H., Conroy, L., Bellovin, S., Krishnaswamy, M., Burg, F.,
+        DeSimone, A., Tewani, K., Davidson, P., Schulzrinne, H. and K.
+        Vishwanathan,  "Toward the PSTN/Internet Inter-Networking --
+        Pre-PINT Implementations", RFC 2458, November 1998.
+
+   [2]  Wijnen, B., Harrington, D. and R. Presuhn, "An Architecture for
+        Describing SNMP Management Frameworks", RFC 2571, April 1999.
+
+   [3]  Rose, M. and K. McCloghrie, "Structure and Identification of
+        Management Information for TCP/IP-based Internets", STD 16, RFC
+        1155, May 1990.
+[4]  Rose, M. and K. McCloghrie, "Concise MIB Definitions", STD 16,
+        RFC 1212, March 1991.
+
+   [5]  Rose, M., "A Convention for Defining Traps for use with the
+        SNMP", RFC 1215, March 1991.
+
+   [6]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Structure of
+        Management Information Version 2 (SMIv2)", STD 58, RFC 2578,
+        April 1999.
+
+   [7]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Textual
+        Conventions for SMIv2", STD 58, RFC 2579, April 1999.
+
+   [8]  McCloghrie, K., Perkins, D. and J. Schoenwaelder, "Conformance
+        Statements for SMIv2", STD 58, RFC 2580, April 1999.
+
+   [9]  Case, J., Fedor, M., Schoffstall, M. and J. Davin, "Simple
+        Network Management Protocol", STD 15, RFC 1157, May 1990.
+
+   [10]  Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+        "Introduction to Community-based SNMPv2", RFC 1901, January
+        1996.
+
+   [11] Case, J., McCloghrie, K., Rose, M. and S. Waldbusser, "Transport
+        Mappings for Version 2 of the Simple Network Management Protocol
+        (SNMPv2)", RFC 1906, January 1996.
+
+   [12] Case, J., Harrington D., Presuhn R. and B. Wijnen, "Message
+        Processing and Dispatching for the Simple Network Management
+        Protocol (SNMP)", RFC 2572, April 1999.
+
+   [13] Blumenthal, U. and B. Wijnen, "User-based Security Model (USM)
+        for version 3 of the Simple Network Management Protocol
+        (SNMPv3)", RFC 2574, April 1999.
+
+   [14] Case, J., McCloghrie, K., Rose, M. and Waldbusser, "Protocol
+        Operations for Version 2 of the Simple Network Management
+        Protocol (SNMPv2)", RFC 1905, January 1996.
+
+   [15] Levi, D., Meyer, P. and B. Stewart, "SNMPv3 Applications", RFC
+        2573, April 1999.
+
+   [16] Wijnen, B., Presuhn, R. and K. McCloghrie, "View-based Access
+        Control Model (VACM) for the Simple Network Management Protocol
+        (SNMP)", RFC 2575, April 1999.
+
+[17] Case, J., Mundy, R., Partain, D. and B. Stewart, "Introduction
+        to Version 3 of the Internet-standard Network Management
+        Framework", RFC 2570, April 1999.
+
+   [18] Petrack, S. and L. Conroy, "The PINT Service Protocol:
+        Extensions to SIP and SDP for IP Access to Telephone Call
+        Services", RFC 2848, June 2000.
+
+   [19] Krupczak, C. and J. Saperia, "Definitions of System-Level
+        Managed Objects for Applications", RFC 2287, February 1998.
+
+   [20] Narten, T. and H. Alvestrand, "Guidelines for Writing an IANA
+        Considerations Section in RFCs", BCP 26, RFC 2434, October 1998.
+11.作者地址
+Murali Krishnaswamy
+   Lucent Technologies
+   3C-512, 101 Crawfords Corner Rd.
+   Holmdel, NJ 07733
+
+   Phone: +1 (732)949-3611
+   Fax:   +1 (732)949-3210
+   EMail: murali@lucent.com
+
+
+   Dan Romascanu
+   Avaya Communication
+   Atidim Technology Park, Bldg 3
+   Tel Aviv, Israel
+
+   Phone: +972 3 6458414
+   EMail: dromasca@avaya.com
+12.完整版权说明
+Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+感谢
+Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+RFC3055――Management Information Base for the PINT Services Architecture 
+PINT服务体系结构管理信息基础
+
+
+1
+RFC文档中文翻译计划

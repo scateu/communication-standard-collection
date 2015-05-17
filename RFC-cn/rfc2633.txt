@@ -1,0 +1,806 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：阮健（ruanjian   rj79@sina.com）
+译文发布时间：2001-12-28
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                               B. Ramsdell, Editor
+Request for Comments: 2633                          Worldtalk
+Category: Standards Track                            June 1999
+
+
+S/多用途网际邮件扩充协议(MIME)版本3信息说明书 
+(RFC2633――S/MIME Version 3 Message Specification)
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1999).
+
+目录
+1绪论	2
+1.1说明书概要	2
+1.2 术语	3
+1.3 定义	3
+2 CMS 选择	4
+2.1运算法则表示符摘要	4
+2.2运算法则表示符摘要	4
+2.3运算法则表示符密钥	4
+2.4 一般语法	4
+2.5 签名信息类型的特征	5
+2.6 SignerIdentifier的SignerInfo类型	8
+2.7 ContentEncryptionAlgorithmldentifier	8
+3.创建s/mime信息	10
+3.1为署名和封装MIME实体作准备	10
+3.2 application/pkcs7-mime类型	14
+3.4创建署名信息	16
+3.5署名和加密	19
+3.6创建只认证信息	20
+3.7请求注册	20
+3.8识别S/MIME消息	20
+4.证书处理	21
+4.1产生密钥对	21
+5 安全	22
+A. ASN.1 模型	22
+B. 参考文献	26
+C. 致谢	28
+
+1绪论
+S/MIME(安全/多用途网际邮件扩充协议)规定一个一致路径去发和收安全MIMI数据.基
+于流行的网络MIME标准,S/MIM为电子通讯提供了以下用密码写的安全服务:起因(利
+用数字签名),秘密和数据安全(利用加密术)的证明,信息完整性和非批判.S/MIME被传统
+的邮件使用代理商用来给要发的邮件加密码安全服务,且给收到的邮件解释用密码写的
+安全服务.可是S/MIME没对邮件限制;它可用于任何传输MIME数据的机器中,比如
+HTTP.同样的,S/MIME利用基于MIME特征的对象和允许安全信息在混合传输系统中被
+交换.更多的,S/MIME用于自动信息传输代理中,这种代理用密码安全服务,是不需要人干
+涉的,例如在网络上传送产生软件文档的标签和传真信息的加密术.
+1.1说明书概要
+本文讲关于加密码的签名和服务于MIME数据密码术的协议.MIME标准[MIME-规
+格]规定了一个关于网络信息的内容类型一般结构且允许为新的内容类型应用扩充.
+这个备忘录详细说明怎样产生一个MIME实体部分,这个部分已经根据CMS增强了
+密码功能, CMS源于PKCS#7.本备忘录也详细说明了MIME类型,此MIME类型能用
+来传输那些实体部分.同样本备忘录也讨论怎样用多部分/有符号MIME类型在
+[MIME-安全]说明传输S/MIME注释的消息.本备忘录也说明了PKCS7的应用-MIME
+类型签名,此MIME类型签名也用来传输S/MIME签名消息.为了产生S/MIME消
+息,S/MIME代理商必须在本备忘录里追求规范,说明书也一样有序列在用密码写的
+消息里.在整个备忘录里,有要求和建议用来处理接收代理如何控制进来的消息.有部
+分要求何建议用来处理发送代理如何产生流出的消息.总的来说,最好的策略是"在呢
+收到消息中是自由的而在呢发送消息中是保守的." 大多的要求是来控制流入消息
+同时多数建议是来产生流出消息.对收方代理和发方代理有不同要求也因为可能有
+S/MIME系统用于不同于传统网络邮件客户的软件.S/MIME能用于任何传输MIME
+数据的系统中. 比如,一种自动化发送一条密码化消息过程可能完全不能收到一条密
+码化消息.因此,对两种类型的代理,要求和建议是分别在适当时候列出.
+1.2 术语
+本文中的关键字“必须”，“必须不”，“要求的”，“应该”，“不应该”，“会”，“不会”，
+“建议”，“或许”，“可选的”在 [MUSTSHOUD] 中解释。
+1.3 定义
+本备忘录的目的,应用以下定义.
+ASN.1:摘要语法符号 1,在CCITT X.208中有定义.
+证明书:把一个实体的显著名字与有数字签名的公共密钥帮定的类型.
+DER:用于ASN.1显著的译成密码的规则,在CCITTX.509中定义.
+7-bit 数据:少与998特征长的原文数据线,998中没有第8bit装置的特征,也没有
+无效的特征. <CR>和<LF>仅发生在线的最后分隔符<CR><LF>部分.
+8-bit 数据: 数据:少与998特征长的原文数据线,998中没有第8bit装置的特征,
+也没有无效的特征. <CR>和<LF>仅发生在线的最后分隔符<CR><LF>部分.
+二元数据:任意的数据.
+传递编码:对数据反复翻译那么8-bit或二元数据可以经过一条只有7-bit数据传
+输的通道发送.
+接方代理:解释和处理S/MIME CMS对象的软件,MIME实体部分包含CMS对象,
+或者二者都包括.
+发送发代理:产生S/MIMECMS对象的软件,MIME实体部分包含CMS对象或者
+二者都包括.
+S/MIME 代理:软件用者是一个接方代理,也是个发送方代理,或者二者都是.
+1.4 优先实际应用S/MIME的兼容性
+版本3,0的S/MIME代理商应该尽力与版本2,0的代理商协同工作.版本2.0 代
+理商经RFC 2315改进在RFC 2311中有说明.RFC2311关于S/MIME发展也有一段
+历史信息.
+2 CMS 选择
+CMS允许在内容和运算法则支持中有广泛的选择.为了在所有的S/MIME执行中取
+得协同工作的基本水平,这部分提出许多有支持力的要求和建议.[CMS]提供了关于
+密码化的运算法则用法的额外详细资料.
+2.1运算法则表示符摘要
+发送方和接收方代理商必须支持SHA-1[SHA1].接收方代理应该支持MD5[MD5]实
+现后面与MD5-摘要 版本2.0 S/MIME 签名数据对象相兼容的目的. 
+2.2运算法则表示符摘要
+发送方和接收方代理商必须支持在[DSS]定义的符号.运算法则参数必须缺少的(不
+能当无效译码). 接收方代理应该支持加密术,在[PKCS-1]里有定义.发送方代理应
+该支持加密术.流出的消息签有用户的私人密钥.私人密钥的大小是在密钥产生时决
+定的. 版本2.0 S/MIME客户记录只能证明用在加密术算法准则的数字签名.
+2.3运算法则表示符密钥
+		发送和接收代理商必须支持DH,在[DH]有定义. 接收代理商应该支持加密术. 引入
+的加密消息包含对称密钥,它可以用用户的私人密钥来解释明白. 私人密钥的大小时在密钥
+产生时决定的. 发送代理商应该支持加密术. 版本2,0 S/MIME 客户记录只能解释用在加密
+术运算法则的内容加密密钥中.
+2.4 一般语法
+  		CMS 定义了多样内容的类型. 这里面,只有有符号数据和信封数据内容类型目前
+是用在S/MIME. 
+2.4.1 数据内容类型
+		发送方代理必须用数据ID类型标签符来说明已应用了安全服务的消息内容.比如,
+当把一个数字签名应用到MIME数据时,CMS的有符号数据、encapContentInfo、eContentType
+必须包含数据ID对象的表示符且MIME内容必须被保存在有字符串八位字节的符号数据、
+encapContentInfo、eContent里(除非发送代理商正使用多个部分或多个符号,在这种情况下
+eContent事缺少的,本文的3.4.3节有说明). 举一个另外例子,当应用加密术到MIME数据时, 
+CMS的信封数据、加密内容信息、内容类型必须包含数据ID对象的标识符和加密的MIME
+内容必须被存在字符串八位的信封数据、加密的内容信息、加密的内容里。
+2.4.2 符号数据内容类型
+发送方代理必须使用符号数据内容类型把数字签名应用到消息中,或者在没有
+签名信息的退化例子里把数字签名应用到证明的传递中.
+2.4.3 信封数据内容类型
+			内容类型被用来对消息的私人保护. 一个发送方需要用此服务得到开启双方
+信件的公共密钥. 内容类型不用提供签名.
+2.5 签名信息类型的特征
+			签名信息类型允许把有符号的与没符号的属性,随同签名包括在一块. 接收方
+代理必须能够处理零或者这种在这里列出的符号属性情况.发送方代理应该产生下列每个
+S/MIME消息的符号属性情况:
+-	签名时间(在本文2.5.1节)
+-	sMIME容量(在本文2.5.2节)
+-	sMIMEncryptionKeyPreference(在本文2.5.3节)
+更进一步说,接收方代理应该能处理零和一种签名证明属性的符号属性的情况(在
+[ESS]第五节). 发送方代理应该产生在每个S/MIME消息里签名证明有符号属性情
+况. 另外的属性和值可能在将来被定义.接收方代理应该处理在优美风格里没被承
+认的属性和值. 发送代理包括没列在这里的符号属性应该显示给用户,从而使用户
+知道所有有符号的数据.
+2.5.1	签名时间的属性
+签名时间属性用来传达签名消息的时间.除非有可信任时间标印服务器,否则签名时
+间将很有可能被消息递交方产生,因此和递交方有相同的信任程度. 发送方代理商
+必须通过2049年作为UTCTime把时间签名译成密码;签名时间在2050年或者以后
+必须译成GeneralizedTime密码.当UTCTime选择被使用时,S/MIME代理器必须说
+明以下年限:
+如果年限大于或等于50,那年代就认为是19YY; 如果年限是小于50,那年代就认为
+是20YY.
+2.5.2 SMIME容量属性
+SMIME容量属性包括签名运算法则(比如"有RSAD的sha1加密术"),对称运算法则
+(比如"DES-EDE3-CBC"),主要密码术的运算法则(比如RSA加密术).它也包括一种
+适用于签名日期的无运算法则性能.SMIME性能是灵活的和可扩展的,这样的话,在
+将来,比如对证书另外性能和参数选择进行鉴别,这种功能能在不导致当前客户程序
+停止的情况下加进去.如当面的,SMIME容量属性必须是一个签名属性;它不应该是
+UnsignedAttribute.CMS把SignedAttributes定义成一套属性. 在签名信息里
+SignedAttributes必须不包括SMIMECapabilities属性的多种情况.CMS为ASN.1排
+序结构定义了属性包括一套属性值的附加值.一个SMIMECapabilities属性必须仅
+仅包括属性值的单个情况.不必有零或在一套属性值中附加值中属性值的多种情
+况.SMIMECapabilites属性的语义详细说明了关于SMIMECapabilites能支持的客户
+程序的多部分列表.客户程序不必列出所有它支持的性能,也不应该列出,这样可以
+使得性能列表不会变的太长. 在一个SMIMECapabilities属性里,0ID根据它们的优
+先顺序列出来,但逻辑上应该根据它们的类别分别列出(签名运算法则,均衡运算法
+则,加密密钥运算法则,等.) SMIMECapabilities属性的结构有利于简单的表格查询和
+为了测定仪器的二进制比较.例如, 有DES EDE3 CBC SMIMECapability的 
+DER-encoding 必须不管执行结果一致同仁的译成编码. 在均衡运算法则的情况
+下,0ID的相关参数必须详细说明所有必需的参数来区分二种运算法则相同情况. 
+例如,除了密钥长度外,RC5的许多圆圈和块大小必须被详细说明. 有一个
+0ID(S/MIME用到的0ID)是重点维护的,它是从备忘录里分离出来的. 这个0ID表是
+由在<http://www.imc.org/ietf-smime/oids.html>IMC来维护的 注意所有有关联
+的0ID必须执行在本文A节提到的运算法则.符合运算法则的0ID应该在实际运用
+时使用相同的0ID,除了对0ID来说运算法则的用法是不明确的. 例如,在初期的草
+案中,rsaEncryption是不明确的,因为它可以指签名运算法则也可以指加密密钥法则.
+在0ID不明确的情况下,需要维护者对已登记的SMIMECapabilities表根据运算法则
+的类型使用0ID 作出正确的判断.新的0ID 必须允许smimeCapabilities 的0ID来
+满足使用其他的0ID. 已登记的SMIMECapabilities表详细说明了0ID需要的参数,
+在变量长度密码对称的情况下,多数主要密钥加长. 结果对特别的0ID来说没有可
+区分的参数,那参数必须省略且不能被译成为无效. SMIMECapabilibies属性的额外
+值在以后可被定义. 接收代理方必须处理一个SMIMECapabilities对象,它拥有在优
+美风格里不被承认的值.
+2.5.3 密码密钥的优先属性
+密码密钥优先属性允许签名者明确说明签名者的证书有签名者的优先密码密钥. 
+设计这属性来增强为了混合那些对加密和签名用不同的密钥的客户的行为能力.用
+这种属性来传送任何个列在证书里的属性,这种证书应该用来给以后加密的信息加
+密一个回话密钥.如果存在,SMIMEEncryptionKeyPreference属性必须是个
+SignedAttribute; 它不必是个UnsignedAttribute. CMS定义SignedAttributes为一类属
+性. 签名信息里的SignedAttributes不必包括SMIMEEncryptionKeyPreference属性
+的多种情况. CMS为属性定义了ASN.1的排列方式用来包括.属性值的一类额外值. 
+SMIMEEncryptionKeyPreference的属性必须仅仅包含属性值的单个情况. 不必有零
+或存在属性值里的一类额外值多种情况. 发送代理商应该包含一类证书里的参考
+证书,如果此属性被使用那这类证书还包含签名信息. 如果证书先前对接收代理来
+说是可利用的那它可以被省略. 如果一般用法或者先前的加密证书与用来消息签
+名的证书不一样,那发送代理应该使用这个属性. 如果消息上的签名是有效的和签
+名时间大于目前存储的值,那么接收代理应该存储优先的数据.(同样对
+SMIMECapabilities,应该检查时钟skew,如果skew太大就不使用数据.) 如可能接收
+代理应该尊重发送者的加密密钥的优先选择属性. 但这尊重仅仅是一种优先选择,
+接收代理在回答发送者时可使用任何有效的证书.
+2.5.3.1 管理证书中接收密钥的选择
+为了确定在发送将来CMS envelopedData消息给一个特别的接收器时的证书管理
+密钥, 应该遵从下列步骤:
+-	如果在一个从预期的接收器收到签名数据对象中发现一个
+SMIMEEncryptionKeyPreference的属性,这可识别x.509 证书,此证书应该用来作为
+接收者的x.509密钥管理证书. 
+-	如果没能在预期的接收器收到数据对象中发现一个SMIMEEncryptionKeyPreference
+的属性, 那应该用这类x.509证书来搜寻与x.509相同题目的证书,以此作为可用作
+密钥管理的签名x.509证书.
+-	或者用一些其他方法来确定用户的管理密钥. 如果一个x.509 密钥管理证书没找到,
+那么密码术不能处理消息的签名.如果找到多个x.509密钥管理证书,那么S/MIME
+代理可以在它们之间任意选择.
+2.6 SignerIdentifier的SignerInfo类型
+版本3.0的S/MIME要求使用版本1.0的SignerInfo,这是IssuerAndSeriaINumber 选
+择必须用作SignerIdentifier.
+2.7 ContentEncryptionAlgorithmldentifier
+收发代理必须支持用DES EDE3 CBC来加密和解密,以下称
+为"tripleDES"[3DES][DES]. 接收代理应该支持加密术和用RC2[RC2]解密或者用
+一致的40bit大小的密钥来加密,以下成为"RC2/40".
+2.7.1 确定用哪种加密方法
+当一个发送代理产生一条加密消息时,它必须同时确定用哪类的加密术. 决定过程
+包含使用存储在容量表里的信息,此表包含从接收器收到的消息, 也包含不相连的
+信息比如私人协议,用户参数选择,合法限制等等.2.5节说明一种发送代理能随意定
+义的方法,其它的例如它的优先顺序解密性能. 以下方法用来处理和记忆在引入签
+名消息里的加密性能属性,这种方法应该使用.
+-	如果接收代理还没为发送方的公共密钥创立个接收表,那在校验了引入的签名消息
+和检查了时间标志后,接收代理应该创立个起码能容下签名时间和匀称性能的表.
+-	如果这样的表已经存在,那接收代理应该校验引入消息的签名时间是否大于存储在
+表里的签名时间且签名是否有效. 如果是,那接收代理应该同时更新表里的签名时
+间和性能. 签名时间的值是个离将来很远的值,接收能力列在签名不能被校验的消
+息里,它不必被接收. 存储性能表应该将来可用来产生消息.发送一条消息前,发送代
+理必须决定是否对消息里的特殊数据使用不牢固的加密术.如果发送代理确定这不
+牢固的加密术对此数据来说是不可接收的,那发送代理不必使用例如RC2/40的不牢
+固加密术. 是否使用弱加密术不用考虑其它部分使用的加密算法. 2.7.2.1节到
+2.7.2.4节写了一个发送代理决定选哪类加密术应用到消息中去.这些规则是安排好
+的,所有发送代理应该根据安排好的规则来决定.
+2.7.1.1 规则1:公开接收容量
+如果接收代理已经从他打算加密的消息接收器里收到了一容量,那发送代理应该通
+过选在表里的第一个容量来使用那信息,因为发送代理知道怎样加密. 如果代理很
+希望接收方能解密消息的话,那发送代理应该表里的其中一个容量.
+2.7.1.2 规则2:没公开接收容量,公开使用加密
+		如果:
+-	发送代理不知接收方的加密容量;
+-	发送代理已从接收方收到不止一条消息;
+-	从接收方收到的最后的加密消息里有可信任的签名.
+那流出的消息应该使用相同的加密运算法则,这被用在最后的签名和从接收方收到
+的加密消息.
+2.7.1.3 规则3:没公开的容量,不知的S/MIME版本
+		如果:
+-	发送代理不知接收方的加密容量;
+-	发送代理不知接收方的S/MIME版本;
+那发送代理应该使用tripleDES因为它是一条更严格的运算法则且是S/MIME V3.0
+所要求的.如果这一步发送代理不选择使用tripleDES,那它必须使用RC2/40.
+2.7.2 选择弱加密术
+像所有运算法则都用到40bit的密钥一样,RC2/40被许多人当作是弱加密术. 一个由
+人控制的发送代理应该允许寄件人去决定使用RC2/40发送数据的风险或者在发送
+数据前决定用相似的弱加密运算法则，或者可能允许他使用更严格的加密术比如
+tripleDES．
+２.7.3 多个收接人
+如果发送代理是给一组接受人构成加密消息,这里说的接收方的加密容量是没有交
+迭的.那么发送代理被迫发送多条消息. 应该注意如果发送代理选择的发送严格加
+密的消息和用弱加密法则加密的同条消息的话,查看信道的人可能会发现用严格加
+密的消息的内容被弱加密的消息所简化.
+―――――周梦龄部分
+
+―――――岑斌部分
+3.创建s/mime信息
+这部分描述了s/mime信息的格式和他们是怎样创建的。s/mime信息是mime体和cmc对象
+的结合体。多种mime种类和cms对象被用到，保证安全的数据总是规范的mime实体。
+Mime实体和诸如认证，签名算法等其它数据，提供给cms处理程序（此程序生成cms实体）。
+Cms对象最后被包装在mime中。对s/mime加强的安全服务[ess]文件提供怎样s/mime信息
+是如何嵌套，保证安全的。Ess提供一个说明如何使用适合于署名的multipart/signed 和
+application/pkcs7来建立三重包装的s/mime信息。
+s/mime提供一种邮件(只含数据)的格式,多种署名数据的格式，多种署名和邮件数据的格式，
+为了适合多种环境，多种格式是需要的，特别对于署名信息来说。在这些信息种选择合适的
+格式亦有描述。
+这部分的读者期望能理解[MIME-SPEC]和[MIME-SECURE]中描述的MIME
+3.1为署名和封装MIME实体作准备
+s/mime用于MIME实体的安全性,一个MIME实体可能是一个信息的一个部分，或者是数据
+的整个部分。MIME体是包含MIME头和MIME实体，但不包含RFC822头。注意：s/mime
+能在保护MIME实体的安全方面的应用，除了应用于internet邮件，还应用于应用程序。被
+保证安全的MIME实体部分在本部分认为是在内部MIME，也就是说，这是可能更大的
+MIME信息的最深层的部分。把外部MIME实体处理成CMS对象在3.2 3.4 和其他的章节
+中进行描述。
+准备MIME实体的过程在[MIME-SPEC]中描述，在签名时，相同的过程也会使用，只是增
+加了些附加约束条件，从[MIME-SPEC]的角度来看，这个过程的描述在这里是重复的，但
+读者可能会想从这篇文档中获得附加的过程。这个章节同时也描述了附加的需要。
+单一的过程在创建用于署名，封装，或署名和封装并举的MIME实体中。同时我们也要采
+取一些步骤来防止在邮件传输过程中可能会出现的问题，这在使用multipart/signed各式的
+clear-signing时特别重要的。同时我们也建议当时用在封装数据，或署名，封装数据上时，
+要采取一些额外的步骤，以使数据在不改变的情况下传输到各个环境。
+这些步骤与其说是说明性的还不如说是描述性的，只要结果是一样的无论是用何种过程都是
+一样的。
+第一步：根据本地的规则，准备MIME实体。
+第二步：MIME实体的子部分被转换成规范的形式。
+第三步：对MIME实体的子部分运用正确的传输编码。
+当一条s/mime信息收到时，信息的安全服务首先被处理，其结果是MIME实体，MIME实
+体会被传到有处理MIME能力的用户代理，在那里其会被进一步解码，并被传输到用户端。
+3.1.1规范化
+每一个MIME实体必须转化为一种规范形式，这种形式能在创建署名，和确认署名的环境
+能唯一，无二义性的表示。MIME实体必须格式化，使之适合于封装和署名。
+规范化的确切细节依靠实体的MIME类型及其子类，这在这里不会被阐述。
+作为替代，会讨论特定MIME类型的标准。例如，text/plain类型的规范化和audio/basic的
+规范化是不同的。除了文本类型，大多数类型不管计算平台和环境（能考虑他们的规范表示）
+的差异只有一种表示。总的来说，规范化会被发送代理的非安全部分而不是S/MIME实现
+执行。
+文本最平常和重要的规范化在不同环境内的表示是不同的。主要类型text的MIME实体必
+须把他们的行结束和字符规范化。行结束必为<cr><lf>对，字符集必是注册的字符集[charsets].
+规范化的细节在[MIME-SPEC]中详细描述，选择的字符集应该在字符集参数中命名，以接
+受代理能无二意的得出其使用的字符集。
+特别要指出的是，一些字符集如[ISO-2022]对不同的字符有不同的表示。当准备要署名的文
+本时，为了表示的规范，必须使用特定字符集。
+3.1.2传输编码
+当产生以下任何的安全MIME实体（除使用multipart/signed格式的署名），传输编码时不需
+要的，S/MIME实现必须能处理二进制MIME对象。如果无内容传输编码头，传输编码必须
+是7位的。
+然而，S/MIME的实现应该使用在3.1.3中描述适合所有安全的MIME实体的传输编码。保
+证只有7位的MIME实体（即使是不向传输环节暴露的封装数据也被编码成7位的）原因
+是允许MIME实体能在不被篡改的情况下，在任何环境中处理。例如，一个信任的网关会
+去掉信息的封装，而非署名，然后继续传输数据至接受端，所以他们能直接确认签名。如果
+在诸如带有单独邮件网关的广域网等非8位clean站点内部传输，除非原始的MIME实体是
+7位数据，确认署名江市不可能的。
+3．1．3署名的传输编码是使用Multi/signed的
+如果一个multipart/signed 实体曾经传输通过标准的internet　SMTP的下层结构或其他被约
+束为7位文档的传输体系，那么它一定是被编码成7位的文本。7位数据的MIME实体无需
+传输编码。8位文档的实体和二进制数据能用打印字符和base-64传输编码进行编码。
+7位编码的首要原因是Internet邮件传输的下层结构，不能保证8位数据或二进制数据。即
+使很多传输段的下层结构能处理8位和二进制数据，但有时候要知道数据的传输路径是8
+位clear的是不可能的。如果8位的邮件信息遭遇不能传输8位或二进制数据的信息传输代
+理。代理有三种选择，但无论哪一种对于clear-signed信息是不可接受的。
+1．	代理改变传输编码，它是署名无效
+2．	代理能传输数据，但很可能破坏第8位数据，这同样使署名无效。
+3．	代理返回数据该给发送者。
+[MIME-SECURE]禁止代理改变multipart/signed信息第一部分的编码，如果不能传输二
+进制和8位数据的兼容的代理遇到第一部分是8位或二进制数据，它可能要把信息返回
+该发送端。
+3．1．4 简单的规范MIME实体
+   这个例子现实一个完全传输编码的multipart/mixed信息，这个例子包含一个文本部分和
+附件，这个简单信息文本包含非US-ASCII字符，它必须进行传输编码。这里虽然没显示，
+但每一行都是以<CR><LF>结束，MIME头，文本，传输编码部分必须以<CR><LF>结束.
+我们来看一下非S/MIME信息的例子：
+Content-Type: multipart/mixed; boundary=bar
+
+     --bar
+     Content-Type: text/plain; charset=iso-8859-1
+     Content-Transfer-Encoding: quoted-printable
+
+     =A1Hola Michael!
+
+     How do you like the new S/MIME specification?
+
+     I agree. It's generally a good idea to encode lines that begin with
+     From=20 because some mail transport agents will insert a
+     greater-than (>) sign, thus invalidating the signature.
+
+     Also, in some cases it might be desirable to encode any  =20
+     trailing whitespace that occurs on lines in order to ensure  =20
+     that the message signature is not invalidated when passing  =20
+     a gateway that modifies such whitespace (like BITNET).  =20
+
+     --bar
+     Content-Type: image/jpeg
+     Content-Transfer-Encoding: base64
+
+     iQCVAwUBMJrRF2N9oWBghPDJAQE9UQQAtl7LuRVndBjrk4EqYBIb3h5QXIX/LC//
+     jJV5bNvkZIGPIcEmI5iFd9boEgvpirHtIREEqLQRkYNoBActFBZmh9GC3C041WGq
+     uMbrbxc+nIs1TIKlA08rVi9ig/2Yh7LFrK5Ein57U/W72vgSxLhe/zhdfolT9Brn
+     HOxEa44b+EI=
+
+     --bar--
+
+3.2 application/pkcs7-mime类型
+   application/pkcs7-mime类型被应用于传送包含封装数据和署名数据的多种CMS对象。
+构造这些信息的细节在接下来的部分中描述，这部分描述的是application/pkcs7-mime类型
+的总体特征。被传输的CMS对象往往包含一个MIME实体，假如ecounttype是id-data那么
+实体应像3.1部分描述的那样进行准备。当ecounttype包含不同的值时，其他的内容可能也
+要传输。要想获得这种例子和签名收条，请参见[ESS]。
+因为CMS对象是二进制对象，在大多数情况下，base-64传输编码是正确的，特别当时用在
+SMTP传输中，使用的传输编码依靠发送对象的传送设备，而非MIME类型的特点。
+值得注意的是这里的讨论指CMS对象或外部MIME实体的传输编码。它区别于由CMS对
+象保证安全性的MIME实体（即是内部对象，在3.1部分描述）的传输编码，同样，和他也
+没有联系。因为Application/pkcs-7MIME对象由多种种类，发送代理应尽力使接受代理不强
+制对对象进行ASN.1解码就知道对象的内容，所有APPLICATION/PKCS7-MIME对象的
+MIME头应包含任选的SMIMETYPE参数，这在以后的章节中会阐述。
+3．2．1名称和文件名称参数
+对于APPLICATION/PKCS7-MIME来说，为了和旧系统的兼容，发送代理应发出任选
+的"NAME"参数给CONTENT-TYPE域，发送代理也应把FILENAME参数发出任选的内容
+描述域[CONTDISP]，如果发送方发出了以上参数，他们的值应是一个有着准确扩展名的文
+件的名称
+MIME Type                                File Extension
+
+   Application/pkcs7-mime (signedData,      .p7m
+   envelopedData)
+
+   Application/pkcs7-mime (degenerate       .p7c
+   signedData "certs-only" message)
+
+   Application/pkcs7-signature              .p7s
+另外，文件名称应被限制在带有三个扩展名和8个字符以内的范围内，8个字符的文件名可
+以是任何的能唯一表示的名字，文件名'SMIME'应使用在表示MIME实体和S/MIME相联
+系。
+包含文件名有两个作用：它能把S/MIME的使用简单化为磁盘上的文件，同时，他亦能转
+换种类信息，以使之能通过网关。当一个APPLICATION/PKCS-7MIME类别的MIME实体
+到达一个没有S/MIME专门的知识的网关时，它可能会默认实体的MIME类型是
+APPLICATION/OCTET-STREAM类型，并把它当成一般的附件，这样就损失了类型信息，
+然而，附件的文件名常常会被带过网关。这常常允许接收系统确定正确的应用来把附件卸下
+来交给单独的S/MIME处理应用。值得注意的是：这个机制是为了在某些环境中方便实现
+而提供的，正确的S/MIME实现以使用MIME类型，而非依靠文件的扩展。
+3．2．2 S/MIME类型的参数
+APPLICATION/PKCS7-MIME内容类型定义了任选的'SMIME-TYPE'参数，参数的目的是转
+化成和包含内容的信息一起的安全性的细节，这个备忘录定义了以下的SMIME-TYPE.
+   Name                   Security                Inner Content
+
+   enveloped-data         EnvelopedData           id-data
+
+   signed-data            SignedData              id-data
+
+   certs-only             SignedData              none
+
+为了在未来实现一致性，当分配一个新的SMIME参数时应遵守以下要点：
+1：如内容要进行署名和加密，SMIME-TYPE的两个值应被赋
+为"SIGNED-*","ENCRYPTED"。如果一个操作被赋值，那么其可被忽略。这样，即使只
+有"CERTS-ONLY"被署名，“SIGNED-”也会被忽视。
+2．要赋给内容OID一个通用的字符串，当MIME是内部内容，我们使用“DATA”作为ID-
+数据内容OID。
+3．如果不赋予通用字符串，那么建议使用OID.<OID>的通用字符串（如
+"OID.1.3.6.1.5.5.7.6.1"表示DES40）。
+3.3 创建只被封装的信息
+这部分描述不署名封装的MIME实体的格式。这一点很重要：发送封装但未署名的信息部
+提供数据的完整性服务。它可以用密码进行更替，这样信息虽然是有效的，但其意义可能以
+改变了。
+第一步：依3.1节准备封装MIME实体。
+第二步：MIME实体和其他必需数据处理成封装数据的CMS对象，除了为每一个接收者加
+密内容加密钥匙的拷贝，内容加密钥匙的拷贝亦应为创作者加密，保存在封装数据中（见
+CMS第6节）
+第三步：把CMS对象插入APPLICATION/PKCS-MIME MIME实体中。只封装数据的
+SMIME-TYPE参数是“封装数据”，这种信息的文件扩展是'.P7M'.
+例举一个简单的消息：
+Content-Type: application/pkcs7-mime; smime-type=enveloped-data;
+            name=smime.p7m
+       Content-Transfer-Encoding: base64
+       Content-Disposition: attachment; filename=smime.p7m
+
+       rfvbnj756tbBghyHhHUujhJhjH77n8HHGT9HG4VQpfyF467GhIGfHfYT6
+       7n8HHGghyHhHUujhJh4VQpfyF467GhIGfHfYGTrfvbnjT6jH7756tbB9H
+       f8HHGTrfvhJhjH776tbB9HG4VQbnj7567GhIGfHfYT6ghyHhHUujpfyF4
+       0GhIGfHfQbnj756YT64V
+3.4创建署名信息
+   在S/MIME中定义的署名信息有两种格式： APPLICATION/PKCS7-MIME和署名数据，
+以及MULTIPART/SIGNED;总的来说，MULTIPART/SIGNED格式最适合于发送，接受代理
+应能处理以上两种。
+3．4．1 为署名信息选择格式
+因为依靠接受者的能力和同没有可以浏览信息的S/MIME软件的重要性相比较更重要的接
+收端认证署名的能力，当要选择特定的只署名格式，没有即快又坚决的规则。
+使用MULTIPART/SIGNED格式的签名信息无论接收端有没有安装S/MIME软件，总能浏览
+信息。他们被看成使用MIME本地用户代理或信息被网关转发。在这篇文章中，‘被看到’
+意思是说本质上处理信息的能力就像处理非署名信息，当然，信息也可包含其他MIME结
+构。
+如果接受端有S/MIME能力，那其能看到使用署名数据 格式的署名信息。然而，如果其有
+S/MIME能力且在传输构成中信息不被改变，信息总是可以被确认的。
+3．4．2 使用APPLICATION/PKCS7-MIME和署名数据的署名
+署名格式使用APPLICATION/PKCS7-MIME MIME类型，创建这种格式的步骤如下：
+第一步：依照,3.1节准备MIME实体。
+第二步：MIME实体和其它需要的数据处理成署名数据类型CMS对象。
+第三步：把CMS对象插入APPLICATION/PKCS7-MIME MIME实体.
+使用APPLICATION/PKCS7-MIME 的SMIME-TYPE参数和署名数据是“署名数据”，文件
+扩展是'.P7M'。
+一个简单的例子：
+Content-Type: application/pkcs7-mime; smime-type=signed-data;
+            name=smime.p7m
+       Content-Transfer-Encoding: base64
+       Content-Disposition: attachment; filename=smime.p7m
+
+       567GhIGfHfYT6ghyHhHUujpfyF4f8HHGTrfvhJhjH776tbB9HG4VQbnj7
+       77n8HHGT9HG4VQpfyF467GhIGfHfYT6rfvbnj756tbBghyHhHUujhJhjH
+       HUujhJh4VQpfyF467GhIGfHfYGTrfvbnjT6jH7756tbB9H7n8HHGghyHh
+       6YT64V0GhIGfHfQbnj75
+3．4．3 使用MULTIPART/SIGNED格式的署名
+这种格式是CLEANIGN-SIGNING格式。没有S/MIME或CMS处理能力的接受端能看到信
+息，他使用了描述在[MIME-SECURE]中的MULTIPART/SIGNED MIME类型。
+MULTIPART/SIGNED MIME类型有两部分：第一部分包含署名的MIME实体，第二部分包
+含分离的署名CMS署名数据对象，在其中,ENCAPCONTENTINFO ECONTENT域时空的。
+3．4．3.1 APPLICATION/PKCS7-MIME类型
+这种MIME类型总是包含单个的署名数据类型的CMS对象。署名数据的
+ENCAPCONTENTINFO ECONTENT域必是空的。SIGNERINFOS域包含MIME实体的署名。
+使用APPLICATION/PKCS署名的只署名信息的文件扩展是‘.P7S’。
+3．4．3．2 创建MULTIPART/SIGNED信息
+第一步：依照3.1节准备要署名的MIME实体，特别注意CLEAN_SIGNING。
+第二步：为了获得署名数据对象(其ENCAPCONTENTINFO ECONTENTZ域是空的)，把
+MIME实体提供给CMS处理。
+第三步：把MIME实体插入MULTIPART/SIGNED信息的首部，MULTIPART/SIGNED信息
+没有经过处理，和在3.1节描述的不一样。
+第四步：转换编码应用于分离的署名CMS署名数据对象，他亦会被插入于
+APPLICATION/PKCS署名的MIME实体
+第五步：MULTIPART/SIGNED实体的第二部分应插入APPLICATION/PKCS7-SIGNATURE
+的MIME实体
+MULTIPART/SIGNED内容类型有两个参数：协议参数和MICALG参数。
+协议参数必是application/pkcs7-signature，注意因为MIME要求：在参数中的‘/’
+字符必用引号，在协议参数的旁边需要引号。
+当署名被确认后，MICALG参数允许单通处理。MICALG参数的值依靠用在消
+息完整性检测计算的消息数字计算法则。如果使用了多个消息数字算法，他们必
+须每个[MIME-SECURE]用逗号进行分割。在MICALG参数的值应依据以下：
+Algorithm   Value
+   used
+
+   MD5         md5
+   SHA-1       sha1
+   Any other   unknown
+(历史标注：一些早期的S/MIME实现程序发送和期望用于MICALG参数
+的 "RSA-MD5","RSA-SHA1".)
+接受代理应能从他们不认识的MICALG参数中恢复。
+3.4.3.3简单的MULTIPART/SIGNED消息
+Content-Type: multipart/signed;
+          protocol="application/pkcs7-signature";
+          micalg=sha1; boundary=boundary42
+
+       --boundary42
+       Content-Type: text/plain
+
+       This is a clear-signed message.
+
+       --boundary42
+       Content-Type: application/pkcs7-signature; name=smime.p7s
+       Content-Transfer-Encoding: base64
+       Content-Disposition: attachment; filename=smime.p7s
+
+       ghyHhHUujhJhjH77n8HHGTrfvbnj756tbB9HG4VQpfyF467GhIGfHfYT6
+       4VQpfyF467GhIGfHfYT6jH77n8HHGghyHhHUujhJh756tbB9HGTrfvbnj
+       n8HHGTrfvhJhjH776tbB9HG4VQbnj7567GhIGfHfYT6ghyHhHUujpfyF4
+       7GhIGfHfYT64VQbnj756
+
+       --boundary42--
+3.5署名和加密
+为了获得署名和封装，会嵌套只署名或只加密的格式。因为以上的格式是所有MIME实体，
+同时他们也是安全的MIME实体，所以这是允许的。
+在接受端计算机的合理能力范围内，S/MIME实现程序必能接受和处理任意的S/MIME嵌套。
+对一个信息首先进行署名或封装是可能的，这是依靠实现程序和用户的选择。当署名优先时，
+在封装中署名会被隐藏。当封装优先时，署名会被暴露，但这使在不移去封装的情况下确认
+署名。这在自动署名认证的环境中是有用的，因为这时认证书明无需私匙。
+选择首先署名还是首先加密有两种不同的安全分叉。首先加密，然后署名的数据的接受者能
+不改变加密的数据块，但不能确定署名者和没加密的信息内容的关系。首先署名后加密的信
+息接受者能确认署名信息本身没改变，但小心的攻击者能改变加密数据的没有认证的部分
+3.6创建只认证信息
+只有证书的消息或MIME实体用于传输证书，诸如对注册请求地响应。这种格式亦能被用
+于传输CRL
+第一步：把证书变换成适合产生署名数据的CMS对象的CMS产生过程。署名数据的
+encapcontentInfo eContent 域必须空缺，singerInfos 域亦必须空缺。
+第二步：CMS署名数据对象包含在application/pkcs7-mime MIME实体中。
+Certs_only 信息的Smime-type参数是"certs-only"的。文件的扩展名为“.p7c”。
+
+―――――岑斌部分
+―――――汤琼部分
+3.7请求注册
+给消息签名的发送代理必须拥有签名证书，这样，接收代理才能验证签名。取得证书通
+常有几种方法，如通过与证书机构交流或通过硬件记号或磁盘等等来获得证书。
+S/MIME v2给出了一种使用application/pkcs10 主体部分来向证书机构注册公钥的方
+法。The IETF's PKIX Working Group则提供了请求证书的另外一种方法；然而，在写本备忘
+录时该方法还没完成。S/MIME v3没有具体指出怎样去请求证书，而是管理每一个发送代
+理已经有的证书管理标准由IETF制定。
+3.8识别S/MIME消息
+因为S/MIME考虑到与非S/MIME环境的互操作性，采用了几种不同的机制传送信息，
+这使得S/MIME消息的识别有了一些困难。下面表格列出了判断一条消息是否是S/MIME
+消息的标准。符合下表的消息就被认为是S/MIME消息。
+列表中的文件后缀来自内容类型报头的"name"参数，或者来自内容部分报头的
+"filename"参数。给出文件后缀的这些参数没有作为参数部分列在下表中。
+MIME type:   application/pkcs7-mime
+   parameters:  any
+   file suffix: any
+   MIME type:   multipart/signed
+   parameters:  protocol="application/pkcs7-signature"
+   file suffix: any
+   MIME type:   application/octet-stream
+   parameters:  any
+   file suffix: p7m, p7s, p7c
+
+4.证书处理
+接受代理为了访问数字信封的收件人的证书，必须提供一些证书检索机制。本备忘录不
+涉及S/MIME代理怎样处理证书，只是说明在证书被确认有效或被否定后，他们作什么。
+S/MIME证书事项在[CERT3]中有说明。
+对于S/MIME的初始配置，用户代理至少能产生一条消息给指定的收件人，要求他的
+签署证书返回消息。接收代理和发送代也应该提供容许用户为通信者“存储和保护”证书，
+这样就能够保证他们以后的检索。
+4.1产生密钥对
+如果S/MIME需要产生密钥对，那么，S/MIME代理商或相关的执行部门必须能够为用
+户生成DH和DSS公钥/私钥对。每对密钥必须由好的非确定性的随机输入源产生，而且，
+私钥必须以某种安全的方式保护起来。
+如果S/MIME代理需要生成密钥对，那么该S/MIME代理或相关的执行部门应该生成
+RSA密钥对。
+用户代理应该生成至少768位长度的RSA密钥对。用户代理不应该产生少于512位的
+RSA密钥对。生成的密钥长于1024位将会使一些老的S/MIME接收代理不能验证签名，但
+具有更好的安全性，因此是有价值的。接收代理应该能验证用任何超过512位的密钥的签名。
+在美国一些代理为了获得更有利的出口许可而选择生成512位密钥。然而，用512位密钥加
+密在很多人士看来是不安全的。实现者应该注意到个人可联合使用多对密钥。例如，一对密
+钥可用来保证机密性，而另一对密钥则用来作认证。
+5 安全
+该整编的备忘录（全用来）讨论安全问题。在其他部分没有涉及的安全事项包括：
+大多数译解密码者都认为40位加密是脆弱的。在S/MIME中使用脆弱的加密方法和发
+送明文一样不具有实际的安全性。然而，S/MIME的其他特征，如tripleDES规范以及宣
+称更强的加密能力和对方交流的能力，允许发送者生成用强加密处理的消息。除
+非别无选择，否则绝不推荐使用弱加密。如果可行，发送和接收代理应该通知发
+送者和接收者消息的相关加密长度。
+对大多数软件或人来说，评估消息的价值是不可能的。而且，大多数软件或人来说，评
+估用特殊长度的密钥加密来加密消息的代价同样是不可能的。而且，假如收件人不能解码消
+息，确定一个失败的解密也是相当困难的。因此，在不同的密钥长度作选择也是不可能的。
+然而，所做的决定总是基于这些标准，因而本备忘录给出了在选择算法时使用那些评估的框
+架。
+如果，发送代理用不同长度的加密发送消息，监听通信信道的黑客就能够通过解密弱加
+密的消息确定用强加密的消息。换句话说，发送者应该和不发送明文一样不发送弱加密的消
+息。
+如果也不使用认证，密文的修改将能不被识别，就如发送被封装的数据而没有把他装入
+签名的信封中或者没有在其中包含签名信息一样。
+A. ASN.1 模型
+SecureMimeMessageV3
+  { iso(1) member-body(2) us(840) rsadsi(113549)
+         pkcs(1) pkcs-9(9) smime(16) modules(0) smime(4) }
+
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+IMPORTS
+-- Cryptographic Message Syntax
+    SubjectKeyIdentifier, IssuerAndSerialNumber,
+RecipientKeyIdentifier
+        FROM    CryptographicMessageSyntax
+               { iso(1) member-body(2) us(840) rsadsi(113549)
+                 pkcs(1) pkcs-9(9) smime(16) modules(0) cms(1) };
+
+--  id-aa is the arc with all new authenticated and unauthenticated
+--  attributes produced the by S/MIME Working Group
+
+id-aa OBJECT IDENTIFIER ::= {iso(1) member-body(2) usa(840)
+rsadsi(113549)
+        pkcs(1) pkcs-9(9) smime(16) attributes(2)}
+-- S/MIME Capabilities provides a method of broadcasting the symetric
+-- capabilities understood.  Algorithms should be ordered by preference
+-- and grouped by type
+smimeCapabilities OBJECT IDENTIFIER ::=
+   {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9) 15}
+SMIMECapability ::= SEQUENCE {
+   capabilityID OBJECT IDENTIFIER,
+   parameters ANY DEFINED BY capabilityID OPTIONAL }
+SMIMECapabilities ::= SEQUENCE OF SMIMECapability
+-- Encryption Key Preference provides a method of broadcasting the
+-- preferred encryption certificate.
+id-aa-encrypKeyPref OBJECT IDENTIFIER ::= {id-aa 11}
+SMIMEEncryptionKeyPreference ::= CHOICE {
+   issuerAndSerialNumber   [0] IssuerAndSerialNumber,
+   receipentKeyId          [1] RecipientKeyIdentifier,
+   subjectAltKeyIdentifier [2] SubjectKeyIdentifier
+}
+-- The Content Encryption Algorithms defined for SMIME are:
+-- Triple-DES is the manditory algorithm with CBCParameter being the
+-- parameters
+dES-EDE3-CBC OBJECT IDENTIFIER ::=
+   {iso(1) member-body(2) us(840) rsadsi(113549)
+encryptionAlgorithm(3) 7}
+CBCParameter ::= IV
+IV ::= OCTET STRING (SIZE (8..8))
+--  RC2 (or compatable) is an optional algorithm w/ RC2-CBC-paramter
+--  as the parameter
+rC2-CBC OBJECT IDENTIFIER ::=
+   {iso(1) member-body(2) us(840) rsadsi(113549)
+encryptionAlgorithm(3) 2}
+-- For the effective-key-bits (key size) greater than 32 and less than
+-- 256, the RC2-CBC algorithm parameters are encoded as:
+RC2-CBC-parameter ::=  SEQUENCE {
+   rc2ParameterVersion  INTEGER,
+   iv                   IV}
+-- For the effective-key-bits of 40, 64, and 128, the
+-- rc2ParameterVersion values are 160, 120, 58 respectively.
+-- The following list the OIDs to be used with S/MIME V3
+-- Digest Algorithms:
+-- md5 OBJECT IDENTIFIER ::=
+--    {iso(1) member-body(2) us(840) rsadsi(113549)
+-- digestAlgorithm(2) 5}
+-- sha-1 OBJECT IDENTIFIER ::=
+--    {iso(1) identified-organization(3) oiw(14) secsig(3)
+-- algorithm(2) 26}
+-- Asymmetric Encryption Algorithms
+--
+-- rsaEncryption OBJECT IDENTIFIER ::=
+--    {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1)
+-- 1}
+--
+-- rsa OBJECT IDENTIFIER ::=
+--    {joint-iso-ccitt(2) ds(5) algorithm(8) encryptionAlgorithm(1) 1}
+--
+-- id-dsa OBJECT IDENTIFIER ::=
+--    {iso(1) member-body(2) us(840) x9-57(10040) x9cm(4) 1 }
+-- Signature Algorithms
+--
+-- md2WithRSAEncryption OBJECT IDENTIFIER ::=
+--    {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1)
+-- 2}
+--
+-- md5WithRSAEncryption OBJECT IDENTIFIER ::=
+--    {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1)
+-- 4}
+--
+-- sha-1WithRSAEncryption OBJECT IDENTIFIER ::=
+--    {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1)
+-- 5}
+--
+-- id-dsa-with-sha1 OBJECT IDENTIFIER ::=
+--    {iso(1) member-body(2) us(840) x9-57(10040) x9cm(4) 3}
+-- Other Signed Attributes
+--
+-- signingTime OBJECT IDENTIFIER ::=
+--    {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+-- 5}
+--    See [CMS] for a description of how to encode the attribute
+--    value.
+
+END
+B. 参考文献
+   [3DES]         ANSI X9.52-1998, "Triple Data Encryption Algorithm
+                  Modes of Operation", American National Standards
+                  Institute, 1998.
+   [CERT3]        Ramsdell, B., Editor, "S/MIME Version 3 Certificate
+                  Handling", RFC 2632, June 1999.
+   [CHARSETS]     Character sets assigned by IANA. See             .
+   [CMS]          Housley, R., "Cryptographic Message Syntax", RFC 2630,
+                  June 1999.
+   [CONTDISP]     Troost, R., Dorner, S. and K. Moore, "Communicating
+                  Presentation Information in Internet Messages: The
+                  Content-Disposition Header Field", RFC 2183, August
+                  1997.
+   [DES]          ANSI X3.106, "American National Standard for
+                  Information Systems- Data Link Encryption," American
+                  National Standards Institute, 1983.
+   [DH]           Rescorla, E., "Diffie-Hellman Key Agreement Method",
+                  RFC 2631, June 1999.
+   [DSS]          NIST FIPS PUB 186, "Digital Signature Standard", 18
+                  May 1994.
+   [ESS]          Hoffman, P., Editor "Enhanced Security Services for
+                  S/MIME", RFC 2634, June 1999.
+   [MD5]          Rivest, R., "The MD5 Message Digest Algorithm", RFC
+                  1321, April 1992.
+   [MIME-SPEC]    The primary definition of MIME. "MIME Part 1: Format
+                  of Internet Message Bodies", RFC 2045; "MIME Part 2:
+                  Media Types", RFC 2046; "MIME Part 3: Message Header
+                  Extensions for Non-ASCII Text", RFC 2047; "MIME Part
+                  4: Registration Procedures", RFC 2048; "MIME Part 5:
+                  Conformance Criteria and Examples", RFC 2049,
+                  September 1993.
+   [MIME-SECURE]  Galvin, J., Murphy, S., Crocker, S. and N. Freed,
+                  "Security Multiparts for MIME: Multipart/Signed and
+                  Multipart/Encrypted", RFC 1847, October 1995.
+   [mustshould]   Bradner, S., "Key words for use in RFCs to Indicate
+                  Requirement Levels", BCP14, RFC 2119, March 1997.
+   [PKCS-1]       Kaliski, B., "PKCS #1: RSA Encryption Version 2.0",
+                  RFC 2437, October 1998.
+   [PKCS-7]       Kaliski, B., "PKCS #7: Cryptographic Message Syntax
+                  Version 1.5", RFC 2315, March 1998.
+   [RANDOM]       Eastlake, 3rd, D., Crocker, S. and J. Schiller,
+                  "Randomness Recommendations for Security", RFC 1750,
+                  December 1994.
+   [RC2]          Rivest, R., "A Description of the RC2 (r) Encryption
+                  Algorithm", RFC 2268, January 1998.
+   [SHA1]         NIST FIPS PUB 180-1, "Secure Hash Standard," National
+                  Institute of Standards and Technology, U.S. Department
+                  of Commerce, DRAFT, 31May 1994.
+   [SMIMEV2]      Dusse, S., Hoffman, P., Ramsdell, B., Lundblade, L.
+                  and L.  Repka, "S/MIME Version 2 Message
+                  Specification", RFC 2311, March 1998.
+C. 致谢
+   非常感谢S/MIME Version 2 Message Specification RFC的其他作者：Steve 
+Dusse, Paul Hoffman, Laurence Lundblade and Lisa Repka。没有v2就不会
+有v3。
+   许多S/MIME工作组的成员也工作很努力，并为本文档作出了贡献。如果把所
+有的人都列出来，将会很冗长，我为此深感抱歉。按字母顺序下面这些人名显示
+在我的脑海中，因为他们对本文档作出了直接的贡献。
+   Dave Crocker
+   Bill Flanigan
+   Paul Hoffman
+   Russ Housley
+   John Pawling
+   Jim Schaad
+
+编者通讯地址：
+   Blake Ramsdell
+   Worldtalk
+   17720 NE 65th St Ste 201
+   Redmond, WA 98052
+   Phone: +1 425 376 0225
+   EMail: blaker@deming.com
+Full Copyright Statement
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   本文档极其译文可以拷贝供他人使用，假如上述版权信息和章节包括在这些
+拷贝和派生作品中，评论性或解说性或帮助执行性的派生作品不受任何限制的、
+全文或部分的构思、拷贝发行和分发。但是，本文档本身不得以任何形式修改，
+诸如删除版权信息、参考书目等。
+   除了为了制定Internet标准的情况下，必须遵守在Internet标准过程的版权程
+序，或者要求翻译成非英语语言，互连网组织不得对本文档作任何修改。
+上述申明具有永久性，互连网协会或其后继者或所属部门不得废除。
+本文档极其所包含的信息是基于"AS IS"提供的，INTERNET协会和
+INTERNET应用任务组否认所有的明确或隐含的警告，（其中）包括但不限制于
+任何本文包含的信息的使用不侵犯任何版权或隐含的商业和为了特殊目的警告。
+特别感谢
+   目前为RFC编辑部门提供资金的互连网协会。
+RFC2633―S/MIME Version 3 Message Specification  S/多用途网际邮件扩充协议(MIME)版本3信息说明书
+
+
+1
+RFC文档中文翻译计划

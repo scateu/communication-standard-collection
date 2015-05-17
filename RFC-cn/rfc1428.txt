@@ -1,0 +1,175 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（Guodagang   gdg0188_cn@sina.com）
+译文发布时间：2001-6-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Net Working Group                                                G. Vaudreuil
+Request for Comments: 1428                                        CNRI
+February 1993
+
+
+Internet邮件从Just-Send-8到8bit-SMTP/MIME的转换
+（RFC1428 Transition of Internet Mail from Just-Send-8 to 8bit-SMTP/MIME）
+
+
+本备忘录的状态：
+ 本文档提供了一种Internet社区的信息协议。它并不是规定了一个Internet标准。本
+备忘录的发布不受任何限制。
+
+
+摘要：
+为了通过8bit字符扩充SMTP协议已经定义了了[3][4]。按照这些协议的要求，通过扩
+充的SMTP协议传送的消息将按照MIME协议的[1][2]被编码。
+在这些协议开始工作前，为了传送8bit数据，几个SMTP补充协议采用ad-hoc机制。
+这急需扩充了的SMTP环境和这些ad-hoc机制之间相互发挥作用。
+1．	术语
+RFC定义了7bit传送。在本文档中，传送代理没有在接收方的八进制上用SMTP信息中
+的比特集清除高级比特，这样的传送被称为8bit透明传送。
+   在SMTP扩充协议中的一个补充说明和8传送MIME用8位一组中的全部8位信息的
+8bit扩充协议4被称为8bit扩充SMTP
+   在扩充SMTP协议中不接收8比特字符的扩充体被称为7bit ESMTP
+   为改变或转换一条信息的内容用户代理权威把网关定义为传送代理。
+2．	问题
+在RFC821中定义的SMTP限制了internet 邮件到美国ASCⅡ5字符的传送，随着internet
+已发展成包含非英文通信，通过其它字符集而非美国ASCⅡ字符集用来通信的需要促使
+许多卖主和用户来扩充SMTP或RFC822来使用非ASCⅡ集。通常的方法是在现有的
+RFC822/SMTP上传送7bit ISO642字符集全局变量，利用8bitISO8859来扩充SMTP和
+RFC822协议，和使用PC的专用字符集 。第三种方法是用来处理日本邮件的，通过成
+对的八进制组清除高序bit，日文字符被表处理，显现出来。在ISO释放序列2022信息
+中说明了从14bit字符集到7bit 字符集的转换。
+只要这些补充说明能够不通过中级转换而进行通信，并有在不拖延地使用专用字符
+集时有一个放宽的秘密协议，那么基本的邮件服务就能够被提供。
+在转换为已定的8bitESMTP/MIME环境中，一个当前没有遵循协议的用户所发送
+的邮件能被另一个同样没有遵循协议的用户所理解，这一点是很重要的。从8bit文本到
+不可读的Base―64编码文本或被引用的可打印的“歪曲”编码文本的转换中降低了这
+个现有的功能。在非美国ASCⅡ邮件和很可能出现到8bit/MIME转换中的几个新邮件
+中，目前有一些有趣的非共同操作的例子，下面列出了到mine转换的例子，在本备忘
+录中，只讨论翻译网关内容4的解决办法。
+
+
+
+发件人
+                     
+   收件人           仅7bit         透明8bit          MIME/ESMTP
+
+   仅7bit              (1)            (1)                 (1)
+   
+   透明8bit            (2)            (3)                 (4)
+
+   MIME/ESMTP       (5)            (5)                 (6)
+
+
+(1)	7bit 非MIME发件人到7bitMIME或透明8bit收件人
+如果在发件人和收件人之间达成一个内部的“超波段”一致，通过ISO646或ISO2022
+字符集变量的转换这将持续无变化的工作。一个从7bit到8bit/EMTP的网关不需要改变这
+些信息的内部。
+（2）8bit发件人到7bit非MIME收件人
+收件人将会接收到打包的bit邮件，这样的邮件导致了数据之间的错误解释和字符的错
+误显示和打印。使用ISO8859中美国ASCII子集字符语言发送的邮件在某种程度上是可读
+的。
+（3）透明8bit发件人到透明8bit收件人
+如果当收件人和发件人之间达成了内部的“超波段”一致后，用一个特殊的没有贴标
+签的字符集，在这种情况下会工作吗？
+（4）透明8bit发件人到非MIME7bit收件人
+如果网关提供一个可行的升级路径，如果这个网关插入的暗含的字符集的标签是正确
+的，如果收件人支持发件人选择的字符集，这种情况是可行的。这个例子是本备忘录的焦点。
+（5）MIME/ESMTP发件人到非MIME7bit收件人
+由于ESMTP /MIME发件人不知道收件人是否接收8bit，发件人将把文本编码成Base-64
+或者是可被收件人看作“歪曲”了的引用形式。为了提供一个可用的下破路径，网关必须有
+一些关于收件人责任的常识。当字符集能被清楚的识别时，在RFC1345中描述的MNEM编
+码技术在这个例子中可能会有帮助。
+（6）MIME/ESMTP发件人到MIME/ESMTP收件人
+如果收件人支持发件人所选择的字符集，就可以达到互操作性。
+3．	从透明8bit到ESMTP /MIME的升级路径
+改进的用来支持扩充的SMTP协议的网关可以提高MIME接收到的一个8bit信息。
+这与所有被ESMTP发送的8bit邮件必须编码与MIME的要求是一致的。
+一个站点可以通过完成对所有正远离此站点的消息的MIME转换升级MIMEen-masse
+对于文本信息，如果此站点使用单一的字符集，那么这个信息体会被加上一个MIME版本
+的报头和在该站点使用的字符集的内容类型。
+为了表明任何编码都是必须的，必须添加一个适当的内容转换编码的报头线。
+
+例：
+MIME版本：1.0
+内容-类型：Text/Plain;字符集=ISO-8859-1
+内容转换编码：8bit
+
+如果使用的字符集没有任何可用的信息，网关应该使用“未知8bit”字符集来改进内容。
+这个字符集参数的值表明了在消息中使用的字符集没有任何可信的可以得到。
+如果一个消息体被升级到MIME，包含非美国ASCII字符集的RFC822的报头必须被升
+级来和使用RFC1342编码规则的报头保持一致。
+网关必须把所有未组织的报头字段重新编码以及根据RFC1342规则而来的RFC822的
+“评注”和“短语”字段。
+由于在RFC1342中没有与“8bit”内容报头编码规则值相同的消息体，所以所有8bit
+报头必须根据“B”或“Q”编码方法来转换形式。在ISO8859字符集中，“Q”编码通常会
+产生一些某种程度上可读的报头。
+文档中应该用转换字句:"rfc822-to- 8bit","rfc822-to-base-64"，"rfc822-to-quoted-printable"
+添加跟踪信息。
+例如：
+来自 dbc.mtview.ca.us   通过 dbc.mtview.ca.us
+转换 rfc822-to-8bit,星期二，9月1日，1992年，01：18：00-0700
+
+附录-“未知8bit字符集“
+以下部分定义了一个“字符集“参数，用于一个MIME的内容类型字段。
+一个有特殊用途的被称为“未知8bit“的字符集 被定义为一个未知的8bit字符集，被
+编码为一系列的8进制。它可以在任何语言的任何字符集中被当作标签，使用任何编码方式。
+它不能被进一步定义。
+在一条消息的“charset="字段中，这个符号的作用表明关于字符集的使用一切未知。在
+非MIME到MIME的转换中，将计划使用这个标签，尤其在那些从SMTP到8bitESMTP/
+MIME的转换中。
+这个字符集没有打算被所有邮件的编写者使用。可以假定邮件的编写者了解所用的字
+符集，并用在[1]中规定的字符集值标记所写邮件，通过当前指定的序号文档[6]修正所写邮
+件。
+“未知8bit”标签仅计划被邮件网关代理来使用。这个代理不能决定预期的字符集的超
+波段信息。
+未知8bit的解释由邮件的阅读者来负责。可以假定在许多例子中，人类用户将能够解
+释信息，选择一个适当的字符集或预处理机。
+
+致谢
+本文档起源于Ned Freed, Neil Katin和本作者的一次非正式谈话。Jonathan Laventhol, 
+Craig Everhart, Olle Jarnefors, and Olafur Gudmundsson接受了主要的意见。本文档用
+IETFSMTP扩展工作组中许多成员的意见重新修订而成。
+
+参考
+
+   [1] Borenstein, N., and N. Freed, "Multipurpose Internet Mail
+       Extensions", RFC 1341, Bellcore, Innosoft, June 1992.
+
+   [2] Moore, K., "Representation of Non-ASCII Text in Internet Message
+       Headers", RFC 1342, University of Tennessee, June 1992.
+
+   [3] Klensin, J., WG Chair, Freed, N., Editor, Rose, M., Stefferud,
+       E., and D. Crocker, "SMTP Service Extensions" RFC 1425, United
+       Nations University, Innosoft International, Inc., Dover Beach
+       Consulting, Inc., Network Management Associates, Inc., The Branch
+       Office, February 1993.
+
+   [4] Klensin, J., WG Chair, Freed, N., Editor, Rose, M., Stefferud,
+       E., and D. Crocker, "SMTP Service Extensions for 8bit
+       MIMEtransport", RFC 1426, United Nations University, Innosoft
+       International, Inc., Dover Beach Consulting, Inc., Network
+       Management Associates, Inc., The Branch Office, February 1993.
+
+   [5] Coded Character Set--7-Bit American Standard Code for Information
+       Interchange, ANSI X3.4-1986.
+
+   [6] Reynolds, J., and J. Postel, "Assigned Numbers", STD 2, RFC 1340,
+       USC/Information Sciences Institute, July 1992.
+
+安全考虑
+     本备忘录中未讨论安全问题。
+
+作者地址
+    Greg Vaudreuil
+
+
+
+
+Internet邮件从Just-Send-8到8bit-SMTP/MIME的转换
+RFC1428 Transition of Internet Mail from Just-Send-8 to 8bit-SMTP/MIME
+
+
+1
+

@@ -1,0 +1,114 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：boniter（boniter  boniter@etang.com）
+译文发布时间：2001-12-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         C. Huitema
+Request for Comments: 1796                                         INRIA
+Category: Informational                                        J. Postel
+                                                                     ISI
+                                                              S. Crocker
+                                                               CyberCash
+                                                              April 1995
+不是所有RFCs是标准
+（RFC1796――Not All RFCs are Standards）
+本备忘录的状态
+    此备忘录为Internet社会提供信息。此备忘录并不定义任何一种Internet标准。此备
+忘录的发布是无限的。
+
+摘要
+    这篇文档讨论了请求注解(RFCs)与Internet标准之间的关系。
+目录
+不是所有RFCs是标准	1
+单独的存档文件	2
+不可忽视的文档	2
+安全考虑	3
+作者地址	3
+
+不是所有RFCs是标准
+    "Request for Comments"(RFCs)文档系列是发布Internet标准文档和其他IESG,IAB,
+和Internet社会出版物的官方发行渠道。有时，在过去几年内大约是每六个月，有些人对
+同时发布Internet标准和像RFCs一样的报告文档的合理性提出质疑。争论通常是这引入了
+“真正的标准”和“纯粹的出版物”之间的混淆。
+    存在一个很可悲的传播误解，那就是像RFC一样的出版物规定了一些公认的级别。它并
+没有，或者至少是不比在普通的定期刊物中的发布多。实际上，每一篇RFC有一个状态，相
+对于它与Internet标准化进程的关系：报告的，试验性的，或是标准追踪（标准提议，标
+准草案，Internet标准），或是历史性的。这种状态在RFC自身的第一页中重现，并在
+“Internet官方协议标准”RFC(STD 1)中备有证明文件。但是这种状态又是忽略了引证和
+参考，就有可能产生混淆。
+    Internet标准的状态信息有两个重要来源：他们定期地在RFC有资格的“Internet官
+方协议标准”中总结和他们在“STD”子系列中备有证明文件。当一篇规范书采用了Internet
+标准，它就被给予了一个附加标签“STD xxxx”,但是它仍保持它在RFC系列中的RFC编号
+和位置。
+    特别注意STD编号与RFC编号不是一一对应的。STD编号确定了协议，RFC编号确定了
+文档。有时不止一篇文档被用来定义一个标准协议。
+    为了将来增加标准化状态的公开性，IAB建议下列行为：
+        使用STD编号，而不是只使用RFC编号，在标准追踪文档中的交叉参考，
+        利用“web”超文本技术来宣扬标准化进程的状态。
+    更巧的是，我们建议在通常的RFC知识库中添加“STD-1”文档的“html”译文，也就
+是，Internet标准的列表。我们正在考虑这篇文档的扩展，同样来描述发展中的行为，也
+就是，在“提议”或“草案”阶段的标准追踪工作。
+
+单独的存档文件
+    IAB相信社会应该值得注意的是益于有一个单独的关于档案的文件系列。文档很容易查
+询和找回，而且文件服务很容易组织起来。这在很长一段时期内对非常重要。过去的经验表
+明限制范围的子系列或系列，有在网络中消失的趋势。并且，没有证据表明交替的文档设计
+方案又处于减少混淆。
+    此外，我们认为附加文档的出现实际上并没有危害到标准化进程。我们建议更好地宣扬
+某一文档“标准”状态的解决办法，由于网络超文本技术的出现，而使得更容易地相关。
+
+不可忽视的文档
+    RFC系列包含了一些文档，它们是通过生活和其他描述经历的文档提出的。当如此一篇
+文档“看上去像”一篇官方协议规范，一个感觉上的问题就产生了。被误导的卖主可能要求
+顺应它，而且被误导的客户可能真的相信他们正在购买一份Internet标准。
+    IAB认为对于被误导的卖主和客户的合适帮助就是给他们提供指导。实际上只有很少的
+迹象表明卖主故意尝试把报告的或实验的RFCs当作“Internet标准”。如果这种尝试存在
+的话，就确实需要适当的反应。
+    IAB认为社会在开放发展的规范下能更好地提供服务。Internet标准化进程提供了公开
+和彻底评论的担保，并且通常发展Internet协议的办法确实是通过IETF。
+    社会在有权使用在IETF标准协议之外发展的规范下，也能给好地提供服务，或是因为
+自然的协议和实验，私下的发展，或是不能取得标准追踪提高的大读书人的意见。
+    IAB认为公开比忽视好。如果一个特殊的规范在Internet中配置产品中结束，如果规
+范在一篇RFC中很容易被找回而不是被隐藏在某些私有的储藏室离，我们的状态就很好。
+
+安全考虑
+    此备忘录不讨论安全问题。
+
+作者地址
+
+Christian Huitema
+   INRIA, Sophia-Antipolis
+   2004 Route des Lucioles
+   BP 109
+   F-06561 Valbonne Cedex
+   France
+
+   Phone: +33 93 65 77 15
+   EMail: Christian.Huitema@MIRSA.INRIA.FR
+
+   Jon Postel
+   USC/Information Sciences Institute
+   4676 Admiralty Way
+   Marina del Rey, CA 90292
+
+   Phone: 1-310-822-1511
+   EMail: Postel@ISI.EDU
+
+   Steve Crocker
+   CyberCash, Inc.
+   2086 Hunters Crest Way
+   Vienna, VA 22181
+
+   Phone: 1- 703-620-1222
+   EMail: crocker@cybercash.com
+RFC1796――Not All RFCs are Standards                   不是所有RFCs是标准                                  
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,196 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者： 徐标（xbxiaoer  xub@mail.ndsc.com.cn）
+译文发布时间：2002-3-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息
+
+
+Network Working Group                                                  J. Woods
+Request for Comments: 1979                                        Proteon, Inc.
+Category: Informational                                             August 1996
+
+                        
+           PPP Deflate压缩协议（PPP Deflate Protocol）
+
+备忘录的状态
+   本备忘录为Internet团体提供信息。不在任何形式上规定一个Internet标准。发布本备忘录不受任何限制。
+摘要   
+   点到点协议（PPP）[1]提供了一种在点到点链路上传输多协议数据报的标准方法。压缩控制协议（CCP）[2]提供了一种在PPP封装链路上协商和使用压缩协议的方法。本文档描述了如何使用PPP Deflate压缩协议压缩PPP封装报文。
+目录
+     1.   介绍 .......................... .......................... .. ........2   
+        1.1 使用许可..... ..... ..... ..... ..... ..... ..... ..... ..... .....2
+     2.     PPP Deflate 报文 ..   .............................................3
+        2.1       报文格式      ...............................................4
+     3.     构造选项格式 ......................................................5
+     安全考虑 .................................................................6
+     参考资料 .................................................................6
+     致谢 .....................................................................7
+     主席地址 .................................................................7
+    作者地址 .................................................................7
+
+介绍  
+被PKZIP和gzib压缩机制使用，并且被收录到自由和广泛发布的zlib库源代码，“deflate”压缩格式[3]有以下特点；
+       ―一个明显的不受限制的编码和压缩算法，和开放的公共可用的规范。
+
+       ―对不可压缩数据的低开支的避开机制。PPP Deflate 规范提供了更大程度上减少开支的选项。
+      
+       ―很广泛的使用在网络、调制解调器和其他点到点链路上为个人计算机和工作站传输文件。
+       
+      ―对压缩方和解压缩方来说，使用少于64K的内存，可以在Calgary corpus[5]上很容易的达到2：1的压缩率。
+
+1.1 使用许可
+
+      zlib源代码是广泛的和自由的使用，遵守以下版权：
+      (C) 1995 Jean-Loup Gailly and Mark Adler
+
+提供本软件完全随意，不需要任何表示或者隐含的保证。软件的作者不对因为使用本软件而带来的损害负有任何责任。
+
+    授权给为任何目的使用本软件的任何人，包括商用程序，可以自由的改变和重新发布本软件。遵守以下限制：
+       
+       1.本软件的原始资料不能被歪曲，不能声明你写的最原始的软件。如果你在你的产品里使用了本软件，应该在该产品文档里面表示致谢，但这并不是要求。
+ 
+       2. 对源版本的任何改变必须明白的标出，而且绝对不允许不如实的反映源软件。
+      
+       3. 本提示可以从任何发布的源文件中移出或改变。
+
+       Jean-Loup Gailly        Mark Adler
+       gzip@prep.ai.mit.edu    madler@alumni.caltech.edu
+
+      如果你在你的产品中使用了zlib库，我们很不情愿收到冗长的要签署的法律文件。源代码是免费提供，不需要任何形式的授权。这个库是完全由Jean-Loup Gailly 和 Mark Adler写成，不包含第三方的代码。
+  
+   Deflate格式和压缩算法是基于Lempel-Ziv LZ77压缩。为了支持其专利免费状态，GNU计划和小型网络图形（Portable Network Graphics）工作组做了更广泛的研究。
+
+2.  PPP Deflate 报文
+    在传输任何PPP Deflate报文被之前，PPP必须达到网络层协议（Network-Layer Protocol）阶段，CCP控制协议必须达到开放（Opened）状态
+    一个Deflate数据报被封装在PPP的信息域中，同时PPP协议域内容是0xFD 或者0xFB。当不使用PPP多链路协议或者在多链路之“上（above）”时使用0xFD，当为了在一个多链路束的单链路上单独进行压缩，在多链路之“下（below）”时使用0xFB。
+在一个PPP链路上传输的PPP Deflate数据报的最大长度和一个PPP封装报文的信息域（Information field）的最大长度是一样的。
+    PPP报文中，只有其PPP协议号在0x0000到0x3FFF范围内，并且不是0xFD和0xFB的才能被压缩，其他报文总是不被压缩的传输。控制报文是很少的，因为软件健壮性的原因不被压缩。
+  
+   填充（Padding）
+
+    如果填充被加到报文里面，PPP Deflate报文要求Self-Describing-Padding构造选项在此之前被协商。如果不增加填充，Self-Describing-Padding不需要协商。
+ 
+   可靠性和顺序性（Reliability and Sequencing）
+
+    PPP Deflate要求按顺序传送报文。它依赖Reset-Request 和 Reset-Ack LCP报文或者重新协商压缩控制协议（CCP）[2]来显示在发送端和接收端之间同步被破坏。LCP的 FCS探测到损坏的报文，正常的处理机制丢弃他们。在解码之前通过顺序号探测丢失的或者失序的报文。
+    当探测到一个顺序号错误后，除了发送Reset-Request外，接收端MAY立刻通过发送一个新的CCP Configure-Request来强迫CCP放弃Opened状态。不过这个方法比使用Reset-Requests要花费更大的代价。
+    当接收端第一次遇到一个异常的顺序号，它SHOULD发送一个Reset-Requests LCP报文。Reset-Requests报文在压缩控制协议里面已经定义。发送端发送了一个Reset-Ack或者接收端收到了一个Reset-Ack报文后，他们必须重置顺序号为0，清空压缩字典，重新发送或者接收报文。接收端MUST丢弃所有探测到错误后收到的报文，直到它接收到Reset-Ack报文。这种处理策略可以这么认为：放弃一个传输“文件”，开始另外一个新“文件”的传输。
+    每次接收到一个Reset-Request，传输端必须清空它的压缩历史和发送一个应答Reset-Ack，因为他不知道在次以前发送的Reset-Ack是否已经到达接收端。接收端收到一个Reset-Ack后不需要对他的压缩历史做任何事情，因为发送端不会再参考任何以前的历史（‘deflate’是一种滑动窗口压缩）。
+     如果链路繁忙，在接收到Reset-Ack之前，发现一个解压错误时可能后面已经跟着几个错误。发送Reset-Requests的频率大于链路的round-trip-time是不合适宜的。因为多余的Reset-Requests 会导致没有必要的压缩字典的清空。
+每收到一个压缩的或者没压缩的报文，接收端MAY发送一个附加的Reset-Request直到收到一个Reset-Ack，但是接收端不应该发送另外一个Reset-Request除非上一个Reset-Request的Reset-Ack晚了。接收端要发送足够多的Reset-Request来确保发送端收到至少一个Reset-Request。举个例子，接收端可以选择每秒发送一个Reset-Request。（或者已经接收到Reset-Ack并且解压器已经启动）
+
+   数据扩展（Data Expansion）
+      
+      在本标准中使用的‘deflate’会扩展不可压缩数据大约14-18个字节（8个字节是最坏情况下的‘defalte’等级，2个另外的字节是‘deflate’块尾（end-of-block）和零长（zero-length）同步块头，两个字节的顺序号，另外增加PPP协议域到发送的数据单元占两个字节。）
+      BSD压缩建议草稿 [7]描述了一种对不可压缩数据逃逸机制，是交替使用一种对变量的让人刺激的复杂的因素分层违反和潜在的不可预测的有效的MTU长度。直接的逃逸机制同样也用在这里。
+      如果一个不可压缩数据报文不符合链路的MRU，那么这个报文MUST用它的最原始状态被发送，并且不被CCP封装。PPP报文
+当收到一个PPP协议号在0x0000到0x3FFF（理所当然应该除去0Xfd 0Xfb）范围内，假设已经造成报文扩展，报文被本地地增加到压缩历史中去。(按照已经定义的‘deflate’格式，这样做的一个简便方便的方法是本地化解压一个适当的长度存储块的头，后面是实际数据块，或者可以简单的附加在接收端的历史中，这依赖执行细节)。
+     
+      在他们的本地封装中发送不可压缩报文可以避免最大传输单元复杂化。如果未压缩报文比他们的本地形式要大，对执行的上层来说，有必要认为PPP链路有一个较小的MTU，来确保经过压缩处理后的不可压缩数据绝对不会大于协商的PPP MTU。
+      
+对不可压缩报文的本地封装使执行复杂化。发送端和接收端必须用在同一个报文时向字典里面添加信息，不是为了同步而等到一个压缩的报文的到来。清空字典后的前几个报文通常是不可压缩的，最可能的是用本地封装把他们发送出去，就好象处理没有执行压缩之前的报文。如果CCP或者LCP报文从网络层被分开处理（例如，用一个‘daemon’来处理控制报文，‘kernel code’来处理数据报文），必须注意确保发送端用开始压缩前的configure-ACK 或 Reset-Ack同步清空字典，同时接收端也必须类似的确保在处理下一个报文之前清空字典。
+      
+2.1   报文格式
+   下面是PPP  Deflate 报文格式概略图。
+   域从左向右传输。
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         PPP Protocol          |           Sequence            |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Data ...
+   +-+-+-+-+-+-+-+-+
+
+   PPP 协议域（PPP Protocol）
+
+      PPP 协议域在Point-to-Point Protocol Encapsulation[1]中描述。
+     如果通过PPP 压缩控制协议（CCP）[2]成功协商了PPP Deflate压缩协议，那么协议域的值是0XFD或OXFB，如果Protocol-Field-Compression已经协商，这个址MAY被压缩。
+   
+   顺序号域（Sequence）
+      
+      顺序号是被发送的最有意义的八位字节。当字典清空的时候，它从0开始，对每个报文来说每次加1（包括未压缩的报文）。顺序号大于65535时变为0。
+      顺序号确保丢失或者失序的报文不会导致对端的压缩数据库变为不同步的。如果遇到一个意外的顺序号，必须发送Reset-Request 或 Configure-Request报文来使压缩字典重新同步。顺序号在一个压缩报文被解码之前应该被检查。
+   
+   数据
+
+      压缩后的PPP封装报文，由原始的、未压缩的报文的协议和数据域组成。
+      协议域压缩MUST应用于在顺序号被计算之前或者整个报文被压缩之前的最原始的报文的协议域，不论协议域压缩是否被协商。这样，如果原始的协议号小于0x100，肯定会被压缩为一个单字节。
+     压缩数据的基本格式在‘Deflate’的Compressed Data Format Specification[3]中被描述。当不可压缩数据重置传输端状态时，为了确保同步，每一个被发送的报文必须以一个‘deflate’块边界开始。为了做到这点，每一个被发送的报文用一个零长（zero-length）的‘deflate’未压缩块（non-compressed）。这就意味着压缩数据的最后四个字节必须是0x00 0x00 0xFF 0xFF。这些字节在传输前必须被移走，如果执行需要的话接收端能够重新把他们插入。
+3.  构造选项格式
+   描述
+    CCP PPP Deflate 构造选项在PPP链路上协商使用PPP Deflate压缩算法。默认或者最后协商失败，不使用任何压缩算法。
+   下面是PPP Deflate 构造选项格式的概要图。域从左项、向右传输。
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |Window | Method|    MBZ    |Chk|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type（类型）
+      26
+   Length（长度）
+      3
+   Window（窗口）
+     
+      表示解压器能够迅速分配的最大窗口的大小。是LZ77窗口大小取以2为底的对数，减8。‘Deflate’顺应解压器必须能够接受最大32K的窗口大小，用值7表示。一个‘deflate’顺应压缩器可以自由的使用简化的窗口大小，所以一个PPP Deflate压缩器MUST要不接受这样请求的现在或者拒绝这个玄乡。
+      
+   Method（方法）
+
+     必须是二进制的1000。‘zlib’压缩方法（Method）标志符8对‘deflate’来说是达到32K窗口大小
+   MBZ
+
+      所有位必须是0。.
+   Chk
+
+      必须所有是0表示顺序号校验方法。
+
+.安全考虑
+     本备忘录不考虑安全问题。
+
+.参考资料
+
+   [1]   Simpson, W., "The Point-to-Point Protocol (PPP)", STD 51,
+         RFC 1661, July 1994.
+
+   [2]   Rand, D., "The PPP Compression Control Protocol (CCP)",
+         RFC 1962, June 1996.
+
+   [3]   Deutsch, L.P., "'Deflate' Compressed Data Format
+         Specification", draft available in
+         ftp.uu.net:/pub/archiving/zip/doc/deflate-1.1.doc.
+
+   [4]   Gailly, J.-L., "Zlib 0.95 beta".
+
+   [5]   Bell, T.C., Cleary, G. G. and Witten, I.H., "Text Compression",
+         Prentice_Hall, Englewood Cliffs NJ, 1990.  The compression
+         corpus itself can be found in ftp.uu.net:/pub/archiving/zip/.
+
+   [6]   Simpson, W., "PPP LCP Extensions", RFC 1570, January 1994.
+
+   [7]   Schryver, V., "PPP BSD Compression Protocol", RFC 1977,
+         August 1996.
+
+致谢
+    在不可压缩报文方面，William Simpson提供了非常有价值的方法从而不使用附加的头字节。
+主席的地址
+
+   可以通过以下地址联系工作组的主席：
+   Karl Fox
+   Ascend Communications
+   3518 Riverside Drive, Suite 101
+   Columbus, Ohio 43221
+
+   EMail: karl@ascend.com
+
+作者的地址
+
+   关于本备忘录有任何问题可以直接联系：
+   John Woods
+   Proteon, Inc.
+   9 Technology Drive
+   Westborough MA 01581-1799
+
+   (508) 898-2800 ext. 2651
+   EMail: jfw@funhouse.com
+

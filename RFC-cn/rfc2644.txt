@@ -1,0 +1,117 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：stan001（stan001   ）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+
+Network Working Group                                           D. Senie
+Request for Comments: 2644                        Amaranth Networks Inc.
+Updates: 1812                                                August 1999
+BCP: 34
+Category: Best Current Practice
+
+
+
+                   更改直接广播在路由器上的缺省值
+（RFC2644――Changing the Default for Directed Broadcasts in Routers）
+
+本备忘录的状态
+	本文详细说明了一个为网络间交流的Internet Best Current Practices，并且要求为改进而
+进行讨论和建议。此备忘录的贡献是有限的。
+版权申明
+Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+1.简介
+	路由器要求说明路由器必须接收和传输直接的广播。它也说明路由器MUST有一个选
+择权散失了这个特征，并且这个选择MUST缺省允许接收和传输的直接广播。当直接的广
+播有用时，他们的在网间中枢使用会出现隐含着在其它网络中的整个恶意攻击。
+	为路由器改变要求的缺省将帮助确定新的路由器连接到网络并且不会添加到已存在的
+麻烦。
+	在本文中的关键字"MUST","MUST NOT","REQUIRED","SHALL","SHALL 
+NOT","SHOULD",SHOULD NOT","RECOMMENDED","MAY","OPTIONAL"已经在
+RFC2119中详细说明了。
+2.讨论的问题
+	破坏性的否定服务攻击导致在过滤入口上的[2]的写。许多网络提供者和共享的网络认
+可这种方法的是用来确保他们的的网络不是这类攻击的来源。
+	一个在Smurf  Attacks[3]里的近代趋势是允许从外面的网络直接广播到目标网络，这些
+系统叫做"Smurf  Amplifiers"。
+	在入口过滤器的不断执行时即使是只见广播也要权力是保证限制这种攻击的最好办法。
+	网络服务提供者和共享网络管理者强烈要求保证他们的网络不受外面网络直接广播的
+包的影响。
+	动态的IP[4]已经提供了在动态的节点的自动配置代理的使用中使用直接广播。虽然一
+些执行支持这种特点，但不清楚它是否有用。能达到同样效果的其他方法在[5]里面详细说
+明。这也许值得考虑在使用直接广播上排除语言就像作为在标准的路径上的动态IP过程一
+样。
+3.建议
+	路由器需求[1]被如下更新：
+4.2.2.11（d）用（d）{<Network-prefix>,-1}代替
+	直接广播――一个广播直接到达特定的网络名称。关键字MUST NOT被作为源地址使
+用。一个路由器的MAY关键字有一个配置选项允许它接收直接广播的包，然而这个选项的
+关键字MUST被设为缺省，因此路由器MUST NOT接收网络直接广播的包除非在结尾有特
+定的配置。
+第5.3.5.2部分的第二节被如下代替：
+	一个路由器MAY关键字有一个能在一个接口上接收network-prefix直接广播的选项并
+且能够传输network-prefix-directed broadcasts。这些选项的MUST缺省来模块化接收和模块
+化传输network-prefix-directed broadcasts。
+4.安全问题
+	本文的目的是减少某一特定类型的服务否定攻击的功效。
+5.参考书
+	[1] Baker, F., "Requirements for IP Version 4 Routers", RFC 1812,
+       June 1995.
+	[2] Ferguson, P. and D. Senie, "Ingress Filtering", RFC 2267, January
+       1998.
+	[3] See the pages by Craig Huegen at:
+       http://www.quadrunner.com/~chuegen/smurf.txt, and the CERT
+       advisory at: http://www.cert.org/advisories/CA-98.01.smurf.html.
+   [4] Perkins, C., "IP Mobility Support", RFC 2002, October 1996.
+
+   [5] P. Calhoun, C. Perkins, "Mobile IP Dynamic Home Address
+       Allocation Extensions", Work in Progress.
+
+6. 谢意
+	作者非常感谢Mindspring的Brandon Ross和Sun的Gabriel Montengro。
+7.作者地址
+	Daniel Senie
+   Amaranth Networks Inc.
+   324 Still River Road
+   Bolton, MA 01740
+
+   Phone: (978) 779-6813
+   EMail: dts@senie.com
+8.版权申明
+	Copyrig document ht (C) The Internet Society (1999).  All Rights Reserved.
+
+   This and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+RFC2644――Changing the Default for Directed Broadcasts in Routers     更改直接广播在路由器上的缺省值
+
+
+1
+RFC文档中文翻译计划

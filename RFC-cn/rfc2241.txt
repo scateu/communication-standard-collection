@@ -1,0 +1,149 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-11-7
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+Network Working Group                                          D. Provan
+Request for Comments: 2241                                  Novell, Inc.
+Category: Standards Track                                  November 1997
+
+
+Novell目录服务的DHCP选项
+（RFC2241――DHCP Options for Novell Directory Services）
+
+
+本备忘录的状态
+本文为Internet社区描述了一种Internet标准跟踪协议，需要讨论和建议以进一步改
+进。关于本协议的标准化状态和进展请参阅最新的“Internet正式协议标准”（STD 1）。本
+备忘录的发布没有限制。
+
+版权信息
+   Copyright (C) The Internet Society (1997).  All Rights Reserved.
+
+摘要
+本文为从Novell目录服务器到客户端的配置信息传递定义了三个新DHCP选项。第一个
+选项传送NDS服务列表，第二个传送客户端的NDS树名，第三个传送初始化NDS上下文。通
+过这三个选项就为NDS客户端连接到某个NDS树提供了足够的信息，不需要手工配置客户端。
+目录
+1. 简介	1
+2. NDS服务选项	2
+3. NDS树名选项	2
+4. NDS上下文选项	2
+5. 参考	3
+6. 安全性问题	3
+7. 作者地址	3
+8.  版权声明	4
+
+1. 简介
+Novell目录服务是一种分布式的、重复的和层次化的对象数据库，每个对象都表示一个
+网络资源，如节点、服务、用户和应用程序。NDS客户必须能够定位NDS服务器，以便通过
+网络验证访问该数据库。另外，如果NDS客户端能够集中处理数据库中用户所关心的部分，
+就可以为用户提供更好的服务。本规范描述的DHCP选项可以把NDS信息传递给NDS的TCP/IP
+客户端。第一个选项NDS服务选项，传送NDS服务列表，其他两个选项――NDS树名选项和
+NDS上下文选项――为客户端提供NDS数据库内的一个缺省上下文。
+NDS树名选项和NDS上下文选项传送的是使用UTF-8字节流编码的16位Unicode文本。
+完整的DHCP可以表示NDS支持的全部Unicode字符集。同时，7位的ASCII文本在UTF-8传
+输中不作改变。在NDS树名和上下文只能是7位ASCII字符的环境中，只支持ASCII的DHCP
+客户和服务器也可以把ASCII文本作为UTF-8编码数据来实现这些选项。
+文中关键字“必须”、“不得”、“要求”、“应”、“不应”、“应该”、“不该”、建议“、“可
+以”和“可选”的解释参见RFC 2119。
+
+2. NDS服务选项
+该选项为客户端连接访问NDS数据库指定了一或多个NDS服务。列出的服务应该按优先
+级排队。
+该选项的代码必须是85。该选项的最小长度为4个字节，而且长度必须是4的倍数。
+      Code   Len        Address 1               Address 2
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+--
+     | 85  |  n  |  a1 |  a2 | a3  |  a4 |  a1 |  a2 |  a3 |  a4 |  ...
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+--
+
+3. NDS树名选项
+该选项指定了客户机将连接的NDS树名，NDS树名是16位的Unicode字符串。NDS树名
+为了通过该选项传送，必须使用UTF-8转化成8位字节，而且不能是空结束字符串。
+该选项的代码是86，最大长度为255字节。
+       Code Len  NDS Tree Name
+      +----+----+----+----+----+----+--
+      | 86 | n  | c1 | c2 | c3 | c4 |  ...
+      +----+----+----+----+----+----+--
+
+4. NDS上下文选项
+该选项规定了客户必须使用的初始NDS上下文。NDS上下文是16位Unicode字符串，在
+传输时，NDS上下文首先转换成UTF-8的8位字节，而且不能是空结束字符串。
+一个DHCP选项只能包含255个字节，由于NDSS上下文的名称可能超出这个长度，该选
+项可以在DHCP包中出现多次。数据包中所有的NDS上下文选项应该按照DHCP规范提出的方
+法连接在一起形成完整的NDS上下文。上下文中经过编码的一个字符可以被分割在两个NDS
+上下文选项中。
+该选项的代码是87，每个实例的最大长度是255个字节，但是如刚才所提到的如果需要
+的NDS上下文超过255个字节，这个选项可以出现多次。在实现本标准时，最好不要限制最
+终连接而成的NDS上下文的长度。
+       Code Len  Initial NDS Context
+      +----+----+----+----+----+----+--
+      | 87 | n  | c1 | c2 | c3 | c4 |  ...
+      +----+----+----+----+----+----+--
+
+5. 参考
+   [1] Alexander, S. and R. Droms, "DHCP Options and BOOTP Vendor
+       Extensions", RFC-2132, March 1997.
+
+   [2] Bradner, S., "Key words for use in RFCs to Indicate Requirement
+       Levels", RFC-2119, March 1997.
+
+   [3] Droms, R., "Dynamic Host Configuration Protocol", RFC-2131,
+       March 1997.
+
+   [4] Yergeau, F., "UTF-8, a transformation format of Unicode and
+       ISO 10646", RFC-2044, October 1996
+
+6. 安全性问题
+DHCP现在没有提供验证和安全机制，DHCP协议规范的第7节讨论了哪些方面可能受到潜
+在的攻击。具体来说，这些DHCP选项允许未经认可的NDS服务器把NDS客户错误地引向一个
+不存在的NDS服务器或者假的NDS服务器。这种危险与NDS在其原生IPX环境中执行常规操
+作时所面临的危险是一样的。
+
+7. 作者地址
+   Don Provan
+   Novell, Inc.
+   2180 Fortune Drive
+   San Jose, California, 95131
+
+   Phone: +1 408 577 8440
+
+   EMail: donp@Novell.Com
+
+8.  版权声明
+   Copyright (C) The Internet Society (1997).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+RFC 2241――DHCP Options for Novell Directory Services                  Novell目录服务的DHCP选项	
+
+
+2
+RFC文档中文翻译计划
+
+

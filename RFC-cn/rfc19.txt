@@ -1,0 +1,65 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang   mcsewang@21cn.com）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group					    John E. Kreznar
+RFC-19								  SDC
+7 October 1969
+
+
+可用来降低有限交换节点阻塞的两条协议性的建议
+(RFC19 Two Protocol Suggestions to Reduce Congestion at Swap-Bound Nodes)
+在ARPA的IMP网络节点的主机系统中，其主存与辅存之间的信息交换速率存在很大的
+差异。对于其中较慢的，拿我们的配备2303交换式存储器的360/50系统来说，如果本文中
+提到的这两条协议性的建议能够被采纳，将不止提高其自身的网络性能，而且对所有节点的
+网络性能提高都有所帮助。
+
+1.	主机控制IMP到主机传输的顺序
+IMP─HOST协议现在是要求按照IMP接收消息的顺序从IMP到主机发送消息的。这将在以
+下情况发生时导致交换的浪费，例如：当IMP有消息要发送给其主机的分时共享用户A和
+B时，如果B正在主机的内核中驻留，按照现在的规则，B将被强制置换出来，让A先进
+入。只要发现第一条消息被接收，A又会被移出而B会再次进驻。如果主机能够做到以下
+两点：a）读入IMP的等待消息队列，b）以其发现的最有效的方式接收信息，那么就可以
+产生一种新的提高网络效率的机制。显然，这种转变会对BBN的IMP软件产生一定的影响。
+
+2.	主机间内核到内核的传输
+在另一个层面上，也许不包括HOST─IMP协议或IMP软件的改变，可以用一种HOST─HOST
+（主机到主机）的协议，其中互相协作的主机商定先暂停内核中的某些特定的程序以留出
+一定的时间段给一个在辅助连接中的多路消息文件进行传输。这可以大大减少此类文件从
+一个交换受限的主机中输入输出的传送时间。美中不足的是，当数字处于某个范围时，本
+提议可能产生的这种优势会减弱：如果我们假定有一条50kbps的线路，它能提供100%的
+带宽效能给这种传输（本例中可能需要稍稍对RFNM做些不同的处理），这样每秒恰有不
+少于6个8kb的消息，在分时系统环境中，锁定一个内核程序并让它等待两秒以上是不明
+智的，如果是这种情况，那么这种方法只能用于文件长度为2到16个消息的极为有限的
+一段范围内。尽管如此，本提议可以令传输一个大文件的速度得到如此大的提升，我觉得
+它还是很值得加以考虑的。
+
+
+
+1. Abhi Bhushan, Proj. MAC               10.  Jerry Cole,  SDC
+2. Steve Crocker, UCLA                   11.  John Kreznar, "
+3. Ron Stoughton, UCSB                   12.  Dick Linde,   "
+4. Elmer Shapiro, SRI                    13.  Bob Long,     "
+
+5. Steve Carr, Utah                      14.  Reg Martin,   "
+6. John Haefner, RAND                    15.  Hal Sackman,  "
+7. Paul Rovner, LL                       16.  C. Weissman,  "
+8. Bob Khan, BB & N                      17.  Marty Bleier, "
+9. Larry Roberts, ARPA
+
+
+
+[ This RFC was put into machine readable form for entry ]
+[ into the online RFC archives by Alex Portnoy 1/97 ]
+
+RFC 19 Two Protocol Suggestions to Reduce Congestion at Swap-Bound Nodes
+可用来降低有限交换节点阻塞的两条协议性的建议
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,24 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang  mcsewang@21cn.com） 
+译文发布时间：2001-5-23
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group											 Steve Crocker
+RFC-16															 27 August 1969
+
+                                      M.I.T
+
+	M.I.T现在可以接受所有的网络工作组文档备忘录，备忘录可以发送到以下地址：
+					Abhai Bhushan
+                    Room 807 - Project MAC
+                    545 Technology Square
+                    Cambridge, Mass. 02139
+Abhai's phone is (617) 864-6900, X 5857.
+
+[This RFC has been restored to on-line status by Walter Pienciak]
+RFC 16  M.I.T

@@ -1,0 +1,102 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-11-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                       J. Reynolds
+Request for Comments: 1239                                          ISI
+Updates: RFCs 1229, 1230, 1231, 1232, 1233                    June 1991
+
+
+
+实验性MIB到标准MIB的重新分配
+（RFC1239――Reassignment of Experimental MIBs to Standard MIBs）
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+综述
+过去，早在它们的开发阶段，就已经在实验性MIB命名空间中进行了赋值，于是在它
+们没有完全达到标准化状态之前，在标准的MIB空间中不会重新赋值了。当某个MIB由草
+案成为完全标准化状态时，即使在定义中可能已经没有实质性的技术上的变化了，这种实践
+活动需要厂商来修订他们的实施。这种实践活动也可能给标准化过程晚期令人不快的阶段带
+来一些操作上的问题。也就是说，在没有完全标准化的阶段，这种实践活动可能不鼓励实施，
+这也是令人不快的。因而，更可取的实验活动是在标准化的最早阶段在标准MIB命名空间
+中来赋值，并随着标准过程的推进保持这些赋值。
+本备忘录以新代码逐一更新如下：
+RFC 1229
+“Extensions to the Generic-Interface MIB”
+RFC 1230
+“IEEE 802.4 Token Bus MIB”
+RFC 1231
+“IEEE 802.5 Token Ring MIB”
+RFC 1232
+“Definitions of Managed对象 for the DS1 Interface Type”
+RFC 1233 - 
+“Definitions of Managed对象 for the DS3 Interface Type”
+将来，为每个MIB出版物考虑新代码的赋值。
+旧的SMI网络管理实验性代码
+字头：1.3.6.1.3(试验用的)
+十进制数
+名称
+描述
+2
+T1-Carrier
+T1载波对象
+4
+IEEE802.5
+类Token Ring对象
+6
+Interface
+通用接口扩展对象
+7
+IEEE802.4
+类Token Bus对象
+15
+DS3
+DS3接口类型
+新的SMI网络管理标准代码
+字头：1.3.6.1.2.1(标准mib)
+十进制数
+名称
+描述
+12
+Generic IF
+通用接口扩展对象
+字头：1.3.6.1.2.1.10(传输)
+十进制数
+名称
+描述
+8
+IEEE802.4
+类Token Bus对象
+9
+IEEE802.5
+类Token Ring对象
+18
+DS1
+T1载波对象
+30
+DS3
+DS3接口类型
+需要考虑的安全问题
+本备忘录不讨论安全问题。
+作者地址
+Joyce K. Reynolds
+USC/Information Sciences Institute
+4676 Admiralty Way
+Marina del Rey，CA  90292-6695
+Phone：(213) 822-1511
+EMail：jkrey@isi.edu
+
+RFC1239――Reassignment of Experimental MIBs to Standard MIBs     实验性MIB到标准MIB的重新分配
+
+
+1
+RFC文档中文翻译计划

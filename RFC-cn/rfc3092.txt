@@ -1,0 +1,532 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：流浪猫（neko   neko@126.com）
+译文发布时间：2001-4-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                    D. Eastlake 3rd
+Request for Comments: 3092                                      Motorola
+Category: Informational                                        C. Manros
+                                                                   Xerox
+                                                              E. Raymond
+                                                  Open Source Initiative
+                                                            1 April 2001
+
+
+
+
+RFC3092 "Foo" 的词源
+(RFC3092  Etymology of "Foo")
+
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+   至今大约有212 个RFC， 从RFC 269 开始，包含了术语'foo','bar'或'foobar'
+   作为伪变量(metasyntactic variable)而没有任何适当的解释或定义。本文纠
+   正这一问题。
+
+
+
+
+
+
+
+目录
+1. 介绍	2
+2. 定义和语源	2
+3. 缩写	5
+附录	6
+安全考虑	11
+参考	11
+作者的地址	13
+完整的版权声明	14
+鸣谢	14
+
+1. 介绍
+   至今约有212 个RFC， 或者约7%的RFC， 从[RFC269]开始，包括了术语'foo',
+   'bar' 或'foobar'作为伪变量而没有任何适当的解释或定义。这可能被认为是
+   微不足道的，但一些新来者，特别是那些非英语国家的人，在理解这些术语时
+   会遇到困难。本文纠正这一问题。
+
+   下面的第二节描述了这些词定义和语源，第三节把它们作为缩写词进行了解释。
+   
+   在附录中，包括了这些词作为伪变量在RFC 中出现位置的表格。
+2. 定义和语源
+   bar /bar/ n. [JARGON]
+
+   1.  第二个伪变量，在foo 之后而在baz 之前。
+       "Suppose we have two functions: FOO and BAR.  FOO calls BAR...."
+
+   2.  经常加在foo 后面构成foobar。
+
+   foo /foo/
+
+   1. interj.  令人反感的术语。
+
+   2.  用于任何东西的一般的名称，特别是程序和文件（特别是草稿文件）。
+
+   3.  用于语法例释的标准伪变量表中的第一个(bar, baz, qux, quux, corge,
+       grault, garply, waldo, fred, plugh, xyzzy, thud). [JARGON]
+
+       当连接'bar' 时通常可以追溯到二战时军中的俚语FUBAR (`Fucked Up
+       Beyond All Repair')， 最后演变成了foobar。早期版本的Jargon File
+       [JARGON]称这一变化是战后的修正，但现在看来更像是FUBAR 本身是'foo'
+       的衍生词。可能是受到了德语'furchtbar'（可怕的） 的影响 -- 也许最
+       初形式是'foobar'。
+
+       似乎'foo' 这个词在战前的漫画和卡通中可以找到历史。在1938年华纳兄
+       弟卡通公司Robert Clampett 指导的"The Daffy Doc"，Daffy Duck 的早
+
+       期版本，有一句口号"SILENCE IS FOO!"。'FOO'和'BAR' 也在Walt Kelly
+       的连环漫画"Pogo"中出现。最早有文献记载的使用是在Bill Holman 的描
+       写一个消防队员的超现实主义连环漫画"Smokey Stover" 中。在1930到
+       1952年间该连环漫画出现在许多美国漫画中，包括"Everybody's"。 它经
+       常在汽车的车牌中包含单词"FOO"， 在背景画面中无意义的话中，如"He
+       who foos last foos best"或"Many smoke but foo men chew"，Smokey
+       说"Where there's foo, there's fire"。Bill Holman，该漫画的作者，
+       在其中充满了奇妙的笑话和个人发明，包括其它无意义的短语如"Notary
+
+       Sojac"和"1506 nix nix"。依照华纳兄弟卡通公司[WBCC]的说法，Holman
+       是在一个中国小雕像的底部发现"foo" 这个词的。这是个似是而非的说法；
+       中国的小雕像经常有避邪用的题字，这可能是中文'fu'（有时候音译为
+       'foo'）， 当发音正确时意为“幸福”（立在许多中餐馆侧面的狮子--狗型
+       守护神正确的称呼是"fu dogs"）[PERS]。 说英语的人认为Holman的'foo'
+       这个无意义的词毫无疑问的受到Yiddish 语的'feh' 和英语的'fooey' 以
+       及'fool'的影响。[JARGON, FOLDOC]
+
+       Holman的漫画描写了一台两轮消防车名叫Foomobile。 该系列漫画在1930
+       年代后流行极了，传说Indiana 的一个制造商甚至造出了一台可操作的
+       Foomobile。 按照美国漫画百科全书[EAC] 的说法，'Foo' 热横扫美国，
+       在流行歌曲和超过500个‘Foo 俱乐部‘ 中可以找到证据。作为流行的遗迹
+       'foo' 嵌入了流行文化（包括华纳兄弟卡通公司1938-39的the couple of
+       appearances） 但它的起源被迅速遗忘了。[JARGON]
+
+       二战后该术语在美国军队仍存留下来。在1944-45 年，术语'foo
+       fighters'[FF] 被雷达操作员用来描述一种神秘的或伪造的轨迹。那后来
+       被称为UFO（ 在1995年通过一个叫Better grunge-rock bands[BFF] 的词
+       老的术语又重新露面）。据信它和漫画Smokey Stover 有关[PERS]。
+
+       战争中美国和英国军队经常交换俚语。Period sources报告说二战中'FOO'
+       变成了半传奇式的主题，英国军队的涂鸦或多或少等于美国的Kilroy
+       [WORDS]。 英国军队走到哪里，都会涂上"FOO was here"或者类似的话。
+       几本俚语字典断言FOO 来自前线巡查官，但这（像同时代的"FUBAR"）也许
+       是backronym[JARGON]。 40年后，Paul Dickson的优秀著作"Words"
+       [WORDS]追踪"Foo"到了一个不明的英国海军杂志，引用如下：
+
+         "Mr. Foo is a mysterious Second World War product, gifted with
+         bitter omniscience and sarcasm."
+
+       更早版本的Jargon File 暗示其用法的可能来自"FOO, Lampoons and
+       Parody"，1958 年发行的一本漫画的标题，Charles 和Robert Crumb合作
+       的一个项目。
+
+
+
+       尽管Robert Crumb（在他后来十几年）后来成了最重要最有影响力的地下
+       漫画作家，这次成功相当艰难；实际上，因为厌恶，兄弟俩后来烧掉了大
+       部分的拷贝。标题FOO 用大号字印在封面上。然而，非常少的拷贝确实流
+       传了下来，Crumb ‘全集’的学生确定它参考的是较早的Smokey Stover 漫
+       画。Crumb的作品可能也受到1951-52年出版的的短命加拿大滑稽杂志
+       "Foo"的影响[JARGON]。
+
+       一个old-time成员报告说在1959年TMRC（MIT 的技术模型铁路俱乐部）编
+       译的“TMRC语言字典”  中有Foo 的词条。当前在线版本中的"Foo" 是唯一
+       标记为红色的词，有如下内容[TMRC]：
+
+         Foo:  The sacred syllable (FOO MANI PADME HUM); to be spoken
+         only when under obligation to commune with the Deity. Our first
+         obligation is to keep the Foo Counters turning.
+
+       这个定义用了Bill Holman 的无意义的词，流行之后20年且确实存在流行
+       文化和俚语中，使一个"ha ha only serious"象西藏佛教一样深奥。今天
+       的人会发现很难抵挡这样精心制作的笑话，而不象1959年代的人那样不易
+       受感染。[JARGON]
+
+   4.  [EF]王子Foo 是Pheebor 最后的统治者，和Phee Helm 的所有者，在
+       rgign of Entharion之前约400 年。当Foo 被来自Borphee 的叫作
+       "eastern fop" 的什么人砍头时，Pheebor 的显赫时代结束了，而Borphee
+       越升到它现在的位置。
+
+   5.  [OED] 一个13-16 世纪用法，指恶魔或任何敌人。最早的引用是在1366
+       年，Chaucer A B C (84): "Lat not our alder foo [devil] make his
+       bobance [boast]"。Chaucer的"Foo"可能是现代英语的"foe"
+
+   6.  稀有种类的狗
+
+       波美拉尼亚丝毛狗被认为灭绝很长时间后又被发现了，中国的Foo 狗，或
+       新疆的神狗，可能起源于越过北欧的猎狗和远古的蒙古中国狗或者中国狼
+       和中国狗的杂交种。它可能由foochow， 或流行在Foochow 的种或风格，
+      或者从中国东南部城市Foochow （现在Minhow）得名。[DOG]
+   
+   foobar n.
+
+       [JARGON]广泛使用的伪变量；语源参考foo。 最初可能在60年代到70年代
+       早期通过数字设备公司(DEC) 的DEC 系统手册传播的；能确证的目击例可
+       以追溯到1972年。热心者一般不使用其表示FUBAR， 无论是作为俚语还是
+       作为专业术语。这似乎暗示"foobar"部分的在早期计算机工程师中传播，
+       由于FUBAR，部分也因为"foo bar"听起来象电子技术术语反转的foo信号。
+
+   foo-fighter n.
+
+       二战术语，德英双方都用于表示不明飞行物(UFO)。参看foo词条对[FF]的
+       说明。
+3. 缩写
+   下面信息主要来自Cork大学<http://www.ucc.ie/acronyms>和缩写发现者
+   <http://www.AcronymFinder.com>用于一般计算机用途。
+   .bar:
+       一般文件扩展名，不暗示任何文件类型。
+   BAR:
+       基地址寄存器(Base Address Register)
+       缓冲区地址寄存器(Buffer Address Register)
+   FOO:
+       转送观察观察员(Forward Observation Observer)
+       FOO Of Oberlin. 一个缩写名为递归词的组织。Motto: The FOO, the
+       Proud, the FOO. 参看
+       <http://cs.oberlin.edu/students/jmankoff/FOO/home.html>。
+       为输出打开文加(File Open for Output)。一个NFILE错误码[RFC1037]。
+   FOOBAR:
+       FTP 在大地址记录上的操作[RFC1639]。 （特别恰当的使用"foo" 的第一
+       个RFC，[RFC269]，也是关于文件传输的）
+   FUBAR:
+       失败的统一总线地址寄存器(Failed UniBus Address Register) -  在
+       VAX 中，来自数字设备公司工程师。
+       Fucked Up Beyond All Recognition/Repair - 来自二战时的美国军队。
+       有时候简化成"Fouled Up ..."。
+   FUBARD -  FUBAR 的过去式
+附录
+   下表列出了这些词在RFC 中作为伪变量的使用（这不包括合理的使用如
+   "vertical bar"或 "bar BoF"）。许多用途是作为域名例。这用用法会减少，
+   因为[RFC2606]中作为当前最佳经验提出了用于举例用的域名。
+
+   +------+-----+-----+---------+-------+-----+
+   | RFC# | bar | foo | foo.bar | fubar |  #  |
+   |      |     |     | foobar  |       |     |
+   +------+-----+-----+---------+-------+-----+
+   |  269 |  X  |  X  |         |       |   1 |
+   |  441 |  X  |  X  |         |       |   2 |
+   |  614 |     |  X  |         |       |   3 |
+   |  686 |     |  X  |         |       |   4 |
+   |  691 |     |  X  |         |       |   5 |
+   |  733 |  X  |  X  |         |       |   6 |
+   |  742 |     |  X  |         |       |   7 |
+   |  743 |  X  |  X  |         |       |   8 |
+   |  756 |     |  X  |         |       |   9 |
+   |  765 |  X  |  X  |         |       |  10 |
+   |  772 |  X  |  X  |         |   X   |  11 |
+   |  775 |     |     |    X    |       |  12 |
+   |  780 |  X  |  X  |         |   X   |  13 |
+   |  788 |  X  |  X  |         |       |  14 |
+   |  810 |  X  |  X  |    X    |       |  15 |
+   |  819 |     |  X  |         |       |  16 |
+   |  821 |  X  |  X  |         |       |  17 |
+   |  822 |  X  |  X  |         |       |  18 |
+   |  882 |  X  |  X  |         |       |  19 |
+   |  883 |     |  X  |         |       |  20 |
+   |  897 |  X  |  X  |         |       |  21 |
+   |  913 |     |  X  |         |       |  22 |
+   |  921 |  X  |  X  |         |       |  23 |
+   |  934 |     |  X  |         |       |  24 |
+   |  952 |  X  |  X  |    X    |       |  25 |
+   |  959 |     |     |    X    |       |  26 |
+   |  976 |     |     |    X    |       |  27 |
+   |  977 |     |  X  |    X    |       |  28 |
+   |  987 |     |     |    X    |       |  29 |
+   | 1013 |     |  X  |         |       |  30 |
+   | 1033 |  X  |  X  |         |       |  31 |
+   | 1035 |     |  X  |         |       |  32 |
+   | 1037 |     |  X  |         |       |  33 |
+   | 1056 |  X  |  X  |    X    |       |  34 |
+   | 1068 |     |  X  |         |       |  35 |
+   | 1137 |     |     |    X    |       |  36 |
+   | 1138 |     |  X  |    X    |       |  37 |
+   | 1148 |     |  X  |    X    |       |  38 |
+   | 1173 |     |     |    X    |       |  39 |
+   | 1176 |     |     |    X    |       |  40 |
+   | 1186 |     |  X  |         |       |  41 |
+   | 1194 |     |  X  |         |       |  42 |
+   | 1196 |     |  X  |         |       |  43 |
+   | 1203 |     |  X  |    X    |       |  44 |
+   | 1288 |     |  X  |         |       |  45 |
+   | 1291 |     |  X  |         |       |  46 |
+   | 1309 |     |  X  |         |       |  47 |
+   | 1327 |     |  X  |    X    |       |  48 |
+   | 1341 |  X  |  X  |    X    |       |  49 |
+   | 1343 |     |  X  |    X    |       |  50 |
+   | 1344 |     |  X  |         |       |  51 |
+   | 1348 |     |     |    X    |       |  52 |
+   | 1386 |     |  X  |         |       |  53 |
+   | 1408 |     |  X  |         |       |  54 |
+   | 1411 |     |  X  |         |       |  55 |
+   | 1412 |     |  X  |         |       |  56 |
+   | 1459 |  X  |  X  |    X    |   X   |  57 |
+   | 1480 |     |  X  |         |       |  58 |
+   | 1505 |     |  X  |         |       |  59 |
+   | 1519 |     |  X  |         |       |  60 |
+   | 1521 |  X  |  X  |         |       |  61 |
+   | 1523 |     |  X  |         |       |  62 |
+   | 1524 |     |  X  |    X    |       |  63 |
+   | 1526 |  X  |  X  |         |       |  64 |
+   | 1535 |  X  |  X  |    X    |       |  65 |
+   | 1536 |  X  |     |    X    |       |  66 |
+   | 1537 |     |  X  |    X    |       |  67 |
+   | 1563 |     |  X  |         |       |  68 |
+   | 1564 |     |     |    X    |       |  69 |
+   | 1572 |     |  X  |         |       |  70 |
+   | 1573 |     |  X  |         |       |  71 |
+   | 1622 |     |  X  |         |       |  72 |
+   | 1635 |     |     |    X    |       |  73 |
+   | 1636 |     |  X  |    X    |       |  74 |
+   | 1642 |     |  X  |         |       |  75 |
+   | 1645 |     |     |    X    |       |  76 |
+   | 1649 |     |  X  |         |       |  77 |
+   | 1664 |     |     |    X    |       |  78 |
+   | 1681 |     |     |    X    |       |  79 |
+   | 1697 |     |  X  |         |       |  80 |
+   | 1716 |     |  X  |         |       |  81 |
+   | 1718 |     |  X  |         |       |  82 |
+   | 1730 |  X  |  X  |    X    |       |  83 |
+   | 1734 |     |     |    X    |       |  84 |
+   | 1738 |     |  X  |         |       |  85 |
+   | 1783 |     |     |    X    |       |  86 |
+   | 1784 |     |     |    X    |       |  87 |
+   | 1786 |  X  |  X  |         |       |  88 |
+   | 1813 |  X  |  X  |         |       |  89 |
+   | 1835 |     |  X  |    X    |       |  90 |
+   | 1856 |     |     |    X    |       |  91 |
+   | 1861 |     |     |    X    |       |  92 |
+   | 1866 |     |  X  |         |       |  93 |
+   | 1894 |     |     |    X    |       |  94 |
+   | 1896 |     |  X  |         |       |  95 |
+   | 1898 |     |  X  |         |       |  96 |
+   | 1913 |     |  X  |    X    |       |  97 |
+   | 1945 |  X  |  X  |         |       |  98 |
+   | 1985 |     |  X  |    X    |       |  99 |
+   | 2015 |  X  |  X  |         |       | 100 |
+   | 2017 |     |  X  |         |       | 101 |
+   | 2033 |  X  |  X  |         |       | 102 |
+   | 2045 |     |     |    X    |       | 103 |
+   | 2046 |  X  |  X  |         |       | 104 |
+   | 2049 |  X  |  X  |         |       | 105 |
+   | 2055 |     |  X  |         |       | 106 |
+   | 2060 |  X  |  X  |    X    |       | 107 |
+   | 2065 |     |  X  |         |       | 108 |
+   | 2068 |     |     |    X    |       | 109 |
+   | 2071 |     |  X  |         |       | 110 |
+   | 2088 |     |     |    X    |       | 111 |
+   | 2109 |     |  X  |         |       | 112 |
+   | 2110 |     |  X  |    X    |       | 113 |
+   | 2111 |  X  |  X  |    X    |       | 114 |
+   | 2141 |     |  X  |         |       | 115 |
+   | 2150 |     |  X  |         |       | 116 |
+   | 2152 |     |  X  |         |       | 117 |
+   | 2156 |     |  X  |    X    |       | 118 |
+   | 2163 |     |     |    X    |       | 119 |
+   | 2167 |     |     |    X    |       | 120 |
+   | 2168 |     |     |    X    |       | 121 |
+   | 2169 |     |     |    X    |       | 122 |
+   | 2180 |  X  |  X  |         |       | 123 |
+   | 2193 |  X  |  X  |         |       | 124 |
+   | 2224 |     |  X  |         |       | 125 |
+   | 2227 |  X  |  X  |         |       | 126 |
+   | 2233 |     |  X  |         |       | 127 |
+   | 2234 |  X  |  X  |    X    |       | 128 |
+   | 2243 |     |  X  |         |       | 129 |
+   | 2255 |     |  X  |    X    |       | 130 |
+   | 2280 |  X  |  X  |         |       | 131 |
+   | 2295 |     |  X  |         |       | 132 |
+   | 2302 |     |  X  |         |       | 133 |
+   | 2311 |  X  |     |         |       | 134 |
+   | 2326 |  X  |  X  |    X    |       | 135 |
+   | 2342 |     |  X  |         |       | 136 |
+   | 2348 |     |     |    X    |       | 137 |
+   | 2349 |     |     |    X    |       | 138 |
+   | 2359 |     |     |    X    |       | 139 |
+   | 2369 |  X  |  X  |    X    |       | 140 |
+   | 2378 |     |  X  |         |       | 141 |
+   | 2384 |     |     |    X    |       | 142 |
+   | 2392 |  X  |  X  |    X    |       | 143 |
+   | 2396 |     |     |    X    |       | 144 |
+   | 2401 |     |     |    X    |       | 145 |
+   | 2407 |     |     |    X    |       | 146 |
+   | 2421 |     |  X  |         |       | 147 |
+   | 2425 |     |     |    X    |       | 148 |
+   | 2434 |     |  X  |         |       | 149 |
+   | 2446 |     |  X  |    X    |       | 150 |
+   | 2447 |  X  |  X  |         |       | 151 |
+   | 2458 |     |  X  |    X    |       | 152 |
+   | 2459 |     |     |    X    |       | 153 |
+   | 2476 |     |  X  |         |       | 154 |
+   | 2483 |  X  |  X  |         |       | 155 |
+   | 2486 |     |  X  |         |       | 156 |
+   | 2505 |  X  |  X  |         |       | 157 |
+   | 2518 |  X  |  X  |    X    |       | 158 |
+   | 2535 |     |  X  |         |       | 159 |
+   | 2538 |     |  X  |         |       | 160 |
+   | 2543 |  X  |  X  |    X    |       | 161 |
+   | 2554 |     |     |    X    |       | 162 |
+   | 2557 |     |  X  |    X    |       | 163 |
+   | 2565 |     |  X  |    X    |       | 164 |
+   | 2569 |  X  |  X  |         |       | 165 |
+   | 2593 |  X  |  X  |         |       | 166 |
+   | 2595 |     |  X  |         |       | 167 |
+   | 2608 |     |  X  |         |       | 168 |
+   | 2609 |     |  X  |         |       | 169 |
+   | 2616 |  X  |  X  |    X    |       | 170 |
+   | 2622 |  X  |  X  |         |       | 171 |
+   | 2626 |     |  X  |         |       | 172 |
+   | 2633 |  X  |     |         |       | 173 |
+   | 2640 |     |  X  |    X    |       | 174 |
+   | 2645 |     |     |    X    |       | 175 |
+   | 2650 |  X  |     |         |       | 176 |
+   | 2659 |     |     |    X    |       | 177 |
+   | 2673 |     |  X  |    X    |       | 178 |
+   | 2693 |     |  X  |         |       | 179 |
+   | 2704 |  X  |  X  |         |       | 180 |
+   | 2705 |  X  |  X  |         |       | 181 |
+   | 2717 |     |  X  |    X    |       | 182 |
+   | 2725 |  X  |  X  |         |       | 183 |
+   | 2731 |  X  |  X  |    X    |       | 184 |
+   | 2732 |     |  X  |         |       | 185 |
+   | 2782 |     |  X  |    X    |       | 186 |
+   | 2803 |     |  X  |         |       | 187 |
+   | 2806 |     |  X  |         |       | 188 |
+   | 2812 |  X  |  X  |    X    |   X   | 189 |
+   | 2818 |  X  |  X  |         |       | 190 |
+   | 2828 |     |  X  |    X    |       | 191 |
+   | 2830 |  X  |     |         |       | 192 |
+   | 2831 |  X  |  X  |    X    |       | 193 |
+   | 2839 |     |  X  |         |       | 194 |
+   | 2846 |  X  |  X  |         |       | 195 |
+   | 2853 |     |  X  |         |       | 196 |
+   | 2863 |     |  X  |         |       | 197 |
+   | 2910 |     |  X  |    X    |       | 198 |
+   | 2912 |     |  X  |    X    |       | 199 |
+   | 2915 |     |  X  |         |       | 200 |
+   | 2926 |     |     |    X    |       | 201 |
+   | 2942 |     |  X  |         |       | 202 |
+   | 2965 |     |  X  |         |       | 203 |
+   | 2967 |  X  |  X  |    X    |       | 204 |
+   | 2970 |     |  X  |         |       | 205 |
+   | 2993 |  X  |  X  |         |       | 206 |
+   | 3010 |  X  |  X  |         |       | 207 |
+   | 3023 |     |  X  |         |       | 208 |
+   | 3028 |     |  X  |         |       | 209 |
+   | 3075 |  X  |  X  |         |       | 210 |
+   | 3080 |     |  X  |         |       | 211 |
+   | 3092 |  X  |  X  |    X    |   X   | 212 |
+   +------+-----+-----+---------+-------+-----+
+   | RFC# | bar | foo | foo.bar | fubar |  #  |
+   |      |     |     | foobar  |       |     |
+   +------+-----+-----+---------+-------+-----+
+安全考虑
+   本文不讨论安全问题。
+参考
+   [BFF]     "Best of Foo Fighters: Signature Licks", Troy Stetina, Foo
+             Fighters, October 2000, Hal Leonard Publishing Corporation,
+             ISBN 063401470.
+   [DOG]     <http://www.rarebreed.com/breeds/foo/foo.html>.
+   [EAC]     "Encyclopedia of American Comics", Ron Goulart, 1990, Facts
+             on File.
+   [EF]      "Encyclopedia Frobozzica",
+             <http://www.everything2.com/index.pl?node=Prince%20Foo>
+   [FF]      Foo Fighters - "The Rainbow Conspiracy", Brad Steiger,
+             Sherry Hansen Steiger, December 1998, Kensington Publishing
+             Corp., ISBN 1575663635.  - Computer UFO Network
+             <http://www.cufon.org> particularly
+             <http://www.cufon.org/cufon/foo.htm>.
+   [FOLDOC]  "Free On-Line Dictionary Of Computing",
+             <http://www.foldoc.org>.
+   [JARGON]  The Jargon File.  See <http://www.jargon.org>.  Last
+             printed as "The New Hacker's Dictionary", Eric S. Raymond,
+             3rd Edition, MIT Press, ISBN 0-262-68092-0, 1996.
+   [OED]     "The Oxford English Dictionary", J. A. Simpson, 1989,
+             Oxford University Press, ISBN 0198611862.
+   [PERS]    Personal communications.
+   [RFC269]  Brodie, H., "Some Experience with File Transfer", RFC 269,
+             December 1971.
+   [RFC1037] Greenberg, B. and S. Keene, "NFILE - A File Access
+             Protocol", RFC 1037, December 1987.
+   [RFC1639] Piscitello, D., "FTP Operation Over Big Address Records
+             (FOOBAR)", RFC 1639, June 1994.
+
+   [RFC2606] Eastlake, D. and A. Panitz, "Reserved Top Level DNS Names",
+             BCP 32, RFC 2606, June 1999.
+   [TMRC]    The Tech Model Railroad Club (The Model Railroad Club of
+             the Massachusetts Institute of Technology) Dictionary,
+             <http://tmrc-www.mit.edu/dictionary.html>.
+   [WBCC]    "Warner Brothers Cartoon Companion",
+             <http://members.aol.com/EOCostello/>.
+   [WORDS]   "Words", Paul Dickson, ISBN 0-440-52260-7, Dell, 1982.
+作者的地址
+   Donald E. Eastlake 3rd
+   Motorola
+   155 Beaver Street
+   Milford, MA 01757 USA
+
+   Phone:  +1 508-261-5434 (w)
+           +1 508-634-2066 (h)
+   Fax:    +1 508-261-4777 (w)
+   EMail:  Donald.Eastlake@motorola.com
+
+   Carl-Uno Manros
+   Xerox Corporation
+   701 Aviation Blvd.
+   El Segundo, CA 90245 USA
+
+   Phone:  +1 310-333-8273
+   Fax:    +1 310-333-5514
+   EMail:  manros@cp10.es.xerox.com
+
+   Eric S. Raymond
+   Open Source Initiative
+   6 Karen Drive
+   Malvern, PA 19355
+
+   Phone:  +1 610-296-5718
+   EMail:  esr@thyrsus.com
+完整的版权声明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+鸣谢
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+RFC3092  Etymology of "Foo"                                            RFC3092 "Foo" 的词源
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

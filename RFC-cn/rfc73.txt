@@ -1,0 +1,53 @@
+组织：中国互动出版网（<http://www.china-pub.com/>）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm <http://www.china-pub.com/>）
+E-mail：ouyang@china-pub.com <mailto:ouyang@china-pub.com>
+译者：董苛（cnchris    duke913@163.com）
+译文发布时间：2001-10-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                   S. Crocker
+Request for Comments #73                                UCLA
+                                                        25 Sept. 70
+
+                    对RFC67的回答(Response to NWM/RFC #67)
+
+Bill的建议确实不错;不过,我现在的政策是鼓励迅速的实施一号文献中的协议,而他有关改动的建议需要延后.对于我来说最重要的是,在对不是急需改变的协议改变之前,通过对网络的使用获得经验.(我在几个站点对Bill的建议做了民意测验.已经实施了NCP的站点同意这个政策,而远没跟上的站点则希望Bill所建议的改动发生.)
+
+
+总的来说,怀着对改动的尊敬,我相信改动对于增进效率,提供更高的适应性和保证可靠性都是很有必要的.现在我们中的很多人都可以提出改动,不过我认为在使用的过程中将会出现更明确的想法.
+
+       [ This RFC was put into machine readable form for entry ]
+         [ into the online RFC archives by Josh Elliott 1/98 ]
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+   

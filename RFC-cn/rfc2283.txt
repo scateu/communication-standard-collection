@@ -1,0 +1,285 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：白建军（jianjun_bai    jianjun_bai@163.net ）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但
+必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                                    T. Bates
+Request for Comments: 2283                                           Cisco Systems
+Category: Standards Track                                                R. Chandra
+                                                               Cisco Systems
+                                                                    D. Katz
+                                                            Juniper Networks
+                                                                  Y. Rekhter
+                                                               Cisco Systems
+February 1998
+
+BGP-4多协议扩展
+（RFC 2283 ――Multiprotocol Extensions for BGP-4）
+Status of this Memo
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+
+
+
+目录
+1、摘要	1
+2、概述	2
+3、多协议可达NLRI的实现	3
+4、多协议不可达NLRI：	5
+5、NLRI编码：	5
+6、子网地址类标识	6
+7、安全考虑	6
+8、致谢	6
+9、参考文献	6
+10、作者信息	7
+11、版权说明	7
+
+1、摘要
+当前的BGP协议[BGP-4]只能广播IPV4 [IP V4]的路由信息，本文档定义一种BGP-4的
+扩展机制，这种机制能够使BGP-4携带多种网络层协议（如IPV6，IPX等网络层协议）的
+路由信息。这种扩展机制是向后兼容的：支持这种扩展的路由器能够和不支持扩展的路由器
+完全交互。
+
+
+
+2、概述
+BGP-4支持的三种IPV4信息分别是：Next-hop属性（用一个IPV4地址表示）、Aggregator
+属性（包含一个IPV4地址）和NLRI属性（IPV4地址前缀）。本文档介绍的这种扩展假设任
+合BGP-4发言人（包括支持多协议扩展机制的发言人）都必须有一个IPV4地址（用在
+Aggregator属性中）。因此，为了让BGP-4支持多种网络层协议的路由，只须做两件事，(a)：
+把Next-hop信息同一个特定的网络层协议联系起来，(b)：把NLRI同一个特定的网络层协
+议联系起来。同时用RFC 1700中定义的地址族区分各种不同的网络层协议。
+显而易见，下一跳信息（Next-hop属性提供的）只有在广播可达目的地的结合点才有用，
+在广播不可达目的地的结合点，下一跳信息根本没用。这就预示着，可达性信息的广播应该
+根据下一跳的广播分类，那些可达性目的地址的广播应该从不可达地址的广播中独立出来。
+为了提供的向后兼容，同时也为了简化BGP-4的多协议扩展机制，引进两个新的BGP-4
+属性，它们是：多协议可达NLRI（MP-REACH-NLRI）和多协议不可达NLRI
+（MP-UNREACH-NLRI）。MP-REACH-NLRI用来携带可达信目的地址以及转发到这些目的
+地址的下一跳的地址，MP-UNREACH-NLRI用来携带不可达的目的地址。这两个属性都是
+可选非过渡的。这样，不支持多协议扩展机制的BGP发言人就可以忽略这些属性所表达的
+信息，并且不把这些信息广播给它的其它邻居。
+3、多协议可达NLRI的实现
+MP-REACH-NLRI是一个可选非过渡属性，主要有以下作用：
+?	
+（a）	向一个对等体广播可用路由。
+（b）	允许路由器广播该路由器的网络层地址以便作为在MP-NLRI 属性中到达NLRI
+信息所表示的目的地的下一跳地址。
+（c）	允许路由器报告部分或全部的本地系统中存在的子网接入点（Sub-network Points 
+of Attachment，SNPAS）。
+每个属性项都包含如下图所示的一个或者多个三元组（Address Family   Information, 
+Next Hop Information, Network Layer Reachability   Information）：
+
++---------------------------------------------------------+
+      | Address Family Identifier (2 octets)          |
+      +---------------------------------------------------------+
+      | Subsequent Address Family Identifier (1 octet) |
+      +---------------------------------------------------------+
+      | Length of Next Hop Network Address (1 octet) |
+      +---------------------------------------------------------+
+      | Network Address of Next Hop (variable)      |
+      +---------------------------------------------------------+
+      | Number of SNPAs (1 octet)                |
+      +---------------------------------------------------------+
+      | Length of first SNPA(1 octet)               |
+      +---------------------------------------------------------+
+      | First SNPA (variable)                      |
+      +---------------------------------------------------------+
+      | Length of second SNPA (1 octet)             |
+      +---------------------------------------------------------+
+      | Second SNPA (variable)                    |
+      +---------------------------------------------------------+
+      | ...                                      |
+      +---------------------------------------------------------+
+      | Length of Last SNPA (1 octet)               |
+      +---------------------------------------------------------+
+      | Last SNPA (variable)                      |
+      +---------------------------------------------------------+
+      | Network Layer Reachability Information (variable) |
+      +---------------------------------------------------------+
+这些域的意义和使用入下所说：
+地址类标识：
+表示网络层协议所属的地址类，用RFC 1700中定义的地址族区分各种不同的类型的
+地址。
+子地址类标识：
+提供关于NLRI类型的附加信息。
+下一跳地址长度：
+一个字节长，这个值表示下一跳地址的长度
+下一条地址：
+可变长域，用来表示到达目的系统经过的下一个路由器的地址列表。
+SPNA的个数：
+一个字节长，包含独立的SPNA的个数。如果值为0。则表示没有子网接入点。
+第N个SNPA的长度：
+一个字节长，表示第N个SNPA的长度。
+下一跳的第N个SNPA：
+可变长域，在下一跳地址域中说明的路由器所拥有的一个SNPA。这个域的值是一个
+整数。
+NLRI（网络层可达性信息）：
+一个可变长的NLRI信息列表，如果子地址类标识的值设为后面定义的任何一个值，
+则NLRI都按后面所介绍的编码机制进行编码。
+
+下一跳信息携带了MP-REACH-NLRI路径属性中定义的边界路由器的网络层地址，这
+个地址应作为在MP-NLRI中列出的目的地址的下一跳。当向一个外部对等体广播
+MP-REACH-NLRI时，假如将要广播的外部对等体和该接口在同一个子网，路由器可能会
+用它的某一个接口地址作为属性中的下一跳地址。这个下一跳称为“first party"下一跳。一
+个BGP发言人在下一跳属性中可以向一个外部邻居广播它的任何一个内部邻居的接口地
+址，假如该外部邻居同该接口地址所属路由器在同一个子网的话，这个下一跳被称为“third 
+party"下一跳。一个BGP发言人可以在下一跳属性中把任何一个外部邻居的IP地址填入，
+假设该外部邻居的IP地址是从一个外部邻居学到的并且将要广播的外部邻居同该IP地址在
+同一个子网，这是“third party”下一跳的另外一种形式。
+一般情况下，BGP的这种扩展机制都是选用那些能使最短可用路径可用的下一跳作为
+要广播的下一跳信息。一个BGP发言人也必须有能力支持不广播“third party"下一跳信息，
+从而可以处理桥接或策略带来的影响。
+BGP发言人也永远不能向一个邻居广播值为该邻居IP地址的下一跳信息，也永远不能
+把自已的IP地址作为下一跳。
+当一个邻居向内部对等体广播路由时，它不能修改该路由下一跳信息。而BGP发言人
+通过内部邻居收到的路由信息，它只是把数据转发到下一跳所说的地址，如果在下一跳属性
+中表示的地址与本地或远端BGP发言人在同一个子网的话。
+携带MP-REACH-NLRI的更新报文也必须携带ORIGIN和AS-PATH属性，而且在IBGP
+对等体相互广播路由信息时，还必须携带LOCAL-PREF属性。如果从某个外部邻居学到一
+个路由，本地系统应该检查AS-PATH中最左边的AS号是否与发送该报文的BGP邻居的
+AS号相同。如果不同，本地系统就会向该邻居发送NOTIFICATION报文。
+4、多协议不可达NLRI：
+MP-UNREACH-NLRI是一个用来撤销多个不可用路由的可选非过渡属性每一个属性项
+都包含如下图所示的一个或者多个三元组（Address Family Information, Unfeasible Routes 
+Length, Withdrawn Routes）：
+      +---------------------------------------------------------+
+      | Address Family Identifier (2 octets)                    |
+      +---------------------------------------------------------+
+      | Subsequent Address Family Identifier (1 octet)          |
+      +---------------------------------------------------------+
+      | Withdrawn Routes (variable)                             |
+      +---------------------------------------------------------+
+
+这些域的意义和使用：
+地址类标识：
+表示网络层协议所属的地址类，用RFC 1700中定义的地址族区分各种不同的类型
+的地址。
+子地址类标识：
+提供关于NLRI类型的附加信息。
+撤销路由：
+要撤销路由的NLRI列表, 如果子地址类标识的值设为后面定义的任何一个值，则
+NLRI都按后面所介绍的编码机制进行编码。
+
+携带MP-UNREACH-NLRI属性的更新报文不用携带任何其他路径属性。
+5、NLRI编码：
+NLRI都是由如下图所示的一个或者多个二元组编码（长度，前缀地址）：
+      +---------------------------+
+      |   Length (1 octet)   |
+      +---------------------------+
+      |   Prefix (variable)   |
+      +---------------------------+
+             
+各域意义如下：
+长度：
+表示地址前缀的长度共有多少位，长度0表示该前缀与所有地址匹配。
+前缀：
+一个地址前缀，它后面可能会填充一些“补丁”以使该域的总长度是字节的整数
+倍。注意，“补丁”里的数字是无关的。
+6、子网地址类标识
+多协议可达NLRI（MP-REACH-NLRI）和多协议不可达NLRI（MP-UNREACH-NLRI）
+属性中的子网地址类在本文档中按下面的定义编码：
+1：用于单播转发（unicast forwarding）的NLRI。
+2：用于组播转发（multicast forwarding）的NLRI。
+3：用于单播转发和组播转发的NLRI。
+
+本文档把“0”和128-255之间的值保留给特殊厂商应用，除了这些保留值以外，所有
+其他子网地址类的编码只有IETF和IESG才有权力改变和定义。
+7、安全考虑
+BGP的这种扩展机制不会改变它的任何基本安全属性
+8、致谢
+作者感谢IDR工作组成员，他们提出了宝贵的建议。
+9、参考文献
+
+   [BGP-4]   Rekhter, Y., and T. Li, "A Border Gateway Protocol 4
+             (BGP-4)", RFC 1771, March 1995.
+
+   [IPv4]    Postel, J., "Internet Protocol", STD 5, RFC 791,
+             September 1981.
+
+   [RFC1700] Reynolds, J., and J. Postel, "Assigned Numbers," STD 2,
+             RFC 1700, October 1994. (see also
+             http://www.iana.org/iana/assignments.html)
+10、作者信息
+
+   Tony Bates
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA 95134
+
+   EMail: tbates@cisco.com
+
+
+   Ravi Chandra
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA 95134
+
+   EMail: rchandra@cisco.com
+
+
+   Dave Katz
+   Juniper Networks, Inc.
+   3260 Jay St.
+   Santa Clara, CA 95054
+
+   EMail: dkatz@jnx.com
+
+
+   Yakov Rekhter
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA 95134
+
+   EMail: yakov@cisco.com
+11、版权说明
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE 
+INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED 
+WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+
+RFC 2283 ――Multiprotocol Extensions for BGP-4                   BGP-4多协议扩展
+
+
+
+1
+RFC文档中文翻译计划
+
+

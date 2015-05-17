@@ -1,0 +1,461 @@
+
+
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：张海斌（netdebug    internetdebug@elong.com ）
+译文发布时间：2001-11-08
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          J. Hodges
+Request for Comments: 2830                                    Oblix Inc.
+Category: Standards Track                                      R. Morgan
+                                                      Univ of Washington
+                                                                 M. Wahl
+                                                  Sun Microsystems, Inc.
+                                                                May 2000
+
+
+简单目录访问协议（v3）：传输层安全扩展
+（RFC2830――Lightweight Directory Access Protocol (v3):
+Extension for Transport Layer Security）
+
+备忘录状况
+这份文档为Internet社区指定为Internet标准（轨迹）协议，并且为进一步改进需要讨论
+和建议。这份协议的标准化状态和状况请参阅"Internet官方协议标准（Internet Official Protocol 
+Standards ）"(STD 1)的当前版。这份备忘录的分发不受限制。
+
+版权声明
+   Copyright (C) The Internet Society (2000)。版权所有。
+
+摘要
+
+   	这份文档针对LDAP [LDAPv3, TLS]定义了 "启动传输层安全操作Start Transport Layer 
+Security (TLS) Operation" 。这个操作规定了与LDAP 关联的TLS建立（establishment）
+和按照LDAP扩展请求被定义。 
+
+
+
+目录
+0.译者的话	2
+1.  本文的约定	3
+2.  启动TLS 请求	3
+2.1.  请求 TLS建立	3
+2.2.  成功回答（"Success" Response）	4
+2.3.  回答为"success"以外的值	4
+3.  启动TLS操作的序列	5
+3.1.  在LDAP关联中启动TLS请求	5
+3.2.  启动TLS	5
+3.3.  TLS版本协商	6
+3.4.  结果安全级的发现（Discovery of Resultant Security Level）	6
+3.5.  客户程序授权身份（Client's Authorization Identity）的断言	6
+3.6.  服务程序身份检查	6
+3.7.  服务程序能力信息的刷新	7
+4.  关闭TLS连接	7
+4.1.  舒缓关闭（Graceful Closure）	7
+4.2.  突然停止（Abrupt Closure）	8
+5.  关于客户程序的授权身份的TLS效应（Effects）	8
+5.1.  TLS连接建立效应	8
+5.1.1.  缺省效应	8
+5.1.2.  授权身份的客户断言	8
+5.1.2.1.  隐式断言（Implicit Assertion）	9
+5.1.2.2.  显式断言（Explicit Assertion）	9
+5.1.2.3.  错误状况（Error Conditions）	9
+5.2.  TLS连接关闭效应	9
+6.  安全考虑	10
+7.  确认	10
+8.  参考	10
+9.  作者地址	11
+10. 知识产权声明	12
+11.  完整版权声明	12
+确认	13
+0.译者的话
+	译者在翻译这份文档的时候，采取直译的方式，尽量保证原文的原意。同时也尽量考虑
+了中文的语义顺畅，便于中文读者阅读，译者在译文中加入了一些修饰语和译注，修饰语一
+般在括号中写明，而译注均有“译者注”字样。由于译者翻译本篇文挡时间有限，译文中一
+定会存在许多理解有误、用词不当之处，欢迎读者来信指正，共同学习。
+
+1.  本文的约定
+   在本文中出现的关键字 "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",   
+"SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", 和 "OPTIONAL" 作为在[ReqsKeywords] 
+中的描述被解释。
+
+2.  启动TLS 请求
+   	这部分描述启动TLS（Start TLS）扩展请求（request）和它们自身的扩展回答（response）：
+如何形成请求，请求的格式，和客户程序（client）必须（MUST）准备处理的各种结果编码
+的列举。
+
+   本节的随后部分开始描述如何连续从头到尾的启动TLS操作（步骤）。
+
+2.1.  请求 TLS建立
+   客户程序可以通过传输LDAP PDU执行启动TLS（Start TLS）操作，其（LDAP PDU）包含
+为启动TLS操作指定OID的ExtendedRequest [LDAPv3]：
+
+     1.3.6.1.4.1.1466.20037
+译者注：上面这一串数字即为OID。
+		PDU：protocol data unit（协议数据单元）
+
+   An LDAP ExtendedRequest 定义如下：
+
+     ExtendedRequest ::= [APPLICATION 23] SEQUENCE {
+             requestName             [0] LDAPOID,
+             requestValue            [1] OCTET STRING OPTIONAL }
+译者注：描述ExtendedRequest定义的为ASN1语法。
+   
+启动TLS扩展请求通过设置requestName 域为上面给出的OID字符串组成。
+requestValue 域被忽略。客户程序直到接收到启动TLS扩展回答，否则一定不能（MUST NOT）
+发送随这个请求连接的任何PDUs。
+
+   	当启动TLS扩展请求构成（made）时，服务程序（server）必须（ MUST）返回一包含启
+动TLS扩展回答的LDAP PDU。LDAP ExtendedResponse定义如下：
+
+     ExtendedResponse ::= [APPLICATION 24] SEQUENCE {
+             COMPONENTS OF LDAPResult,
+             responseName     [10] LDAPOID OPTIONAL,
+             response         [11] OCTET STRING OPTIONAL }
+
+   启动TLS扩展回答必须（MUST）包含responseName域，其（值）必须（MUST）被设置为
+存在于启动TLS扩展中responseName域相同的字符串。Response域被忽略。服务程序必须
+（MUST）设置resultCode域或者为成功（success）或者为在段落2.3中定义的值中的一个。
+
+2.2.  成功回答（"Success" Response）
+   如果ExtendedResponse包含的resultCode值为success，这说明服务程序愿意（willing）
+和有能力协商（negotiate）TLS。参考段落3，获得详细内容。
+
+2.3.  回答为"success"以外的值
+   如果ExtendedResponse包含的resultCode值为success以外的其他（值），这说明服务
+程序不愿意（unwilling）或者没有能力协商TLS。
+   
+   如果启动TLS扩展请求没有成功，resultCode（值）将为下面中的一个：
+
+   operationsError  （操作序列不正确（incorrect）；例如，TLS已经建立)
+
+   protocolError    （TLS不被支持或者不正确的PDU结构)
+
+   referral         （这个服务程序没有做TLS，试试这个）
+
+   unavailable      （例如，一些相关TLS的主要问题，或者服务程序被杀死（shutting 
+down））
+
+   如果客户程序违反任何在段落3中描述的启动TLS扩展操作序列请求，服务程序必须
+（MUST）返回operationsError。
+
+   如果服务程序不支持TLS （由于设计或者由于当前的配置），它必须（MUST）设置
+resultCode为protocolError (参见段落4.1.1 [LDAPv3]部分)，或者为referral。服务程
+序必须（MUST）在LDAP Result中包括（include）确切（actual）的referral值，如果它
+在resultCode中返回referral。客户程序当前会话不受影响，如果服务程序不支持 TLS。
+客户程序可以（MAY）继续执行任何LDAP操作，或者它可以（MAY）关闭（当前）的连接。
+
+   服务程序必须（MUST）返回unavailable，如果它支持TLS但是因为一些原因不能建立TLS 
+连接，例如，证书服务（certificate server）没有回答，它不能接触到（contact）它的
+TLS工具（implementation），或者如果服务程序在处理过程中当掉（shutting down）。客户
+程序可以（MAY）尝试再次启动TLS操作，或者它可以（MAY）继续进行任何其他LDAP操作，
+或者它可以（MAY）关闭连接。
+
+3.  启动TLS操作的序列
+   	这部分描述客户程序和服务程序为TLS的建立必须（MUST）伴随的从头到尾的过程
+（procedures）。这些过程考虑了LDAP关联（association）中总体安全的各个方面，包括发
+现（discovery）结果安全级（resultant security level）和客户程序的验证标识断言
+（assertion）。
+
+   	注意精确的影响（precise effects），关于客户程序的验证标识，在LDAP关联中的TLS
+建立在部分5中详细描述。 
+
+3.1.  在LDAP关联中启动TLS请求
+   客户程序可以（MAY）在建立LDAP关联后任何时间发送启动TLS扩展请求，除非下列情况，
+客户程序一定不能（MUST NOT）发送启动TLS扩展请求：
+
+     - 如果TLS是在连接中被建立，或者
+     - 在multi-stage SASL协商（negotiation）过程中，或者
+     - 如果在连接未完成时发生任何LDAP操作。
+
+   	任何这些违反（规则）的请求结果是resultCode的operationsError（错误代码），在
+本文上面2.3节描述过。
+
+   	客户程序可以（MAY）在发送启动TLS请求时已经执行了绑定（Bind）操作，或者还没有
+绑定。 
+
+   	如果客户程序在发送任何其他请求之前没有建立TLS连接，并且服务程序在执行特定的
+请求之前要求客户程序建立TLS连接，服务程序必须（MUST）拒绝（客户程序的）请求，并
+返回confidentialityRequired或者strongAuthRequired 结果。（而）客户程序可以（MAY）
+发送启动TLS扩展请求，或者可以（MAY）选择关闭连接。
+
+3.2.  启动TLS
+   	如果服务程序愿意和有能力协商TLS，则服务程序将返回成功的resultCode扩展回答。
+如果不能，则返回本文上面描述的其他resultCodes。
+
+   	在成功的情况下，客户程序在连接中已经停止了传送LDAP请求，（客户程序）必须（MUST）
+或者开始TLS协商或者关闭连接。客户程序将在对服务程序初始化TLS协商[TLS]的基于传输
+连接的TLS记录协议（TLS Record Protocol）中发送PDUs。
+
+3.3.  TLS版本协商
+   	应用TLS或者SSL的版本协商是TLS握手协议（TLS Handshake Protocol）的一部分，
+在[TLS]文档中详细描述，请参阅。
+
+3.4.  结果安全级的发现（Discovery of Resultant Security 
+Level）
+   	在TLS连接被建立在LDAP关联之后，双方必须（MUST）逐个判定是否继续构建（based on）
+私有级取得（the privacy level achieved）。查明TLS连接的私有级是执行工具
+（implementation）的依靠，以及通过各自的本地（local）TLS执行完成。
+
+   	如果客户程序或者服务程序对于继续的执行判定验证或者私有级还不够高的级别，它应
+该（SHOULD）大方地在TLS协商已经完成之后立即关闭TLS连接（参见4.1和5.2部分）。
+
+   	客户程序可以（MAY）尝试再次启动TLS，或者可以（MAY）发送拆分（unbind）请求，
+或者发送任何其他LDAP请求。
+
+3.5.  客户程序授权身份（Client's Authorization Identity）
+的断言
+   	客户程序可以（MAY）在表明成功的启动TLS扩展回答到达时，断言在判断客户程序的授
+权状态中特定的授权身份被利用。客户程序通过LDAP绑定请求指定SASL[SASL]的"EXTERNAL" 
+机制来完成。参见本文后面的5.1.2部分。
+
+3.6.  服务程序身份检查
+   	客户程序必须检查针对存在于服务程序证书信息中的服务程序身份，以便理解服务程序
+主机名，目的是为了阻止中间人攻击（man-in-the-middle attacks）。
+
+   	匹配执行按照下列规则：
+
+- 客户程序必须（MUST）使用打开LDAP连接的那个服务程序主机名作为比较在服务程序
+证书中表示的服务程序名。客户程序一定不能（MUST NOT）使用服务程序规范的DNS名字
+或者任何其他导出的形式名字（form of name）。
+
+- 如果类型dNSName 的subjectAltName扩展出现在证书中，它应该被用于服务程序身份
+的来源。
+
+   - 匹配是大小写无关的（case-insensitive）。
+
+   - 通配符"*"是允许的。如果存在，它仅适用于最左面名字的组成部分。
+例如 *.bar.com 将匹配 a.bar.com， b.bar.com，等等。但不能是bar.com。如果存在证书
+中的给定类型的身份超过一个（例如，多于一个的dNSName名字），在（身份名字）集合中任
+何一个被考虑是可接受的。
+
+   	如果在上面每一个检查规格中主机名没有匹配基于dNSName （dNSName-based）的身份，
+面向用户的客户程序应该或者通知用户（不管怎么样程序可以（MAY）提供给用户一个机会是
+否继续连接）或者决定连接并且指示服务程序的身份是受怀疑的。自动化的客户程序应该
+（SHOULD）关闭连接，返回和/或错误日志表明服务程序的身份是受怀疑的。
+
+   	超出这部分关于服务程序身份检查的描述，客户程序应该（SHOULD）准备进一步进行检
+查以确保服务程序对它提供的服务是被授权的。客户程序可以（MAY）（需要）使用本地策略
+信息。
+
+3.7.  服务程序能力信息的刷新
+   	客户程序必须（MUST）在TLS会话建立之上刷新任何缓存的服务程序能力的信息（例如，
+来自服务程序根DSE；参见[LDAPv3]部分3.4）。这是避免主动中间攻击（active-intermediary 
+attacks）必要的，主动中间攻击可以在早于TLS建立之前已经改变任何被检索的服务程序能
+力信息。服务程序可以在TLS建立之后公告（advertise）不同的能力（信息）。
+
+4.  关闭TLS连接
+4.1.  舒缓关闭（Graceful Closure）
+   	或者客户程序或者服务程序可以（MAY）通过发送一TLS关闭警告结束关于LDAP关联的
+TLS连接。这将完整的离开LDAP关联。
+
+   	在关闭TLS连接之前，客户程序必须（MUST）或者等待任何未完成的LDAP操作直到完成，
+或者明示地（explicitly）放弃它们[LDAPv3]。
+
+   	当关闭的启动程序（initiator of a close）已经发送一关闭警告之后，它必须（MUST）
+丢弃（discard）任何TLS报文直到它已经接收到从另一方来的警告。它将停止发送TLS记录
+协议（TLS Record Protocol）PDUs，和随着收到警告，可以（MAY）发送和接收LDAP PDUs。
+
+   	另一方，如果接收到关闭警告，必须（MUST）立即发送一TLS关闭警告。它将随后停止
+发送TLS记录协议PDUs，和可以（MAY）发送和接收LDAPPDUs。
+
+4.2.  突然停止（Abrupt Closure）
+   	或者客户程序或者服务程序可以（MAY）突然地关闭整个LDAP关联和任何建立其上的TLS
+连接，通过撤销TCP连接。服务程序在这种情况可以（MAY）预先准备好发送给客户程序一断
+开连接通知（Notice of Disconnection）[LDAPv3]。
+
+5.  关于客户程序的授权身份的TLS效应
+（Effects）
+   	这部分描述关于通过在LDAP关联之上建立TLS所带来的客户程序的授权身份的效应。首
+先描述缺省效应，接下来客户程序的授权身份的断言被讨论，包括错误状况。最后，关闭TLS
+连接的效应被描述。
+
+   	授权身份和相关概念定义在[AuthMeth]。
+
+5.1.  TLS连接建立效应
+5.1.1.  缺省效应
+   	针对LDAP关联的TLS连接建立之上，任何建立之前的验证和授权身份必须（MUST）有效
+遗留（remain in force），包括匿名状况。这甚至在服务程序请求客户程序通过TLS验证请
+求情况中保持――例如，请求客户程序在TLS协商期间提供它的证书（参见[TLS]）。
+
+5.1.2.  授权身份的客户断言
+   	客户程序可以（MAY）或者隐含来自它的已授权的TLS证明（authenticated TLS 
+credentials）的LDAP授权身份，或者它可以（MAY）显示地提供一授权身份并且它被用在与
+它的已授权的TLS证明的结合。前者称为隐式断言，后者称为显式断言。
+
+5.1.2.1.  隐式断言（Implicit Assertion）
+   	隐式授权身份断言在通过调用SASL形式的绑定请求的TLS建立之后完成，SASL形式的
+绑定请求使用不应该（SHALL NOT）包括可选证明的八位组（octet）字符串（在绑定请求的
+SaslCredentials序列中发现）的"EXTERNAL"机制名字[SASL, LDAPv3]。服务程序将从符合
+本地策略的客户程序证明（典型的公钥证书）中提供的验证标识（authentication identity）
+导出客户程序的授权身份。如何实现（上述断言）由特定的工具做到。
+
+5.1.2.2.  显式断言（Explicit Assertion）
+   	显式授权身份断言在通过调用SASL形式的绑定请求的TLS建立之后完成，SASL形式的
+绑定请求使用应该（SHALL）包括证明八位组（octet）字符串的"EXTERNAL"机制名字[SASL, 
+LDAPv3]。字符串必须（MUST）作为[AuthMeth]部分9中的文档的组成部分。
+
+5.1.2.3.  错误状况（Error Conditions）
+   	不管断言的形式如何，服务程序必须（MUST）核实客户程序的授权身份作为提供在它的
+TLS证明中是允许映射到断言授权身份的。服务程序必须（MUST）拒绝在绑定回答中以
+invalidCredentials resultCode（回答）的绑定操作，如果客户程序没有被这样授权。
+
+   	作为断言形式的补充，如果TLS会话还没有在制作SASL EXTERNAL 绑定请求之前在客户
+程序和服务程序之间建立，并且没有其他的外来证明（例如IP-level security [IPSEC]），
+或者如果在TLS会话建立处理期间，服务程序没有请求客户程序的证明，SASL EXTERNAL 绑
+定必须（MUST）以结果码inappropriateAuthentication 失败。
+
+   	在上述绑定操作失败后，任何客户程序的证明和LDAP关联的授权状态丢失，所以失败之
+后LDAP关联是匿名状态。TLS连接状态不受影响，服务程序可以（MAY）在绑定失败的基础
+上通过TLS关闭通知（close_notify）报文结束TLS连接（可以（MAY）在任何时候）。
+
+5.2.  TLS连接关闭效应
+   	TLS连接的关闭必须（MUST）引发（cause）LDAP关联移向匿名证明和授权状态，而不管
+基于TLS之上建立的状态以及不管TLS连接建立之前证明和授权的状态如何。
+
+6.  安全考虑
+   	关于LDAP使用TLS协议的目的是确保连接的机密性（confidentiality）和完整性
+（integrity），以及可选择提供的（身份）证明。TLS专门提供的这些能力在[TLS]中描述。
+
+   	所有通过启动TLS操作的使用获得的安全通过TLS自身的使用得到改善。启动TLS操作，
+作为它自己，没有提供任何额外的安全。
+
+   	TLS的使用没有提供或者确保通过基于LDAP（LDAP-based）目录服务数据入住（the data 
+housed）的机密性和/或不可否认性（non-repudiation）。也没有保护数据免于服务管理者的
+审查（inspection）。一旦建立（完成），TLS仅提供和确保在LDAP关联之上传输中的操作和
+数据的机密性和完整性，并且仅当客户程序和服务程序都支持和协商（建立）。
+
+   安全级（The level of security）通过直接依赖于TLS工具（implementation）使用的
+质量（quality）和使用方式（style）的TLS的使用提供。另外，主动中间攻击者
+（active-intermediary attacker）能够从根DSE（the root DSE）的supportedExtension
+属性中除去（remove）启动TLS扩展操作。 因此，双方应该（SHOULD）独立地查明和同意
+TLS建立后取得的安全级，以及在TLS连接使用开始之前。例如，TLS连接的安全级可以已经
+协商到明文（plaintext）。
+
+   	客户程序应该（SHOULD）或者警告用户，当取得的安全级没有提供机密性和/或完整性保
+护，或者被配置为在没有可接受的安全级时拒绝继续执行。
+
+   	客户和服务实现程序应该（SHOULD）采取措施确保恰当的（身份）证明保护和其它没有
+被TLS工具提供（这样）措施（保护）的机密数据（的保护）。
+
+   	服务实现程序应该（SHOULD）允许服务管理者选择（elect）当连接机密和/或完整性被
+需求时的任何一个，还可以选择当客户程序通过TLS授权被需求时的任何一个。
+
+7.  确认
+   作者感谢为这篇文章做出贡献的Tim Howes, Paul Hoffman, John Kristian, Shirish   
+Rai, Jonathan Trostle, Harald Alvestrand, 和Marcus Leech。
+
+8.  参考
+   [AuthMeth]     Wahl, M., Alvestrand, H., Hodges, J. and R. Morgan,
+                  "Authentication Methods for LDAP", RFC 2829, May 2000.
+
+   [IPSEC]        Kent, S. and R. Atkinson, "Security Architecture for
+                  the Internet Protocol", RFC 2401, November 1998.
+
+   [LDAPv3]       Wahl, M., Kille S. and T. Howes, "Lightweight
+                  Directory Access Protocol (v3)", RFC 2251, December
+                  1997.
+
+   [ReqsKeywords] Bradner, S., "Key Words for use in RFCs to Indicate
+                  Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [SASL]         Myers, J., "Simple Authentication and Security Layer
+                  (SASL)", RFC 2222, October 1997.
+
+   [TLS]          Dierks, T. and C. Allen. "The TLS Protocol Version
+                  1.0", RFC 2246, January 1999.
+
+9.  作者地址
+   Jeff Hodges
+   Oblix, Inc.
+   18922 Forge Drive
+   Cupertino, CA 95014
+   USA
+
+   Phone: +1-408-861-6656
+   EMail: JHodges@oblix.com
+
+   RL "Bob" Morgan
+   Computing and Communications
+   University of Washington
+   Seattle, WA
+   USA
+
+   Phone: +1-206-221-3307
+   EMail: rlmorgan@washington.edu
+
+   Mark Wahl
+   Sun Microsystems, Inc.
+   8911 Capital of Texas Hwy #4140
+   Austin TX 78759
+   USA
+
+   EMail: M.Wahl@innosoft.com
+
+10. 知识产权声明
+   	IETF没有担任关于任何知识产权或者其他版权（rights）正当或者范围的（职位），这
+里所说的版权是指在本文中可以声明属于实现工具（implementation）或者技术的使用，或
+者在这样版权之下的任何可以或者不可以有效的许可（license）的扩展；也没有做出任何努
+力去识别（identify）这样的版权。关于在标准轨迹（standards-track）和标准相关
+（standards-related）的文档中的IETF的流程（procedures）信息能在BCP-11中找到。版
+权声明的拷贝对出版有效以及任何许可保证将有效，或者尝试获得通用许可，或者通过实现
+工具或者这个规格说明书的用户允许使用这样的知识产权的使用能从IETF秘书处得到。
+
+   	IETF邀请任何参与的各方（interested party）带来他们的任何版权（copyrights）的
+考虑（attention），专利或者专利应用，或者其他知识产权其可以实践这些标准替代技术的
+将被需求的（版权）。请将信息发送给IETF执行主管（IETF Executive Director）。 
+
+11.  完整版权声明
+   	版权（C）因特网协会（2001）。版权所有。
+
+   	这个文档和它的翻译可以拷贝和分配给其他人，以及有关评论或者别样的解释或者其应
+用的帮助等派生工作可以被准备、拷贝、发表和发布，其整体或者部分没有受到任何限制，
+提供上述版权通知以及本段落应被包含在所有这样的拷贝和派生工作中。然而，这个文档本
+身不可以以任何方式修改，例如移走版权通知或者Internet协会或其他Internet组织的参考，
+除非为了发展Internet标准（其版权程序定义在Internet Standards进程如下），或者需要翻译
+成除英语以外的其他语言。
+
+   上述限制允许授权是持久的并且将不被Internet协会或者它的继承人隐藏或者转让。
+
+译者注：对于本文档的完整版权声明原文如下：
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+确认
+   	为RFC编辑功能资助现在由因特网协会（Internet Society）提供。
+
+RFC2830――Lightweight Directory Access Protocol (v3): Extension for Transport Layer Security
+简单目录访问协议（v3）：传输层安全扩展
+
+
+13
+RFC文档中文翻译计划

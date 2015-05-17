@@ -1,0 +1,218 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：卢伍春（spacelu  wuchun_lu@163.net）
+译文发布时间：2001-5-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。 
+
+
+   RFC2873
+Network Working Group                                            X. Xiao
+Request for Comments: 2873                               Global Crossing
+Category: Standards Track                                      A. Hannan
+                                                                    iVMG
+                                                               V. Paxson
+                                                              ACIRI/ICSI
+                                                               E. Crabbe
+                                                   Exodus Communications
+                                                               June 2000
+   
+
+
+
+在Ipv4优先域中的TCP过程
+（RFC2873 TCP Processing of the IPv4 Precedence Field）
+
+
+备忘录状态
+这个文档详细说明了跟踪协议的网络标准，以及要求讨论和提高建议。根据目前版本的
+“正式因特网协议标准”（STD1）来标准化这个协议。这个备忘录的发行不受限制。
+
+版权事项
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+这个备忘录描述了TCP[RFC793]和DiffServ[RFC2475]在Ipv4包头{RFC791}中TOS8
+位中前3位的使用冲突。包含DiffServ-capable节点的网络中，如此冲突可能引起TCP连接
+建立失败或已经建立的TCP连接意外重设。这个备忘录主要是提出解决冲突问题的变化。
+因为在IPV6中，传输8位组除了在RFC2474中定义的外没有任何意义，还有没有定义过程
+或安全参数位，因此在TCP和DiffServ的使用位上没有冲突。
+1．	介绍
+在TCP传输中，每个连接有一系列的状态。那些状态在两端TCP控制块（TCB）中的系列
+变量反映出来。那些变量包括本地和远程套接字数，连接优先级，安全等级和间隔，等等。
+两端必须在优先级和安全登记参数设置上保持一直，以便建立一个连接并保持。
+在TCP报头中没有域指示优先级段。而是，在IP报头中的优先级域用来指明。同样的，安
+全等级和间隔也是在IP报头中，但是作为一个可选项而不是必须的报头域。因为这些差异，
+在这个备忘录中讨论的优先域问题不适合它们。
+TCP要求一个连接的优先级（和安全参数）必须在连接的生存期间保持一致。因此，对于
+一个已经建立的有优先级的连接，收到的数据中有不同的优先级，这个连接必须进行重置。
+（RFC793,pp,36,37,40,66,67,71）.
+随着DiffServ的出现，中间节点可能改变IP报头中的区分服务代码点（DSCP）[RFC2474]
+来表示将到达的下一跳的表现（PHB）[RFC2474，RFC2597，RFC2598[。DSCP包括前面认
+为是优先域的3位。因为对端节点来说，那三位的改变是非法的，可能引起建立连接失败或
+引起以建立连接重置。
+2．	术语
+段：TCP发送给IP的数据单元
+优先域：在Ipv4报头TOS8位段中的最左3位。注意，在DiffServ中，这三位有可能被用
+作指示IP包的优先级。在IPV6中没有相关域来指示优先级。
+TOS域：在IPV4报头中TOS8位中的3-6位[RFC1349]
+MBZ域：必须为0。
+TOS的结构如下：
+
+
+
+
+
+
+
+DS域：IPV4报头中的TOS8位域被DiffServ该名成区分服务（DS）。
+DS域的结构为：
+
+
+
+
+
+DSCP：区分服务代码点，在DS域中的左6位。
+CV：当前未使用。
+下一跳表现（PHB）：应用在区分服务相兼容节点表现集合的外部观察描述
+3．	问题阐述
+操作DSCP用DiffServ-capable节点来获得想要的PHB可能和优先域的TCP应用冲突。这
+个冲突可能引起和RFC793一致的TCP执行问题。首先，RFC793的36页状态：
+如果连接在任何非同步状态（侦听，SYN-发送，SYN-接收），有些确认侦没有发送（段包
+含不可接收ACK），或则有和要求建立连接的安全层和时间间隔不符的输入段，必须重置。
+如果SYN连接请求包没有确认以及输入段的优先级高于要求的优先级，那么或者增加本地
+优先级（如果系统和用户允许）或发送重置请求；或则如果输入段的优先级低于要求则继续，
+此时认为优先级相符（如果远地TCP不能增加优先级来匹配，那么在它发送的下一个段来
+检测，然后连接将中断）。如果我们的SYN连接请求包已经确认（可能在输入段），输入段
+的优先级必须和本地优先级刚好相配，否则必须发送重置信息。
+这将导致问题1：对一个优先级敏感TCP模型，如果在TCP同步过程，SYN或则ACK包
+的优先级在中间节点被改变，将导致有一个和原先的TCP模块中优先级不一样接收ACK包，
+这样TCP连接不能建立，即使两个模块确实在连接优先级上一致。
+然后，看RFC793的状态：
+如果一个连接在同步状态（已经建立，FIN- WAIT-1, FIN-WAIT-2, CLOSE-WAIT, CLOSING, 
+LAST-ACK, TIME-WAIT），安全层，时间间隔，优先级分别和建立连接的不同，将发一个
+重置信息，并且连接将关掉。
+这个导致问题2：对一个优先级敏感的TCP模块，如果如果一个已经建立的TCP连接，接
+收到段的优先域和建立时的优先域不同，TCP连接将被重置。
+问题1和2有一个实际的问题。他们引起依据RFC793必须重置的TCP连接不必重置。
+问题3：有可能在不同的优先级上的两个TCP建立连接，因为SYN和ACK包在中间节点
+会被改变，这样可以使两个模块默认为在相同的优先级上。
+问题4：两个具有相同优先级的TCP模块能够正常建立。但是在数据传输过程中，其中一
+个TCP模块有可能改变其优先级。依据RFC793，TCP连接必须被重置。在DiffServ-capable，
+如果优先级段被中间节点改变，但在另外一个TCP模块中获得期望值，连接不会被重置。
+4．	TCP的建议修正
+TCP的建议修正为TCP必须忽略所有接收段的优先级。详细的：
+（1）。 在TCP同步过程，两端的TCP模块必须忽略SYN和SYN ACK包的优先域。TCP
+应该能建立连接如果除了优先级外的满足RFC793条件的TCP连接。
+（2） 在一个连接建立后，每一端发送自己要求段。两端的TCP数据发送过程中的优先级
+可以和另外一端不一致，也可以一致（因为在连接建立时间优先级被忽略）。优先域可能被
+中间节点改变。在每一种情况下，接收段的优先级将被忽略。这样，TCP连接也就不要进
+行重置。
+问题1和2将因为这个提议得到解决。问题3和4则不是个问题因为在DiffServ-capable环
+境下TCP必须忽略优先级。
+5．	安全考虑
+不管报头的系列号是否正确，在收到不正确优先域而终止连接的TCP执行将造成严重拒绝
+服务攻击隐患，还有所有的攻击者必须猜出端口然后发送两个不同优先级的数据报；它们中
+的任一个都肯定导致连接终止。相应地，在这个备忘录中的TCP处理过程的改变将获得TCP
+执行弹性的重大收获。
+另一方面，RFC793中严格的处理规则将使TCP哄骗攻击变得更加困难，随着攻击者必须猜
+出受害方的TCP初始系列号而且是优先级设置。
+最后，每个PHB组的安全问题在RFC2597，RFC2598中特别描述。
+6．确认
+感谢AI  Smith的仔细检验和注解。
+6．	参考书
+[RFC791]  Postel, J., "Internet Protocol", STD 5, RFC 791, September
+             1981.
+   [RFC793]  Postel, J., "Transmission Control Protocol", STD 7, RFC
+             793, September 1981.
+
+   [RFC1349] Almquist, P., "Type of Service in the Internet Protocol
+             Suite", RFC 1349, July 1992.
+
+   [RFC2460] Deering, S. and R. Hinden, "Internet Protocol, Version 6
+             (IPv6) Specification", RFC 2460, December 1998.
+
+   [RFC2474] Nichols, K., Blake, S., Baker, F. and D. Black, "Definition
+             of the Differentiated Services Field (DS Field) in the IPv4
+             and IPv6 Headers", RFC 2474, December 1998.
+
+   [RFC2475] Blake, S., Black, D., Carlson, M., Davies, E., Wang, Z. and
+             W.  Weiss, "An Architecture for Differentiated Services",
+             RFC 2475, December 1998.
+
+   [RFC2597] Heinanen, J., Baker, F., Weiss, W. and J. Wroclawski,
+             "Assured Forwarding PHB Group", RFC 2587, June 1999.
+
+   [RFC2598] Jacobson, V., Nichols, K. and K. Poduri, "An Expedited
+             Forwarding PHB", RFC 2598, June 1999.
+
+8. Authors' Addresses
+
+   Xipeng Xiao
+   Global Crossing
+   141 Caspian Court
+   Sunnyvale, CA 94089
+   USA
+
+   Phone: +1 408-543-4801
+   EMail: xipeng@gblx.net
+
+   Alan Hannan
+   iVMG, Inc.
+   112 Falkirk Court
+   Sunnyvale, CA 94087
+   USA
+
+   Phone: +1 408-749-7084
+   EMail: alan@ivmg.net
+
+   Edward Crabbe
+   Exodus Communications
+   2650 San Tomas Expressway
+   Santa Clara, CA 95051
+   USA
+
+   Phone: +1 408-346-1544
+   EMail: edc@explosive.net
+
+   Vern Paxson
+   ACIRI/ICSI
+   1947 Center Street
+   Suite 600
+   Berkeley, CA 94704-1198
+   USA
+
+   Phone: +1 510-666-2882
+   EMail: vern@aciri.org
+
+9.  版权
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.   This document and 
+translations of it may be copied and furnished to others, and derivative works that comment on or 
+otherwise explain it or assist in its implementation may be prepared, copied, published and 
+distributed, in whole or in part, without restriction of any kind, provided that the above copyright 
+notice and this paragraph are included on all such copies and derivative works.  However, this
+document itself may notbe modified in any way, such as by removing the copyright notice or 
+references to the Internet Society or other Internet organizations, except as needed for the purpose 
+of developing Internet standards in which case the procedures for copyrights defined in the 
+Internet Standards process must be  followed, or as required to translate it into languages other 
+than English. The limited permissions granted above are perpetual and will not be revoked by the 
+Internet Society or its successors or assigns.
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+确认
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC2873 TCP Processing of the IPv4 Precedence Field              在Ipv4优先域中的TCP过程
+
+
+1
+RFC文档中文翻译计划

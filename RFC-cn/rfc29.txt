@@ -1,0 +1,39 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王华伟(wanghuawei  huaweiw@pub.xaonline.com) 
+译文发布时间：2001-5-23
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+
+Network Working Group					Robert Kahn
+RFC-29							BBN
+							19 January 1970
+
+本文件是对应Bill English的RFC 28。
+
+对于绝大多数网络时间量度要求，一个“毫秒”级的时钟就可以满足了。循环消息的典型传
+输时间为十到百毫秒级别。IMP消息包含一个16位硬时钟，用于每隔100微秒自增加一次，
+以量度IMP消息的内部事件。比如跟踪消息时。但是，大多数时间测度使用一个25．6微妙
+的软时钟。
+
+
+时区分布：
+
+A. Bhushan, MIT
+S. Carr. Utah
+G. Cole, SDS
+S. Crocker, UCLA
+K. Fry, MITRE
+J. Heafner, RAND
+B. Kahn, BBN
+T. O'Sullivan, Raytheon
+L. Roberts, ARPA
+P. Rovner, LL
+R. Stoughton, UCSB
+RFC29    Response to RFC 28                                                      响应 RFC 28   
+RFC文档中文翻译计划		1

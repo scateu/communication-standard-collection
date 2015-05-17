@@ -1,0 +1,386 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：马  良  （idayang  superwiles@263.net）
+译文发布时间：2001-8-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                           R. Glenn
+Request for Comments: 2104                                          NIST
+Category: Standards Track                                        S. Kent
+                                                                BBN Corp
+                                                           November 1998
+HMAC:键入-散列法用于信息身份验证
+(RFC2104--HMAC: Keyed-Hashing for Message Authentication)
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程
+度和状态。本备忘录的发布不受任何限制。
+版权声明
+ Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+摘要：
+本文档阐述了一种使用散列函数加密的消息验证机制――散列消息鉴别码
+HMAC。HMAC通过捆绑一个共享密钥可以使用任何迭代的可用于加密的散列
+函数。例如：MD5, SHA―1。这种加密机制的强度取决于所用散列函数的特性。
+
+1. 简介	2
+2. HMAC的定义。	2
+3. 密钥。	3
+4. 注意事项	4
+5. 删节输出结果	4
+6. 安全	4
+注释：	5
+附录：	5
+致谢:	8
+参考书目：	8
+
+1. 简介
+        在开放的计算与通讯世界中，提供一种途径去检测通过不可靠媒介传输或
+存储的信息完整性是非常重要的。提供这种完整性检测的机制基于一种通常
+被称作消息鉴别码的密钥MAC。一般的，消息鉴别码用于验证传输于两个共
+同享有一个密钥的单位之间的消息。在本文档中，我们将描述一种基于散列函数
+的消息鉴别码机制。这种机制被称为散列消息鉴别码HMAC。它是基于[BCK1]
+的作者所做的工作，他说明并就加密性能分析了HMAC的结构。我们在讲述H
+MAC的基本原理和安全性分析时会提到这些结果，并且还要与其他键入式散列方
+法做对比。
+    HMAC可以与任何迭代散列函数捆绑使用。MD5和SHA―1就是这种散列函数
+HMAC还可以使用一个用于计算和确认消息鉴别值的密钥。
+    这种结构的主要作用是：
+
+?	不用修改就可以使用适合的散列函数。而且散列函数在软件方面表现的很好。
+并且源码是公开和通用的。
+
+?	可以保持散列函数原有的性能而不致使其退化。
+
+?	可以使得基于合理的关于底层散列函数假设的消息鉴别机制的加密强度分析
+便于理解。
+
+?	当发现或需要运算速度更快或更安全的散列函数时，可以很容易的实现底层
+散列函数的替换。
+
+        本文档详细描述了HMAC使用一种抽象的散列函数(用H表示)。具体的HMAC
+需要定义一个具体的散列函数。目前，可供选择的散列函数有SHA―1[SHA],MD5,
+RIPEMD―128/160[RIPEMD]。这些不同的HMAC实现被表示为，HMAC―SHA1，
+HMAC―MD5,HMAC―RIPEMD，等等。
+    
+注释：  
+        在写本文档时，MD5和SHA―1是使用最广泛的加密用散列函数。MD5最近已被
+证明对于[Dobb]的攻击存在缺陷。这种攻击方法和其他目前已知的MD5的缺陷不允许
+在HMAC中按本文的方法使用MD5(细节请见[Dobb])。然而，SHA―1似乎是一种
+更强壮的函数。目前，MD5 可以被考虑用于HMAC来为应用程序提供出众的执行效
+率的观点受到批评。无论如何，执行者与用户都需要了解关于加密用散列函数被破解
+可能性的最新进展，并可能会需要替换底层的散列函数。（关于HMAC安全性的更多
+信息参见第六部分）
+
+2. HMAC的定义。
+        定义HMAC需要一个加密用散列函数（表示为H）和一个密钥K。我们假设H是
+一个将数据块用一个基本的迭代压缩函数来加密的散列函数。我们用B来表示数据块
+的字长。（以上说提到的散列函数的分割数据块字长B=64），用L来表示散列函数的
+输出数据字长（MD5中L=16,SHA―1中L=20）。鉴别密钥的长度可以是小于等于数
+据块字长的任何正整数值。应用程序中使用的密钥长度若是比B大，则首先用使用散列
+函数H作用于它，然后用H输出的L长度字符串作为在HMAC中实际使用的密钥。
+一般情况下，推荐的最小密钥K长度是L个字长。（与H的输出数据长度相等）。更详
+细的信息参见第三部分。
+   我们将定义两个固定且不同的字符串ipad,opad：
+（‘i','o'标志内部与外部）
+       ipad = the byte 0x36 repeated B times
+         opad = the byte 0x5C repeated B times.
+计算‘text'的HMAC：
+          H( K XOR opad, H(K XOR ipad, text))
+即为以下步骤:
+
+(1)	在密钥K后面添加0来创建一个子长为B的字符串。(例如，如果K的字长是20
+字节，B＝60字节，则K后会加入44个零字节0x00)
+
+(2)	将上一步生成的B字长的字符串与ipad做异或运算。
+
+(3)	将数据流text填充至第二步的结果字符串中。
+
+(4)	用H作用于第三步生成的数据流。
+
+(5)	将第一步生成的B字长字符串与opad做异或运算。
+
+(6)	再将第四步的结果填充进第五步的结果中。
+
+(7)	用H作用于第六步生成的数据流，输出最终结果
+    
+ 基于MD5的相关代码将作为附录提供
+
+3. 密钥。
+用于HMAC的密钥可以是任意长度（比B长的密钥将首先被H处理）。但当密钥
+长度小于L时的情况时非常令人失望的，因为这样将降低函数的安全强度。长度大于
+L的密钥是可以接受的，但是额外的长度并不能显著的提高函数的安全强度。（如果一
+个随机的密钥被认为是不可靠的，那么选择一个较长的密钥是明智的）。
+   密钥必须随机选取(或使用强大的基于随机种子的伪随机生成方法)，并且要周期
+性的更新。（目前的攻击没有指出一个有效的更换密钥的频率，因为那些攻击实际上并
+不可行。然而，周期性更新密钥是一个对付函数和密钥所存在的潜在缺陷的基本
+的安全措施，并可以降低泄漏密钥带来的危害。）
+
+4. 注意事项
+HMAC是按底层散列函数可以不修改源码就可使用这种方式定义的。尤其是它在使用
+H函数时还要依赖于预定义的初始化值IV（一个定值，由每个迭代散列函数在初始化它
+的压缩函数时指定).然而，如果你愿意的话，可以修改H函数的源码来支持可变的初始
+化值Ivs.
+    这个想法是这样的：压缩函数作用于B字长数据块（K XOR opad）和(K XOR ipad)
+所产生的中间结果可以在密钥刚刚生成时就预先计算好的。先将这些中间结果存储，然
+后在每次有消息需要验证时来生成H函数的初始化值IV。这种方法为每个要鉴别的消息
+保存了H 的压缩函数对于两个B字长数据块（K XOR opad）和(K XOR ipad)的应用。
+当鉴别短数据流，保存这样的信息是重要的。我们要强调的是：对待这些中间结果要象
+对待密钥一样，并且要同样的进行保密。
+     上述的选择实现HMAC的方法是本地执行的结果，对内部操作性没有影响。
+
+5. 删节输出结果
+        一个著名的消息鉴别方法是删节消息鉴别码的输出，而只输出部分结果。Preneel
+   与Van  Oorschot[pv]给出了一些散列消息鉴别码删节后的输出结果的优势分析。在这
+   一领域的成果并不是绝对的说删节输出结果有全面的安全优势。它有优势的一面（对一
+   个攻击者来说可用的散列函数结果信息将更少），也有劣势的一面（攻击者要预测的字长
+更短）。基于HMAC的应用程序可以只输出HMAC计算结果的最左的t个字节（也就是说
+，计算将按第二部分定义的方式执行，但输出结果将删节至t个字节）。我们推荐的输
+出长度t不小于散列函数输出长度的一半（匹配生日攻击的限度）且不能少于80字节
+（一个适合的速度限制的字节数使得攻击者难以去预测）。我们建议使用HMAC-H-t来表
+示基于输出长度为t的散列函数的HMAC的实现。例如，HMAC－SHA1－80表示HMAC使用
+SHA－1函数并且输出被删节至80字节。（如果没有声明这项参数，则假定不删节输出结
+果。）
+6. 安全
+        这里将说明消息鉴别机制的安全性取决于所采用的散列函数的加密特性:1。抗冲突
+攻击能力（只限于初始化值是随机且秘密的，且函数的输出对攻击者来说是不可用的情
+况）2。当作用于单数据块时H的压缩函数的的消息鉴别属性(在HMAC中这些数据块是
+    部分未知得，当攻击者自制内部H函数计算结果，并且攻击者是不能充分的选择得）
+         HMAC中使用的散列函数一般都具有以上或更强的属性。实际上，如果一个散列函数
+不具有以上的属性那么它对于大多数的加密应用程序是不适用的，包括基于该函数的选
+择消息鉴别方案。（对HMAC函数原理详细阐述和完整的分析参见[BCK1]）
+         只要得到关于候选散列函数的加密强度有限的信任，那么观察它用于消息鉴别的安
+全性及以下HMAC结构的两种属性是很重要的。
+1．	这种结构是独立于具体所使用的散列函数并且后者是可以被任何其它安全加
+密散列函数替代
+2．	消息鉴别相对于加密来说是一种“瞬时”影响。公开的对一种消息鉴别方案
+的破坏会导致该方案被替换，但是其对已鉴别过的信息却无能为力，。这就与
+加密形成鲜明对比。如果其加密算法被破解的话。今天加密的的数据，在未
+来都会受到被破解的威胁， 
+         对HMAC已知最有力的攻击是基于散列函数的冲突频率。（“生日攻击法”）[PV,BCK2],
+但完全不适用于最小有理散列函数。 
+例如：如果我们考虑一个类似MD5的散列函数，其输出结果长度为L=16字节(128
+比特)，攻击者需要获得正确的消息鉴别标志（使用相同的密钥K!!）计算大约2**64已
+知明文。这样至少要使用H处理2**64数据块，这是一个不可能完成的任务（一个数据
+块的长度为64字节，在连续的1Gbps link的条件下需要250,000年，并且在整个过程
+中不能更换密钥!）这样的攻击只有在函数H的冲突行为的严重缺陷被发现才有可能成为
+现实（冲突在处理2**30后会存在）。这样的发现会导致立即更换现有的函数H(这种故
+障产生的影响远远大于传统的在上下文环境数字签名与公开密钥中使用的散列函数故
+障。)
+
+注释：
+          这种攻击与在无相关密钥、2**64离线并行计算可以发现冲突的环境中针对加密散
+列函数的规则冲突攻击形成鲜明对比。在现在的条件下生日攻击已基本不可行，    而
+后者可行性却很高。（在以上的例子中，如果使用的散列函数的输出是160字节，则
+    2**64应改为2**80)
+
+
+        正确的实施以上的结构时需要注意：选择随机（或加密的伪随机）密钥、一个安全
+的密钥交换机制，频繁的更新密钥，对密钥的良好的安全防护。以上这些都是维护HMAC
+完整的鉴别机制安全的基本要素。
+    
+
+ 附录： 
+例程源码
+为了更好的说明该机制，我们提供了实现HMAC-MD5的源码，并且还提供了
+ 一些相应的测试向量。（代码是基于[MD5]中的MD5的源码）
+    
+
+      /*
+** Function: hmac_md5
+*/
+
+void
+hmac_md5(text, text_len, key, key_len, digest)
+unsigned char*  text;                /* pointer to data stream */
+int             text_len;            /* length of data stream */
+unsigned char*  key;                 /* pointer to authentication key */
+int             key_len;             /* length of authentication key */
+caddr_t         digest;              /* caller digest to be filled in */
+
+{
+        MD5_CTX context;
+        unsigned char k_ipad[65];    /* inner padding -
+                                      * key XORd with ipad
+                                      */
+        unsigned char k_opad[65];    /* outer padding -
+                                      * key XORd with opad
+                                      */
+        unsigned char tk[16];
+        int i;
+        /* if key is longer than 64 bytes reset it to key=MD5(key) */
+        if (key_len > 64) {
+
+                MD5_CTX      tctx;
+
+                MD5Init(&tctx);
+                MD5Update(&tctx, key, key_len);
+                MD5Final(tk, &tctx);
+
+                key = tk;
+                key_len = 16;
+        }
+
+        /*
+         * the HMAC_MD5 transform looks like:
+         *
+         * MD5(K XOR opad, MD5(K XOR ipad, text))
+         *
+         * where K is an n byte key
+         * ipad is the byte 0x36 repeated 64 times
+         * opad is the byte 0x5c repeated 64 times
+         * and text is the data being protected
+         */
+
+        /* start out by storing key in pads */
+        bzero( k_ipad, sizeof k_ipad);
+        bzero( k_opad, sizeof k_opad);
+        bcopy( key, k_ipad, key_len);
+        bcopy( key, k_opad, key_len);
+
+        /* XOR key with ipad and opad values */
+        for (i=0; i<64; i++) {
+                k_ipad[i] ^= 0x36;
+                k_opad[i] ^= 0x5c;
+        }
+        /*
+         * perform inner MD5
+         */
+        MD5Init(&context);                   /* init context for 1st
+                                              * pass */
+        MD5Update(&context, k_ipad, 64)      /* start with inner pad */
+        MD5Update(&context, text, text_len); /* then text of datagram */
+        MD5Final(digest, &context);          /* finish up 1st pass */
+        /*
+         * perform outer MD5
+         */
+        MD5Init(&context);                   /* init context for 2nd
+                                              * pass */
+        MD5Update(&context, k_opad, 64);     /* start with outer pad */
+        MD5Update(&context, digest, 16);     /* then results of 1st
+                                              * hash */
+        MD5Final(digest, &context);          /* finish up 2nd pass */
+}
+
+Test Vectors (Trailing '\0' of a character string not included in test):
+
+  key =         0x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
+  key_len =     16 bytes
+  data =        "Hi There"
+  data_len =    8  bytes
+  digest =      0x9294727a3638bb1c13f48ef8158bfc9d
+
+  key =         "Jefe"
+  data =        "what do ya want for nothing?"
+  data_len =    28 bytes
+  digest =      0x750c783e6ab0b503eaa86e310a5db738
+
+  key =         0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+  key_len       16 bytes
+  data =        0xDDDDDDDDDDDDDDDDDDDD...
+                ..DDDDDDDDDDDDDDDDDDDD...
+                ..DDDDDDDDDDDDDDDDDDDD...
+                ..DDDDDDDDDDDDDDDDDDDD...
+                ..DDDDDDDDDDDDDDDDDDDD
+  data_len =    50 bytes
+
+  digest =      0x56be34521d144c88dbb8c733f0e8b3f6
+
+
+致谢:
+    Pau-Chen Cheng, Jeff Kraemer, and Michael Oehler, have provided
+   useful comments on early drafts, and ran the first interoperability
+   tests of this specification. Jeff and Pau-Chen kindly provided the
+   sample code and test vectors that appear in the appendix.  Burt
+   Kaliski, Bart Preneel, Matt Robshaw, Adi Shamir, and Paul van
+   Oorschot have provided useful comments and suggestions during the
+   investigation of the HMAC construction.
+
+ 参考书目：
+      
+  [ANSI]  ANSI X9.9, "American National Standard for Financial
+           Institution Message Authentication (Wholesale)," American
+           Bankers Association, 1981.   Revised 1986.
+
+   [Atk]   Atkinson, R., "IP Authentication Header", RFC 1826, August
+           1995.
+
+   [BCK1]  M. Bellare, R. Canetti, and H. Krawczyk,
+           "Keyed Hash Functions and Message Authentication",
+           Proceedings of Crypto'96, LNCS 1109, pp. 1-15.
+           (http://www.research.ibm.com/security/keyed-md5.html)
+
+   [BCK2]  M. Bellare, R. Canetti, and H. Krawczyk,
+           "Pseudorandom Functions Revisited: The Cascade Construction",
+           Proceedings of FOCS'96.
+
+   [Dobb]  H. Dobbertin, "The Status of MD5  After a Recent Attack",
+           RSA Labs' CryptoBytes, Vol. 2 No. 2, Summer 1996.
+           http://www.rsa.com/rsalabs/pubs/cryptobytes.html
+
+   [PV]    B. Preneel and P. van Oorschot, "Building fast MACs from hash
+           functions", Advances in Cryptology -- CRYPTO'95 Proceedings,
+           Lecture Notes in Computer Science, Springer-Verlag Vol.963,
+
+[MD5]   Rivest, R., "The MD5 Message-Digest Algorithm",
+           RFC 1321, April 1992.
+
+[MM]    Meyer, S. and Matyas, S.M., Cryptography, New York Wiley,
+           1982.
+
+   [RIPEMD] H. Dobbertin, A. Bosselaers, and B. Preneel, "RIPEMD-160: A
+            strengthened version of RIPEMD", Fast Software Encryption,
+            LNCS Vol 1039, pp. 71-82.
+            ftp://ftp.esat.kuleuven.ac.be/pub/COSIC/bosselae/ripemd/.
+
+   [SHA]   NIST, FIPS PUB 180-1: Secure Hash Standard, April 1995.
+
+   [Tsu]   G. Tsudik, "Message authentication with one-way hash
+           functions", In Proceedings of Infocom'92, May 1992.
+           (Also in "Access Control and Policy Enforcement in
+            Internetworks", Ph.D. Dissertation, Computer Science
+            Department, University of Southern California, April 1991.)
+
+   [VW]    P. van Oorschot and M. Wiener, "Parallel Collision
+           Search with Applications to Hash Functions and Discrete
+           Logarithms", Proceedings of the 2nd ACM Conf. Computer and
+           Communications Security, Fairfax, VA, November 1994.
+
+作者地址:
+Hugo Krawczyk
+   IBM T.J. Watson Research Center
+   P.O.Box 704
+   Yorktown Heights, NY 10598
+
+
+   EMail: hugo@watson.ibm.com
+
+   Mihir Bellare
+   Dept of Computer Science and Engineering
+   Mail Code 0114
+   University of California at San Diego
+   9500 Gilman Drive
+   La Jolla, CA 92093
+
+   EMail: mihir@cs.ucsd.edu
+
+   Ran Canetti
+   IBM T.J. Watson Research Center
+   P.O.Box 704
+   Yorktown Heights, NY 10598
+
+   EMail: canetti@watson.ibm.com
+
+    
+RFC2104--HMAC: Keyed-Hashing for Message Authentication   
+HMAC:键入-散列法用于信息身份验证
+
+
+1
+RFC文档中文翻译计划

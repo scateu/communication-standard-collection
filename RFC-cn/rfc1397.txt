@@ -1,0 +1,73 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang    guodagang@tyut.edu.cn）
+译文发布时间：2001-8-14
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working GroupD.                                                   Haskin
+Request for Comments: 1397                         Bolt Beranek and Newman, Inc.
+January 1993
+
+在边界网关协议（Border Gateway Protocol）版本2
+和版本3中的缺省路由通告
+(RFC1397――Default Route Advertisement In BGP2 
+And BGP3 Versions Of The Border Gateway Protocol)
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+
+摘要
+本文档详细描述了BGP工作组在边界网关协议(Border Gateway Protoco，缩写为BGP) 
+版本2 [1]和版本3 [2]中有关缺省路由通告的建议。
+本建议仅适用于边界网关协议的版本2和版本3，因为缺省路由通告功能已经从BGP
+版本4[3]开始被包含了。
+1. 介绍
+缺省路由通告功能的目的是通告边界网关的IP地址。边界网关被当作通往那些没有在
+BGP对等路由表中明确列出的目的地址的缺省的下一跳。
+本功能允许那些不能维护一个完整的路由列表(例如由于它的尺寸)的路由器学习成为一
+个预备处理预订制业务的边界网关。同样，如果有多个缺省网关，就对照静态缺省值。对于
+一个BGP通告者，这将使比较一个比其他优先的优先权成为可能。这也减少了在路由器上
+配置缺省路由的需求。
+2. 缺省路由通告
+一条包含可达网络0.0.0.0的更新(UPDATE)消息中发布了一个缺省路由。这样一个更新
+(UPDATE)消息的网段，应该包含IP地址0.0.0.0，作为它携带一个缺省路由的标志。这样一
+个消息的下一跳(NEXT_HOP)路径标识，提供一个边界网关的IP地址，当作通向目标地址
+的没有在BGP对等路由表中列出的缺省的下一跳。起源(ORIGIN)标识的值应该是2 (不完
+全)。根据和应用于常规网络的通告相同的规则来创建自治域路径(AS_PATH)标识。
+如果BGP通告者通告了多个缺省路由，INTER-AS-METRIC路径标识包含在相应的更
+新(UPDATE)消息中，用于标识一个自治域(AS)进入点的优先级。
+不可达(UNREACHABLE)路径标志用于标识一个先前通告的缺省路由已经变得不可达。
+根据应用所有更新(UPDATE)消息的规则来处理包含缺省路由通告的更新(UPDATE)消
+息。如果BGP通告者获得了多个缺省路由，则根据BGP通告者采用的本地策略来选择路由。
+参考文献
+[1] Lougheed, K., and Y. Rekhter, "A Border Gateway Protocol (BGP)", RFC 1163, 
+cisco Systems, T.J. Watson Research Center, IBM Corp., June 1990.
+
+[2] Lougheed, K., and Y. Rekhter, "A Border Gateway Protocol 3 (BGP-3)", RFC 1267, 
+cisco Systems, T.J. Watson Research Center, IBM Corp., October 1991.
+
+[3] Rekhter, Y., and T. Li, "A Border Gateway Protocol 4 (BGP-4)", Work in Progress, 
+T.J. Watson Research Center, IBM Corp., cisco Systems, December 1992.
+安全因素
+本备忘录不讨论有关安全问题。
+作者地址：
+Dimitry Haskin
+Bolt, Beranek & Newman
+150 Cambridge Park Drive
+Cambridge, MA 02140
+
+Phone: 617-873-8609
+Email: dhaskin@bbn.com
+
+RFC1397――Default Route Advertisement In BGP2 And BGP3 Versions Of The Border 
+Gateway Protocol       在边界网关协议版本2和版本3中的缺省路由通告
+
+
+1
+RFC文档中文翻译计划                                                                  
+
+

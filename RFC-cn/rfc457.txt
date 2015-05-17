@@ -1,0 +1,23 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                  Dave Walden
+RFC #457                                               BBN-NET
+NIC #14377                                             February 15, 1973
+
+TIPUG
+（TIPUG）
+任何没有收到更新的TIP用户手册或者没有收到TIP用户手册拷贝的TIP用户请注意：请把你的名字发给我(连同你常用的TIP和Host)，以确保您可以进一步得到这些材料的分发清单。
+[这个RFC文档是由GTE支持的Alex McKenzie（最初的BBN公司）以计算机可读的文件格式归档到在线RFC文档库的，9/99]
+RFC457――TIPUG                                                                       TIPUG
+
+
+
+
+1
+RFC文档中文翻译计划
+

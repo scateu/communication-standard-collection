@@ -1,0 +1,24 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                      Auerbach
+RFC # 496                                                  SRI-ARC
+NIC # 15496                                                April 5, 1973
+
+一种可用的TNLS快速参考卡
+（A TNLS QUICK REFERENCE CARD IS AVAILABLE）
+这个RFC宣布了一种新的TNLS快速参考卡（Quick Reference Card）。说明了TNLS用途的一些特定目的的特征每天需要的所有基本命令。包括连接SRI-ARC的TIP设置，基于TENEX/EXECUTIVE命令，以及一套完整的针对TNLS应用的VIEWSPECS代码。
+这个卡的一份拷贝将被发送给你的站点代理。如果你想获得你的站点上用户的拷贝，请联系SRI-ARC的Marcia Keeney (MLK)，并且简要地说明你需要的拷贝的编号。
+[这个RFC文档是由得到GTE（原来的BBN公司）支持的Alex McKenzie以计算机可读的文件格式归档到在线RFC文档库的。9/99]
+RFC496――A TNLS QUICK REFERENCE CARD IS AVAILABLE                 一种可用的TNLS快速参考卡
+
+
+
+
+1
+RFC文档中文翻译计划
+

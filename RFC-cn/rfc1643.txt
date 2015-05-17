@@ -1,0 +1,623 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王俊辉（冷雨夜	 wangjh99@263.net）
+译文发布时间：2000-8-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                      F. Kastenholz
+Request for Comments: 1643                            FTP Software, Inc.
+Obsoletes: 1623, 1398                                          July 1994
+STD: 50
+Category: Standards Track
+以太网接口管理对象
+（RFC1643 ――Definitions of Managed Objects for the Ethernet-like Interface Types） 
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+
+目录
+介绍	2
+1.	SNMP网络管理框架	2
+2.	修改日志	2
+3.	概述	3
+3.1	与RFC 1213关系	3
+3.2.	与RFC 1573关系	3
+4.	定义	5
+5.	感谢	13
+6.	参考	13
+7.	安全考虑	15
+8.	作者地址：	15
+
+  介绍
+这个备忘录在因特网团体中用网络管理协议定义了一部分管理信息库( MIB)。 
+尤其，它确定的管理对象是以太网接口部分。 
+
+   这个备忘录也包括一个MIB 模块。 这个MIB 模件修改了早期版本RFC 1623 [20 ]和
+RFC 1398 [15 ]的一些小错误。
+
+1.	SNMP网络管理框架
+Snmp网络管理框架有三个主要部分组成.他们是：
+?	STD 16/RFC 1155 [3]定义了SMI（管理信息结构），定义了管理对象的描述和
+命名机制。STD 16/ RFC 1212 [13 ]确定一个更简明的描述机构，完全和SMI 
+一致。
+?	RFC 1156 [4]定义了MIB-I ，因特网协议组中的核心管理对象。STD 17/RFC           
+1213 [6]定义了MIB-II，基于MIB-I的执行经验和新的操作要求演化而来的。
+?	STD 15/RFC 1157 [5]定义了为管理网络对象的SNMP协议。
+为了实验和评估，这个框架允许定义新的管理对象。
+1.	1对象定义
+管理的对象通过一个储存虚拟消息来存取，称管理信息库或者MIB。MIB中的对
+象采用SMI[16]定义的ASN.1[7]语法的子集来定义。尤其，每个对象实体类型被
+管理分配一个对象标识符。实体类型以及一个目标实例能唯一确定一个具体对象
+实例。为便利起见，我们经常使用一个字符串来指向实体类型，称描述符。
+2.	修改日志
+这部分列举对RFC 1398的修改记录：
+(1) 增加了一部分以太网接口的各种适应性。  
+
+    (2) 修复了一个在TDR 试验的描述过程中的较小错误。
+
+    ( 3) 一个loopback 测试部分替换原来RFC 1229中的标准loopback 。
+
+    ( 4) dot3CollFrequencies 的描述更加清楚。 
+
+(5) 增加了一个新的结点 EtherChipset。这个结点代替了在接口MIB中的ifExtnsChipSet
+结点。
+
+(6)	修改了几处编辑，拼写，语法和标点错误。
+3.	概述
+对象类型的实例代表了以太网通信介质的接口属性。目前，在Internet-standard MIB中，
+以太网介质的标识用ifType对象的三个值来表示：
+         ethernet-csmacd(6)
+         iso88023-csmacd(7)
+         starLan(11)
+对于这些接口，在MIB-II [6]中ifSpecific变量的值的对象标识符是：
+        dot3    OBJECT IDENTIFER ::= { transmission 7 }
+    在这儿的定义是基于IEEE 802.3层管理定义（Layer Management Specification [9]），最
+初的解释在Interlan in [10]。这些MIB对象的实现参照IEEE文件的描述（用Pascal pseudocode
+的形式）不同的MAC属性在何时，何地，和怎样被测量。IEEE文件也描述了MAC动作的
+影响，这些MAC动作可能被这儿定义的MIB对象的多个实例调用。
+    在一定程度上，在Layer Management Specification [9]定义中的一些属性由先前在
+Internet-standard MIB或Generic Interface Extensions MIB [11]中定义的对象来描述，这样的
+一些属性不在该备忘录中重复描述。
+    在被其它备忘录定义的对象描述的这些属性中，有以下一些：在特殊接口上发送或接收
+的八位字节的数目，在特殊接口上发送或接收的帧的数目，接口的混杂状态，接口的MAC
+地址，与接口相关的多点传送信息。
+
+3.1	与RFC 1213关系
+    只有在该MIB用在关联"old"接口组时才应用该部分。
+    以太网接口与在Internet-standard MIB的上下文的接口的关系是一对一关系。接口对象
+实例的值能直接用于标识在这儿定义的相关对象实例。
+   
+3.2.	与RFC 1573关系
+    RFC 1573，接口MIB的发展需要，与接口MIB相关的任何MIB阐明接口MIB中的定
+义区域。这些区域在RFC 1573中定义含糊，是为了避免约束MIB，因此排除了一定媒介类
+型的管理。
+   RFC 1573的Section 3.3列举了，媒介定义MIB必须阐明的几个区域。每一个区域的地
+址分配在下面的子部分中描述。为了更好地理解这些区域的总的意图，实现程序参见RFC 
+1573。
+
+3.2.1.	分层模块
+    该MIB不提供分层。这里没有子层。
+   编者的注释：
+      我能预见到802.2和以太网收发MIB的发展。它们可能分别在更高子层和更低子层。
+该文档间接提到了其可能性和促进该可能性的实现。
+      
+3.2.2.	虚拟电路
+    该媒介不支持虚拟电路，该区域对该MIB不适用。
+
+3.2.3.	接口测试表（ifTestTable）
+    该MIB定义了两个媒介测试，该媒介使用该MIB实现：发送数据寄存器（TDR）和回
+送（Loopback）。这些测试的执行并不是必需的。许多普通的接口芯片不支持这两个测试的
+一个或两个。
+   这两个测试是便利的，允许普通的方法调用这些测试。
+   标准的MIBs不包含返回TDR测试结果的对象。任何被需要的对象在卖主定义的MIB
+中必须被提供。
+   
+3.2.4.	ifRcvAddressTable
+    该表包含了所有IEEE 802.3地址，单一传播，多点传送和广播，为此，该接口将接收
+到包并将它们转发到本地的更高层实体。地址的格式被包含在ifRcvAddressTable中，如
+ifPhysAddress一样。
+  在MAC桥的接口事件中，该表不包括单一传播的地址，这些地址可能被接收转发到一些
+其它的端口。该表明确表示不提供网桥地址的过滤机制。
+
+3.2.5.	接口物理地址（ifPhysAddress）
+    该对象包含了IEEE 802.3地址，这些地址放在以太网，星形局域网或IEEE 802.3的帧
+的源地址池中，这些地址在该接口生成。通常这将被保存在接口硬件的ROM中。一些系统
+可能通过软件来设置这些地址。
+   在一个系统中在哪里有这些地址，设计者面临一个艰难的选择。选中的地址应该是用来
+网络管理的（如，放在ARP的地址是用来主要的IP系统的响应）。
+   假如设计者不能真正地选择，建议使用厂家提供的ROM地址。
+   假如地址不能被决定，应该返回一组零长度的八位字节的字节串。
+   以二进制的形式在该对象中存储地址。地址的存储是以规范的比特次序存储的，也就是
+说，组比特（Group Bit）是以第一个八位字节的低次序来放置的。这样，多点传送的地址的
+第一个字节将是0x01的设置。
+
+3.2.6.	接口类型（ifType）
+    该MIB适用于含有下列接口类型值的接口中：
+         ethernet-csmacd(6)
+         iso88023-csmacd(7)
+         starLan(11)
+    含有这些接口类型值的接口以同样的方式映射到以太网MIB （EtherLike-MIB）。以太
+网MIB同样适用于所有这三种类型；实现方式也没有什么不同。
+  
+
+
+4.	定义
+
+   EtherLike-MIB DEFINITIONS ::= BEGIN
+
+      IMPORTS
+          Counter, Gauge         FROM RFC1155-SMI
+          ifIndex, transmission  FROM RFC1213-MIB
+          OBJECT-TYPE            FROM RFC-1212;
+
+       -- 该MIB模块使用扩展的OBJECT-TYPE宏定义，如RFC-1212中定义。
+
+      dot3    OBJECT IDENTIFIER ::= { transmission 7 }
+
+      -- 以太网统计组
+
+       dot3StatsTable  OBJECT-TYPE
+            SYNTAX     SEQUENCE OF Dot3StatsEntry
+            ACCESS     not-accessible
+            STATUS     mandatory
+            DESCRIPTION
+             "配在特定系统中的以太网接口的统计"
+            ::= { dot3 2 }
+
+
+       dot3StatsEntry   OBJECT-TYPE
+            SYNTAX      Dot3StatsEntry
+            ACCESS      not-accessible
+            STATUS      mandatory
+            DESCRIPTION
+              "一个以太网媒介的特定接口的统计"
+            INDEX     { dot3StatsIndex }
+            ::= { dot3StatsTable 1 }
+
+
+       Dot3StatsEntry ::= SEQUENCE {
+            dot3StatsIndex                      INTEGER,
+            dot3StatsAlignmentErrors            Counter,
+            dot3StatsFCSErrors                  Counter,
+            dot3StatsSingleCollisionFrames      Counter,
+            dot3StatsMultipleCollisionFrames    Counter,
+            dot3StatsSQETestErrors              Counter,
+            dot3StatsDeferredTransmissions      Counter,
+            dot3StatsLateCollisions             Counter,
+            dot3StatsExcessiveCollisions        Counter,
+            dot3StatsInternalMacTransmitErrors  Counter,
+            dot3StatsCarrierSenseErrors         Counter,
+            dot3StatsFrameTooLongs              Counter,
+            dot3StatsInternalMacReceiveErrors   Counter,
+            dot3StatsEtherChipSet               OBJECT IDENTIFIER
+       }
+
+       dot3StatsIndex   OBJECT-TYPE
+            SYNTAX      INTEGER
+            ACCESS      read-only
+            STATUS      mandatory
+            DESCRIPTION
+              "标识以太网媒介的一个接口的唯一索引值。被该索引指示的接口与用相同
+的接口索引值标识的接口是同一个。"
+            ::= { dot3StatsEntry 1 }
+
+       dot3StatsAlignmentErrors   OBJECT-TYPE
+            SYNTAX     Counter
+            ACCESS     read-only
+            STATUS     mandatory
+            DESCRIPTION
+             "在一个特定接口上接收到的并且没有通过FCS检测的帧的计数值，它们在
+长度上不是字节的完整的数目。由该对象实例表示的计数值的增加是在当MAC服务返回
+alignmentError状态值到LLC（或者其他MAC用户）时。通过IEEE 802.3层管理规范，由
+于LLC的错误状态表示，增加得到多个错误状态的接收到的帧的数目。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+
+            ::= { dot3StatsEntry 2 }
+
+       dot3StatsFCSErrors   OBJECT-TYPE
+            SYNTAX      Counter
+            ACCESS      read-only
+            STATUS      mandatory
+            DESCRIPTION
+            "在一个特定接口上接收到的并且没有通过FCS检测的帧的计数值，它们在长
+度上是字节的完整的数目。由该对象实例表示的计数值的增加是在当MAC服务返回
+frameCheckError 状态值到LLC（或者其他MAC用户）时。通过IEEE 802.3层管理规范，
+由于LLC的错误状态表示，增加得到多个错误状态的接收到的帧的数目。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 3 }
+
+       dot3StatsSingleCollisionFrames   OBJECT-TYPE
+            SYNTAX      Counter
+            ACCESS      read-only
+            STATUS      mandatory
+            DESCRIPTION
+            "在一个特定接口上成功发送的帧的计数值，此时发送恰好被一个冲突所抑制。
+被一个对象实例所累计的帧数也被相关的dot3StatsMultipleCollisionFrames对象的
+ifOutUcastPkts 或ifOutMulticastPkts或 ifOutBroadcastPkts,实例所累计，不被
+dot3StatsSingleCollisionFrames对象的相关实例所累计。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 4 }
+
+       dot3StatsMultipleCollisionFrames   OBJECT-TYPE
+            SYNTAX      Counter
+            ACCESS      read-only
+            STATUS      mandatory
+            DESCRIPTION
+            "在一个特定接口上成功发送的帧的计数值，此时发送恰好被两个或更多个冲
+突所抑制。被一个对象实例所累计的帧数也被相关的dot3StatsMultipleCollisionFrames对象
+的ifOutUcastPkts 或ifOutMulticastPkts或 ifOutBroadcastPkts,实例所累计，不被
+dot3StatsSingleCollisionFrames对象的相关实例所累计。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 5 }
+
+       dot3StatsSQETestErrors   OBJECT-TYPE
+            SYNTAX     Counter
+            ACCESS     read-only
+            STATUS     mandatory
+            DESCRIPTION
+            " SQE TEST ERROR次数 的计数值消息是由一个特定接口的PLS子层生成
+的。 SQE TEST ERROR消息的定义在ANSI/IEEE 802.3-1985的section 7.2.2.2.4，它的产生
+的描述参见同个文档的section 7.2.4.6。"
+            REFERENCE
+            "ANSI/IEEE Std 802.3-1985 Carrier Sense
+            Multiple Access with Collision Detection Access
+            Method and Physical Layer Specifications"
+            ::= { dot3StatsEntry 6 }
+
+       dot3StatsDeferredTransmissions   OBJECT-TYPE
+            SYNTAX      Counter
+            ACCESS      read-only
+            STATUS      mandatory
+            DESCRIPTION
+            "因为媒介忙，所以在一个特定接口上试图第一次发送被延迟的帧的计数值。
+被该对象的实例所表示的计数值不包括在冲突中卷入的帧的数目。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 7 }
+
+       dot3StatsLateCollisions   OBJECT-TYPE
+            SYNTAX      Counter
+            ACCESS      read-only
+            STATUS      mandatory
+            DESCRIPTION
+            "在一个特定接口上检测到的冲突的次数的计数值比512比特-次数进入包的发
+送更迟。512比特-次数相当与在一个10 Mbit/s系统上的51.2微秒。包含在一个由该MIB
+对象实例代表的计数器中的一个冲突也被认为是与其它冲突相关统计的普通冲突。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 8 }
+
+       dot3StatsExcessiveCollisions   OBJECT-TYPE
+            SYNTAX    Counter
+            ACCESS    read-only
+            STATUS    mandatory
+            DESCRIPTION
+            "由于在一个特定接口上过多的冲突导致发送失败的帧的数目的计数器。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 9 }
+
+
+       dot3StatsInternalMacTransmitErrors   OBJECT-TYPE
+            SYNTAX    Counter
+            ACCESS    read-only
+            STATUS    mandatory
+            DESCRIPTION
+            "由于在一个特定接口上内在的MAC子层传送错误导致发送失败的帧的数目
+的计数器。假如该帧不被dot3StatsLateCollisions 对象，或dot3StatsExcessiveCollisions 对象，
+或dot3StatsCarrierSenseErrors对象的相关实例所累计，则该帧只被该对象的实例所累计。由
+该对象实例所代表的计数器的精确意思是执行规范化。尤其是，该对象的实例可能代表在一
+个特定接口上传输错误的计数器，而不是其它的计数器。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 10 }
+
+       dot3StatsCarrierSenseErrors   OBJECT-TYPE
+            SYNTAX    Counter
+            ACCESS    read-only
+            STATUS    mandatory
+            DESCRIPTION
+            "在一个特定接口上试图传送帧时，载波传感器的环境被丢失或未被证实的次
+数的计数器。由该对象实例表示的计数器的值的增加大都是在每一个传输尝试时，甚至在传
+输尝试的载波传感器环境有所波动时。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 11 }
+
+       -- { dot3StatsEntry 12 } is not assigned
+
+       dot3StatsFrameTooLongs   OBJECT-TYPE
+            SYNTAX    Counter
+            ACCESS    read-only
+            STATUS    mandatory
+            DESCRIPTION
+            "在一个特定接口上接收到的超过最大允许帧大小的帧的计数器。当MAC服
+务向LLC（或其他MAC用户）返回frameTooLong的状态值时，增加该对象实例代表的计
+数器的值。接收到的帧得到多个错误状态，依照IEEE 802.3层管理的规定，计数的增加唯
+一依照向LLC报告的错误状态。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 13 }
+
+       -- { dot3StatsEntry 14 } is not assigned
+
+       -- { dot3StatsEntry 15 } is not assigned
+
+       dot3StatsInternalMacReceiveErrors   OBJECT-TYPE
+            SYNTAX    Counter
+            ACCESS    read-only
+            STATUS    mandatory
+            DESCRIPTION
+            "由于内在的MAC子层接收错误而在特定的接口上产生帧接收失败的帧的计
+数器。只有在该计数器不被dot3StatsFrameTooLongs 对象， 或dot3StatsAlignmentErrors 对
+象，或dot3StatsFCSErrors对象的相关实例计数时，该对象实例才对帧数进行计数。 该对象
+实例代表的计数的精确意思就是执行的规范。尤其是，该对象实例可能代表在一个特定接口
+上接收错误的计数。"
+            REFERENCE
+            "IEEE 802.3 Layer Management"
+            ::= { dot3StatsEntry 16 }
+
+       dot3StatsEtherChipSet   OBJECT-TYPE
+            SYNTAX        OBJECT IDENTIFIER
+            ACCESS        read-only
+            STATUS        mandatory
+            DESCRIPTION
+            "该对象包含一个对象标识符，该标识符用来标识实现接口的芯片集。以太网
+接口由几种不同的芯片组成。MIB实现者决定了通过该对象标识哪一块芯片。实现者应该
+标识通常被称为MAC的芯片。如果没有这样容易标识的芯片，实现者应该标识实际上集中
+了发送、接收统计和错误指示的芯片。这将允许管理工作站与统计和生成统计的芯片相关联，
+这样就给了它分析芯片中的任何已知异常事件的能力。"
+            ::= { dot3StatsEntry 17 }
+
+       -- 以太网冲突统计组
+
+       -- 该组的实现是可选的；所有的系统组含有必要的统计是合适的。
+
+       dot3CollTable  OBJECT-TYPE
+            SYNTAX    SEQUENCE OF Dot3CollEntry
+            ACCESS    not-accessible
+            STATUS    mandatory
+            DESCRIPTION
+            "在一套特定的接口组中的冲突柱状图的收集。"
+            ::= { dot3 5 }
+
+
+       dot3CollEntry  OBJECT-TYPE
+            SYNTAX    Dot3CollEntry
+            ACCESS    not-accessible
+            STATUS    mandatory
+            DESCRIPTION
+            "一个特定接口上的每个帧冲突的柱状图的一个单元。该对象实例代表单个
+MAC帧在一个特定接口上产生一定数量媒介冲突的频率。"
+            INDEX     { ifIndex, dot3CollCount }
+            ::= { dot3CollTable 1 }
+
+       Dot3CollEntry ::= SEQUENCE {
+            dot3CollCount        INTEGER,
+            dot3CollFrequencies  Counter
+       }
+
+       -- { dot3CollEntry 1 } 不再使用
+
+       dot3CollCount  OBJECT-TYPE
+            SYNTAX    INTEGER (1..16)
+            ACCESS    not-accessible
+            STATUS    mandatory
+            DESCRIPTION
+            "在一个特定接口上的每个帧媒介冲突的数量。"
+            ::= { dot3CollEntry 2 }
+
+
+       dot3CollFrequencies   OBJECT-TYPE
+            SYNTAX    Counter
+            ACCESS    read-only
+            STATUS    mandatory
+            DESCRIPTION
+            "在一个特定接口上该帧经历过相关dot3CollCount 对象计数的帧冲突数后，
+该接口发送（不管成功与否）的单个MAC帧的计数值。
+            举例说，在该帧在接口77上的发送经历了4个冲突后，该帧将被
+dot3CollFrequencies.77.4对象计数指示。在该例中dot3CollFrequencies的其它实例不被计数
+增加。"
+            ::= { dot3CollEntry 3 }
+
+       --  802.3 测试
+
+       dot3Tests   OBJECT IDENTIFIER ::= { dot3 6 }
+
+       dot3Errors  OBJECT IDENTIFIER ::= { dot3 7 }
+
+
+       --  TDR 测试
+
+       -- 时间域反射计（TDR）测试是严格按照以太网接口除10BaseT和10BaseF的规范。
+在确定出故障电缆的距离时，TDR的值也许是有用的。重复这项测试来检查TDR值的固定
+结果，查证错误是可取的。
+       
+       dot3TestTdr OBJECT IDENTIFIER ::= { dot3Tests 1 }
+
+       -- TDR测试返回TDR测试发送开始到后来检测到载波的冲突或失效的时间间隔，
+这是由10 MHz ticks or 100 nsec检测到的。当TDR测试的成功完成，结果以MIB对象实例
+dot3TestTdrValue的值保存，并且该实例的对象标识符保存在相关的ifExtnsTestCode 对象实
+例中（因此，指示了结果的保存地方）。
+
+       -- Loopback Test（环回测试）
+
+       -- 另一个测试是全二虫的环回测试。该测试配置了MAC芯片和执行存储器、数据
+路径、MAC芯片逻辑的内在环回测试。该测试只能在接口脱机时被执行。一旦测试完成，
+MAC芯片应被重新初始化，但是它应该保持脱机。Another test is the full-duplex loopback test.
+       
+       dot3TestLoopBack OBJECT IDENTIFIER ::= { dot3Tests 2 }
+
+       -- 假如在测试中出现错误，对象ifTestResult （在RFC1573中定义）设为failed(7)。
+下面的两个对象标识符可能被用来作为ifTestCode的值提供更多信息。
+
+                -- 为测试不能初始化MAC芯片
+       dot3ErrorInitError     OBJECT IDENTIFIER ::= { dot3Errors 1 }
+
+                -- 在环回测试中期望得到的数据没被接收到（或不能成功接收到）
+       dot3ErrorLoopbackError OBJECT IDENTIFIER ::= { dot3Errors 2 }
+
+       -- RFC1573除去接口芯片集对象。
+       -- 下面的对象标识符定义为了能向后兼容被保留在先前的RFC1573系统中。
+       --  802.3 硬件芯片集
+
+       -- 在RFC1229中的ifExtnsChipSet 对象标识用来接口通信的M AC硬件。下面硬件
+芯片集由802.3提供。
+
+       dot3ChipSets          OBJECT IDENTIFIER ::= { dot3 8 }
+       dot3ChipSetAMD        OBJECT IDENTIFIER ::= { dot3ChipSets 1 }
+       dot3ChipSetAMD7990    OBJECT IDENTIFIER ::= { dot3ChipSetAMD 1 }
+       dot3ChipSetAMD79900   OBJECT IDENTIFIER ::= { dot3ChipSetAMD 2 }
+       dot3ChipSetAMD79C940  OBJECT IDENTIFIER ::= { dot3ChipSetAMD 3 }
+
+       dot3ChipSetIntel      OBJECT IDENTIFIER ::= { dot3ChipSets 2 }
+       dot3ChipSetIntel82586 OBJECT IDENTIFIER ::= { dot3ChipSetIntel 1 }
+       dot3ChipSetIntel82596 OBJECT IDENTIFIER ::= { dot3ChipSetIntel 2 }
+
+       dot3ChipSetSeeq       OBJECT IDENTIFIER ::= { dot3ChipSets 3 }
+       dot3ChipSetSeeq8003   OBJECT IDENTIFIER ::= { dot3ChipSetSeeq 1 }
+
+       dot3ChipSetNational      OBJECT IDENTIFIER ::= { dot3ChipSets 4 }
+       dot3ChipSetNational8390  OBJECT IDENTIFIER ::=
+                                  { dot3ChipSetNational 1 }
+       dot3ChipSetNationalSonic OBJECT IDENTIFIER ::=
+                                  { dot3ChipSetNational 2 }
+
+       dot3ChipSetFujitsu       OBJECT IDENTIFIER ::= { dot3ChipSets 5 }
+       dot3ChipSetFujitsu86950  OBJECT IDENTIFIER ::=
+                                  { dot3ChipSetFujitsu 1 }
+
+       dot3ChipSetDigital       OBJECT IDENTIFIER ::= { dot3ChipSets 6 }
+       dot3ChipSetDigitalDC21040  OBJECT IDENTIFIER ::=
+                                  { dot3ChipSetDigital 1 }
+
+       -- 对于上面未出现的芯片集，对象标识符的分配在其它的文档中，如，代表单个企
+业的注册数部分中的分配（见RFC1155）。
+
+   END  
+5.	感谢
+这份资料由Ethernet MIB 工作组撰写。 
+	这份资料基于推荐标准Ethernet MIB， RFC 1284 [14 ]，Jihn Cook是编辑。Ethernet MIB 
+工作组收集那些在RFC 1284变量的实施经验并且使用这些信息修正发展而成的MIB。 
+
+   RFC 1284是基于一篇由Frank Kastenholz编写的关于IEEE 802.3 TCP/IP网络层次管理草
+稿M 相容的MIB。. 这份资料已经被适度重写，最初通过SNMP工作组，然后通过传输工
+作组， 约定当前定义MIB接口对象的一些习俗。麻省理工学院实验室的计算机科学家James 
+Davin，和Hughes局域网系统的Keith McCloghrie都有助于这个备忘录的晚草稿。 
+执行国际标准单位制股份有限公司的Marshall Rose把资料转化成它目前的简明的形式。 
+DEC的Anil Rijsinghani捐献出关于TDR测试的文献。感谢Interlan的Frank Kastenholz和
+IBM的Louis Steinberg的实验。
+
+6.	参考
+
+   [1] Cerf, V., "IAB Recommendations for the Development of Internet
+       Network Management Standards", RFC 1052, NRI, April 1988.
+
+   [2] Cerf, V., "Report of the Second Ad Hoc Network Management Review
+       Group", RFC 1109, NRI, August 1989.
+
+   [3] Rose M., and K. McCloghrie, "Structure and Identification of
+       Management Information for TCP/IP-based internets", STD 16, RFC
+       1155, Performance Systems International, Hughes LAN Systems, May
+       1990.
+
+   [4] McCloghrie K., and M. Rose, "Management Information Base for
+       Network Management of TCP/IP-based internets", RFC 1156, Hughes
+       LAN Systems, Performance Systems International, May 1990.
+
+   [5] Case, J., Fedor, M., Schoffstall, M., and J. Davin, "Simple
+       Network Management Protocol", STD 15, RFC 1157, SNMP Research,
+       Performance Systems International, Performance Systems
+       International, MIT Laboratory for Computer Science, May 1990.
+
+   [6] McCloghrie K., and M. Rose, Editors, "Management Information Base
+       for Network Management of TCP/IP-based internets", STD 17, RFC
+       1213, Performance Systems International, March 1991.
+
+   [7] Information processing systems - Open Systems Interconnection -
+       Specification of Abstract Syntax Notation One (ASN.1),
+       International Organization for Standardization, International
+       Standard 8824, December 1987.
+
+   [8] Information processing systems - Open Systems Interconnection -
+       Specification of Basic Encoding Rules for Abstract Notation One
+       (ASN.1), International Organization for Standardization,
+       International Standard 8825, December 1987.
+
+   [9] IEEE, "IEEE 802.3 Layer Management", November 1988.
+
+  [10] Kastenholz, F., "IEEE 802.3 Layer Management Draft compatible MIB
+       for TCP/IP Networks", electronic mail message to mib-
+       wg@nnsc.nsf.net, 9 June 1989.
+
+  [11] McCloghrie, K., Editor, "Extensions to the Generic-Interface
+       MIB", RFC 1229, Hughes LAN Systems, Inc., May 1991.
+
+  [12] IEEE, "Carrier Sense Multiple Access with Collision Detection
+       (CSMA/CD) Access Method and Physical Layer Specifications",
+       ANSI/IEEE Std 802.3-1985.
+
+  [13] Rose, M., and K. McCloghrie, Editors, "Concise MIB Definitions",
+       RFC 1212, Performance Systems International, Hughes LAN Systems,
+       March 1991.
+
+  [14] Cook, J., Editor, "Definitions of Managed Objects for Ethernet-
+       Like Interface Types", RFC 1284, Chipcom Corporation, December
+       1991.
+
+  [15] Kastenholz, F., "Definitions of Managed Objects for the
+       Ethernet-like Interface Types", RFC 1398, FTP Software, Inc.,
+       January 1993.
+
+  [16] Case, J., McCloghrie, K., Rose, M., and S. Waldbusser, "Structure
+       of Management Information for version 2 of the Simple Network
+       Management Protocol (SNMPv2)", RFC 1442, SNMP Research, Inc.,
+       Hughes LAN Systems, Dover Beach Consulting, Inc., Carnegie Mellon
+       University, April 1993.
+
+  [17] Galvin, J., and K. McCloghrie, "Administrative Model for version
+       2 of the Simple Network Management Protocol (SNMPv2)", RFC 1445,
+       Trusted Information Systems, Hughes LAN Systems, April 1993.
+
+  [18] Case, J., McCloghrie, K., Rose, M., and S. Waldbusser, "Protocol
+       Operations for version 2 of the Simple Network Management
+       Protocol (SNMPv2)", RFC 1448, SNMP Research, Inc., Hughes LAN
+       Systems, Dover Beach Consulting, Inc., Carnegie Mellon
+       University, April 1993.
+
+  [19] McCloghrie, K., and F. Kastenholz, "Evolution of the Interfaces
+       Group of MIB-II", RFC 1573, Hughes LAN Systems, FTP Software,
+       January 1994.
+
+  [20] Kastenholz, F., "Definitions of Managed Objects for the
+       Ethernet-like Interface Types", STD 50, RFC 1623, FTP Software,
+       Inc., May 1994.
+7.	安全考虑
+安全问题没有在这里讨论。
+8.	作者地址：
+   Frank Kastenholz
+   FTP Software, Inc.
+   2 High Street
+   North Andover, Mass, USA 01845
+
+   Phone: 508-685-4000
+   EMail: kasten@ftp.com
+
+RFC1643―Definitions of Managed Objects for the Ethernet-like Interface Types                                                      
+以太网接口管理对象
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,701 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com	
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-9-19
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本
+文档的翻译及版权信息。
+
+
+
+Network Working Group                                           D. ThroopRequest 
+for Comments: 1461                                      Data General Corporation 
+May 1993
+
+
+X.25上多协议内部互联的SNMP MIB扩展
+(SNMP MIB extension for Multiprotocol Interconnect over X.25)
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得
+到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准化程度和状态。
+本备忘录的发布不受任何限制。
+摘要
+此备忘定义了基于TCP/IP的INTERNET网络管理协议使用的管理信息库（MIB）的一个分支，
+主要是定义了运行于X.25上的管理多协议互连流量的对象。这个对象，再加上“NMP MIB extension 
+for the Packet Layer of X.25”、“SNMP MIB extension for LAPB”以及“Definitions of Managed 
+Objects for RS-232-like Hardware Devices”中定义的对象组成了对基于X.25协议栈流量的管理。
+目录
+1.网络管理构架	2
+2.对象	2
+2.1.定义的格式	2
+3.概述	2
+3.1.范围	2
+3.2.MIB对象的构造	3
+4.定义	3
+5.致谢	14
+6.参考文献	15
+7.有关安全方面的考虑因素	16
+8.作者地址	16
+
+1.网络管理构架
+INTERNET标准网络管理框架由三部分组成。它们给出了定义对象的规则、对象的定义和使用
+对象的协议。
+网络管理框架按照抽象信息树的方式组织对象。树的分支命名对象，树的叶子包含用来实现管
+理的值。这棵树就叫做管理信息库或简称为MIB（此概念在STD 16，RFC 1155“The Structure of 
+Management Information”或SMI[1]中给出）。SMI定义树干及定义树叶时使用的对象种类。STD 16，
+RFC 1212，“Towards Concise MIB Definitions”[3]，定义了一套更简明的保留了全部SMI特征的
+描述机制。
+对于Internet协议族，可以在STD 17，RFC 1213[4]，“Management Information Base for 
+Network Management of TCP/IP-based internets”中找到对核心MIB的定义。
+STD 15，RFC 1157 [2]定义了SNMP协议本身，即如何在远程MIB中使用对象。
+为了实验和评估，可以在MIB树的结构中定义新的对象。
+2.对象
+MIB中对象的定义包括对象名称和种类。对象名称和种类使用SMI中定义的ASN.1子类定义。
+对象用ASN.1对象标识符命名来指定对象类型，这些名称是由管理员指定的。对象名称，加上一个
+可选的对象事例，唯一的标识了一个对象的特定事例。为了方便，我们常常使用一个文本串来标识
+对象，称为描述符。
+对象还包括定义与对象类型相对应的抽象数据结构的语法。ASN.1语言提供了完成此目的的原
+语。SMI故意限制了ASN.1的结构，以便简化和易于使用。
+2.1.定义的格式
+第4节讲述了包含在所有MIB模块中对象种类的规范。对象种类按照SMI中约定的习惯定义，
+如同“Towards Concise MIB Definitions”中制定的那样。
+3.概述
+3.1.范围
+以下定义的对象事例提供了RFC 1356中定义的X.25上多协议互联流量的管理信息。多协议包
+(IP,CLNP,ES-IS,或者SNAP)封装在X.25帧中，在节点间传输。基于RFC1356的所有节点必须实
+现这个MIB。
+应用于节点软件中的MIB对象管理X.25连接和完成协议封装。此节点可能是包的原或目的主
+机的最后节点，或者是负责转发包的路由器和桥。因为RFC1356需要X.25，所以实现RFC1356
+的节点必须实现RFC 1382中定义的X.25 MIB。
+此MIB只应用于X.25服务上的多协议互联，不应用于其他使用X.25的软件（如PAD）。因而
+这些软件存在与否或是否执行不会直接影响这些对象（然而这些软件使用的连接仍将出现在X.25 
+MIB中）。
+3.2.MIB对象的构造
+MIB中的对象组成三个表：mioxPleTable，mioxPeerTable和mioxPeerEncTable。表中的所有
+对象必须于MIB一致。
+MioxPleTable定义了与X.25多协议连接流量使用的接口有关的信息。这些接口使用INTERNET
+标准ddn-x25或rfc877-x25中的ifType对象标识。ddn-x25类中的接口使用一种自包含算法IP将
+地址翻译成X.121地址，或相反。rfc877-x25类中的接口没有这么一种算法。注意不是所有的X.25
+接口都将用来承载多协议互联流量，这些接口不会包含在mioxPleTable条目中。MioxPleTable中的
+条目只包含那些承载了多协议互联流量的接口，并按照ifIndex进行索引，易于找到一个接口的对应
+表项。
+MioxPeerTable表包含通知X.25对交换包所必须的信息，如双方的X.121地址和定位一个访问
+所需的X.25访问参数的指针。此表中对象使用的事例标识符独立于其他接口和那些MIB以外定义
+的其他表，它包含访问X.25对使用的接口的ifIndex值。
+MioxPeerEncTable包含在X.25对之间通讯使用的封装类型的信息。此表在事例标识上是
+MioxPeerTable的扩展。MioxPeerTable表中的每一个条目可能包含零条和多条此表中的条目。此
+表中不包含任何在MioxPeerTable表中没有对应项的条目。
+4.定义
+ MIOX25-MIB DEFINITIONS::= BEGIN
+
+ IMPORTS
+Counter,
+TimeTicks
+FROM RFC1155-SMI
+OBJECT-TYPE
+FROM RFC-1212
+DisplayString, transmission,
+ifIndex
+FROM RFC1213-MIB
+InstancePointer
+FROM RFC1316-MIB
+X121Address
+FROM RFC1382-MIB
+PositiveInteger
+FROM RFC1381-MIB;
+
+-- IP over X.25 MIB
+
+ miox OBJECT IDENTIFIER ::= { transmission 38 }
+
+ mioxPleOBJECT IDENTIFIER ::= { miox 1 }
+ mioxPeerOBJECT IDENTIFIER ::= { miox 2 }
+
+ -- ###########################################################
+ --Ple Table
+ -- ###########################################################
+
+ --实现RFC1356的系统也必须实现这组中的所有对象 。
+
+ mioxPleTable OBJECT-TYPE
+SYNTAXSEQUENCE OF MioxPleEntry
+ACCESSnot-accessible
+STATUSmandatory
+描述
+“此表包含与X.25 PLE（Packet Level Entity）接口相关信息。”
+::= { mioxPle 1}
+
+ mioxPleEntry OBJECT-TYPE
+SYNTAXMioxPleEntry
+ACCESSnot-accessible
+STATUSmandatory
+描述
+“这些对象管理X.25中其他协议的封装。”
+INDEX { ifIndex }
+::= { mioxPleTable 1 }
+
+ MioxPleEntry ::= SEQUENCE {
+mioxPleMaxCircuits
+INTEGER,
+mioxPleRefusedConnections
+Counter,
+mioxPleEnAddrToX121LkupFlrs
+Counter,
+mioxPleLastFailedEnAddr
+OCTET STRING,
+mioxPleEnAddrToX121LkupFlrTime
+TimeTicks,
+mioxPleX121ToEnAddrLkupFlrs
+Counter,
+mioxPleLastFailedX121Address
+X121Address,
+mioxPleX121ToEnAddrLkupFlrTime
+TimeTicks,
+mioxPleQbitFailures
+Counter,
+mioxPleQbitFailureRemoteAddress
+X121Address,
+mioxPleQbitFailureTime
+TimeTicks,
+mioxPleMinimumOpenTimer
+PositiveInteger,
+mioxPleInactivityTimer
+PositiveInteger,
+mioxPleHoldDownTimer
+PositiveInteger,
+mioxPleCollisionRetryTimer
+PositiveInteger,
+mioxPleDefaultPeerId
+InstancePointer
+}
+
+ mioxPleMaxCircuits OBJECT-TYPE
+SYNTAXINTEGER (0..2147483647)
+ACCESSread-write
+STATUSmandatory
+描述
+“X.25可以对此接口一次开放的最大电路数量。值零表明接口不允许其他额外的电路（好像它
+很快将关闭）。值2147483647表明允许没有限制数量的电路。”
+::= { mioxPleEntry 1 }
+
+ mioxPleRefusedConnections OBJECT-TYPE
+SYNTAXCounter
+ACCESSread-only
+STATUSmandatory
+描述
+“本系统清除的远程系统对本系统的X.25访问数量，接口事例应当标识X.25访问进入的接口。”
+::= { mioxPleEntry 2 }
+
+ mioxPleEnAddrToX121LkupFlrs OBJECT-TYPE
+SYNTAXCounter
+ACCESSread-only
+STATUSmandatory
+描述
+“封装地址到X.121地址翻译时，没有找到对应X.121地址的失败次数。封装地址可以在
+mioxPeerTable 表中查到或通过如DDN的算法翻译得到。成功识别的地址不增加此计数器的值。
+未能识别的地址（反映了反常的包传递情况）会增加此计数器的值。
+如果地址翻译失败，就很难决定哪一个PLE条目应当记数此次失败。这种情况下，将选择表中
+的第一个可能条目。代理将记录此次失败，即使他们不确定哪一个PLE应当与此失败相关联。”
+::= { mioxPleEntry 3 }
+
+ mioxPleLastFailedEnAddr OBJECT-TYPE
+SYNTAXOCTET STRING (SIZE(2..128))
+ACCESSread-only
+STATUSmandatory
+描述
+“最后没有找到对应X.121地址，使得mioxPleEnAddrToX121LkupFlrs值增加的封装地址。
+这个对象的第一个八位字节包含封装类型，其余的八位字节包含失败的地址类型。如对于一个IP地
+址，长度将是五个字节，第一个字节是204（十六进制是CC），其余的四个字节包含IP地址。对于
+SNAP封装，第一个字节是128(十六进制是80)，其余的字节串包含SNAP头。”
+::= { mioxPleEntry 4 }
+
+ mioxPleEnAddrToX121LkupFlrTime OBJECT-TYPE
+SYNTAXTimeTicks
+ACCESSread-only
+STATUSmandatory
+描述
+" 从一个封装地址到X.121地址翻译，而没有找到对应X.121地址时，sysUpTime 的最新值"
+::= { mioxPleEntry 5 }
+
+ mioxPleX121ToEnAddrLkupFlrs OBJECT-TYPE
+SYNTAXCounter
+ACCESSread-only
+STATUSmandatory
+描述
+“从X.121地址到封装地址翻译时，没有找到对应封装地址的失败次数。算法成功识别的地址
+不增加此计数器的值。此值反映了碰到未能识别X.25对的反常情况下，接受访问的次数。”
+::= { mioxPleEntry 6 }
+
+ mioxPleLastFailedX121Address OBJECT-TYPE
+SYNTAXX121Address
+ACCESSread-only
+STATUSmandatory
+描述
+“最后使mioxPleX121ToEnAddrLkupFlrs 值增加的X.121地址。”
+::= { mioxPleEntry 7 }
+
+ mioxPleX121ToEnAddrLkupFlrTime OBJECT-TYPE
+SYNTAXTimeTicks
+ACCESSread-only
+STATUSmandatory
+描述
+“从X.121地址到封装地址翻译，而没能找到对应的封装地址时，sysUpTime 的最新值。”
+::= { mioxPleEntry 8 }
+
+ mioxPleQbitFailures OBJECT-TYPE
+SYNTAXCounter
+ACCESSread-only
+STATUSmandatory
+描述
+“因为Q比特失效而关闭的连接的次数。”
+::= { mioxPleEntry 9 }
+
+ mioxPleQbitFailureRemoteAddress OBJECT-TYPE
+SYNTAXX121Address
+ACCESSread-only
+STATUSmandatory
+描述
+“由于Q比特失效而关闭的最近一次连接的远程地址。”
+::= { mioxPleEntry 10 }
+
+mioxPleQbitFailureTime OBJECT-TYPE
+SYNTAXTimeTicks
+ACCESSread-only
+STATUSmandatory
+描述
+“由于Q比特失效而关闭的连接的sysUpTime 的最新值。这也是使mioxPleQbitFailures 增加
+的最后一次。”
+::= { mioxPleEntry 11 }
+
+ mioxPleMinimumOpenTimer OBJECT-TYPE
+SYNTAXPositiveInteger
+ACCESSread-write
+STATUSmandatory
+描述
+“允许连接关闭之前接口保持连接打开的最短时间，以毫秒为单位。零值表示没有记数。”
+DEFVAL { 0 }
+::= { mioxPleEntry 12 }
+
+ mioxPleInactivityTimer OBJECT-TYPE
+SYNTAXPositiveInteger
+ACCESSread-write
+STATUSmandatory
+描述
+“在关闭之前接口保持空闲连接打开的时间总计，以毫秒为单位。值2147483647表明没有记
+数。”
+DEFVAL { 10000 }
+::= { mioxPleEntry 13 }
+
+ mioxPleHoldDownTimer OBJECT-TYPE
+SYNTAXPositiveInteger
+ACCESSread-write
+STATUSmandatory
+描述
+“保持时间，以毫秒记数。在上一次没有成功访问一主机后，尝试下一个访问前等待的最短时
+间。值2147483647表面主机未再作尝试。”
+DEFVAL { 0 }
+::= { mioxPleEntry 14 }
+
+ mioxPleCollisionRetryTimer OBJECT-TYPE
+SYNTAXPositiveInteger
+ACCESSread-write
+STATUSmandatory
+描述
+" Collision Retry 计数器，毫秒为单位。在一次访问尝试中，超过了最大电路数量后，延迟下一
+次访问的时间。"
+DEFVAL { 0 }
+::= { mioxPleEntry 15 }
+
+ mioxPleDefaultPeerId OBJECT-TYPE
+SYNTAXInstancePointer
+ACCESSread-write
+STATUSmandatory
+描述
+“它标识mioxPeerTable表中此接口使用的缺省参数的事例。此对象标识的条目可以是零长度
+封装地址和零长度X.121地址。
+这些缺省参数用于在mioxPeerTable表中没有条目的主机间的连接。当使用ddn-x25 IP-X.25
+地址映射或接受不再mioxPeerTable表中的其他主机的连接时，会产生这些连接。
+与mioxPeerTable表条目有相同索引的MioxPeerEncTable表条目指定了访问封装类型，此PLE
+接受那些不再mioxPeerTable表中的双方。如果mioxPeerEncTable表中不包含任何条目，此PLE
+将不接受那些不在mioxPeerTable表中条目的访问。”
+::= { mioxPleEntry 16 }
+
+ -- ###########################################################
+ --Peer Table
+ -- ###########################################################
+--实现RFC1356的系统也必须实现这组中的所有对象。
+
+ mioxPeerTable OBJECT-TYPE
+SYNTAXSEQUENCE OF MioxPeerEntry
+ACCESSnot-accessible
+STATUSmandatory
+描述
+“此表包含那些可能交换包的双方及其的信息。”
+::= { mioxPeer 1 }
+
+ mioxPeerEntry OBJECT-TYPE
+SYNTAXMioxPeerEntry
+ACCESSnot-accessible
+STATUSmandatory
+描述
+“每一方的信息。”
+INDEX { mioxPeerIndex}
+::= { mioxPeerTable 1 }
+
+ MioxPeerEntry ::= SEQUENCE {
+mioxPeerIndex
+PositiveInteger,
+mioxPeerStatus
+INTEGER,
+mioxPeerMaxCircuits
+PositiveInteger,
+mioxPeerIfIndex
+PositiveInteger,
+mioxPeerConnectSeconds
+Counter,
+mioxPeerX25CallParamId
+InstancePointer,
+mioxPeerEnAddr
+OCTET STRING,
+mioxPeerX121Address
+X121Address,
+mioxPeerX25CircuitId
+InstancePointer,
+mioxPeerDescr
+DisplayString
+}
+
+ mioxPeerIndexOBJECT-TYPE
+SYNTAXPositiveInteger
+ACCESSread-only
+STATUSmandatory
+描述
+“唯一标识条目的索引值。此索引独立于其他的索引。”
+::= { mioxPeerEntry 1 }
+
+-- 系统可以在没有mioxPeerStatus设置时，通过值clearCall或makeCall声明于此MIB一致。
+必须接受所有定义的其他值。实施者应当意识到这些值提供了更丰富的管理内容，在实现时鼓励接
+受这些值。
+ mioxPeerStatus OBJECT-TYPE
+SYNTAXINTEGER {
+ valid (1),
+ createRequest (2),
+ underCreation (3),
+ invalid (4),
+ clearCall (5),
+ makeCall (6)
+ }
+ACCESSread-write
+STATUSmandatory
+描述
+“此值报告了双方条目的状态。有效的值标识一个正常的正在被代理使用的条目，
+underCreation 值表明一个新建立的条目，此条目尚未被使用，因为创建管理站点仍然在设置值。
+无效的值表明此条目不再被使用，代理可以随意的删除此条目。管理站点可以随意是哟嘎无效
+状态的条目。
+通过设置createRequest 的值来创建条目。只有不存在的或无效的条目可以设置
+createRequest 。依据得到一个有效的createRequest ，代理将在underCreation状态下创建一个
+条目。这个对象不可以直接设置为值underCreation ，条目只能通过设置createRequest 值来创建。
+非无效状态下的条目不能设置createRequest 。
+系统不使用值为underCreation 的条目，管理工作站可以改变表中其他对象的值。管理工作站
+也应当记住使用相同的索引值作为本端条目来配置mioxPeerEncTable 的值
+underCreation 状态的一个条目可以设置为有效或无效。多个underCreation 的条目将保持状
+态直到1）代理时间超时2）它们被设置为有效3）它们被设置为无效。如果一个代理注意到一个条
+目已经在underCreation 状态一段长时间，它可能认为管理站已经无效不工作了。谨慎的代理将之
+理解为等待有人输入，并允许决定这种非正常长时期的可能性。
+一旦管理站点完成了所有条目的字段，将设置有效的值。这会使条目激活。
+有效状态的条目也可以通过设置makeCall或clearCall来建立或清除X.25访问对方。在此设置
+请求后，条目仍然在有效状态。设置makeCall的值将使代理初始化一个由条目指定的X.25访问请
+求。设置clearCall的值将使代理初始化一个由条目指定的清除X.25访问请求。每一个设置请求将
+初始化另一个访问请求或清除请求（依赖于最大的允许值）；这意味着没有得到回应的管理工作站应
+当询问以在重发请求前判别是否一个访问事实上是定位还是被清除。不在有效状态条目不能设置
+makeCall或clearCall。
+makeCall和clearCall的值为设备上的电路控制提供，这些设备使用没有地址识别的静态电路
+分配完成以太桥接；那些基于动态目标地址动态定位访问的其他设备可能拒绝这些请求。
+因为设置了createRequest而（重新）生成一个新条目的代理也应当用mioxPeerEncIndex 1
+和mioxPeerEncType的204(十六进制CC)（重新）生成mioxPeerEncTable 表的条目。”
+::= { mioxPeerEntry 2 }
+
+ mioxPeerMaxCircuits OBJECT-TYPE
+SYNTAXPositiveInteger
+ACCESSread-write
+STATUS mandatory
+描述
+“双方通讯所允许的X.25电路最大值。”
+DEFVAL { 1 }
+::= { mioxPeerEntry 3 }
+
+ mioxPeerIfIndex OBJECT-TYPE
+SYNTAXPositiveInteger
+ACCESSread-write
+STATUSmandatory
+描述
+“ifIndex 对象的值，用来访问对端X.25接口。”
+DEFVAL { 1 }
+::= { mioxPeerEntry 4 }
+
+ mioxPeerConnectSeconds OBJECT-TYPE
+SYNTAXCounter
+ACCESSread-only
+STATUSmandatory
+描述
+“访问本端激活的秒数。当两端连接打开后，此计数器每个一秒增加一。如果两个访问同时打
+开，实际上过了一秒，将产生两秒的连接时间。”
+::= { mioxPeerEntry 5 }
+
+ mioxPeerX25CallParamId OBJECT-TYPE
+SYNTAXInstancePointer
+ACCESSread-write
+STATUSmandatory
+描述
+“RFC 1382的x25CallParmTable中的索引对象事例，用于同远端主机通讯时使用的X.25访
+问参数。值{0 0 }表示没有指定参数。”
+DEFVAL { {0 0} }
+::= { mioxPeerEntry 6 }
+
+ mioxPeerEnAddrOBJECT-TYPE
+SYNTAX OCTET STRING (SIZE (0..128))
+ACCESSread-write
+STATUSmandatory
+描述
+“此表条目映射的远程主机的封装地址。零长度表示远程IP地址是未知的，或是未用PLE缺
+省指定的。
+此对象的第一个八位字串包含封装类型，其余八位字串包含那个类型的地址。比如IP地址，长
+度将是五个字节，第一个字节是204（十六进制是CC）,其余的四个字节包含IP地址。对于SNAP
+封装，第一个字节是128（十六进制是80）,其余的字节串包含SNAP头。”
+DEFVAL { ''h }
+::= { mioxPeerEntry 7 }
+
+ mioxPeerX121Address OBJECT-TYPE
+SYNTAXX121Address
+ACCESSread-write
+STATUSmandatory
+描述
+“此表条目映射的远程主机的X.25地址。零长度字串表示X.25地址是未用PLE缺省指定的。”
+DEFVAL { ''h }
+::= { mioxPeerEntry 8 }
+
+ -- Systems can claim conformance to this MIB without implementing sets to 
+mioxPeerX25CircuitId. However systems that use PVCs with RFC1356 are encouraged to 
+implement sets.
+ mioxPeerX25CircuitId OBJECT-TYPE
+SYNTAXInstancePointer
+ACCESSread-write
+STATUSmandatory
+描述
+“此对象标识表中条目映射的X.25双方打开电路的索引事例。值{0 0}表示目前没有连接激活。
+对于多连接来说，它标识连接的多个表条目的索引。这只在使用PVC时才记录，也就是说记录下的
+标识电路表条目一定时PVC。”
+DEFVAL { {0 0} }
+::= { mioxPeerEntry 9 }
+
+ mioxPeerDescrOBJECT-TYPE
+SYNTAXDisplayString (SIZE (0..255))
+ACCESSread-write
+STATUSmandatory
+描述
+“此对象返回双方任何标识信息。代理可提供在双方配置文件条目中找到的注释信息。零长度
+字串表示没有可获取的信息。”
+DEFVAL { ''h }
+::= { mioxPeerEntry 10 }
+
+ -- ###########################################################
+ --Peer Encapsulation Table
+ -- ###########################################################
+
+ mioxPeerEncTable OBJECT-TYPE
+SYNTAXSEQUENCE OF MioxPeerEncEntry
+ACCESSnot-accessible
+STATUSmandatory
+描述
+“该表包含了对等体用于通讯的封装的列表。该表有两个索引，第一个用于确定对等体，第二
+个用于区分封装类型。
+在mioxPeerTable中的第一个索引确定了相应的入口。第二个索引给出了不同封装的优先权。
+封装类型是按优先级顺序排列的。对于呼叫一个对等体，首先会试验第一个入口(1的
+mioxPeerEncIndex)是。如果呼叫不成功，由于呼叫用户数据不完整，远程主机清除该呼叫，就会
+尝试列表中的下一个入口。会尝试每一个入口，直到列表耗尽。
+为了响应一个呼叫，对等体请求的封装类型必须能从列表中找到，否则拒绝该呼叫。如果列表
+中的对等体没有入口，就会拒绝所有从对等体请求的呼叫。
+当相同索引的mioxPeerStatus对象有underCreation值时，该表中的对象才能设置。当状态对
+象废止和删除时，列表中的对等体索引入口也必须删除。”
+::= { mioxPeer 2 }
+
+ mioxPeerEncEntry OBJECT-TYPE
+SYNTAXMioxPeerEncEntry
+ACCESSnot-accessible
+STATUSmandatory
+描述
+“每个连接的信息。”
+INDEX { mioxPeerIndex, mioxPeerEncIndex}
+::= { mioxPeerEncTable 1 }
+
+MioxPeerEncEntry ::= SEQUENCE {
+mioxPeerEncIndex
+PositiveInteger,
+mioxPeerEncType
+INTEGER
+}
+
+ mioxPeerEncIndexOBJECT-TYPE
+SYNTAXPositiveInteger
+ACCESSread-only
+STATUS mandatory
+描述
+“表中的第二个索引，以区别不同的封装类型。”
+::= { mioxPeerEncEntry 1 }
+
+ mioxPeerEncType OBJECT-TYPE
+SYNTAXINTEGER (0..256)
+ACCESSread-write
+STATUSmandatory
+描述
+“封装类型的值。对于IP封装，这个值是204（十六进制是CC）。对于SNAP封装的包，这
+个值是128（十六进制是80）。对于CLNP,ISO8473，这个值是129（十六进制是81）。对于ES-IS,ISO 
+9542，这个值是130（十六进制82）。值197（十六进制C5）标识Blacker X.25封装。值0标识
+NULL封装。
+此值只有在同一mioxPeerIndex mioxPeerStatus对象值为underCreation时才记录。设置此对
+象的值为256将删除条目。当删除一个条目时，在同一mioxPeerEncTable表中有相同
+mioxPeerIndex以及比删掉的条目有更高的mioxPeerIndex值的条目的mioxPeerEncIndex都将减
+一。”
+::= { mioxPeerEncEntry 2 }
+
+ -- ###########################################################
+
+结束
+5.致谢
+本文档由x25mib工作组提出：
+Fred Baker
+ACC
+Art Berggreen
+ACC
+Frank Bieser
+
+Gary Bjerke
+Tandem
+Bill Bowman
+HP
+Christopher Bucci
+Datability
+Charles Carvalho
+ACC
+Jeff Case
+University of Tennessee at Knoxville
+Angela Chen
+HP
+Carson Cheung
+BNR
+Tom Daniel
+Spider Systems
+Chuck Davin
+MIT
+Billy Durham
+Honeywell
+Richard Fox
+Synoptics
+Doug Geller
+Data General
+Herve Goguely
+LIR Corp
+Andy Goldthorpe
+British-Telecom
+Walter D. Guilarte
+
+David Gurevich
+
+Steve Huston
+Consultant
+Jon Infante
+ICL
+Frank Kastenholz
+FTP Software
+Zbigniew Kielczewski
+Eicon
+Cheryl Krupezak
+Georgia Tech
+Mats Lindstrom
+Diab Data AB
+Andrew Malis
+BBN
+Evan McGinnis
+3Com
+Gary (G.P.)Mussar
+BNR
+Chandy Nilakantan
+3Com
+Randy Pafford
+Data General
+Ragnar Paulson
+The Software Group Limited
+Dave Perkins
+Synoptics
+Walter Pinkarschewsky
+DEC
+Karen Quidley
+Data General
+Chris Ranch
+Novell
+Paul S. Rarey
+DHL Systems Inc.
+Jim Roche
+Newbridge Research
+Philippe Roger
+LIR Corp.
+Timon Sloane
+
+Mike Shand
+DEC
+Brad Steina
+Microcom
+Bob Stewart
+Xyplex
+Tom Sullivan
+Data General
+Rodney Thayer
+Sable Technology Corporation
+Mark Therieau
+Microcom
+Jane Thorn
+Data General
+Dean Throop
+Data General
+Maurice Turcotte
+Racal Datacom
+Mike Zendels
+Data General
+6.参考文献
+[1] Rose M., and K. McCloghrie, "Structure and Identification of Management Information for 
+TCP/IP-based internets", STD 16, RFC 1155, Performance Systems International, Hughes LAN 
+Systems, May 1990.
+[2] Case, J., Fedor, M., Schoffstall, M., and J. Davin, "Simple Network Management Protocol", 
+STD 15, RFC 1157, SNMP Research, Performance Systems International, Performance Systems 
+International, MIT Laboratory for Computer Science, May 1990.
+[3] Rose, M. and K. McCloghrie, Editors, "Towards Concise MIB Definitions", STD 16, RFC 
+1212, Performance Systems International, Hughes LAN Systems, March 1991.
+[4] Rose M., Editor, "Management Information Base for Network Management of 
+TCP/IP-based internets", STD 17, RFC 1213. Performance Systems International, March 1991.
+[5] "Information processing systems - Open Systems Interconnection - Specification of 
+Abstract Syntax Notation One (ASN.1)", International Organization for 
+Standardization.International Standard 8824, December, 1987.
+[6] Stewart, B., Editor, "Definitions of Managed Objects for RS-232- like Hardware Devices", 
+RFC 1317, Xyplex, Inc., April 1992.
+[7] Throop, D., and F. Baker, "SNMP MIB extension for X.25 LAPB", RFC 1381, Data General 
+Corporation, Advanced Computer Communications, November 1992.
+[8] Throop, D., Editor, "SNMP MIB extension for the X.25 Packet Layer", RFC 1382, Data 
+General Corporation, November 1991.
+[9] Malis, A., Robinson, D., and R. Ullmann "Multiprotocol Interconnect on X.25 and ISDN in 
+the Packet Mode", RFC 1356, BBN Communications, Computervision Systems Integration, 
+Process Software Corporation, August 1992.
+7.有关安全方面的考虑因素
+本备忘录不讨论安全问题。
+8.作者地址
+Dean D. Throop
+Data General Corporation
+62 Alexander Dr.
+Research Triangle Park, NC 27709
+Phone: (919) 248-6081
+EMail: throop@dg-rtp.dg.com
+RFC1461――SNMP MIB extension for Multiprotocol Interconnect over X.2           X.25 MIB的多协议内部互联             
+
+
+1
+RFC文档中文翻译计划

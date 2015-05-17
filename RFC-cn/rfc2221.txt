@@ -1,0 +1,178 @@
+
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-11-5
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+Network Working Group                                           M. Gahrns
+Request for Comments: 2221                                      Microsoft
+Category: Standards Track                                    October 1997
+
+
+IMAP4登录参照
+（RFC2221――IMAP4 Login Referrals）
+
+本备忘录的状态
+本文为Internet社区描述了一种Internet标准跟踪协议，需要讨论和建议以进一步改
+进。关于本协议的标准化状态和进展请参阅最新的“Internet正式协议标准”（STD 1）。本
+备忘录的发布没有限制。
+
+版权信息
+   Copyright (C) The Internet Society (1997).  All Rights Reserved.
+
+
+目录
+1. 摘要	1
+2. 本文中的约定	2
+3. 概述	2
+4. 本地服务器参照	2
+4.1.  LOGIN和AUTHENTICATE参照	3
+4.2 连接启动参照BYE	3
+5. 形式语法	3
+6. 安全性问题	3
+7. 参考	4
+8.  感谢	4
+9. 作者地址	4
+10. 版权声明	5
+
+1. 摘要
+在处理大量的用户和许多IMAP4[RFC-2060]服务器时，经常需要把用户从一个IMAP4服
+务器转移到另一个。比方说，由于硬件故障或组织结构的变化就会造成这种变化需求。
+如果客户端的IMAP4发生了变化，登录参照允许该客户端透明地连接到可选择的IMAP4
+服务器上。
+参照机制的效率要好于目前的“代理方法（proxy method）”。对于后者，本地IMAP4服
+务器代表客户与远程服务器连接，从远程服务器获取数据然后再传送给客户。参照机制直接
+使客户与远程服务器连接，通常可以提高带宽的利用率，而且在通过远程服务器验证时也不
+需要本地服务器模拟客户的脚色。
+
+2. 本文中的约定
+在例子中，“C：”和“S：”分别表示后面的一行是由客户还是服务器发出的。
+本地服务器是包含用户收件箱的IMAP4服务器。
+远程服务器是包含远程邮箱的服务器。
+文中关键字“必须”、“不得”、“要求”、“应”、“不该”、“应该”、“不应”、“建议”、“可
+以”和“可选”的解释参阅RFC 2119。
+
+3. 概述
+支持本文所述扩展的IMAP4服务器必须在CAPABILITY响应中列出关键字
+LOGIN-REFERRALS。激活服务器的LOGIN-REFERRALS功能不需要客户端的动作。
+支持LOGIN-REFERRALS功能的IMAP4服务器不得对返回参照的服务器返回参照。如果没
+有咨询服务器，客户端不能按照超过10级的参照进行。
+LOGIN-REFERRALS的返回码必须按照[IMAP-URL]的定义包含一个有效的IMAP服务器URL
+参数。
+本地服务器参照由带标记的NO或OK相应，或者不带标记的BYE相应构成，其中包含
+LOGIN-REFERRALS响应码。
+比如：A001 NO [REFERRAL IMAP://user;AUTH=*@SERVER2/] 远程服务器。
+注意
+IMAP-URL规定“user;AUTH=*”是必需的，以免客户端依赖于匿名登录。
+
+4. 本地服务器参照
+本地服务器可以作为AUTHENTICATE或LOGIN命令的响应返回，也可以出现在连接启动标
+志中。如果服务器在带标记的NO相应中返回本地服务器参照，就说明该服务器不含任何该用
+户可以访问的邮箱。如果服务器在带标记的OK响应中返回本地服务器参照，则表明该用户的
+私人邮箱没有在该服务器上，但是该服务器上有一个用户可读的公共信箱。收到本地服务器
+参照后，客户端无法知道这一用户迁移是暂时的还是长期的。
+
+4.1.  LOGIN和AUTHENTICATE参照
+如果IMAP4服务器希望把用户重定向到其它的IMAP4服务器上，那么可以用本地服务器
+参照响应LOGIN或AUTHENTICATE命令。
+例子：C: A001 LOGIN MIKE PASSWORD
+      S: A001 NO [REFERRAL IMAP://MIKE@SERVER2/]
+通知用户本服务器无效，连接SERVER2。
+例子：C: A001 LOGIN MATTHEW PASSWORD
+      S: A001 OK [REFERRAL IMAP://MATTHEW@SERVER2/] 
+通知用户的私人信箱在Server2上，但是可以使用公共信箱。
+例子：C: A001 AUTHENTICATE GSSAPI
+      <交换验证信息>
+      S: A001 NO [REFERRAL IMAP://user;AUTH=GSSAPI@SERVER2/]
+              说明该用户在这个服务器上无效，试连接SERVER2。
+
+4.2 连接启动参照BYE
+如果IMAP4服务器拒绝连接并把客户重定向到其它的IMAP4服务器，可以使用不带标记
+的BYE和REFERRAL响应码应答，其中包含指向本地服务器的IMAP URL。
+例子：S: * BYE [REFERRAL IMAP://user;AUTH=*@SERVER2/]
+			服务器拒绝连接，是连接SERVER2。
+
+5. 形式语法
+下面的语法规范使用了[ABNF]定义的扩展BNF范式。
+这里修改了RFC2060所规定的IMAP4语法中的“res_text_code”元素。
+   resp_text_code =/ "REFERRAL" SPACE <imapurl>
+      ；<imapurl>的定义参见[IMAP-URL]。 
+      ; resp_text_code的基本定义参见[RFC-2060]。
+
+6. 安全性问题
+IMAP4登录参照机制利用了IMAP URL等协议，与一般的互联网URL[RFC 1738]（特别是
+IMAP URL）的安全性相同。
+如果用户验证失败，则服务器不应返回登录参照，这样可以避免把用户帐号信息泄露给
+未授权的用户。
+具有LOGIN-REFERRALS功能，潜在的好处是使编写一个“密码捕捉”服务器更容易了，
+这样的程序可以收集登录数据并提示用户实际使用的IMAP4服务器。在降低编写此类服务器
+难度的同时，参照响应也使得入侵检测更见简单。
+
+7. 参考
+
+   [RFC-2060], Crispin, M., "Internet Message Access Protocol - Version
+   4rev1", RFC 2060, December 1996.
+
+   [IMAP-URL], Newman, C., "IMAP URL Scheme", RFC 2192, Innosoft,
+   September 1997.
+
+   [RFC-1738], Berners-Lee, T., Masinter, L. and M. McCahill, "Uniform
+   Resource Locators  (URL)", RFC 1738, December 1994.
+
+   [RFC-2119], Bradner, S., "Key words for use in RFCs to Indicate
+   Requirement Levels", RFC 2119, March 1997.
+
+   [ABNF], DRUMS working group, Dave Crocker Editor, "Augmented BNF for
+   Syntax Specifications: ABNF", Work in Progress.
+
+8.  感谢
+许多有用的建议都来自私下的讨论和IMAP4邮件列表。特别感谢Raymond Cheng、Mark 
+Crispin、Mark Keasling Chris Newman和Larry Osterman为本文作出的突出贡献。
+
+9. 作者地址
+
+   Mike Gahrns
+   Microsoft
+   One Microsoft Way
+   Redmond, WA, 98072
+
+   Phone: (206) 936-9833
+   EMail: mikega@microsoft.com
+
+10. 版权声明
+
+   Copyright (C) The Internet Society (1997).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implmentation may be prepared, copied, published
+   andand distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE."
+
+
+RFC2221――IMAP4 Login Referrals                                              IMAP4登录参照		
+
+RFC文档中文翻译计划
+
+

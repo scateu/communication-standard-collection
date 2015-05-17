@@ -1,0 +1,266 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：（）
+译文发布时间：2001-11-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转
+载，但必须保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                           D. Thaler
+Request for Comments: 2991                                      Microsoft
+Category: Informational                                          C. Hopps
+                                                     NextHop Technologies
+
+
+
+多路径分发在单点传送和多点传送下一路程段选择
+（RFC2991――Multipath Issues in Unicast and Multicast Next-Hop Selection）
+
+
+本备忘录的状态
+
+	此备忘录为网络成员提供信息。它不详细说明任何形式的一个网络标准，因此这个备忘
+录所作的贡献是有限的。
+
+版权申明
+	Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+
+摘要
+
+	各种各样的路由协议，包括开放式的最短路径优先（OSPF）和中间系统对中间系统
+（ISIS），都明确的遵循ECMP路由。一些路由器的执行也按照RIP的平等选择多路径分发和
+其它的路由协议。在一个转换器上多路径路由的作用是使用某种方法选择哪种传送下一路段
+将给定的数据包送到任意给定的目的地。
+
+目录
+1.介绍	1
+2.关心的问题	2
+3.要求	2
+4.解决办法	3
+4.1. 单点传送转换	4
+4.2. 多点传送转换	4
+5. 适用性	4
+6.冗余的并行连接	4
+7.安全方面的考虑	5
+8.参考书	5
+9.作者地址	5
+10.所有版权申明	6
+10.鸣谢	7
+
+1.介绍
+
+	各种各样的路由协议，包括OSPF和ISIS，明确的按照“平等选择多路径”路由。一些
+路由器的执行也按照RIP的平等选择多路分发和其它的路由协议。使用平等选择多路意味着
+如果多路的平等选择路由到同一目的地，它们能够发现并且在多余的路径中加载平衡。
+
+	多路由在一个转换机上的作用是使用某种方法选择哪种传送下一路段将给定的数据包
+送到任意给定的目的地。此备忘录的概述了目前的惯例，问题和解决办法。
+
+2.关心的问题
+
+	多路由器转换机运许多路径传输。有时通过round-robin来路由，每个数据包按照
+round-robin的形式路由到给定的目的地。这就提供了一种加载平衡的形式，但是有些问题伴
+随着像round-robin或随机而产生：
+
+各种各样的路径MTU
+	由于每个冗长的路径可以有不同的MTU，这就意味着所有的路径MTU能通过一个个
+包的成分而改变，否定了路径MTU发现的有用路径。
+
+各种各样的潜伏因素：
+	由于各种冗长的路径可以有不同的潜伏，会引起数据包在各自路径传输时常常导致不按
+照命令发送，增加了发送的潜伏和缓冲设备。
+
+
+	数据包的重新整理导致TCP认为当一个很长的队列数据包到时替换了以前的那个数据
+包而导致丢失。但有三个或更多数据包时再后来到的包前被接收时，TCP进入了一个被叫
+做“快速转发”的模式，这种模式消耗了额外的带宽（它能够潜伏的促使更多的丢失，减少
+了吞吐量）当它试图转发不必要的被耽搁的数据包时。因此，数据包的重新整理对网络的性
+能是不利的。
+
+调试
+	普通的调试方法像ping和tranceroute在目前的多路径中缺乏可靠性而且甚至是完全错
+误的结果。
+
+在多点传送路由中，多路径的问题是多点传送路由协议通过对同一组地址的所有接收者构造
+一棵单一的树阻止了循环和复制。多点传送路由协议配置现在（DVMRP,PIM-DM,PIM-SM）
+构造最短路径的树来确立任一资源，或是另一个路由器被命名为核心或集合点。
+因此，他们确保复制的方式不会出现因为一个给定的树必须仅能使用对单一树根的下一路
+段。
+
+3.要求
+	在文件的最后，我们将用术语“流程”来代表那个路由器保持路由状态的间隔尺寸。流
+程的精确定义可以依据是实际的执行。例如，一个流程可能由目的地址单独确定，或是由（资
+源地址，目的地址，协议id）三部分确定。因此“流程”不是术语“微流程”的同义词。当
+然，包括实际上由问题的下一路程段选择程序的传输层信息。例如，如果数据包被分段，传
+输层信息不可能在每个数据包中被看到。此外，选择路径依靠传输层域像用在两个相同终端
+的并发线路中的MTU可能否定了隐藏信息的好处。
+	所有在以前的部分中被概括出来的问题会发生当在相同的单点传送或多点传送的数据
+包在多选路径中被分开。正常的解决办法是确保相同的流程总是被用在相同的路径中。
+
+值得注意的两点附加特点：
+
+最小中断：
+	当多路选择被用时，意味着对下一路段是多路线有效的，从考虑的事项来添加删除路程
+比仅仅通过使用“最好"路线时的机会要更多。当多种路径在使用中，因此一系列更优先的
+路线实际上可能被用来传输，由于没使用多路程路线的变动可能会更大，因此潜在的数据包
+重新整理和数据包丢失。所以，由于下一路段的附加或删除而引起的影响就需要最小化活动
+的流程。
+快速执行：
+	附加计算的数量需要前一个数据包应该小。例如，当进行round-robin时，这一计算可
+能由一下一段路程的索引组成。
+
+4.解决办法
+	我们目前提供了三种可能的方法来改进多路径的性能然后讨论他们对单点传送和多点
+传送传输的适用性。
+
+
+N模式的复述	
+	从下一路段的N列表中选择一个下一路段，路由器在确定以流程的数据包头域中执行一
+种N模式的复述。它有快速的优点，所有流程改变路径花费(N-1)/N无论何时当一个下一路
+段被增加或删除。
+
+开端复述：
+	在执行确定流程的数据包头域的复述前路由器先选择一个键。N下一路段已经被分配了
+特殊的区域在复述运行输出的空间。通过比较区域边界的价值路由器能够决定复述价值属于
+哪个区和决定使用哪个下一路段。当下一路段被增加或删除时这种方法有仅仅作用与区域边
+界的流程的优点。对ECMP的开端复述查找能通过一种简单的分配来实现。当下一路段被增
+加或删除时，在1/4和1/2之间所有流程的被改变路径。一种这种方法的分析就能被建立。
+
+最高的随机负荷（HRW）
+	路由器就像在下一路段的地址上那样通过执行对确定流程的数据包头域的复述来为
+EACH的下一路段估计一个键。然后路由器根据结果最高的键值来选择下一路段。这样有利
+于使通过下一路段增加或减少而起作用的流程的数目达到最小，但是这样的花费大约是一个
+N复述模型的N倍。
+	这三种选择性的办法的适用性至少依据两个因素：不管转换机是否维持每一流程的状态
+和CPU对多路转换机是怎样的珍贵。
+	一些路由器因为某些理由可以维持每一流程而不去支持多路径。例如，路由器典型的为
+多点传送流程维持每一流程以至于他们能保持在流程中应该被复制的数据包的接口目录。
+	如果每一流程的状态在一个多路径转换集中被保持，那下一路段的估计能够在状态创建
+的时间里被路由器执行。由于下一路段已被提前估计，因此这就不用像一般的单一下一路段
+那样在数据包转换的时候需要花费额外的时间。在这样的情况下，包括round-robin,随机，
+N模型，开端复述或HRW中的任意一种都可以被用了。在一个流程的生命期中由于通过路由
+器的并发的下一路段估计往往总是被选择同一路径，所以如果转换机的状态能够通过任意理
+由被去掉的话那像N模型，开端复述和HRW这些复述的运行将会更好。这对改进路由的调试
+也是有用的。最后，最佳化路径的稳定性在上面提到的方法中HRW的使用是最好的。
+	如果在转换机中每一流程的状态不能被维持，那使用多点传送下一路段时需要的因为下
+一路段在数据包到达时已经被计算出来。当CPU比流程路径稳定性更珍贵时，在上面提到的
+方法中开端复述将被建议使用。
+
+4.1. 单点传送转换
+	依据执行单点传送的运行可能保持每一流程的状态也可能不被保持。我们建议转换机执
+行保持流程的状态，路由器应该使用HRW在选择下一路段的状态创建时间时，没有每一流程
+状态的转换机使用开端复述。
+4.2. 多点传送转换
+目前的多点传送转换引擎使用根据组和源分址的一个高速缓冲存储器。这就意味着目前的多
+点传送转换机总是保持每个流程的状态，虽然流程因为一些多点传送路由协议可能相当的不
+精确（e.g.从所有的原传送到同一目的地）。由于每一流程的状态都被转换机保持，因此建
+议路由器总是使用HRW来选择下一路段。
+	路由器使用像PIM-SM这样的简明连接协议因此应该用多路径通知当决定连接哪一相邻
+的地方并且发送一条连接信息。例如，当因为一个给定的RP(Rendezvous Point)存在多重
+的下一路段连接信息将被发送到下一个连接，建议为每个组使用HRW来选择下一路段。
+
+5. 适用性
+	运算法则在所有依靠某些复述功能形式（除了round-robin）上讨论。当复述运行被均
+一的分配时平等的流程分配也被完成。由于一般使用的复述功能仅仅当输入数量相当大时才
+变成均一分配，这些运算法则更加适用路由器路由许多流程，例如，一个小的商业设置。
+
+
+
+6.冗余的并行连接
+	当在同一对路由器中使用多重的并行连接时一个相关联的问题就发生了。一个普遍的解
+决办法是当被用于路由时把两个连接捆到一个超连接上。对多点传送转换来说这样两个连接
+减少到一个下一路段的结果是可以防止复制。当一个单点传送或多点传送的包被队列在复合
+连接上时，仍然需要某种前面讨论过的方法来决定传输数据包到那里的物理连接。如果并行
+连接一样，那本文中所讨论的大多数要关心的问题用复合连接可以避免。信息包记录除外，
+因为记录可能在round-robin中仍然发生，反作用于 TCP。
+
+7.安全方面的考虑
+	本文中讨论的分发各种各样的方法从多重有效的下一路段种选择一个下一路段。同样的
+它不直接影响因特网的基础下部构造或是它的应用软件的安全。
+	一个问题值得提一下，然而当下一路段的选择时可预期的，一个攻击者能合成所有同样
+复述的通信量，使得可能开始一个不接受服务的攻击而使某一特殊路径超载。由于当同一下
+一路段总是被选择这一特殊情况，像一个当多路径不被使用时的攻击是最容易的。引进多路
+径路由时得像那样的攻击变得更加困难，复述越是不可预知，操作对任意单一连接的不接受
+服务的攻击就越难。
+
+8.参考书
+	1]  Moy, J., "OSPF Version 2", STD 54, RFC 2328, April 1998.
+
+   [2]  Maufer, T., "Deploying IP Multicast in the Enterprise",
+        Prentice-Hall, 1998.
+
+   [3]  Hopps, C., "Analysis of an Equal-Cost Multi-Path Algorithm", RFC
+        2992, November 2000.
+
+   [4]  Thaler, D., and C.V. Ravishankar, "Using Name-Based Mappings to
+        Increase Hit Rates", IEEE/ACM Transactions on Networking,
+        February 1998.
+
+   [5]  Estrin, D., Farinacci, D., Helmy, A., Thaler, D., Deering, S.,
+        Handley, M., Jacobson, V., Liu, C., Sharma, P. and L. Wei,
+        "Protocol Independent Multicast-Sparse Mode (PIM-SM): Protocol
+        Specification", RFC 2362, June 1998.
+
+   [6]  Allman, M., Paxson, V. and W. Stevens, "TCP Congestion Control",
+        RFC 2581, April 1999.
+
+   [7]  Nichols, K., Blake, S., Baker, F. and D. Black., "Definition of
+        the Differentiated Services Field (DS Field) in the IPv4 and
+        IPv6 Headers", RFC 2474, December 1998.
+9.作者地址
+	Dave Thaler
+   Microsoft
+   One Microsoft Way
+   Redmond, WA  98052
+电话：+1 425 703 8835
+E-Mail: dthaler@dthaler.microsoft.com
+
+Christian E. Hopps
+   NextHop Technologies, Inc.
+   517 W. William Street
+   Ann Arbor, MI 48103-4943
+   U.S.A
+电话：+1 734 936 0291
+E-Mail: chopps@nexthop.com
+10.所有版权申明
+	Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+10.鸣谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC2991――Multipath Issues in Unicast and Multicast Next-Hop Selection
+多路径分发在单点传送和多点传送下一路程段选择
+
+
+1
+RFC文档中文翻译计划

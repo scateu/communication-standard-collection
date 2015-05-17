@@ -1,0 +1,157 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：胡维龙（along_2000 along_2000@263.net）
+译文发布时间：2001-3-19
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                               J. K. Reynolds
+Request for Comments: 918                                                      ISI
+                                                                    October 1984
+
+
+邮局协议
+(RFC-918――POST OFFICE PROTOCOL)
+本文档的状态：
+	本文档提出了一个实现工作站从邮件服务器动态收取邮件的简单协议。本文档提出了一个用于ARPA(Advanced Research Projects Agency (美国国防部)高级研究计划)的Internet社区的协议。它需要进一步进行讨论和建议，以进行进一步的改进。
+1． 介绍：
+	Post Office Protocol (POP)的目的是允许工作站用户从邮件服务器中收取邮件。而工作站发送邮件到邮件服务器预期经由Simple Mail Transfer Protocol(SMTP)协议实现。了解更进一步的信息，请参阅RFC-821,RFC-822。
+本文档处于测试阶段，并且本协议是基于TCP实现的。
+2． 协议：
+	本协议为：邮件服务器开始侦听连接。当连接被打开时，服务器发送一个问候信息并且等待命令。当命令接收到时，服务器执行并且返回一个回应。
+	客户端打开一个连接。等待问候信息。然后发送USER 和 PASS 命令以确认到达邮箱的权限。客户端发送RDEL命令（从邮箱中阅读并且删除所有的消息）或者RETR 命令（仅仅简单地从邮箱中阅读消息）开始一个邮件阅读处理。服务器打开邮箱，加锁。然后向客户端返回邮箱中所有消息的字符数。客户端发送RCEV命令来请求邮件数据。服务器返回相应的邮件数据。当所有的邮件全部接收到时，客户端发送RCVD命令。如果处理开始是客户端发送的事RDEL命令，那么服务器将在此时删除所有的邮件。不论在那种情况，服务器将关闭邮箱并且解锁。客户端发送QUIT命令来终止会话。
+
+
+
+
+
+
+
+一般情况：
+		客户端										服务器
+		----------										------------
+												侦听连接
+打开连接		-->
+* +OK
+等待命令
+	USER Fred		-->
+* +OK
+等待命令
+	PASS password	-->
+* +OK
+等待命令
+（打开并且对邮箱加锁）
+	RDEL mailbox	-->
+* #xxx
+等待命令
+	RCEV			-->
+* 发送一个邮件的拷贝
+等待命令
+	RCVD			-->					（从邮箱中删除邮件，解锁并关闭邮箱）
+* +OK
+等待命令
+	QUIT			-->
+* +OK
+关闭连接		-->					<--		关闭连接
+											侦听新的连接（回到开始）
+命令和回应的对应
+	命令和回复摘要
+
+	命令										回应
+-----------------									-------------------
+USER name									+OK
+PASS password								-Error
+RETR mailbox								#xxx
+RCEV
+RCVD
+QUIT
+NOOP
+RSET
+
+	USER name
+		该命令用于向服务器标志身份。他后面必须跟有PASS命令
+可能的回应：   "+OK" 或者 "-ERR"
+	PASS password
+		PASS 命令用于发送用户的验证口令。USER和PASS命令用于服务器控制访问邮箱的权限。
+可能的回应：   "+OK" 或者 "-ERR"
+	RETR mailbox
+	该命令将开始一个阅读邮件处理。RETR命令用于阅读邮箱中的邮件而不删除它们。他后面必须跟有RCEV命令
+		可能的回应：   "+xxx" 或者 "-ERR"
+	RDEL mailbox
+该命令将开始一个阅读邮件处理。RETR命令用于阅读邮箱中的邮件并且删除它们。他后面必须跟有RCEV命令
+可能的回应：   "+xxx" 或者 "-ERR"
+RCEV
+该命令用于确认客户端已经准备好接受邮件数据，他后面必须跟有RCVD命令。
+	可能的回应：   "+OK" 或者 连接中断
+RCVD
+该命令用于确认客户端已经接收到并且接受了邮件数据。RCVD命令终止邮件阅读处理，如果是一个RDEL处理，有可能邮件并不是必须删除。这将由发送一个错误回复来指示。
+	可能的回应：   "+OK" 或者 "-ERR"
+QUIT
+该命令指示客户端已经完成了这个会话，服务器将发送一个“+OK"回复然后关闭连接
+	可能的回应：   "+OK" 然后关闭连接
+NOOP
+这是一个不完成任何操作的命令，除了服务器发送一个OK 回复外，它不会在服务器上引发任何操作 。
+	可能的回应：   "+OK"
+RSET
+该命令将引发服务器中断当前的处理并且返回等待命令(RDEL,RETR,QUIT,NOOP或者RSET其中的一个) 当中断一个处理时，服务器必须注意正确的关闭邮箱和对邮箱解锁。
+	可能的回应：   "+OK"
+3． 致谢
+   I would like to acknowledge the contributions of Jon Postel, Joel   Goldberger, Dale Chase, and Michael Butler in the development of the Post Office Protocol.
+4． 参考：
+   [1]  Postel, J., "Simple Mail Transfer Protocol", RFC-821, USC/Information Sciences Institute, August 1982.
+   [2]  Crocker, D., "Standard for the Format of ARPA-Internet Text Messages", RFC-822, University of Delaware, August 1982.
+
+
+
+图示：
+         +---+      +---+       +---+       +---+       +---+      
+   Open  |   | +OK  |   |       |   | +OK   |   |       |   | +OK  
+   ----->| S |--+-->| C |------>| S |------>| C |------>| S |---->+
+         |   |  ^   |   | USER  |   |       |   | PASS  |   |     |
+         +---+  |   +---+       +---+       +---+       +---+     |
+                |                 | -ERR                  | -ERR  |
+                |                 V                       V       |
+   +<-----------+<----------------+<----------------------+       |
+   |                                                              |
+   V      +---+       +---+                                       |
+   +----->|   | QUIT  |   | +OK                                   |
+          | C |------>| S |----->Close                            |
+   +----->|   |       |   |                                       |
+   ^      +---+       +---+                                       |
+   |                                                              V
+   +<-------------------------------------------------------------+
+   |                                                              ^
+   |  +---+     +---+      +---+     +---+     +---+     +---+    |
+   |  |   |RETR |   | #xxx |   |RECV |   |DATA |   |RCVD |   |+OK |
+   +->| C |---->| S |----->| C |---->| S |---->| C |---->| S |--->+
+   |  |   | Or  |   |      |   |     |   |     |   |     |   |    ^
+   |  +---+ RDEL+---+      +---+     +---+     +---+     +---+    |
+   |              | -ERR     |         |         |         | -ERR |
+   |              V          |         V         |         |      |
+   +<-------------+          |       Abort       |         |      |
+   |                         V                   V         V      |
+   |        +<---------------+-------------------+         +----->+
+   |        V                                                      
+   |      +---+       +---+                                        
+   |      |   | RSET  |   | +OK                                    
+   +----->| C |------>| S |----->+                                 
+   |      |   |       |   |      |                                 
+   |      +---+       +---+      |                                 
+   |                             V                                 
+   +<----------------------------+                                 
+   |                             ^                                 
+   |      +---+       +---+      |                                 
+   |      |   | NOOP  |   | +OK  |                                 
+   +----->| C |------>| S |----->+                                 
+          |   |       |   |                                        
+          +---+       +---+                                        
+RFC-918 Post Office Protocol                                                           邮局协议
+
+
+
+
+4
+RFC文档中文翻译计划
+

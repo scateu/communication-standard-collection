@@ -1,0 +1,65 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-25
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         S. Crocker
+Request for Comments: #154                                          UCLA
+NIC: #6759                                                   12 May 1971
+Categories: C.4
+Updates: #107
+Obsoletes: #132
+
+
+
+
+               
+
+风格显示
+（Exposition Style） 
+
+
+在用来描述函数的一种教学手段中，我们使用了就像下边儿的这个图形：
+
+           |
+           |                  +-----------------
+           |                 /:
+           |                / :
+           |               /  :
+           |              /   :
+           |             /    :
+           |            /     :
+      -----+------------------------------------
+           |                  a
+           |
+
+其中，邻接的定义域需要有两个方程f1 和 f2来描述，但是方程在分界点处要连续。我通
+常将它们写成如下的形式：
+ 
+        f(x) = f1(x) for x =< a
+        f(x) = f2(x) for x >= a
+
+    聪明的读者会发现，两个定义域在a点处重叠了，但是在重叠处有f1(a) = f2(a)成立，
+所以在语义上并没有产生歧义。
+
+
+
+
+
+     [ This RFC was put into machine readable form for entry ]
+     [ into the online RFC archives by Naoki Matsuhira 5/97 ]
+
+
+
+
+RFC154―Exposition Style                                       风格显示 
+
+
+1
+RFC文档中文翻译计划

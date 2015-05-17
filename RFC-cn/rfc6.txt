@@ -1,0 +1,54 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang  mcsewang@21cn.com）
+译文发布时间：2001-5-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Note											Steve Crocker, UCLA
+RFC-6															  10 April 1969
+
+
+与 Bob Kahn 会话
+（CONVERSATION WITH BOB KAHN）
+
+
+	昨天我与Bob Kahn在BB&N谈话。我们谈到了IMP的、IMP─HOST间通讯的，以及
+HOST软件中的代码转换。
+	BB&N是准备来将6、7、8、9位字符代码转换为8位ASCII码用以传输以及在目标IMP
+集合上再次转换的。BB&N对每一个主机都制订了唯一的一个“一对一的”计划表单。我
+提出那些使用6位代码的区域也许需要进行字符切换，Bob说这样就可能在需要过多切换时
+导致溢出，我认为此种情况出现的概率很小，而且我们应该可以忍受这种可能会出现的溢出，
+事实上溢出几乎是不可避免的。
+	出于对HOST-IMP间通讯的考虑，现在我们用一个5位的连接字段，而用1个位来标示
+转换。也可能是两位的转换标示符，一个用来在发送前转换，一个用于发送后。这将使得另
+一个句柄可以检测或控制系统。
+	
+主机（HOST）可以发送信息或一个信息的部分到它的IMP来指定：
+1、	 追踪
+2、	 转换
+3、	 信息是针对目标IMP还是HOST（主机）
+4、	 发送RFNM信息
+5、	 HOST（主机）处于激活状态还是宕机状态
+6、	同步
+7、	格式化错误信息
+8、	掌管连接清除
+9、	状态请求
+
+IMP可以向它的主机发送下面相关的信息：
+1、	转换
+2、	RFNM已经到达
+3、	IMP激活或宕机
+4、	同步
+5、	主机呼叫无回应
+6、	格式化错误
+7、	IMP中的状态
+
+我还为Bob概括介绍了网络文档1、2、3的内容。
+RFC 6  Conversation with Bob Kahn                                     与 Bob Kahn 会话
+
+
+1
+

@@ -1,0 +1,811 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-10-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group
+K. McCloghrie
+Request for Comments: 2932
+cisco Systems
+Category: Standards Track
+D. Farinacci
+
+Procket Networks
+
+D. Thaler
+
+Microsoft
+
+October 2000
+IPv4组播路由MIB
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2000)。版权所有。
+摘要
+在INTERNET社团中，为了使用网络管理协议，本备忘录定义了管理信息数据库(Management Information Base，缩写为MIB)的一部分。尤其，它描述了用来管理IPv4 IP组播路由的管理对象，不依赖于现在使用的组播路由协议。
+1.  介绍
+这个MIB详细描述了用于管理IP组播路由[16]的对象。它不依赖于现在使用的组播路由协议[17-21]。在其他地方详细说明了特定的组播路由协议的管理对象。类似的，该MIB不支持其他地址系列（包括IPv6）的组播路由的管理。这种管理可以由其他 MIB来支持。
+2.  SNMP管理框架
+SNMP管理框架目前包括五个主要的组成部分：
+* 总体框架，参见RFC 2571[RFC2571]的叙述。
+* 用于管理目的的对象及事件的描述和命名机制。这个管理信息结构（SMI）的第一个版本称为SMIv1，参见STD 16，RFC 1155，STD 16，RFC 1212和RFC 1215。第二版称为SMIv2，参见STD 58，RFC 2578 [RFC2578]，RFC 2579 [RFC2579] 和RFC 2580的描述。
+* 用于传输管理信息的消息协议。SNMP消息协议的第一版称为SNMPv1，由STD 15，RFC 1157[RFC1157]描述。SNMP消息协议的第二版――不是一项Internet标准跟踪协议――称为SNMPv2c，由RFC 1901[RFC1901]和RFC 1906[RFC1906]描述。消息协议的第三版称为SNMPv3，由RFC 1906[RFC1906]、RFC 2572 [RFC2572]和 RFC 2574 [RFC2574]描述。
+* 访问管理信息的协议操作。采用PDU格式的第一个协议操作集合由STD 15，RFC 1157 [RFC1157]描述，采用PDU格式的第二个协议操作集合由RFC 1905 [RFC1905]描述。
+* RFC 2573 [RFC2573]描述了一系列基础应用，RFC 2575 [RFC2575]描述了基于视图的访问控制机制。
+通过虚拟信息存储访问管理对象称为管理信息库或者MIB。在MIB中的对象使用SMI定义的机制定义。本备忘录描述了适应SMIv2的MIB模型。通过适当的转化可以得到遵循SMIv1的MIB。转换后的MIB必须在语义上式等价的，除非不可能转换而不得不忽略的对象及事件（Counter64的使用)。SMIv2的一些机器易读的信息在转换的过程中必须转化成SMIv1的文本描述。不过这种极其易读信息的损失不认为是改变了MIB的语义。
+3.  概述
+该MIB模块包含了1个标量和6个表单。表单是：
+(1)包含了从特定的源发往路由器已知的IP组播组的IP数据报组播路由信息的IP组播路由表单。
+(2)IP组播路由下一跳表单，包含了路由IP组播数据报的下一跳信息。每个表项就是在输出接口上从特定的源地址发送给某个组播组地址的下一跳地址列表中的一个地址。
+(3) IP组播路由Interface表单包含了Interface的组播路由信息细节。
+(4) IP组播范围边界列表包含了组播范围[22]的配置边界。
+(5) IP组播范围名称表单包含了组播范围的可读性名称。
+4.  定义
+IPMROUTE-STD-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+源自SNMPv2-SMI的模块标识符、OBJECT-TYPE、mib-2、Integer32、32位计数器、Counter64、Gauge32、IpAddress、TimeTicks
+源自SNMPv2-TC的RowStatus、TEXTUAL-CONVENTION、TruthValue
+源自SNMPv2-CONF的MODULE-COMPLIANCE、OBJECT-GROUP
+源自SNMP-FRAMEWORK-MIB的SnmpAdminString
+源自IF-MIB的InterfaceIndexOrZero、InterfaceIndex
+源自IANA-RTPROTO-MIB的IANAipRouteProtocol、IANAipMRouteProtocol；
+
+ipMRouteStdMIB 模块标识符
+最新的升级：“200009220000Z” -- 2000年9月22日
+组织：“IETF IDMR工作组”
+联系方式：
+“Dave Thaler
+Microsoft Corporation
+One Microsoft Way
+Redmond，WA  98052-6399
+US
+Phone: +1 425 703 8835
+EMail: dthaler@microsoft.com”
+描述
+“IP组播路由管理的MIB模块，但是不依赖于目前使用的特定的组播路由协议。”
+修订版：“200009220000Z” -2000年9月22日
+描述
+“早期的版本，以RFC 2932发布。”
+::= { mib-2 83 }
+
+-- 本文的约定
+
+LanguageTag ::= 本文约定
+
+DISPLAY-HINT “100a”
+状态：现行
+描述：
+“类RFC 1766的语言标记，把所有字母的字符改为了小写。在用于语言标记时，这种约束使词汇顺序按照SNMP使用的顺序排列。注意：理论上，这种有效的语言标记超出了这种语法允许的长度，因此不可能用这种语法进行表述。在INTERNET上当前采用的语言标记取样建议这种限制不会在实际中引发一系列问题。”
+语法：八位字符串(大小(1到100))
+
+-- 这个MIB的最高层结构
+
+ipMRouteMIBObjects对象标识符 ::= { ipMRouteStdMIB 1 }
+
+ipMRoute对象标识符::= { ipMRouteMIBObjects 1 }
+
+--IP组播路由MIB组
+--提供IP组播组信息的对象集合
+
+ipMRouteEnable对象类型
+语法：整形 { enabled(1)，disabled(2) }
+最大访问权限：读/写
+状态：现行
+描述：
+“该路由器上的IP组播路由的启用状态”
+::= { ipMRoute 1 }
+
+ipMRouteEntryCount对象类型
+语法：32位量规
+最大访问权限：只读
+状态：现行
+描述：
+“在ipMRouteTable行中的数据可以用于监控组播路由列表尺寸。”
+::= { ipMRoute 7 }
+
+ipMRouteTable对象类型
+语法：IpMRouteEntry的序列
+最大访问：不可访问
+状态：现行
+描述：
+“（概念上的）表，包含着组播路由信息 information for 有关由特定的源发送给这个路由器已知的IP组播组的IP数据报。”
+::= { ipMRoute 2 }
+
+ipMRouteEntry对象类型
+语法：IpMRouteEntry
+最大访问权限：不可访问
+状态：现行
+描述：
+“表项（概念上的行），包含着来自某个具体的IP数据报的组播路由信息，以及一个具体的IP组播组地址的编址。通过观测ipMRouteUpTime的值来检测这个表项中累计值的中断。”
+索引{ ipMRouteGroup，
+ipMRouteSource，
+ipMRouteSourceMask }
+::= { ipMRouteTable 1 }
+
+IpMRouteEntry ::= 序列{
+IpMRouteGroup：IpAddress，
+IpMRouteSource：IpAddress，
+IpMRouteSourceMask：IpAddress，
+IpMRouteUpstreamNeighbor：IpAddress，
+IpMRouteInIfIndex：InterfaceIndexOrZero，
+IpMRouteUpTime：TimeTicks，
+IpMRouteExpiryTime：TimeTicks，
+IpMRoutePkts：32位计数器，
+IpMRouteDifferentInIfPackets：32位计数器，
+IpMRouteOctets：32位计数器，
+IpMRouteProtocol：IANAipMRouteProtocol，
+IpMRouteRtProtoI：ANAipRouteProtocol，
+IpMRouteRtAddress：IpAddress，
+IpMRouteRtMask：IpAddress，
+IpMRouteRtType：INTEGER，
+IpMRouteHCOctets：Counter64
+}
+
+ipMRouteGroup对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“包含在组播路由信息中的IP组播组地址。”
+::= { ipMRouteEntry 1 }
+
+ipMRouteSource对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“和ipMRouteSourceMask的相应值相关的网络地址，定义了包含在组播路由信息中的源地址。”
+::= { ipMRouteEntry 2 }
+
+ipMRouteSourceMask对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述
+“和ipMRouteSource的相应值相关的网络地址，定义了包含在组播路由信息中的源地址。”
+::= { ipMRouteEntry 3 }
+
+ipMRouteUpstreamNeighbor对象类型
+语法：IpAddress
+最大访问权限：只读
+状态：现行
+描述：
+“收到的上行相邻节点的地址(例如：RPF的相邻节点)，从这里这些源地址就可以把IP数据报发往组播地址了；如果上行相邻节点未知的话(例如在CBT中)，就是0.0.0.0。”
+::= { ipMRouteEntry 4 }
+
+ipMRouteInIfIndex对象类型
+语法：InterfaceIndexOrZero
+最大访问权限：只读
+状态：现行
+描述：
+“收到的接口的（在这个接口上由这个源地址把IP数据报发送给这个组播地址）ifIndex值。0值表示在输入接口上不检测数据报，但是可以被多个接口(例如在CBT中)接收。”
+::= { ipMRouteEntry 5 }
+
+ipMRouteUpTime对象类型
+语法：TimeTicks
+最大访问权限：只读
+状态：现行
+描述：
+“从这个表项描述组播路由信息时起，路由器学习的时长。”
+::= { ipMRouteEntry 6 }
+
+ipMRouteExpiryTime对象类型
+语法：TimeTicks
+最大访问权限：只读
+状态：现行
+描述
+“在这个表项没有老化之前维持的最短时间。0值表示这个表项还没有老化。”
+::= { ipMRouteEntry 7 }
+
+ipMRoutePkts对象类型
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述：
+“这个路由器从源地址收到的编成组播组地址的数据包的数量。”
+::= { ipMRouteEntry 8 }
+
+ipMRouteDifferentInIfPackets对象类型
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述：
+“路由器已经从这个源地址收到并按照组播组地址编制的数据包的数量，如果在由ipMRouteInIfIndex标明的接口上没有收到的话就会减少。在输入接口上进行检测的数据包(例如运用CBT)不进行累计。”
+::= { ipMRouteEntry 9 }
+
+ipMRouteOctets对象类型
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述：
+“在IP数据报中包含的从源地址收到，并且进行了组播组地址，然后由这个路由器转发的字节数。”
+::= { ipMRouteEntry 10 }
+
+ipMRouteProtocol对象类型
+语法：IANAipMRouteProtocol
+最大访问权限：只读
+状态：现行
+描述：
+“组播路由协议。通过它，可以学习到这个表项转发的组播。”
+::= { ipMRouteEntry 11 }
+
+ipMRouteRtProto对象类型
+语法：IANAipRouteProtocol
+最大访问权限：只读
+状态：现行
+描述
+“路由机制。通过它，就可以学到用于查找转发这个表项的组播的上行或者父接口的路由。路由协议的值的这些可选项并不表示需要支持那些协议。”
+::= { ipMRouteEntry 12 }
+
+ipMRouteRtAddress对象类型
+语法：IpAddress
+最大访问权限：只读
+状态：现行
+描述：
+“用于查找组播转发表项的上行或者父接口的路由的地址部分。”
+::= { ipMRouteEntry 13 }
+
+ipMRouteRtMask对象类型
+语法：IpAddress
+最大访问权限：只读
+状态：现行
+描述：
+“和用于发现为转发表项的组播的上行或者父接口的路由相关的掩码。”
+::= { ipMRouteEntry 14 }
+
+ipMRouteRtType对象类型
+语法：整形{
+unicast (1)， -- 单播路由用于组播RIB
+组播 (2) -- 组播 route
+}
+最大访问权限：只读
+状态：现行
+描述：
+“把给定路由放入(逻辑上)组播路由信息库（Route Information Base，缩写为RIB)的原因。单播的值表示路由通常只会放到单播RIB中，除非把本地配置（例如在RIP上运行PIM时）放到组播RIB (更换或者其他)中。组播的值表示由路由协议（例如DVMRP或者多协议BGP）把路由明确地添加到组播RIB中。”
+::= { ipMRouteEntry 15 }
+
+ipMRouteHCOctets对象类型
+语法：64位计数器
+最大访问权限：只读
+状态：现行
+描述：
+“包含在从源收到、然后编址为组播组地址、由路由器转发的IP数据报中的字节数。这个对象是ipMRouteOctets的64位版本。”
+::= { ipMRouteEntry 16 }
+
+-- IP组播路由下一跳表单
+
+ipMRouteNextHopTable对象类型
+语法：IpMRouteNextHopEntry的序列
+最大访问权限：不可访问
+状态：现行
+描述：
+“包含了为了路由IP组播数据报而在输出接口上的下一跳信息的（概念上的）表单。  每个表项都是输出接口上由特定的源地址发往特定的组播组地址的下一跳地址清单中的一个地址。”
+::= { ipMRoute 3 }
+
+ipMRouteNextHopEntry对象类型
+语法：IpMRouteNextHopEntry
+最大访问权限：不可访问
+状态：现行
+描述：
+“输出接口上的下一跳列表中的一个表项（概念上的行），把从特定的源地址路由到某个IP组播组地址的IP组播数据报。可以通过观测ipMRouteUpTime的值来监测在这个表项中的计数器的中断。”
+索引{ ipMRouteNextHopGroup，ipMRouteNextHopSource，
+ipMRouteNextHopSourceMask，ipMRouteNextHopIfIndex，
+ipMRouteNextHopAddress }
+::= { ipMRouteNextHopTable 1 }
+
+IpMRouteNextHopEntry ::= 序列{
+IpMRouteNextHopGroup：IpAddress，
+IpMRouteNextHopSource：IpAddress，
+IpMRouteNextHopSourceMask：IpAddress，
+IpMRouteNextHopIfIndex：InterfaceIndex，
+IpMRouteNextHopAddress：IpAddress，
+IpMRouteNextHopState：INTEGER，
+IpMRouteNextHopUpTime：TimeTicks，
+IpMRouteNextHopExpiryTime：TimeTicks，
+IpMRouteNextHopClosestMemberHops：Integer32，
+IpMRouteNextHopProtocol：IANAipMRouteProtocol，
+ipMRouteNextHopPkts：32位计数器
+}
+
+ipMRouteNextHopGroup对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“详细说明了在输出接口上下一跳的IP组播组。”
+::= { ipMRouteNextHopEntry 1 }
+
+ipMRouteNextHopSource对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“结合相应的ipMRouteNextHopSourceMask的数值，网络掩码定义了源地址（也就是这个表项详细描述了的某个输出接口上的下一跳地址）。”
+::= { ipMRouteNextHopEntry 2 }
+
+ipMRouteNextHopSourceMask对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述
+“结合相应的ipMRouteNextHopSource的数值，网络掩码定义了源地址（也就是这个表项详细描述了的某个输出接口上的下一跳地址）。”
+::= { ipMRouteNextHopEntry 3 }
+
+ipMRouteNextHopIfIndex对象类型
+语法：InterfaceIndex
+最大访问权限：不可访问
+状态：现行
+描述：
+“下一跳的输出接口的接口ifIndex值。”
+::= { ipMRouteNextHopEntry 4 }
+
+ipMRouteNextHopAddress对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“这个表项的下一跳指定的地址。对于大多数接口，和ipMRouteNextHopGroup一样。然而，NBMA接口可能会有若干下一跳地址，而不是一个输出接口。"
+::= { ipMRouteNextHopEntry 5 }
+
+ipMRouteNextHopState对象类型
+语法：整形实数{ pruned(1)，forwarding(2) }
+最大访问权限：只读
+状态：现行
+描述：
+“这个表项用于描述输出接口和下一跳当前是否被用于转发IP数据报。‘forwarding’值表示当前正在使用；‘pruned’值表示没在使用。”
+::= { ipMRouteNextHopEntry 6 }
+
+ipMRouteNextHopUpTime对象类型
+语法：TimeTicks
+最大访问权限：只读
+状态：现行
+描述
+“从这个表项描述组播路由信息时起，路由器学习的时长。”
+::= { ipMRouteNextHopEntry 7 }
+
+ipMRouteNextHopExpiryTime对象类型
+语法：TimeTicks
+最大访问权限：只读
+状态：现行
+描述
+“在这个项目老化以前持续的最小时长。如果删除了ipMRouteNextHopState(1)，在删节之前持续的时间将到期，而且把对状态的回复向前转发(2)。否则，在这个表项之前持续的时间将从这个表中删除。如果在这个表项使用的协议中没有指定下一跳的定时器，持续的时间可以复制ipMRouteExpiryTime。0值表示这个表项不会老化。”
+::= { ipMRouteNextHopEntry 8 }
+
+ipMRouteNextHopClosestMemberHops对象类型
+语法：Integer32
+最大访问权限：只读
+状态：现行
+描述：
+“在路由器和任何通过这个输出接口的下一跳IP组播组成员之间的最少跳数。对于这个组中任何TTL少于这个跳数的IP组播数据报将不能向下一跳转发。”
+::= { ipMRouteNextHopEntry 9 }
+
+ipMRouteNextHopProtocol对象类型
+语法：IANAipMRouteProtocol
+最大访问权限：只读
+状态：现行
+描述：
+“学习下一跳的路由机制。”
+::= { ipMRouteNextHopEntry 10 }
+
+ipMRouteNextHopPkts对象类型
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述：
+“用这条路由转发的数据包的数量。”
+::= { ipMRouteNextHopEntry 11 }
+
+--  组播路由Interface表
+
+ipMRouteInterfaceTable对象类型
+语法：IpMRouteInterfaceEntry的序列
+最大访问权限：不可访问
+状态：现行
+描述：
+“包含着Interface的组播路由信息的(概念上的)表单。”
+::= { ipMRoute 4 }
+
+ipMRouteInterfaceEntry对象类型
+语法；IpMRouteInterfaceEntry
+最大访问权限：不可访问
+状态：现行
+描述：
+“包含着特定接口的组播路由信息的表项（概念上的行）。”
+索引{ ipMRouteInterfaceIfIndex }
+::= { ipMRouteInterfaceTable 1 }
+
+IpMRouteInterfaceEntry ::= 序列{
+IpMRouteInterfaceIfIndex：InterfaceIndex，
+ipMRouteInterfaceTtl：Integer32，
+ipMRouteInterfaceProtocol：IANAipMRouteProtocol，
+ipMRouteInterfaceRateLimit32位整形实数，
+ipMRouteInterfaceInMcastOctets：32位计数器，
+ipMRouteInterfaceOutMcastOctets：32位计数器，
+ipMRouteInterfaceHCInMcastOctets：64位计数器，
+ipMRouteInterfaceHCOutMcastOctets：64位计数器
+}
+
+ipMRouteInterfaceIfIndex对象类型
+语法：InterfaceIndex
+最大访问权限：不可访问
+状态：现行
+描述：
+“接口的ifIndex值，这个表项包含着的信息。”
+::= { ipMRouteInterfaceEntry 1 }
+
+ipMRouteInterfaceTtl对象类型
+语法：32位整形实数(0到255)
+最大访问 read-write
+状态：现行
+描述
+“对于这个接口的数据包的TTL的极限。任何小于这个TTL极限的IP组播数据报将从这个接口转发出去。缺省值0表示把所有的组播数据包从这个接口转发出去。”
+::= { ipMRouteInterfaceEntry 2 }
+
+ipMRouteInterfaceProtocol对象类型
+语法：IANAipMRouteProtocol
+最大访问权限：只读
+状态：现行
+描述：
+“这个接口上运行的路由协议。”
+::= { ipMRouteInterfaceEntry 3 }
+
+ipMRouteInterfaceRateLimit对象类型
+语法：32位整形实数
+最大访问权限：读/写
+状态：现行
+描述
+“接口上转发组播的流量的速度极限，以Kb/s为单位。速度极限为0，表示没有设定速度极限。”
+DEFVAL  { 0 }
+::= { ipMRouteInterfaceEntry 4 }
+
+ipMRouteInterfaceInMcastOctets对象类型
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述：
+“已经到达这个接口上的组播数据包的字节数，包括组帧字符串。除了只累计组播数据包以外，这个对象和接口MIB的ifInOctets相似。”
+ ::= { ipMRouteInterfaceEntry 5 }
+
+ipMRouteInterfaceOutMcastOctets对象类型
+语法：32位计数器
+最大访问权限：只读
+状态：现行
+描述：
+“这个接口上发送出来的组播数据包的八位字节数量。”
+::= { ipMRouteInterfaceEntry 6 }
+
+ipMRouteInterfaceHCInMcastOctets对象类型
+语法：Counter64
+最大访问权限：只读
+状态：现行
+描述：
+“到达这个接口的组播数据包的八位字节的数量，包括组帧字符串。这个对象是 ipMRouteInterfaceInMcastOctets的64位版本。除了只对组播数据包进行计数外，其他和接口MIB中的ifHCInOctets类似。”
+::= { ipMRouteInterfaceEntry 7 }
+
+ipMRouteInterfaceHCOutMcastOctets对象类型
+语法：64位计数器
+最大访问权限：只读
+状态：现行
+描述：
+“这个接口上发送出去的组播数据包的八位字节数量。这个对象是ipMRouteInterfaceOutMcastOctets的64为版。”
+::= { ipMRouteInterfaceEntry 8 }
+
+--IP组播范围的边界表
+
+ipMRouteBoundaryTable对象类型
+语法：IpMRouteBoundaryEntry的序列
+最大访问权限：不可访问
+状态：现行
+描述：
+“列出了路由器组播地址范围边界的(概念上的)表单。”
+::= { ipMRoute 5 }
+
+ipMRouteBoundaryEntry对象类型
+语法：IpMRouteBoundaryEntry
+最大访问权限：不可访问
+状态：现行
+描述：
+“反映界定边界的ipMRouteBoundaryTable中的表项（概念上的行）。”
+索引{ ipMRouteBoundaryIfIndex，ipMRouteBoundaryAddress，
+ipMRouteBoundaryAddressMask }
+::= { ipMRouteBoundaryTable 1 }
+
+IpMRouteBoundaryEntry ::=序列{
+IpMRouteBoundaryIfIndex：InterfaceIndex，
+ipMRouteBoundaryAddress：IpAddress，
+ipMRouteBoundaryAddressMask：IpAddress，
+ipMRouteBoundaryStatus：RowStatus
+}
+
+ipMRouteBoundaryIfIndex对象类型
+语法：InterfaceIndex
+最大访问权限：不可访问
+状态：现行
+描述：
+“这个边界采用的接口的IfIndex值。不转发到这个接口的在相关的地址和掩码范围带有源地址的数据包。”
+::= { ipMRouteBoundaryEntry 1 }
+
+ipMRouteBoundaryAddress对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“由相应的ipMRouteBoundaryAddressMask值定义了组的范围（指定了现有的边界范围）的组地址。地址范围必须在RFC 2365中定义的239.x.x.x网段中。”
+::= { ipMRouteBoundaryEntry 2 }
+
+ipMRouteBoundaryAddressMask对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“组地址掩码，当结合相应的ipMRouteBoundaryAddress值，定义了的组范围（现有的边界网段）。”
+ ::= { ipMRouteBoundaryEntry 3 }
+
+ipMRouteBoundaryStatus对象类型
+语法：RowStatus
+最大访问权限：读创建
+状态：现行
+描述：
+“在创建的新表项或者从这个表中删除的旧表项时，这个行的状态。”
+::= { ipMRouteBoundaryEntry 4 }
+
+-- IP组播范围的名称表
+
+ipMRouteScopeNameTable对象类型
+语法：IpMRouteScopeNameEntry的序列
+最大访问权限：不可访问
+状态：现行
+描述：
+“列出了组播范围的名称的（概念上）表单。”
+ ::= { ipMRoute 6 }
+
+ipMRouteScopeNameEntry对象类型
+语法：IpMRouteScopeNameEntry
+最大访问权限：不可访问
+状态：现行
+描述：
+“在ipMRouteScopeNameTable中的一个表项(概念上的行)，描述了一个组播范围的名称。”
+索引{ ipMRouteScopeNameAddress，
+ipMRouteScopeNameAddressMask，
+IMPLIED ipMRouteScopeNameLanguage }
+::= { ipMRouteScopeNameTable 1 }
+
+IpMRouteScopeNameEntry ::= 序列{
+IpMRouteScopeNameAddress：IpAddress，
+ipMRouteScopeNameAddressMask：IpAddress，
+ipMRouteScopeNameLanguage：LanguageTag，
+ipMRouteScopeNameString：SnmpAdminString，
+ipMRouteScopeNameDefault：TruthValue，
+ipMRouteScopeNameStatus：RowStatus
+}
+
+ipMRouteScopeNameAddress对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“组地址。和相应的ipMRouteScopeNameAddressMask值组合起来，定义了和组播范围相关的组范围。地址范围是239.x.x.x网段。”
+::= { ipMRouteScopeNameEntry 1 }
+
+ipMRouteScopeNameAddressMask对象类型
+语法：IpAddress
+最大访问权限：不可访问
+状态：现行
+描述：
+“组地址掩码。和相应的ipMRouteScopeNameAddress值组合起来，定义了和组播范围相关的组范围。”
+::= { ipMRouteScopeNameEntry 2 }
+
+ipMRouteScopeNameLanguage对象类型
+语法：LanguageTag
+最大访问权限：不可访问
+状态：现行
+描述：
+“和范围名称相关的类RFC 1766语言标签。”
+::= { ipMRouteScopeNameEntry 3 }
+
+ipMRouteScopeNameString对象类型
+语法：SnmpAdminString
+最大访问权限：读创建
+状态：现行
+描述：
+“和组播范围相关的文本名称。这个对象的值应该符合最终用户的显示要求。例如在这个范围内分配一个组播地址。没有指定名称时，这个对象的缺省值应该是字符串239.x.x.x/y， x和y代表和范围相对应的适当的地址和掩码的长度。”
+::= { ipMRouteScopeNameEntry 4 }
+
+ipMRouteScopeNameDefault对象类型
+语法  TruthValue
+最大访问权限：读创建
+状态：现行
+描述：
+“如果为真，表示一种优先选择权，如果在想用的语言中没有可用的名称，那么应用程序就应该使用下列语言中的名称。”
+DEFVAL { false }
+::= { ipMRouteScopeNameEntry 5 }
+
+ipMRouteScopeNameStatus对象类型
+语法：RowStatus
+最大访问权限：读创建
+状态：现行
+描述：
+“该行的状态，用于创建新的入口或从列表中删除旧的入口。”
+::= { ipMRouteScopeNameEntry 6 }
+
+-- 一致性信息
+
+ipMRouteMIBConformance
+对象标识符 ::= { ipMRouteStdMIB 2 }
+ipMRouteMIBCompliances
+对象标识符 ::= { ipMRouteMIBConformance 1 }
+ipMRouteMIBGroups 对象标识符 ::= { ipMRouteMIBConformance 2 }
+
+-- 一致性状态
+
+ipMRouteMIBCompliance依从模块
+状态：现行
+描述：
+“IP组播MIB的一致性状态。”
+MODULE  -- this module
+强制性组{ ipMRouteMIBBasicGroup，
+ipMRouteMIBRouteGroup}
+
+组：ipMRouteMIBBoundaryGroup
+描述：
+“这个组是强制性的，如果路由器支持管理范围的组播地址边界。”
+
+对象：ipMRouteBoundaryStatus
+最小访问权限：只读
+描述：
+“不需要写入访问。”
+
+对象：ipMRouteScopeNameStatus
+最小访问权限：只读
+描述：
+“不需要写入访问。”
+
+组：ipMRouteMIBHCInterfaceGroup
+描述：
+“该组只对ifSpeed的相应数值大于20Mbps的网络接口是强制性的。”
+::= { ipMRouteMIBCompliances 1 }
+
+-- 一致的单元
+
+ipMRouteMIBBasicGroup对象组
+对象{ ipMRouteEnable，ipMRouteEntryCount，
+ipMRouteUpstreamNeighbor，ipMRouteInIfIndex，
+ipMRouteUpTime，ipMRouteExpiryTime，
+ipMRouteNextHopState，
+ipMRouteNextHopUpTime，
+ipMRouteNextHopExpiryTime，
+ipMRouteNextHopProtocol，
+ipMRouteNextHopPkts，
+ipMRouteInterfaceTtl，
+ipMRouteInterfaceProtocol，ipMRouteInterfaceRateLimit，
+ipMRouteInterfaceInMcastOctets，
+ipMRouteInterfaceOutMcastOctets，
+ipMRouteProtocol
+}
+状态：现行
+描述：
+“支持基本的IP 组播路由管理的对象集合。”
+::= { ipMRouteMIBGroups 1 }
+
+ipMRouteMIBHopCountGroup对象组
+对象{ ipMRouteNextHopClosestMemberHops }
+状态：现行
+描述：
+“支持IP组播路由跳计数应用管理的对象。”
+ ::= { ipMRouteMIBGroups 2 }
+
+ipMRouteMIBBoundaryGroup对象组
+对象{ ipMRouteBoundaryStatus，ipMRouteScopeNameString，
+ipMRouteScopeNameDefault，ipMRouteScopeNameStatus }
+状态：现行
+描述：
+“支持组播地址边界范围管理的对象集合。”
+::= { ipMRouteMIBGroups 3 }
+
+ipMRouteMIBPktsOutGroup对象组
+对象{ ipMRouteNextHopPkts }
+状态：现行
+描述：
+“支持各个输出接口表项的路由器的数据包计数器的管理对象集合。”
+::= { ipMRouteMIBGroups 4 }
+
+ipMRouteMIBHCInterfaceGroup对象组
+对象{ ipMRouteInterfaceHCInMcastOctets，
+ipMRouteInterfaceHCOutMcastOctets，
+ipMRouteHCOctets }
+状态：现行
+描述：
+“提供给高速网络接口(高于20，000，000 bps)的信息细节的对象集合。”
+::= { ipMRouteMIBGroups 5 }
+
+ipMRouteMIBRouteGroup对象组
+对象{ ipMRouteRtProto，ipMRouteRtAddress，
+ipMRouteRtMask，ipMRouteRtType }
+状态：现行
+描述：
+“提供了与组播路由信息和IP转发列表相关信息的对象集合。”
+::= { ipMRouteMIBGroups 6 }
+
+ipMRouteMIBPktsGroup对象组
+对象{ ipMRoutePkts，ipMRouteDifferentInIfPackets，
+ipMRouteOctets }
+状态：现行
+描述：
+“支持各个转发表项的数据包计数器管理的对象集合。”
+::= { ipMRouteMIBGroups 7 }
+
+END
+5.  IANA需要考虑的问题
+ipMRouteRtProto、ipMRouteNextHopProtocol、ipMRouteInterfaceProtocol和 ipMRouteProtocol采用从了IANA-RTPROTO-MIB引入的文本约定。在单独的MIB模块中定义这些文本约定的目的是允许定义附加变量，除非发布这个文档的新版本。IANA(Internet Assigned Numbers Authority)对分配所有Internet编号（包括各种和SNMP相关的编号）赋有责任；它将管理和这些文本约定相关的数值。
+在和IANA-RTPROTO-MIB的MODULE- IDENTITY声明相关的描述条款中，勾勒出了对IANA-RTPROTO-MIB进行变更和增减时所要遵守的规则。
+可以从IANA的主页http://www.iana.org/来访问IANA-RTPROTO-MIB的当前版本。
+6.  需要考虑的安全因素
+这个MIB包含了可读的对象，它们的值提供了有关组播路由的信息，包括用什么机制发送到哪个组的信息。也有许多具有读/写和/或读创建的最大访问权限子句的对象，例如那些允许网络管理员配置的组播边界。
+当对可读对象进行无授权的访问时，并没有太多问题；但是对可写对象进行无授权的操作时，就可能导致拒绝服务，或者导致数据包广播，而不仅仅是本地发布。因此，在没有恰当的保护措施的非安全环境中，对SET业务的支持可能会对网络业务产生负面影响。
+SNMPv1自身不是一个安全环境。即使假设它自身是安全的（如用IPSec），仍然没有方法在MIB中控制网络上允许连通或GET/SET（read/change/create/delete）的信息。
+强烈被推荐具有安全特性的应用----SNMPv3。尤其推荐使用基本用户安全模型RFC2574[12]和基于观点连接控制模型RFC2575[15]。
+保证SNMP提供连通MIB是客户/用户的责任，应该配置成只有给那些合法用户有权实施Get或Set信息。
+7.  知识产权声明
+IETF不考虑任何关于知识产权或其他权利的有效性或适用范围的问题，这些权利可能附属于那些实现和使用本文档描述的技术的文档中声明，基于此产权声明的许可不是必须的。而且也无须表示为了识别此声明而做的努力。关于标准制定和标准相关的IETF版权声明过程的信息可以在BCP-11中找到。可以从IETF秘书处得到出版物的有效版权声明的复制和许可证书，还可以使用此详述的制定者和使用者的私人授权，以便得到通用的授权和许可。
+IETF邀请任何感兴趣的组织注意其版权、专利或专利应用、其它专有权利，它们可能需要使用这个标准的技术。请告知IETF 执行董事会相关的信息。
+8.  致谢
+该MIB模块基于对IETF的Inter- Domain组播路由(IDMR)工作组的建议而修改。
+9.  作者地址
+Keith McCloghrie
+cisco Systems，Inc.
+170 West Tasman Drive
+San Jose，CA  95134-1706
+Phone: +1 408 526 5260
+EMail: kzm@cisco.com
+
+Dino Farinacci
+Procket Networks
+3850 North First Street
+San Jose，CA 95134
+Phone: +1 408-954-7909
+Email: dino@procket.com
+
+Dave Thaler
+Microsoft Corporation
+One Microsoft Way
+Redmond，WA  98052-6399
+Phone: +1 425 703 8835
+EMail: dthaler@microsoft.com
+10.  参考文献
+[1]  Wijnen，B.，Harrington，D. and R. Presuhn，"An Architecture for  Describing SNMP Management Frameworks"，RFC 2571，April 1999.
+[2]  Rose，M. and K. McCloghrie，"Structure and Identification of Management Information for TCP/IP-based Internets"，STD 16，RFC 1155，May 1990.
+[3]  Rose，M. and K. McCloghrie，"Concise MIB Definitions"，STD 16，RFC 1212，March 1991.
+[4]  Rose，M.，"A Convention for Defining Traps for use with the SNMP"，RFC 1215，March 1991.
+[5]  McCloghrie，K.，Perkins，D.，Schoenwaelder，J.，Case，J.，Rose，M.  and S. Waldbusser，"Structure of Management Information Version 2 (SMIv2)"，STD 58，RFC 2578，STD 58，April 1999.
+[6]  McCloghrie，K.，Perkins，D.，Schoenwaelder，J.，Case，J.，Rose，M.  and S. Waldbusser，"Textual Conventions for SMIv2"，STD 58，RFC 2579，April 1999.
+[7]  McCloghrie，K.，Perkins，D.，Schoenwaelder，J.，Case，J.，Rose，M.  and S. Waldbusser，"Conformance Statements for SMIv2"，STD 58，RFC 2580，April 1999.
+[8]  Case，J.，Fedor，M.，Schoffstall，M. and J. Davin，"Simple Network Management Protocol"，STD 15，RFC 1157，May 1990.
+[9]  Case，J.，McCloghrie，K.，Rose，M. and S. Waldbusser，"Introduction to Community-based SNMPv2"，RFC 1901，January 1996.
+[10] Case，J.，McCloghrie，K.，Rose，M. and S. Waldbusser，"Transport Mappings for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 1906，January 1996.
+[11] Case，J.，Harrington D.，Presuhn R. and B. Wijnen，"Message Processing and Dispatching for the Simple Network Management Protocol (SNMP)"，RFC 2572，April 1999.
+[12] Blumenthal，U. and B. Wijnen，"User-based Security Model (USM) for version 3 of the Simple Network Management Protocol (SNMPv3)"，RFC 2574，April 1999.
+[13] Case，J.，McCloghrie，K.，Rose，M. and S. Waldbusser，"Protocol Operations for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 1905，January 1996.
+[14] Levi，D.，Meyer，P. and B. Stewart，"SNMPv3 Applications"，RFC 2573，April 1999.
+[15] Wijnen，B.，Presuhn，R. and K. McCloghrie，"View-based Access Control Model (VACM) for the Simple Network Management Protocol (SNMP)"，RFC 2575，April 1999.
+[16] Deering，S.，"multicast Routing in a Datagram Internetwork"，PhD thesis，Electrical Engineering Dept.，Stanford University，December 1991.
+[17] Waitzman，D.，Partridge，C. and S. Deering，"Distance Vector multicast routing protocol"，RFC 1075，November 1988.
+[18] Estrin，D.，Farinacci，D.，Helmy，A.，Thaler，D.，Deering，S.，Handley，M.，Jacobson，V.，Liu，C.，Sharma，P. and L. Wei，"Protocol Independent multicast-Sparse Mode (PIM-SM): Protocol Specification"，RFC 2362，June 1998.
+[19] Deering，S.，Estrin，D.，Farinacci，D.，Jacobson，V.，Helmy，A. and L. Wei，"Protocol Independent multicast Version 2，Dense Mode Specification"，Work in Progress.
+[20] Moy，J.，"multicast Extensions to OSPF"，RFC 1584，March 1994.
+[21] Ballardie，A.，"Core Based Trees (CBT version 2) multicast routing"，RFC 2189，September 1997.
+[22] Meyer，D.，"Administratively Scoped IP multicast"，BCP 23，RFC 2365，July 1998.
+11.  完整的版权声明
+Copyright (C) The Internet Society (2000)。版权所有。
+本文档及其译文可以拷贝和提供给他人，且其衍生物，如评论、解释或帮助实施的作品可以全部或部分地定制、拷贝、出版和发布，对此我们不加任何限制，前提是上述版权声明，及本段内容包含在所有的拷贝和派生作品中。然而，本文档本身不允许以任何方式修改，例如删除Internet社团或其他Internet组织的版权声明或参考，除非是为了开发Internet标准的需要。即便在这种情况下，也需要添加Internet标准中定义的版权声明，或者根据需要把他翻译成英语以外的其他语言。
+上述准许的有限许可是永久性的， 无论是Internet社团以及其继承者或代理者都将不会废止这些许可。
+本文档及其中包含的信息基于“AS IS”提供，而且INTERNET社团和IETF拒绝所有授权、表达或影射，包括但不限于任何这里使用的消息的授权将不会违背任何版权或者隐含的商业性授权或对特定的合理目的。
+致谢
+目前，RFC编者活动的基金由Internet社团提供。
+
+RFC2932――IPv4组播路由MIB
+
+RFC文档中文翻译计划                                                                                 [Page 22]
+

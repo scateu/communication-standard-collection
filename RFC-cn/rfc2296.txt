@@ -1,0 +1,330 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：x1982212（x1982212）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          K. Holtman
+Request for Comments: 2296                                            TUE
+Category: Experimental                                              A. Mutz
+                                                             Hewlett-Packard
+                                                                  March 1998
+HTTP远程变量选择算法―RVSA/1.0
+（RFC2296――HTTP Remote Variant Selection Algorithm -- RVSA/1.0）
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和
+建议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+摘要
+HTTP允许web站点作者在单一URL下放置相同信息的多个版本。透明内容协商是用来
+在存取URL时自动选择最佳变量的一种机制。一个远程变量选择算法能用来加速透明协商进
+程。这篇文档定义了1.0版本的远程变量选择算法。
+目录
+1．介绍	2
+2．术语和符号	3
+3．远程变量选择算法	3
+3.1输入	3
+3.2输出	3
+3.3计算总体品质因数	3
+3.4确定及不确定的品质值	4
+3.5确定结果	5
+4．算法的使用	5
+4.1使用品质因数为参数划分等级	5
+4.2.1折叠接收报头元素	6
+4.2.2忽略接收报头	7
+4.2.3动态长度请求	7
+4.3本地和远程算法的区别	8
+4.3避免主要区别	8
+4．3．2解决细微区别	8
+5．0安全和隐私考虑	8
+6．致谢	9
+7．参考文献	9
+8．作者地址	9
+9．完整版权说明	9
+
+1．介绍
+   HTTP允许web站点作者在单一URL下放置相同信息的多个版本。透明内容协商［2］是
+用来在存取URL时自动选择最好版本的一种机制。远程变量选择算法能被HTTP服务器用来
+为一个协商用户代理选择一个最好的变量。通过减少一个请求－响应来回，远程变量选择算
+法的使用能够加速透明协商进程。
+这篇文档定义了1.0版本的远程变量选择算法。此算法计算请求的接收报头里是否包含
+足够的信息来进行一个选择，并且在包含足够信息的情况下，决定选择哪一个变量。
+2．术语和符号
+   这篇说明使用HTTP透明内容协商说明［2］中的术语和符号。
+3．远程变量选择算法
+    这篇文档定义了1.0版本的远程变量选择算法。为了实现这个定义，服务器可能运行任
+何产生相同结果的算法。
+注意：根据［2］，服务器也可以返回一个列表响应，而不运行一个远程算法。因此，任
+何时候，服务器只要可以运行一个远程算法，它就可以运行该算法的部分实现，只要部分实
+现在不能计算真实结果时也返回列表响应。
+3.1输入
+算法通常为一个特别的请求而运行，这个特别的请求请求一特殊的透明可协商资源。它
+将以下信息作为输入。
+1．	资源的变量列表，正如资源的备用报头所示。
+2．	（部分）关于这个特殊请求的用户代理的功能和参数信息，和请求的接收报头里给
+出的一样。
+如果在备用报头里存在一个回撤变量描述{“fallback.html”},这个算法必须将它解释为下
+面的变量描述{“fallback.html”0.000001}。这个极低的品质因数确保了只有当所有其它
+选择都用尽时回撤变量才会被选中。
+3.2输出
+作为它的输出，远程变量选择算法接着将产生合适的动作。存在两种可能：
+选择响应
+接收报头包含足够的信息来为可能的用户代理作出选择，而且在一个选择响应中必
+须返回一个最佳变量。
+列表响应
+接收报头没有包含足够的信息为可能的用户代理作出选择。必须返回一个列表响
+应，这样就允许用户代理自己作出选择。
+3.3计算总体品质因数
+   远程变量选择算法的第一步，是计算列表中的个体变量的总体品质因数。
+   一个变量的总体品质Q的值为
+       Q=round5(qs*qt*qc*ql*qf)
+       这里round5是一个函数，它将一个浮点值四舍五入直到小数点后有5个十进制数，参
+数qs,qt,qc,ql和qf按如下方式决定。
+       qs 是变量描述中的源品质因数。
+       qt 如果变量描述中没有类型属性，或者在请求中没有接收报头，媒体类型品质因数
+就是1。否则，它就是接收报头在类型属性中给媒体类型赋的值。
+        注意：如果一个类型不能和接收报头中的任何元素匹配，接收报头就把这种类型的
+品质因数赋为0。
+        qc 如果在变量描述中没有字符集属性，或在请求中没有接收字符集报头，字符集
+品质因数就是1。否则，字符集品质因数就是接收字符集报头在字符集属性中给字符集赋
+的值。
+        ql 如果在变量描述中没有语言属性，或在请求中没有接收语言报头，语言品质因
+数就是1。否则，语言品质因数就是接收语言报头在语言属性中给列出的任何一种语言赋
+予的所有的品质因数中的最高值。
+        qf 如果在变量描述中没有特征属性，或在请求中没有接收特征报头，特征品质因
+数就是1。否则，它就是特征属性的品质退化因数，参见［2］的6.4节。
+        例如，如果一个变量列表包含变量描述｛“paper.html.en"0.7 {type 
+text/html}{language fr}｝并且请求包含接收报头
+        Accept:text/html:q=1.0,*/*=0.8
+        Accept-Language:en;q=1.0,fr;q=0.5
+        远程变量选择算法会按下面方式为变量计算一个总体品质:
+  {"paper.html.fr" 0.7 {type text/html} {language fr}}
+                    |           |                 |
+                    |           |                 |
+                    V           V                 V
+          round5 ( 0.7   *     1.0        *      0.5 ) = 0.35000
+   按上面的接收报头,下面完整的变量列表
+   {"paper.html.en" 0.9 {type text/html} {language en}},
+   {"paper.html.fr" 0.7 {type text/html} {language fr}},
+   {"paper.ps.en"   1.0 {type application/postscript} {language en}}
+   会产生下面的计算式：
+round5 ( qs  * qt  * qc  * ql  * qf  ) =   Q
+                     ---   ---   ---   ---   ---     -------
+   paper.html.en: 0.9 * 1.0 * 1.0 * 1.0 * 1.0   = 0.90000
+   paper.html.fr: 0.7 * 1.0 * 1.0 * 0.5 * 1.0   = 0.35000
+   paper.ps.en:   1.0 * 0.8 * 1.0 * 1.0 * 1.0   = 0.80000
+3.4确定及不确定的品质值
+    一个计算好的总体品质值既可能是确定的，也可能是不确定的。如果计算时没有使用
+任何接收报头中的‘*’通配符，并且不需要一个特殊接收报头不存在，那么它就是确定的。
+相反，它就是不确定的。
+比如，在这节里，paper.html.en和paper.html.fr的品质值是确定的，paper.ps.en
+的品质值是不确定的，因为application/postscript类型和范围*/*匹配。
+确定性可以定义地更正规，如下所示。一个总体品质值Q是确定的，如果在请求信息
+按照如下方式改变之后还能计算出相同的品质值Q的话：
+1．如果一个接收报头,接收字符集报头,接收语言报头,或接收特征报头从请求中丢失了,向
+这个报头中加上一个空字段。
+2．从接收报头中删除任何包含一个通配符‘＊’的媒体域。从接收字符集报头，接收语言
+报头，和接收特征报头中删除所有通配符‘＊’。
+这里是另外一个例子，变量｛“blah.html”1｛language en-gb｝{features blebber [x 
+y]}｝，如果它的接收报头是
+    Accept-Language: en-gb, fr
+    Accept-Features: blebber, x, !y, *和
+Accept-Language: en, fr
+Accept-Features: blebber, x, *
+它的总体品质因数是1并且是确定的
+如果接收报头是
+Accept-language: en-gb, fr
+Accept-Features: blebber, !y, *和
+Accept-Language: fr, *
+Accept-Features: blebber, x, !y, *
+总体品质因数还是1，但是是不确定的，
+3.5确定结果
+最优变量，由远程变量选择算法决定的，是具有最高总体品质值的变量，或者当有许
+多变量具有此相同的最高品质值时，是列表中的第一个具此值的变量。
+当下列所有条件都满足时，远程变量选择算法的最终结果是选择响应：
+a．	最优变量的总体品质值大于0。
+b．	 最优变量的总体品质值是一个确定的品质值。
+c．	变量资源和可协商资源相邻。这个条件的存在确保了一个对选择响应的安全相关限
+制得到满足。参见［2］的10.2和10.4节。
+   在所有其它情况下，最终结果都是列表响应。
+   上面对确定性的要求以一种戏剧性的方式影响对接收报头的解释。比如，它使得远程算
+法将报头
+Accept: image/gif;q=0.9, */*;q=1.0解释成
+‘我接收品质值为0.9的image/gif, 并把其它媒体类型的品质类型赋为1.0。如果此信息
+不够我自己作出选择，就不作选择而是发送变量列表 '。
+没有以上要求的话，解释就会是
+‘我接收品质值为0.9的image/gif，和品质值为1.0的所有其它媒体类型 '。
+4．算法的使用
+   这一节讨论用户代理怎样以一种最佳方式使用远程算法。这节是非标准化的，把它包括
+进来只是出于提供信息的目的。
+4.1使用品质因数为参数划分等级
+   使用品质因数，用户代理不仅可以为一个特别接收报头里的元素划分等级，而且也能表
+示不同接收报头之间的优先等级。比如考虑下面的变量列表：
+{"paper.english" 1.0 {language en} {charset ISO-8859-1}},
+{"paper.greek"   1.0 {language el} {charset ISO-8859-7}}
+并且假设用户选择“el”而不是“en”，这时用户代理能使“ISO-8859-1”的品质比“ISO-8859-7”
+的高。如果接收报头是：
+Accept-Language: gr, en；q=0.8
+Accept-Charset: ISO-8859-1, ISO-8859-7；q=0.6, *
+那么远程变量选择算法会选择English变量，因为这个变量的总体品质退化最少。但是如果
+接收报头是
+Accept-Language: gr, en;q=0.8
+Accept-Charset: ISO-8859-1, ISO-8859-7;q=0.95, *
+那么算法就会选择Greek变量。一般地,品质因数之间差额最大的接收报头获得最高优先权。
+如果用户代理允许用户为一些报头设置品质因数，同时其它因数都是hard-coded的，它就
+应该对hard-coded的因数使用一个低差额，对用户提供的因数提供一个高差额，所以用户
+设置比内置设置具有更高的优先权。
+4.2短请求的构造
+   在对透明可协商资源的一个请求中，用户代理不需要发送一个列出所有功能的长接收报
+头。比如，不发送
+Accept: image/gif;q=0.9, image/jpeg;q=0.8, image/png;q=1.0,
+
+             image/tiff;q=0.5, image/ief;q=0.5, image/x-xbitmap;q=0.8,
+             application/plugin1;q=1.0, application/plugin2;q=0.9
+用户代理发送
+Accept: image/gif;q=0.9, */*;q=1.0
+它能发送短报头，从而不冒获得一个次等image/tiff变量的选择响应的危险。例如，对变
+量列表
+{"x.gif" 1.0 {type image/gif}}, {"x.tiff" 1.0 {type image/tiff}},
+远程算法将为x.gif计算一个确定的总体品质0.9，并为x.tiff计算一个不确定的总体品
+质因值1.0。因为最优变量拥有一个不确定的品质值，算法不会选择x.tiff，而是返回一个
+列表响应，在此之后用户代理的选择算法会正确地选择x.gif。最终结果和发送长接收报头
+得到的结果相同。
+因此，用户能改变接收报头的长度以在首次请求发送速度，和远程算法拥有足够信息消除第
+二次请求的机会之间获得最佳平衡。
+4.2.1折叠接收报头元素
+   这节讨论一个列出所有功能和参数的长接收报头如何被安全地缩短。远程变量算法按某
+种方式设计，使得它总可以这安全地缩短接收或接收字符集报头，它提取两个报头元素
+‘A;q=f’和‘B;q=g’并用一个元素‘P;q=m’代替它们，这里P是一个匹配A和B的通配
+符类型，m是f和g 的最大值。这里是一些例子
+text/html;q=1.0, text/plain;q=0.8       -->    text/*;q=1.0
+image/*;q=0.8, application/*;q=0.7      -->    */*;q=0.8
+iso-8859-5;q=1.0, unicode-1-1;q=0.8     -->    *;q=1.0
+注意上面的个‘;q=1.0’都是可选的，可以忽略：
+iso-8859-7;q=0.6, *                     -->    *
+对于接收语言，可以安全地将所有具有相同主要标记符的语言域折叠为一个通配符：
+en-us;q=0.9, en-gb;q=0.7, en;q=0.8, da  -->    *;q=0.9, da
+也可以安全地将一个语言域折叠为一个通配符，或者将它替代为一个通配符，如果它的主要
+标记符只出现一次：
+*;q=0.9, da                             -->    *
+最后，在接收特征报头中，每一个特征表达式都能够被折叠为一个通配符，或者替代为一个
+通配符：
+colordepth!=5, *                        -->    *
+4.2.2忽略接收报头
+   根据HTTP/1.1说明［1］，一个接收报头完全不存在于请求中等价于‘Accept:*/*’。因
+此，如果接收报头被折叠成‘Accept:*/*’，用户代理可能完全忽略它。包含‘*’的接收字
+符集，接收语言，或接收特征也可能被忽略。
+4.2.3动态长度请求
+   一个能进行透明内容协商的用户代理也能缺省发送短请求。一些短接收报头为了已存的
+使用HTTP/1.0的服务器的利益，也能被包括进来（参见［2］的4.2节）。这是一个例子：
+GET /paper HTTP/1.1
+Host: x.org
+User-Agent: WuxtaWeb/2.4
+Negotiate: 1.0
+Accept-Language: en, *;q=0.9
+如果这样一个作为输入的缺省请求包含的接收报头和远程变量选择算法不匹配，用户代理就
+能够发送‘Negotiate:trans’而不是‘Negotiate:1.0’，从而使算法失效。
+如果用户代理发现了，不管是否接收到一个列表或选择响应，一个特别的源服务器包含透明
+协商资源，它就能动态设置对这个服务器的以后的请求的长度，例如GET /paper/chapter1 
+HTTP/1.1
+      Host: x.org
+      User-Agent: WuxtaWeb/2.4
+      Negotiate: 1.0
+      Accept: text/html, application/postscript;q=0.8, */*
+      Accept-Language: en, fr;q=0.5, *;q=0.9
+      Accept-Features: tables, *
+这将增加远程变量选择算法拥有足够信息为用户代理作出选择的机会，因而会使协商进程最
+优化。一个动态扩展的优良算法是用这些媒体类型，语言，字符集，和特征标记符来扩展报
+头，这些都是在过去来自服务器的响应的变量列表中提到的。
+4.3本地和远程算法的区别
+   一个用户代理只能最优化内容协商，即使使用远程算法，而它的本地算法一般会做出相
+同的选择。如果用户代理收到一个包括由远程算法选择的变量X，而本地算法会选择Y，用
+户代理有两种选择：
+1．	在接下来的请求中重新得到Y。这不是最佳方案，因为它费时间。
+2．	无论如何也要显示X。这不是最佳方案，因为它使最终结果依赖于会随机改变的因数。
+对于对同一资源的下个请求，中间代理缓冲会返回一个列表响应，这会导致本地算法选
+择并重新得到Y而不是X。和稳定的表示相比，一个随机地在X和Y之间转换的表示的
+品质低得多。
+因为上面的两种选择都没有吸引力，用户代理应该试着一起避免上面的两种情况。下面
+的几节讨论了这该如何实现。
+4.3避免主要区别
+如果用户代理使这篇说明中的远程算法生效了，它应该按照惯例使用一个很类似远程算
+法的本地算法。此算法也应该使用乘法组合品质因数。如果用户代理通过加法组合品质因数，
+定义一个新远程变量选择算法会更有利，这个算法有一个新的主要版本号。
+4．3．2解决细微区别
+即使一个本地算法使用乘法组合品质因数，它还是可以使用扩展的品质公式像：
+Q = round5( qs * qt * qc * ql * qf ) * q_adjust
+以解决维之间的特殊相互依赖，这种依赖源自用户代理的局限性。例如，如果用户代理，由
+于某种原因，在翻译text/plain文档时不能处理iso-8859-7字符集，而text/plain - 
+iso-8859-7组合在变量描述中出现时，q_adjuster因数就会为0，否则为1。
+通过选择性地扣留来自远程变量选择算法的信息，用户代理能确保如果本地q_adjust
+小于1，远程算法永远不会作出一个选择。例如，为阻止远程算法返回一个text/plain - 
+iso-8859-7选择响应，用户代理应该小心永远不要产生一个精确说明text/plain和
+iso-8859-7品质因数的请求。对一个请求的任一因数的忽略都会任何text/plain - 
+iso-8859-7变量的总体品质值成为不确定的，拥有不确定品质值的变量永远不会在一个选
+择响应中返回。
+一般地，对一个特殊的组合X-Y-X，如果本地q_adjust不等于1，一个远程选择可以
+通过如下方式阻止，总是忽略来自接收报头的组合中的元素，并加上一个合适的通配符类型
+来匹配忽略的元素，如果这样的类型还没有存在的话。
+5．0安全和隐私考虑
+这部分说明没有介绍任何［2］中还没有涉及到的安全和隐私考虑。参见［2］以获得和
+接收报头相关的隐私风险。
+6．致谢
+有关HTTP内容协商的工作至少自1993年就已经做好了。作者不能够追溯这篇文档中的
+许多观点的来源。许多HTTP工作组的成员对这篇说明中的协商模型作出了贡献。作者衷心
+感谢那些对这篇文档早期版本作出评论的个人，包括Brian Behlendorf, Daniel DuBois, 
+Ted Hardie, Larry Masinter, and Roy T.Fielding.
+7．参考文献
+   [1] Fielding, R., Gettys, J., Mogul, J., Frystyk, H., and
+       T. Berners-Lee, "Hypertext Transfer Protocol -- HTTP/1.1", RFC
+       2068, January 1997.
+   [2] Holtman, K., and A. Mutz, "Transparent Content Negotiation in
+       HTTP", RFC 2295, March 1998.
+8．作者地址
+   Koen Holtman
+   Technische Universiteit Eindhoven
+   Postbus 513
+   Kamer HG 6.57
+   5600 MB Eindhoven (The Netherlands)
+   EMail: koen@win.tue.nl
+   
+Andrew H. Mutz
+   Hewlett-Packard Company
+   1501 Page Mill Road 3U-3
+   Palo Alto CA 94304, USA
+   Fax:   +1 415 857 4691
+   EMail: mutz@hpl.hp.com
+9．完整版权说明
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+RFC2296――HTTP Remote Variant Selection Algorithm -- RVSA/1.0   HTTP远程变量选择算法―RVSA/1.0
+
+
+1
+RFC文档中文翻译计划                                                                                     

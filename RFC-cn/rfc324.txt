@@ -1,0 +1,27 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                       J. Postel
+Request for Comments #324                                   UCLA-NMC
+NIC #9631                                                   3 April 72
+Categories:  RJE
+
+RJE协议会议
+（RJE Protocol Meeting）
+1972年4月21日（星期五）即将在ARPA Network召开一次讨论远程工作入口(Remote Job Entry，缩写为RJE)协议。会议即将从上午9:30到下午5:00在(美国)加利福尼亚大学洛杉矶分校（UCLA ）Ackerman学生联合会大楼的2412房间召开。
+预备参会的人员应该通过(213) 825-2368来联系Bryna Lang，以确认与会人数。
+与会人员也应该熟悉ARPANET RJE协议的前期工作，尤其是对在前面的RJE会议中由McKenzie(1972年2月25日)和Kampe(1972年3月8日)提交的报告。注意相关的数据和文件传输协议（Data and File Transfer protocols）。
+[这个RFC文档是由BBN公司在Alex McKenzie指导下以计算机可读的文件格式归档到在线RFC文档库的，12/96]
+
+RFC324――RJE Protocol Meeting                                                  RJE协议会议
+
+
+
+
+1
+RFC文档中文翻译计划
+

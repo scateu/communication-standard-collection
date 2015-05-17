@@ -1,0 +1,38 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+RFC #232
+NIC #7649
+A. Vezza
+
+               
+
+  网络图形会议延缓 
+（ RFC232――Postponement of network graphics meeting ） 
+
+7月份在M.I.T.举行的上一次网络图形会议上，我们暂定了下一次由Stanford AI主持
+的会议的时间为10 月的17、18、19日。因为网络工作小组会议定在10月10、11、12、13
+和14日举行，所以我们决定将网络图形会议延缓。等会议的新的时间确定下来，我们会立
+即通过RFC文档发布。预计会议将在11月某个时候或者是12月初，在San Francisco地区
+举行。
+
+
+[ This RFC was put into machine readable form for entry ]
+[ into the online RFC archives by BBN Corp. under the   ]
+[ direction of Alex McKenzie.                   12/96   ]
+
+
+
+RFC232――Postponement of network graphics meeting        网络图形会议延缓   
+
+
+1
+RFC文档中文翻译计划

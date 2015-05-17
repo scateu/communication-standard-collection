@@ -1,0 +1,478 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：黄俊（hujiao  hj_chinese@yahoo.com）
+译文发布时间：2001-4-26
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                           E. Nebel
+Request For Comments: 1867                                   L. Masinter
+Category: Experimental                                 Xerox Corporation
+                                                           November 1995
+
+                     HTML中基于表单的文件上传
+(RFC1867  Form-based File Upload in HTML)
+
+本备忘录的状态
+
+本备忘录描述了一种Internet社区的试验协议。本备忘录并未规定任何Internet标准，它需
+要进一步进行讨论和建议以得到改进。本备忘录的发布不受限制。
+
+目录
+1．摘要	2
+2．带有文件提交功能的HTML表单	2
+3．建议采纳的应用	3
+3.1 FILE组件的显示	4
+3.2提交之后的动作	4
+3.3 multipart/form-data的使用	4
+3.4其他属性的解释	5
+4.向后兼容性的考虑	5
+5.其他的考虑	6
+5.1压缩，加密	6
+5.2文件传输延迟	6
+5.3传输二进制数据的其他解决办法	7
+5.4 不修改<INPUT>	7
+5.5字段内容的默认类型	8
+5.6允许ACTION指向"mailto:"	8
+5.7第三方传输的远程文件	8
+5.8用ENCTYPE=x-www-form-urlencoded来传输文件	8
+5.9将CRLF作为行分隔符	8
+5.10和multipart/related的关系	9
+5.11含有非ASCII码的字段名	9
+6.例子	9
+7. multipart/form-data的登记	10
+8.安全性考虑	11
+9.结论	11
+作者地址：	12
+A.为multipart/form-data登记的媒体类型	12
+参考：	13
+
+1．摘要
+
+目前，HTML的表单让表单编写者能够通过表单得到浏览表单的用户的信息。在许多需要得
+到用户输入的应用中，表单被证明是非常有用的。但是，因为HTML表单并没有提供让用
+户可以上传文件或数据的途径，这种能力受到了一定的限制。所以那些需要从用户那儿得到
+文件的服务提供商们不得不自己来建立相应的应用程序。（我们可以在www-talk邮件列表
+中找到这类客户浏览器的例子。）既然文件上传是能够让许多应用程序受益的特点，这使得
+人们要求扩展HTML，以便能让信息提供商们能够统一地处理文件上传请求，并为文件上传
+响应提供统一的MIME兼容的表现形式。本方案同时也包括了一个向后保持兼容的策略介
+绍，以便能让新的服务器能和现有的HTML客户端进行互动。
+
+本建议独立于现有的各版本HTML。
+
+2．带有文件提交功能的HTML表单
+
+现有的HTML规范为INPUT元素的TYPE属性定义了八种可能的值，分别是：CHECKBOX, 
+HIDDEN, IMAGE, PASSWORD, RADIO, RESET, SUBMIT, TEXT. 另外，当表单采用
+POST方式的时候，表单默认的具有"application/x-www-form-urlencoded" 的ENCTYPE
+属性。
+
+本建议对HTML做出了两处修改：
+1）为INPUT元素的TYPE属性增加了一个FILE选项。
+2）INPUT标记可以具有ACCEPT属性，该属性能够指定可被上传的文件类型或文件格式
+列表。
+
+另外，本建议还定义了一种新的MIME类型：multipart/form-data，以及当处理一个带有
+ENCTYPE="multipart/form-data" 并且/或含有<INPUT type="file">的标记的表单时所应该
+采取的行为。
+
+这些改变可以被视为是完全独立的，但对于合理的文件上传需求来说，这些改变都是必需的。
+
+举例来说，当HTML表单作者想让用户能够上传一个或更多的文件时，他可以这么写：
+
+    <FORM ENCTYPE="multipart/form-data" ACTION="_URL_" METHOD=POST>
+
+    File to process: <INPUT NAME="userfile1" TYPE="file">
+
+    <INPUT TYPE="submit" VALUE="Send File">
+
+    </FORM>
+
+HTML DTD里所需要做出的改动是为InputType实体增加一个选项。此外，我们也建议用
+一系列用逗号分隔的文件类型来作为INPUT标记的ACCEPT属性。
+
+  ... (其他元素) ...
+
+  <!ENTITY % InputType "(TEXT | PASSWORD | CHECKBOX |
+                         RADIO | SUBMIT | RESET |
+                         IMAGE | HIDDEN | FILE )">
+  <!ELEMENT INPUT - 0 EMPTY>
+  <!ATTLIST INPUT
+          TYPE %InputType TEXT
+          NAME CDATA #IMPLIED  -- required for all but submit and reset
+          VALUE CDATA #IMPLIED
+          SRC %URI #IMPLIED  -- for image inputs --
+          CHECKED (CHECKED) #IMPLIED
+          SIZE CDATA #IMPLIED  --like NUMBERS,
+                                  but delimited with comma, not space
+          MAXLENGTH NUMBER #IMPLIED
+          ALIGN (top|middle|bottom) #IMPLIED
+          ACCEPT CDATA #IMPLIED --list of content types
+          >
+
+  ... (其他元素) ...
+
+3．建议采纳的应用
+
+因为用户端有多种途径来选择最合适的方式来解释HTML内容，本节针对其中的一种：
+WWW浏览器来建议如何实现文件上传。
+
+3.1 FILE组件的显示
+
+当浏览器遇到一个FILE类型的INPUT标记时，它将显示一个文件名（或者是前面所选择
+的文件名），和一个Browse（浏览）按钮或类似的选择方式。选择这个Browse（浏览）
+按钮将触发浏览器对应于其所运行的平台相应的文件选择方式。举例来说，基于Windows
+的浏览器将会弹出一个文件选择窗口。在这个文件选择窗口中，用户可以进行替换现有的选
+择，为选择增加一个新的文件等操作。浏览器的设计者可以自己确定所选择的文件名列表是
+否可以被用户手工修改。
+
+如果该标记有ACCEPT属性，浏览器还可以限制符合该平台的文件类型。
+
+3.2提交之后的动作
+
+当用户填完了表单，并且选择了SUBMIT元素，浏览器应该将表单的内容和所选择的文件
+的内容传回。对于传送那些大容量的二进制数据或包含非ASCII字符的文本来说，
+application/x-www-form-urlencoded编码类型是远远不能满足要求的。于是，我们提出了一
+种新的媒体类型：multipart/form-data，用来作为将填写好的表单内容从客户端传回到主机
+端的高效方式。
+
+3.3 multipart/form-data的使用
+
+第7节里面对multipart/form-data做出了具体的定义。最极端的情况是选择中不包括任何数
+据。（这种选择在某些情况下是非常可能的。）作为数据流的一部分，表单中的每一项内容
+都按照它们在表单中出现的顺序被依次发送。每一部分由它们在HTML表单中INPUT标记
+的名字所标识。如果该部分内容的类型是已知的，就用相应的媒体内容进行标识（举例来说，
+可以从文件的扩展名或者从操作系统的相关类型信息中得知），否则的话，就标识为
+application/octet-stream。
+
+如果有多个文件被选中上传，它们必须按照multipart/mixed格式进行传输。
+
+虽然HTTP协议能够传送任意形式的二进制数据，邮件传送（举例来说，如果表单的ACTION
+是mailto的形式）的默认方式是7位编码。但是如果传送的内容和默认的编码方式不兼容
+的话，所传送的内容将需要进行编码，并且加上一个"content-transfer-encoding"标识头。
+（此方面详细内容可参看RFC 1521第5节）。
+
+上传文件的原始文件名也应该一道被传送，或者是作为filename参数，或者是
+'content-disposition: form-data'的标题头，如果传送的是多个文件的话，也可以是子内容中
+的'content-disposition:file'的标题头。客户端应用程序应该尽量提供文件名。如果客户端操
+作系统上的文件名包含有非US-ASCII字符，文件名可以用类似的字符或者是按照RFC1522
+中描述的方法进行编码。这在某些情况下有其便利之处，比如说上传的文件中可能包含互相
+关联的关系，例如一个TeX文件可能会有一个后缀为.sty的附加类型描述文件。
+
+在服务器端，ACTION可能是指向一个HTTP地址，借助CGI来完成表单的处理程序。在
+这种情况下，CGI程序将会注意到内容类型是multipart/form-data，并采取措施来处理不同
+的字段（校验合法性，按照处理顺序将文件写入磁盘等等）
+
+3.4其他属性的解释
+
+<INPUT TYPE=file>标记可以有一个VALUE属性来指定默认的文件名。这有可能会影响到
+平台无关性，但也可能非常有用。举例来说在某些有多个提交过程的操作中，可以避免让用
+户不停的选择同样的文件名。
+
+可以用“SIZE=宽，高”来指定SIZE属性。宽度默认为文件名的宽度，而高度是所选择的
+文件列表的显示区域大小。举例来说，对那些希望在浏览器中实现上传多个文件，并且显示
+多行的文件输入框（当然，旁边还有一个Browse按钮）的人来说，这点非常有用。当没有
+指定高度值时，将只会显示一个单行的文件输入框（如果表单设计者只希望上传一个文件的
+话），而如果高度值大于1的话，将显示带有滚动条的多行输入框（如果表单设计者希望
+上传多个文件的话）。
+
+4.向后兼容性的考虑
+
+尽管对于现有的WWW表单机制来说，一个成功的改进方案不一定要考虑这点，但是考虑
+一种迁移的策略也是有帮助的：对于那些使用比较老版本的浏览器的用户来说，借助于一个
+附加程序，他们也能够进行文件上传。现有的绝大部分浏览器在碰到<INPUT TYPE=FILE>
+时，会将它按照<INPUT TYPE=TEXT>对待，并给用户一个文本输入框。用户能在这个框
+里面输入文件名。此外，似乎现有的浏览器都忽略了表单元素中的ENCTYPE参数，并按
+照application/x-www-form-urlencoded传送表单数据。
+
+这样的话，当服务器端的CGI处理传送回来的表单数据时，如果数据类型是
+application/x-www-form-urlencoded，而不是multipart/form-data，就可以知道用户使用的
+浏览器没有实现文件上传。
+
+在这种情况下，服务器端的CGI不会返回一个“text/html”响应，而是返回一个数据流以
+便附加程序能够处理；这个数据流可能被标识为"application/x-please-send-files"，并包含
+以下内容：
+
+?	表单数据实际需要被传送至的（标准）URL地址（以CRLF结尾）
+?	应该包含文件内容的字段名字列表（用空格间隔开，以CRLF结尾）
+?	客户端传至服务器端的application/x-www-form-urlencoded表单数据
+
+这时候，浏览器需要被设置以便能启动一个附加程序来处理application/x-please-send-files
+请求。
+
+附加程序能够处理表单数据，并且注意到那些包含有“本地文件名”、需要用实际的文件内
+容替代的字段。它可能会需要提示用户来改变或增加文件列表，然后重新将数据和文件内容
+打包成multipart/form-data，并再次传回给服务器。
+
+附加程序能够象那些新版本的浏览器实际处理数据那样处理表单，并按照原始的ACTION
+指定的URL地址将数据发送。这样处理的好处是服务器端可以使用“同样的”CGI来处理
+老版本及新版本的浏览器。
+
+附加程序不需要显示表单数据，但是“需要”确保用户能够得知传送的文件是恰当的。（这
+是为了避免那些不怀好意的服务器要求传送用户本来没有要求传送的文件而可能带来的安
+全问题。）如果能够显示当前正在传送的文件状态，将非常有帮助。
+
+5.其他的考虑
+
+5.1压缩，加密
+
+本方案并没有考虑可能存在的文件压缩。经过一定的考虑，我们发现如果要让浏览器自己来
+决定那些文件需要被压缩的话，对文件压缩进行优化的讨论将变得非常复杂。许多连接层的
+传输协议（比如说高速调制解调器）在连接层对数据进行压缩，如果在这一层上对压缩进行
+优化可能不是非常恰当。如果确实希望如此的话，可以让浏览器选择是否对文件内容进行
+content-transfer-encoding的x-compress压缩，并且在服务器端处理数据前进行数据解压
+缩。但这将不在该方案中进行讨论。
+
+同样，本方案也没有包括对数据进行加密的机制。这应该由其他的数据保密传输协议进行处
+理，或者是保密HTTP（HTTPs），或者是电子邮件。
+
+5.2文件传输延迟
+
+在某些情况下，在确实准备接受数据前，服务器先对表单数据中的某些元素（比如说用户名，
+账号等）进行验证是推荐的做法。但是，经过一定的考虑后，我们认为如果服务器想这样做
+的话，最好是采用一系列的表单，并将前面所验证过的数据元素作为“隐藏”字段传回给客
+户端，或者是通过安排表单使那些需要验证的元素先显示出来。这样的话，那些需要做复杂
+的应用的服务器可以自己维持事务处理的状态，而那些简单的应用的则可以实现得简单些。
+
+HTTP协议可能需要知道整个事务处理中的内容总长度。即使没有明确要求，HTTP客户端
+也应该提供上传的所有文件的内容总长度，这样一个繁忙的服务器就能够判断文件的内容是
+否是过大以至于将不能完整地处理，从而返回一个错误代码并关闭该连接，而不用等到接受
+了所有的数据才进行判断。目前一些现有的CGI应用对所有的POST事务都需要知道内容
+总长度。
+
+如果INPUT标记含有一个MAXLENGTH属性，客户端可以将这个属性值看作是服务器端
+所能够接受的传送文件的最大字节数。在这种情况下，服务器能够在上传开始前，提示客户
+端在服务器上有多少空间可以用来进行文件上传。但是应该引起注意的是，这仅仅是一个提
+示，在表单被创建后和文件上传前，服务器的实际需求可能会发生改变。
+
+在任何情况下，如果接受的文件过大的话，任何一个HTTP服务器都有可能在文件传输的
+过程中中断传输。
+
+5.3传输二进制数据的其他解决办法
+
+有些人曾经建议使用一种新的MIME类型"aggregate"，比如说aggregate/mixed 或是
+content-transfer-encoding "包"来描述那些不确定长度的二进制数据，而不是靠分解为多个
+部分来表示。虽然我们并不反对这么做，但这需要增加额外的设计和标准化工作来让大家接
+受并理解"aggregate"。 从另一方面来说，"分解为多部分"的机制工作得很好，能够非常简
+单的在客户发送端和服务器接受端加以实现，而且能像其他一些综合处理二进制数据的方式
+一样高效率地工作。
+
+5.4 不修改<INPUT>
+
+有些人曾经提到过，为什么要修改INPUT来实现文件上传功能，而不是为表单元素提供一
+个完全不同的类型？在这种种考虑中，当我们使用<INPUT>时，最重要的考虑是兼容策略。
+事实上，<INPUT>标记"早就已经"被修改过以用来包含各种输入的数据，相比较于创造不同
+种类的<INPUT>标记，对<INPUT>进行加强看起来是更为合理的办法。INPUT的“类型”
+并不是它所返回的内容类型，而更象是“多类型”的，也就是说，它表示了和用户互动的方
+式。它的定义被仔细地斟酌以便其既能在文本浏览器，也能在声音标记中使用。
+
+5.5字段内容的默认类型
+
+HTML中许多字段都需要用户进行输入。过去人们对这些表单数据应该如何传回到服务器有
+些意见分歧。但是将这些INPUT字段的内容看成是纯文本很明显将有助于消除这方面的分
+歧。客户端再将这些数据传回到服务器以前应该将它们用CRLF分隔开，并进行适当的编
+码。
+
+5.6允许ACTION指向"mailto:"
+
+虽然和本方案无关，但是如果允许客户端的表单的ACTION指向一个"mailto:"地址将肯定非
+常有用。不管本方案本身怎么设想，这都是一个好主意。同样的，那些用来接受邮件的表单
+的ACTION也应该默认指向"reply-to:"。这两个设想有助于让HTML表单借助于HTTP服务
+器工作，但通过电子邮件发送内容。或者也可以这么做：允许HTML表单能够被电子邮件
+发送，当HTML中指明的邮件收件人填写完表单后，再将结果发送作为邮件传送回来。
+
+5.7第三方传输的远程文件
+在某些情况下，那些操作客户端软件的用户可能希望通过指定一个URL地址来传送位于网
+上，而不是本地的数据文件。在这种情况下，浏览器能够发送给客户一个指向远程数据的连
+接，而不是实际的所有内容吗？这种要求实际上是可以办得到的，举例来说，只要让客户在
+发送给服务器的数据当中，用"message/external-body"来指明数据的类型，同时将
+"access-type"设置为连接的地址，并在发送的内容中包含远程数据的URL地址就可以了。
+
+5.8用ENCTYPE=x-www-form-urlencoded来传输文件
+
+如果一个表单包含了<INPUT TYPE=file>元素，但是表单本身未包含ENCTYPE属性，也
+就是没有详细说明相应的行为的话。这将可能导致为服务器进行不恰当的对大量数据进行
+URN编码，而这将是服务器端所不希望看到的
+
+5.9将CRLF作为行分隔符
+
+象所有的MIME传输一样，在用POST方式传送表单内容的时候，CRLF都被用作行的分
+隔符。
+
+5.10和multipart/related的关系
+MIMESGML小组正在考虑制订一种新的类型，称为multipart/related。它包含和
+multipart/form-data类似的特点。Form-data的使用和应用却是完全不同的，所以它被单独
+进行描述。
+
+在某些情况下，有可能将HTML表单的内容（包括文件）作为multipart/related进行编码，
+但这和本方案所讨论的情况有很大的不同。
+
+5.11含有非ASCII码的字段名
+
+需要注意的是MIME的标题头通常是由7位的US-ASCII字符集构成。所以如果字段名的字
+符不属于该字符集的话，就必须按照RFC 1522里面所提到的方法进行编码。在HTML 2.0
+里面，默认的字符集是ISO-8859-1，而由非ASCII码字符组成的字段名就必须进行编码。
+
+6.例子
+
+假设服务器段提供的是如下的HTML：
+
+     <FORM ACTION="http://server.dom/cgi/handle"
+           ENCTYPE="multipart/form-data"
+           METHOD=POST>
+     What is your name? <INPUT TYPE=TEXT NAME=submitter>
+     What files are you sending? <INPUT TYPE=FILE NAME=pics>
+     </FORM>
+
+用户在“姓名”字段里面填写"Joe Blow"，对问题'What files are you sending?'，用户选择
+了一个文本文件"file1.txt"。
+
+客户段可能发送回如下的数据：
+
+        Content-type: multipart/form-data, boundary=AaB03x
+
+        --AaB03x
+        content-disposition: form-data; name="field1"
+
+        Joe Blow
+        --AaB03x
+        content-disposition: form-data; name="pics"; filename="file1.txt"
+        Content-Type: text/plain
+
+         ... file1.txt 的内容...
+        --AaB03x--
+
+如果用户同时还选择了另一个图片文件"file2.gif"，那么客户端可能发送的数据将是：
+
+        Content-type: multipart/form-data, boundary=AaB03x
+
+        --AaB03x
+        content-disposition: form-data; name="field1"
+
+        Joe Blow
+        --AaB03x
+        content-disposition: form-data; name="pics"
+        Content-type: multipart/mixed, boundary=BbC04y
+
+        --BbC04y
+        Content-disposition: attachment; filename="file1.txt"
+
+        Content-Type: text/plain
+
+        ... file1.txt 的内容...
+        --BbC04y
+        Content-disposition: attachment; filename="file2.gif"
+        Content-type: image/gif
+        Content-Transfer-Encoding: binary
+
+          ... file2.gif的内容...
+        --BbC04y--
+        --AaB03x--
+
+7. multipart/form-data的登记
+multipart/form-data的媒体内容遵从RFC 1521所规定的多部分的数据流规则。它主要被用
+来描述表单填写后返回的数据。在一个表单中（这里指的是HTML，当然其他一些应用也可
+能使用表单），有一系列字段提供给用户进行填写，每个字段都有自己的名字。在一个确定
+的表单中，每个名字都是唯一的。
+
+multipart/form-data由多个部分组成，每一部分都有一个content-disposition标题头，它的
+值是"form-data"，它的属性指明了其在表单内的字段名。举例来说，'content-disposition: 
+form-data; name="xxxxx"'，这里的xxxxx就是对应于该字段的字段名。如果字段名包含非
+ASCII码字符的话，还应该按照RFC 1522里面所规定的方法进行编码。
+
+对所有的多部分MIME类型来说，每一部分有一个可选的Content-Type，默认的值是
+text/plain。如果文件的内容是通过表单填写上传返回的话，那么输入的文件就被定义为
+application/octet-stream，或者，如果知道是什么类型的话，就定义为相应的媒体类型。如
+果一个表单返回多个文件，那么它们就作为multipart/form-data中所结合的multipart/mixed
+被返回。
+
+如果所传送的内容不符合默认的编码方式的话，该部分都将被编码，并加上
+"content-transfer-encoding"的标题头。
+
+上传的文件也可能被指定文件名，文件名可以由标题头"content-disposition"中的filename
+参数所指定。虽然这并不是必需的，但我们强烈建议在能够得知原始文件名的情况下这么做。
+对于很多应用程序来说，这都是必需的或者是有用的。
+
+8.安全性考虑
+
+如果用户没有明确要求发送某个文件，用户端就不应该发送该文件，这点非常重要。所以，
+在碰到<INPUT TYPE=file VALUE="yyyy">的标记的时候，HTML解释器应该能够让用户确
+认默认的文件名。不要使用隐含的字段来指定任何文件。
+
+本方案并没有包括对数据加密的讨论；这应该是保密数据传输协议，或者是加密HTTP，或
+者是MOSS所提供的加密协议（在RFC 1848中有具体的描述）所讨论的问题。
+
+一旦文件上传成功，就将取决于文件接受方来处理文件或者是储存在适当的地方。
+
+9.结论
+
+我们所建议的应用让客户端有很大的弹性来决定它发送到服务器的文件的类型和数量，也让
+服务器端有权决定是否接受上传的文件，同时也让服务器有机会和那些不支持类型为file的
+INPUT的浏览器进行互动。
+
+对HTML DTD的改动虽然很简单，但却有很大的作用。能够让目前这种缺少文件上传机制
+的万维网实现很多种服务。这将给万维网实际的性能增加许多惊人的价值。
+
+作者地址：
+
+   Larry Masinter
+   Xerox Palo Alto Research Center
+   3333 Coyote Hill Road
+   Palo Alto, CA 94304
+
+   Phone:  (415) 812-4365
+   Fax:    (415) 812-4333
+   EMail:   masinter@parc.xerox.com
+
+   Ernesto Nebel
+   XSoft, Xerox Corporation
+   10875 Rancho Bernardo Road, Suite 200
+   San Diego, CA 92127-2116
+
+   Phone:  (619) 676-7817
+   Fax:    (619) 676-7865
+   EMail:   nebel@xsoft.sd.xerox.com
+
+A.为multipart/form-data登记的媒体类型
+媒体类型名称:
+ multipart
+
+子类型名称:
+ form-data
+
+必需的参数:
+ 无
+
+可选参数:
+ 无
+
+编码考虑:
+和其他类型相比没有额外的考虑。
+
+发行的规范:
+ RFC 1867
+
+安全性考虑
+
+multipart/form-data并未引进新的安全性考虑来针对那些可能存在所附的内容中的问题。
+
+参考：
+
+[RFC 1521] MIME (多用途的网际邮件扩充协议) 第一部分:
+	  网上邮件内容格式的确定和规范机制
+	  N. Borenstein & N. Freed.
+           1993年9月.
+
+[RFC 1522] MIME (多用途的网际邮件扩充协议) 第二部分:
+	  非ASCII码文本的邮件头扩充
+           K. Moore.
+           1993年9月.
+
+[RFC 1806] 英特网上的信息通讯和表达
+           信息: Content-Disposition标题头. 
+	  R. Troost & S. Dorner, 
+	  1995年6月.
+RFC 1867 Form-based File Upload in HTML	HTML中基于表单的文件上传
+RFC文档中文翻译计划		1

@@ -1,0 +1,283 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：孟岩（dreamwords   dreamwords@sina.com）李超（licc_li@sina.com）
+译文发布时间：2001-6-26
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                       G. Hellstrom
+Request for Comments: 2793                                    Omnitor AB
+Category: Standards Track                                       May 2000
+
+
+用于文本交谈的RTP负载
+（RTP Payload for Text Conversation）
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+
+版权声明
+Copyright (C) The Internet Society (2001).
+
+摘要
+本文描述了在RTP包中传输文本交谈内容的方法，关于文本交谈会话内容在ITU-T建议
+（T.140[1]）中有详细说明。
+文本交谈可以用来单独传输或与音视频等交谈工具一起构成多媒体交谈服务。
+本RTP负载包含可选的已传输数据包的冗余文本来降低包丢失的风险。冗余码参照RFC 
+2198。
+									目录
+1．简介	2
+1.1 术语	3
+2. RTP用法	3
+2.1 RTP包头	3
+2.2 附加头	4
+2.3 T.140 文本结构	4
+3. 推荐过程	4
+3.1  基本推荐过程	5
+3.2  补偿丢包的推荐过程	5
+3.3  补偿乱序包的推荐过程	5
+3.4  使用冗余时的“静音期”传输	5
+4. 范例	6
+5．安全性考虑	7
+6.  MIME MEDIA TYPE REGISTRATIONS	7
+6.1  Registration of MIME media type text/t140	7
+鸣谢	8
+作者地址	8
+参考	8
+版权说明	9
+致谢	9
+1．简介
+本文定义了一种用于在RTP包中传输文本交谈会话内容的负载格式，文本交谈会话内容
+在ITU-T建议（T.140[1]）中有详细说明。文本交谈可单独传输或与音视频等交谈工具共同
+构成多媒体交谈服务。文本交谈中的文本应尽快传输，或者经过一个小的缓冲延迟。
+文本的输入通常是以键盘、手写识别、语音识别或是其它输入方法。字符的输入率通常
+为每秒几个字符。这样，期望的字符传输率也较低。通常每个包中只有很少的新字符需要传
+输。
+在T.140中指定文本和其它T.140元素必须以经过UTF-8变换的ISO 10 646-1 码来传送。
+这些有助于实现国际化应用，并且易于处理现代信息技术环境中的文本。本文RTP负载中
+的文本编码严格遵守T.140，没有任何附加帧。通常是UTF-8编码的ISO 10646单字符。
+	T.140要求字符按照原始顺序，没有重复的传输。文本交谈的使用者希望文本传输没有
+或尽可能少丢失。当然，如果能标识出丢失的信息，则丢失的可接受程度会高些。
+	因此，这里介绍了一个基于RTP的机制。它将按照原始顺序，无重复传输，并且提供
+丢失检测和指示。它同时也提供一个可选方案，利用重复的冗余数据来降低丢失文本风险。
+考虑到包开销通常远远大于T.140内容，传输通道中增加冗余数据造成的负担很小。
+1.1 术语
+本文中的关键字“必须”，“必须不”，“要求的”，“应该”，“不应该”，“会”，“不会”，
+“建议”，“或许”，“可选的”在 RFC 2119 [4]中解释。
+2. RTP用法
+当RTP传输中需要传输T.140文本交谈，应该使用本文所述的负载。
+这种负载格式的文本交谈RTP包的格式包括：一个RTP头（在RFC 1889 [2] 中有定义），
+其后紧接着是一个T.140数据块（这里被定义为“T140block”）。该负载格式没有附加头。
+T140块包括 [1] 中定义的一个或多个T.140码元素。大部分T.140码元素为ISO 10645 [5] 单
+字符，但是也有一些是多字符序列。其中每个字符均为UTF-8编码[6]的一个或多个字节。
+这说明不管单个字符中有几个字节，每一块必须包含UTF-8码的整数倍。这也说明任何组
+合的字符序列（CCS）应该被放到同一块中。
+T140块可能会根据RFC 2198 [3] 所定义的负载格式传输冗余数据。这样，RTP头后将
+是一或多个冗余数据块头，个数与从携带的冗余T140块数相同，最后是此包的新T140块。
+2.1 RTP包头
+每个RTP包开始于一个固定的RTP头。下面列出了用于T.140文本流的几个RTP头字
+段。
+负载类型（PT）：RTP负载类型的分配是使用该负载格式的RTP框架特定的。对于利用
+动态负载类型号的协议子集，这种负载格式被命名为"T140"（参照第六节）。如果按照RFC 
+2198使用冗余数据，负载类型中必须指定负载格式（"RED"）。
+顺序号：顺序号必须严格按照每个新传送包以一递增。它用于包丢失和乱序检测，同时
+也可以用于获取冗余文本，重组文本和标记丢失文本。
+	时间戳：RTP时间戳记录了包中主文本块采样时间的近似值。必须使用1000赫兹的时
+钟频率。连续包不能使用相同的时间戳。由于包不按固定间隔发送，所以时间戳不能直接被
+用于指示包丢失。
+2.2 附加头
+本负载格式没有定义专门的附加头。
+当要按RFC 2198传输冗余数据时，RTP头后紧跟者一个或多个冗余数据块头，每个冗
+余数据块都要有一个对应的冗余数据块头。这些头部均提供了时间戳位移和相应的数据块长
+度，以及指示了这种负载格式("T140")的负载类型号。
+2.3 T.140 文本结构
+T.140文本是按T.140协议规定经过UTF-8编码的，没有额外组帧。当用该格式传输冗
+余数据时，发送者会选择每个包中要传输的T140block数。数越高则将丢包保护性越好，但
+同时也会增加数据传输率。
+由于数据包并非按一定的时间间隔产生，如果不提供附加信息，时间戳在包丢失时就无
+法标识出该包。冗余数据头并没有提供顺序号，所以必须遵循附加规则才能将丢失主数据所
+对应的冗余数据正确的插入T140blocks主数据流中：
+1.	每个冗余数据块必须与先前传输原始数据的T140块数据相同，并标识为相同的时
+间戳位移。
+2.	冗余数据必须按照时间顺序放置，最近的冗余T140块位于冗余区的最后。
+3.	必须包括从最早的T140blocks到新数据块前的T140blocks所有的T140块，。
+通过这些规则，冗余T140块的顺序号可以从当前RTP头的序号反向推算得到。结果就
+是负载中的所有文本都是连续且顺序的。
+3. 推荐过程
+这部分描述了负载格式使用的推荐过程，根据接受包的信息，接收者可以：
+1.	把错乱文本重新排序。
+2.	标识丢失文本。
+3.	用冗余数据补偿丢失包。
+3.1  基本推荐过程
+	只有合法的T.140格式的数据包才被传输， T.140数据的排序要使用顺序号。
+	在接收端，将RTP顺序号与最后一次正确接收包的序号相比较，如果是连续的，就从
+中取出T140block。
+3.2  补偿丢包的推荐过程
+	为了减少包丢失时的数据丢失，可以根据RFC2198在包中使用冗余数据。如果无法得
+知网络条件，建议每一包中只使用一个冗余T140块。如果RTP序号出现空隙，且后续包中
+的冗余T140块可用，则可以通过包中RTP头的序号逆向推算出冗余T140块的序号。如果
+该冗余T140块的序号与丢失的相吻合，就用冗余T140块来替换丢失T140块。
+	无论是否使用冗余数据，都应该在T140块的接收流中插入一个丢失文本标记来标志丢
+失的数据，见ITU-T T.140附录。
+3.3  补偿乱序包的推荐过程
+	对于乱序包的检测，接收端应该采取下属程序。如果接收包序号有空隙，但没有可用的
+冗余数据来填充那个空隙，则接收包将被存储在缓存中来等待丢失包的到达。建议等待时间
+限于0.5秒。如果使用了冗余，并且冗余数乘以T.140缓冲时间比0.5秒长，则等待时间应
+延长到该乘积。
+	如果空隙数据包在限制时间内到达，则将它被插入到空隙中，这样从空隙前沿开始的
+T140块就恢复连续了。任何没有在限制时间内到达的T140块将被视为丢失。
+3.4  使用冗余时的“静音期”传输
+	当使用冗余传输模式且T.140没有数据要传输时，最后传输的一个T140块有可能在作
+冗余数据传送之前就失效。这样就不能对文本输入序列的末尾提供有效的丢包保护。为了要
+避免这种情况，应该传送一个0长度的携带冗余数据的原始T140块。
+	根据2.3节，为了能正确推算冗余T140块的序号，任何被当作原始数据为0长度的T140
+块必须如同正常文本块一样在接下来的包中当作冗余传输。
+	最后一个T140块的冗余不应该由重复传送同一个包（相同序号）来解决，因为这样会
+造成RTCP报告的包丢失数量减少。
+4. 范例
+这是一个没有冗余的T140 RTP包的例子
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|V=2|P|X| CC=0  |M|   T140 PT   |       顺序号               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                      时间戳 (1000Hz)                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           同步源 (SSRC) 标识符                            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
++                      T.140 编码数据                       +
+|                                                           |
++                                               +---------------+
+|                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+	
+	这是一个携带冗余数据的RTP 包的例子
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |V=2|P|X| CC=0  |M|  "RED" PT   |   主序号                   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      原始数据时间戳                       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           同步源 (SSRC) 标识符                            |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |1|   T140 PT   |            "R" 时间戳位移  |      "R" 块长度|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |0|   T140 PT   |                                            |
+   +-+-+-+-+-+-+-+-+                                            +
+   |                                                           |
+   +               "R" T.140 编码冗余数据                      +
+   |                                                           |
+   +                                               +---------------+
+   |                                               |            |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               +
+   |                "P" T.140 编码原始数据                       |
+   +                                                           +
+   +                                               +---------------+
+   |                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   
+   附图：RTP文本包的例子
+5．安全性考虑
+既然本负载格式的目的是在文本交谈中携带文本，加密的安全性度量就变得十分重要。
+文本传输的数量很少，这样我们可以选择任何加密方法来对T.140会话或者整个RTP包进
+行加密。如果数据包中包含了冗余数据，要使用同RFC 2198一样的安全性考虑。
+6.  MIME Media Type Registrations
+
+   本文档描述了一种新的RTP负载名称和相应的MIME类型，T140 (text/t140).
+6.1  Registration of MIME media type text/t140
+   MIME media type name: text
+   MIME subtype name: t140
+   必需参数: 无
+   可选参数: 无
+   编码考虑: 按RFC 2793规定传输T140文本。
+   安全性考虑：无
+   互操作考虑: 无
+   已发行规范: ITU-T建议T.140，RFC 2793.
+   使用该媒体类型的应用:
+     文本通信终端和文本会议工具。
+   附加信息: 无
+     Magic number(s): 无
+     文件扩展: 无
+     Macintosh文件类型码: 无
+   联系办法:
+     Gunnar Hellstrom
+     e-mail: gunnar.hellstrom@omnitor.se
+   预期使用: COMMON
+     Author                      / Change controller:
+     Gunnar Hellstrom            | IETF avt WG
+     gunnar.hellstrom@omnitor.se | c/o Steve Casner casner@cisco.com
+鸣谢
+感谢 Stephen Casner 和 Colin Perkins 在本文写作时给予的细查和建议。
+   	感谢Ericsson公司的Mickey Nasiri提供的实验环境。
+   	感谢Michele Mizarro验证了负载格式的可用性。
+作者地址
+Gunnar Hellstrom
+   	Omnitor AB
+   	Alsnogatan 7, 4 tr
+   	SE-116 41 Stockholm
+   	Sweden
+   	Phone: +46 708 204 288 / +46 8 556 002 03
+   	Fax:   +46 8 556 002 06
+   	EMail: gunnar.hellstrom@omnitor.se
+参考
+   [1]  ITU-T Recommendation T.140 (1998) - Text conversation protocol
+        for multimedia application, with amendment 1, (2000).
+   [2]  Schulzrinne, H., Casner, S., Frederick, R. and V. Jacobson,
+        "RTP: A Transport Protocol for Real-Time Applications", RFC
+        1889, January 1996.
+   [3]  Perkins, C., Kouvelas, I., Hardman, V., Handley, M. and J.
+        Bolot, "RTP Payload for Redundant Audio Data", RFC 2198,
+        September 1997.
+   [4]  Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+   [5]  ISO/IEC 10646-1: (1993), Universal Multiple Octet Coded
+        Character Set.
+   [6]  Yergeau, F., "UTF-8, a transformation format of ISO 10646",  RFC
+       2279, January 1998.
+版权说明
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.	
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+
+
+
+
+
+RFC2793―― RTP Payload for Text Conversation	用于文本交谈的RTP负载
+
+
+1
+RFC文档中文翻译计划
+

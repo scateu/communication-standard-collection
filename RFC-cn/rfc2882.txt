@@ -1,0 +1,530 @@
+
+
+Network Working Group                                           D. Mitton
+Request for Comments: 2882                                Nortel Networks
+Category: Informational                                         July 2000
+
+			网络接入服务器（NAS）需求：扩展RADIUS实践
+                  (RFC2882-Network Access Servers Requirements:
+                       Extended RADIUS Practices)
+
+Status of this Memo
+
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+
+	该文档描述的是一些超出RFC2138、2139范围的在当前的一些NAS产品中的具体实现。
+	这样做的目的是给出一些范例，说明处理和标准化这些类型的 ad-hoc函数（ad-hoc function）
+	的必要性。因为这些特性需要一个匹配的服务器支持，因而配置个管理NAS和AAA服务器产品的
+	相互操作的能力被严重的阻碍了。
+	
+   	记载在这儿的实践列举了在将来开发NAS时实现AAA所期望的一些功能。
+
+1、 简介
+	RADIUS工作组成立于1995年，专门文档化一些同名的协议，	并被特许在一定的范围之内
+	支持拨号拨号接入终端服务器。遗憾的是现实中的NAS不再只是停留在小而简单的状态，而是
+	以惊人的速度在发展。
+	
+	该文档列举了一些当前市场上的已经超出了RADIUS协议功能范围的实现。一些特性彻底的
+	超出了协议。这些特性利用RADIUS协议的结构和格式，但是应用和语意已经超出了RFC文档。
+	
+	我通过一些手册了解这些功能的细节，并在投标规格书中对这些功能做出一些响应。当它
+	们变成该领域的配置时，它们就成了实际上的标准。
+	
+	因为它们是在RFC文档范围之外被实现的，它们是厂商特有的，从而在产品的可互操作方面
+	引入了困难。
+	
+1.1	非保证事项（Disclaimers）
+	
+	该文档中的数据是从公共数据来源以及厂商的文档收集来的。这些特性的实现以及以后的
+	变化没有被确认。
+	
+	该文档是当前已经知道的一些实践的集合。其目的不是想标准化这些实践或者是使得该文档
+	通用。如果文档中给出了一些细节的信息，请注意那不是该文档的目的。该文档的目的不是
+	想将提到的一些功能描述成完全的功能规范。
+	
+	作者没有转录版权材料，也不清楚这些实现是否有知识产权的限制。
+	
+	任何分配的数据或者是功能操作如果被厂商修改了，请恕不通知。如果有直接从实现者那里
+	获得的资料，特别是第一手资料，我将感激不尽。
+	
+1.2	表示方法
+	
+	由于这些材料专门组织，信息按照一种简单的分类方法管理。
+	
+	   -    Attribute Usage
+	
+	   -    Attribute Data Types
+	
+	   -    Message Codes
+	
+	   -    New Operations
+	
+2.	属性用法（Attribute Usage）	
+
+	RADIUS 的 RFC 定义了给出了属性类型的范围，以及一些属性的定义。
+	
+	－定义了大约70个RADIUS属性
+	
+	－192-193为试验使用保留
+	
+	－224-240为特有的实现使用保留
+	
+	－241-255保留，不得使用
+	
+	26号属性被定义为厂商特有属性（VSA），它利用更深一层的内在结构，允许
+	厂商扩展。
+	
+2.1	属性冲突
+
+	实际上，属性92-255被一个厂商使用。而另一个厂商也用了属性90-104,而且这
+	两种用法有冲突。
+	
+	为了处理这个问题，服务器开发商把特定厂商参数加入到它们的客户端数据库文件中。
+	管理者在指出NAS的IP地址和共享密钥的同时，还要指出NAS的类型，这样服务器才
+	能消除这些属性用法的歧义。
+	
+	一种服务器用一个大的厂商文件来将所有的属性映射到一种保留厂商ID的内部格式。
+	另外一种服务器则用多个词典实现，每个词典对应着一种NAS和厂商定义列表模型。
+	
+2.2	属性值冲突
+	
+	相对于简单的特性需求来说，增加额外的属性可能会变得更麻烦。通常，现有的属性
+	能通过另外的值来扩展（特别是那些枚举选择的属性）。但是这样做，就没有办法保证
+	不会与其它厂商的扩展出现冲突。
+	
+2.2.1	关于厂商特有属性枚举值的建议
+
+	关于该问题的一个推荐的解决方法是VSE（Vendor specific Enumerations）。
+	这种方法就是将用于填充某个属性的值的空间分割一部分出来，将厂商的ID以数字值
+	的形式填入（ala VSAs）。该技术没有被工作组以及其它厂商采用，但是，厂商没有
+	达到额外工作组或者是其它厂商值不冲突的目的。
+	
+	VSE值的字典示例如下：
+	
+	   VALUE   Service-Type        VSE-Authorize-Only       0x06300001
+	   VALUE   Acct-Status-Type    VSE-User-Reject          0x06300001
+	   VALUE   Acct-Status-Type    VSE-Call-Reject          0x06300002
+	   VALUE   Acct-Status-Type    VSE-IPCP-Start           0x06300003
+	   VALUE   Acct-Status-Type    VSE-IPXCP-Start          0x06300004
+	   VALUE   Acct-Status-Type    VSE-ATCP-Start           0x06300005
+	   VALUE   Acct-Status-Type    VSE-Accounting-Restart   0x06300006
+	   VALUE   Acct-Status-Type    VSE-Accounting-Shutoff   0x06300007
+	   VALUE   Acct-Status-Type    VSE-Tunnel-Start         0x06300008
+	   VALUE   Acct-Status-Type    VSE-Tunnel-Stop          0x06300009
+	   VALUE   Acct-Status-Type    VSE-Tunnel-Reject        0x0630000a
+	   VALUE   Acct-Status-Type    VSE-Tunnel-Link-Start    0x0630000b
+	   VALUE   Acct-Status-Type    VSE-Tunnel-Link-Stop     0x0630000c
+	   VALUE   Acct-Status-Type    VSE-MP-Start             0x0630000d
+	   VALUE   Acct-Status-Type    VSE-MP-Stop              0x0630000e
+	   VALUE   Acct-Status-Type    VSE-Line-Seizure         0x0630000f
+	   VALUE   Acct-Status-Type    VSE-Rlogin-Start         0x06300010
+	   VALUE   Acct-Status-Type    VSE-Rlogin-Stop          0x06300011
+	   
+2.3.	厂商特有的属性（VSA）的用法
+	
+	由于在RADIUS工作组的开发中，26号属性－－Vendor Specific Attributes（VSAs）
+	－－直到后来才出现，有些服务器到后来才支持该属性。现在，一些前沿的关于客户端的
+	实现也利用VSA做扩展。非常不幸的是VSA的具体实现有不同的格式。这是因为RFC建议的
+	格式支持的属性不能多于256个。
+	
+2.3.1	VSA在一些客户端中的应用
+	
+	写该文档是，参考过下面的内容：
+	
+	   -    Microsoft: several for MS-CHAP authentication support [9]
+	
+	   -    ACC: 42 [10]
+	
+	   -    Nortel(Bay): about 60 VSAs and 16 VSEs
+	
+	   -    Nortel(Aptis): about 60 VSA: 20 1-byte, ~130 4-byte header.
+	   	由于它有大量的属性，Aptis的VSA已经从通常的格式变为头长度为4-byte的格式。
+	
+	   -    3Com (USR): about 130
+	   	USR的VSA格式不同于RFC2138所推荐的格式。它的Type域有4个字节长度，并且
+	   	内部没有长度域。
+	
+	有部分厂商开始没有使用VSA，后来则变成将VSA用为一个可配置的选项。
+	
+2.3.2	支持多个厂商属性的客户端
+
+	如今MS-CHAP的RADIUS属性已经在RFC 2548中作为Microsoft VSA属性被出版，	这使得支持
+	MS-CHAP认证的NAS客户端在处理不同的厂商的VSA类型时，它会成为典型的应用。这提示服务器
+	可以根据厂商的NAS客户端过滤或者是裁减一些属性。
+	
+	一个NAS客户端可以接收最多3种不同的VSA属性集，但是只会根据操作员配置的模式发送特定的属性，
+	这使得它能适合于那些客户是需要依赖于一组特定的RADIUS属性的的环境，这也允许NAS能随意
+	访问而不必改变服务器的属性（allows the NAS to "drop-in" without server attribute 
+	changes）。
+	
+	现在还有另外一种NAS，能同时支持3种厂商属性。更准确的说，就是给服务器响应时，它使用不同
+	厂商的VSA属性的组合。这样做为了支持那些竞争厂商的扩张属性的超集，也是为了支持给NAS的
+	同类产品的扩展属性。
+	
+3.	属性数据类型
+	
+	RFC只定义了4种基本的数据类型
+
+	   -    integer, 32 bit unsigned
+	
+	   -    string, 1-253 bytes, counted.
+	
+	   -    ipaddr, 32 bit IPv4
+	
+	   -    date, 32 bit Unix format.
+		
+	以后又添加了一些其它数据类型：
+	
+	在关于隧道认证的文档[6]中隧道属性中增加了一个可选的组合字段－“tag"。
+	这是一个预先被添加到数据域中的单字节，用于支持返回的属性集合。该字节
+	的取值范围必需是0x01－0x3F，或者被考虑成数据域中的数据〔译者注：不再
+	将它看成一个"tag"字段〕。
+	
+	请注意没有关于IPv6的支持。实际上在一些固定的消息组件中也没有关于IPv6的支持。
+	
+	在服务器里又构造了一些新的属性类型。为了包过滤，构造了一种叫做"abinary"
+	的格式。用户在profile中输入一串ASCII字符串格式的过滤描述。在将它传到NAS
+	端前，服务器将它解析成二进制串。这有利于将来服务器端解析的复杂度。另外，
+	还有一种"phonestring"的服务器数据类型允许在程序的入口处做额外的数据类型
+	检查。
+	
+4.	新近的消息	
+	
+	一系列新的消息已经被逐步引入。原来基本的规范是6个，厂商增加了26个。
+	
+	这些消息分成了几类，我们在下面描述。其中的一些消息，用类似于RADIUS的协议，
+	用于RADIUS服务器和其它资源服务器之间，实现一些新的功能。
+	
+         6 Accounting Status
+                  (now Interim Accounting [5])
+         7 Password Request
+         8 Password Ack
+         9 Password Reject
+         10 Accounting Message
+
+         21 Resource Free Request
+         22 Resource Free Response
+         23 Resource Query Request
+         24 Resource Query Response
+         25 Alternate Resource Reclaim Request
+         26 NAS Reboot Request
+         27 NAS Reboot Response
+
+         29 Next Passcode
+         30 New Pin
+         31 Terminate Session
+         32 Password Expired
+         33 Event Request
+         34 Event Response
+         40 Disconnect Request
+         41 Disconnect Ack
+         42 Disconnect Nak
+         43 Change Filters Request
+         44 Change Filters Ack
+         45 Change Filters Nak
+         50 IP Address Allocate
+         51 IP Address Release
+	
+5.	附加的功能
+
+	有一些操作，是通过RADIUS的扩展以及其它的消息类型来实现的。
+	
+5.1	修改密码
+	
+	有关于远程修改密码的描述和建议，但是该工作组没有采用。但是，这个
+	特性在一些产品中还是被开发出来了。
+	
+	消息类型；
+	    - Password Request
+	    - Password Ack or Reject
+		
+5.2	认证模式
+	
+	增加了一些消息类型用于协商智能卡服务器之间的密码修改（passcode changes）。
+	    - Next Passcode
+	    - New PIN
+	    - Password Expired
+	这允许NAS和RADIUS服务器能通过其它的一台安全服务器协商修改密码。
+	
+5.3	菜单
+	
+	至少有两家厂商开发了用于拨号终端的、通过菜单相互操作的系统。
+	
+	一种实现使用Reply-Message作为要显示的菜单文本，用State属性来跟踪菜单内的位置。
+	通过Access-Challenge消息来显示菜单。象通常处理challenge一样，将响应在编码在
+	User-Password域内。
+	
+	按照这种方式使用，一些RADIUS客户端会出问题，因为它们不能处理返回的太长的或者是
+	多个Reply-Message。一个Echo属性应该通过菜单的响应来控制响应行为。用State属性
+	来明了Challenge序列也是一种标准行为。
+	
+	另一种实现是用两个厂商定义的属性（VSA-Menu-Item, VSA-Menu-Selector）来传递
+	这些信息。这种实现是厂商特有的。
+	
+5.4	虚拟用户
+
+	一种客户端将RADIUS服务器的能力优势，将它用做一台远端的数据库服务器。通过用一些
+	周知的、特定的用户名和密码，NAS可以从服务器获取一些特定的信息：静态IP路由、静态
+	IPX路由、或者是如期等。
+	
+	这叫做虚拟用户，因为它们是使用一个构造的用户名，获取非认证的其它信息。
+	
+	另一种客户端也使用虚拟客户技术来解决未知的Filter-ID的值。将一个Access-Request
+	报文－－－－将Filter-ID设为用户名，用周知的密码，设置Service-Type为VSE-Authorization-Only
+	－－－发送到RADIUS服务器。响应报文中Service-Type值必需相同，否则会被丢弃。
+	响应报文中必需包含IP-Filter属性（该属性是一个VSA属性），该属性定义了过滤法。
+	
+	必需注意的如果没有将一个特定的或者是可操作的有效的Service-Type绑定到虚拟用户的profile,
+	则虚拟用户的profile会有安全问题。客户端必需测试这个返回值，以防止普通的拨号用户
+	通过这个profile接入。
+	
+6.	资源管理
+	
+	为了提供服务，认证会话可能还需要分配其它的动态资源。最典型的就是IP地址。这种
+	分配可以在一个独立于RADIUS服务器的层次上被延迟，直到有需要或者类似的需求为止。
+	可能使用其它的一些消息去分配或者释放这些资源。RADIUS服务器可以代理将这个需求
+	转发给其它的服务器。
+	
+	示例：一些服务器能分配本地的地址给NAS或者是使用外部的地址服务器。另外一些服务
+	器有本地的地址池，通过选择分配一个地址，填入Framed-IP-Address属性。
+
+6.1	被管理的资源
+
+	被管理的资源包括：IP地址，并行登陆，拨号端口分配策略，隧道限定和均衡负载
+	（load distribution）。
+	
+	有几种不同的实现技术：
+	
+	    - Explicit request/free resource requests
+	    - Monitor usage with deamons watching the state
+	    - Explicit messages to a state deamon
+	    - Monitor Accounting messages for state changes
+	    
+6.2	资源管理消息
+	
+	用于资源管理的消息：
+
+	    - IP Address Allocate
+	    - IP Address Release
+	
+	    - Resource Request
+	    - Resource Response
+	    - Resource Free Request
+	    - Resource Free Response
+	    - Resource Reclaim Request
+	    - NAS Reboot Request/Response
+	    
+	这些消息用于为NAS从一个集中的服务器分配/释放资源。这些方案允许业务提供者
+	（service provider）能有比那些自动的LAN业务（它们是没有输入策略或者管理的）
+	有着更好的管理。
+	
+6.3	并行登陆（Concurrent Login）
+
+	遵照RADIUS协议的服务器是没有状态的。这就是说，服务器不知道每个会话的状态。
+	但是，对于很多服务提供商来说，它们有必要跟踪一个用户打开了多少个会话，这样
+	可以禁止一些非法接入。
+	
+	
+	在RADIUS环境中有几种不同的技术可以实现限制接入数。一些厂商已经开发出一些
+	工具，这些工具能利用SNMP协议或者是其它的方法检查会话的状态。
+	
+	而另一些厂商则是通过分离接入或者是记账请求中的状态信息来监视RADIUS的接入和
+	记账消息。这些监视没有直接查询NAS可靠，但是它较少的依赖于特定的厂商。倘若它
+	发送所有的流到同一个服务器，那它能与任何RADIUS NAS工作。
+	
+	目前使用的几种方法：
+	
+	    - SNMP commands
+	    - Telnet monitor deamon
+	    - Accounting monitor
+	
+6.4	授权修改
+	
+	如果需要实现动态修改一个在线的会话，例如修改过滤器（filter）或者是超时切断，
+	那么厂商至少还需要一个类似于RADIUS的服务器，该服务器接收网络上的应用程序
+	发出的消息，匹配会话，然后执行相应的动作。
+	
+	从服务器发给NAS的消息：
+	    - Change Filter Request
+	    - Change Filter Ack / Nak
+	    - Disconnect Request
+	    - Disconnect Response
+
+	过滤器通过限制用户发送报文的系统和协议来限制用户的接入。通过在一个授权服务器
+	上完成一些注册，业务提供者可以移去这些限制，或者是掐断一个用户。
+	
+7.	策略服务
+	
+	一些厂商通过把RADIUS作为控制协议，实现了策略服务器。	两个明显的策略管理者作为
+	一个RADIUS代理过滤器，使用RADIUS消息，拒绝那些超出了当前策略限制的接入。
+	
+	一种实现实现就象一个RADIUS代理服务器，但是通过一个策略进程管理下一步的决定。最
+	典型的就是当一个呼叫到达时，NAS在发出认证消息前发出一个其它的消息（例如想在最新
+	的草案中的Service-Type = CallCheck )。该消息只在用户名域包含呼叫号的信息。服
+	务器收到这个Access-Request消息后，通过它所知道的网络状态和预备的策略处理该报文。
+	
+	接收这个呼叫后，一个Access-Accept报文被返回给系统，同时还包含一些动态的策略信息
+	以及特定的虚拟POP缺省参数（Virtual POP specific default parameters）。当一
+	个真正的ppp认证消息到达后，代理将该报文转发给RADIUS服务器。这个过程可以看做是
+	一个认证预处理过程。它也可以处理没有这种预处理的接入请求，而用用户名域获得它想要
+	获得的用于策略评估的信息。
+	
+	其它的实现也有类似的操作。不同的是他不是用预认证消息，而是在Access-Request中使用
+	VSA。
+	
+8.	记账扩展
+
+	通常记账只记录会话的开始和结束，这个感觉挺烦的。当相关操作发生时，为了给出一个更好的
+	描述而额外上报一些其它的信息是很容易的事。
+	
+8.1	审核/行为（Auditing/Activity）
+	
+	    - Call or Modem Starts, Stops
+	    - Tunnel Starts, Stops
+	    - Tunnel Link Starts & Stops
+	    - Admin changes
+	
+	如果一个状态服务器监视上面这些事件，那它可以被用于收集一个用户/会话的网络使用信息。
+	与向后跟踪IP地址流相比，一个特定用户进入网络的信息与网络业务管理更相关。通过一定
+	范围内的NAS收集的关于使用端口的有效信息能使得业务提供者能很快的发现有问题的区域
+	或者是用户。
+	
+	同样，对于业务提供者来说，关于用户呼叫的成功、失败、质量的信息同样很重要。
+	
+	扩展RADIUS记账很容易，但奇怪的是很多实现都没有关于这个方面的内容。
+	
+9.	结论
+
+	实际中，RADIUS服务器的软件实现变得相当复杂。他们经常作为一个中间人将认证或授权
+	信息转到其它的授权处或者是某个中心。为了实现这种解决方案，通常将不同的RADIUS
+	协议组合在一起使用。
+	
+	一些解决方案能被一些潜在的更好的业务替代。
+	
+	对实现者来说，这意味者RADIUS与RFC的描述变得更不相关了。很多增加的特性需要
+	匹配客户端和服务器关于消息的处理。如果没有标准，我们在该领域不能协同工作，
+	则更多的精力花费在相互作用上。
+	
+	无论如何，该文档不是一个完全的调查。它只是我写这篇文档时所知道的一些典型
+	应用摘要。感谢那些提供关于一些实践和细节的材料的用户和厂商。如果你有什么参
+	考材料能提供的话，我也感激不尽。
+	
+10.	安全考虑
+
+	略
+	
+11.	实现文档
+	
+	下面的材料可以从各自的所有者获得。很多列表在制造厂商的站点上就能找到。
+	
+11.1	客户端
+	
+	   - 3Com(USR) Total Control Hub
+	   - Ericsson(ACC) Tigris
+	           draft-ilgun-radius-accvsa-01.txt, Dec 1998
+	   - Lucent(Ascend) MAX TNT
+	   - Lucent(Livingston) Portmaster
+	   - Nortel(Aptis) CVX 1800
+	   - Nortel(Bay Networks) Versalar 5399/8000 Remote Access Controller
+	   - Intel(Shiva)
+
+11.2	服务器
+
+	   - Ericsson(ACC) Virtual Port Server Manager
+	   - Funk Steel-Belted RADIUS
+	   - Intel(Shiva) Access Manager
+	   - Lucent(Ascend) Access Control
+	   - Lucent(Ascend) NavisAccess
+	   - Lucent(Ascend) Modified Livingston 1.16
+	   - Lucent(Livingston) V2.01
+	   - Lucent(Livingston) ABM
+	   - Lucent Port Authority
+	   - MERIT AAA Servers
+	   - Nortel(Bay Networks) BaySecure Access Control
+	   - Nortel Preside Radius
+	   - Nortel CVX Policy Manager
+
+12	参考材料
+
+	   [1]  Rigney, C., Rubens, A., Simpson, W. and S. Willens, "Remote
+	        Authentication Dial In User Service (RADIUS)", RFC 2138, April
+	        1997.
+	
+	   [2]  Rigney, C., "RADIUS Accounting", RFC 2139, April 1997.
+	
+	   [3]  Rigney, C., Willens, S., Ruebens, A. and W. Simpson, "Remote
+	        Authentication Dial In User Service (RADIUS)", RFC 2865, June
+	        2000.
+	
+	   [4]  Rigney, C., "RADIUS Accounting", RFC 2866, June 2000.
+	
+	   [5]  Rigney, C., Willats, W. and P. Calhoun, "RADIUS Extensions", RFC
+	        2869, June 2000.
+	
+	   [6]  Zorn, G., Leifer, D., Rubens, A., Shriver, J., Holdrege, M. and
+	        I. Goyret, "RADIUS Attributes for Tunnel Protocol Support", RFC
+	        2868, June 2000.
+	
+	   [7]  Zorn, G., Aboba, B. and D. Mitton, "RADIUS Accounting
+	        Modifications for Tunnel Protocol Support", RFC 2867, June 2000.
+	
+	   [8]  Aboba, B. and G. Zorn, "Implementation of L2TP Compulsory
+	        Tunneling via RADIUS", RFC 2809, April 2000.
+	
+	   [9]  Zorn, G., "Microsoft Vendor-specific RADIUS Attributes", RFC
+	        2548, March 1999.
+	
+	   [10] Ilgun, K., "RADIUS Vendor Specific Attributes for ACC/Ericsson
+	        Datacom Access", Work in Progress.
+	
+13.  Author's Address
+
+   David Mitton
+   Nortel Networks
+   880 Technology Park Drive
+   Billerica, MA 01821
+
+   Phone: 978-288-4570
+   EMail: dmitton@nortelnetworks.com
+
+14.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+	

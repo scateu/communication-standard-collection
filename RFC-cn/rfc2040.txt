@@ -1,0 +1,1108 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：金凤（phoenix_jin    take.a.bow@263.net）
+译文发布时间：2001-9-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+
+Network Working Group                                         R. Baldwin
+Request for Comments: 2040                       RSA Data Security, Inc.
+Category: Informational                                        R. Rivest
+                                     MIT Laboratory for Computer Science
+                                             and RSA Data Security, Inc.
+                                                            October 1996
+
+
+RC5,RC5-CBC,RC5-CBC-PAD和RC5-CTS算法
+（  RFC2040 ――The RC5, RC5-CBC, RC5-CBC-Pad, and RC5-CTS Algorithms ）
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+
+目录
+1.实现概述	2
+2.总览	3
+3.术语和符号	3
+4. RC5密钥的描述	4
+4.1 创建一个RC5密钥	4
+4.2 销毁一个RC5密钥	5
+4.3 设置一个RC5密钥	5
+5.设置一个RC5密钥	6
+5.1 初始常量定义	7
+5.2 接口定义	7
+5.3 转换密钥从字节到字	8
+5.4 初始化扩展密钥表	8
+5.5 混合密钥	8
+６. RC5块密码的描述	9
+6.1 加载A和B的值	9
+6.2  重申轮函数	10
+6.3  存储A和B的值	10
+7． RC5-CBC和RC5-CBC-Pad模式的描述	11
+7.1  创建密码对象	11
+7.2  撤消密码对象	12
+7.3  为密码对象设置初始向量	13
+7.5  消息的处理部分	14
+7.5.1 输出缓冲区大小的检查	15
+7.5.2 将明文分成块	15
+7.6  最后块的处理	16
+8. RC5-CTS的描述	17
+9.测试程序和向量	18
+9.1  测试程序和向量	18
+9.2  测试向量	22
+9.3  测试结果	23
+10.安全考虑	25
+11. ASN.1标识符	26
+12.参考	26
+13.作者地址	27
+
+
+1.实现概述
+这个文档定义了四种形式的密码算法拥有足够的信息以确保不同实现间的协同工作
+能力。第一种是原始的RC5块加密，RC5密码使用固定的输入长度使用一个依赖密钥的转
+换产生一个固定长度的输出块。第二种是，RC5-CBC，是RC5的块密码链接模式。它能处
+理长度是RC5块尺寸倍数的消息。第三种是，RC5-CBC-Pad，处理任意长度的明文，尽管
+密文将比明文长但长度至多长一个RC5块。RC5-CTS密码是RC5算法的密文挪用模式，处
+理任意长度的明文且密文的长度匹配明文的长度。
+RC5密码是1994由麻萨诸塞技术研究所的Ronald L. Rivest教授发明的。它是一种非
+常快速且简单的算法由块尺寸，轮数，和密钥长度参数化。这些参数能被调整以满足不同的
+安全目的，性能和出口能力。
+合并的RSA数据安全已经归档了RC5密码的专利的申请和RC5，RC5-CBC，
+RC5-CBC-Pad，RC5-CTS并分类了各种变更。
+2.总览
+这个备忘录是对存在的出版资料的重述。RC5的描述是遵从Rivest教授原始的RC5
+论文中的符号和解释顺序。CBC模式出现在参考著作中例如Bruce Schneier写的。CBC-Pad
+模式与公钥加密标准（PKCS #5）相同。参考C代码被包括只是为了清楚等同于英语的描述。
+密码将以一种倒置的面向对象的风格来解释。首先，RC5密钥将伴随着密钥扩展算
+法出现。接着RC5块密码将被解释，最后，将规定RC5-CBC和RC5-CBC-Pad密码。为了
+简短，只有加密过程被描述。解密可以通过转化加密的步骤来实现。
+此处的面向对象的描述应该使得实现交互性系统更加容易，尽管并不像参考文献中
+的功能描述那样简单。有两个对象类，密钥和密码算法。两个类用同一种方式共享创建和撤
+消这些对象的操作确保秘密信息没有被返回给存储管理者。
+密钥也拥有一个“set”操作拷贝一个秘密密钥到对象。密码对象的“set”操作定义
+了轮数，和初始向量。
+在这个备忘录描述了对于密码对象四个操作。绑定一个密钥到密码对象，为每一个
+密码对象设置一个新的初始向量没有改变密钥，一个消息的加密部分（对于长的消息要执行
+多次），和处理消息的最后一个部分可以进行填充或检查消息的长度。
+总之，密码将根据这些操作被解释：
+
+RC5_Key_Create           - 创建一个密钥对象.
+
+RC5_Key_Destroy          - 撤消一个密钥的对象.
+
+RC5_Key_Set              - 绑定一个用户密钥到密钥对象.
+
+RC5_CBC_Create           - 创建一个密码对象.
+RC5_CBC_Destroy          - 撤消一个密码对象.
+
+RC5_CBC_Encrypt_Init     - 绑定一个密钥对象到一个密码对象.
+
+RC5_CBC_SetIV            - 设置一个初始向量不用改变密钥.
+
+RC5_CBC_Encrypt_Update   - 一个消息的处理部分.
+
+RC5_CBC_Encrypt_Final    - 消息末尾的处理.
+
+3.术语和符号
+术语“word”指的是一个特殊长度位数的字符串既可以作为一个无符号整数也可以
+作为一个位向量。例如一个“word”可以是32位也可以是64位取决于需要的RC5密码块的
+的尺寸。一个32位字将产生一个64位的块。为了取得最好的性能RC5子长度应和CPU的寄
+存器的长度相匹配。术语“byte”指8位二进制位数。
+下面的变量在此备忘录中将以如下定义使用：
+W     这个变量表示的是RC5以二进制位数计算的字的尺寸。是块尺寸的一半在此备忘录
+中字的尺寸采用的是32和64。
+WW    此变量是RC5以字节计算的字尺寸。
+B     此变量是以位计算的块尺寸。是2倍的字尺寸。当RC5被用作64位的块密码。B是
+64，W是32。0<B<257。在简单的代码中，B被用作一个代替密码系统参数的变量，
+但是这个使用应该是上下文明显的。
+BB    此变量是以字节计算的块尺寸。BB=B/8。
+b     这个变量是密钥的字节长度。B0<=b<256。
+K     作为一个 b个字节长的密钥序列，通过K[0],...,K[b-1]索引。
+R     此变量是一个内部RC5转换的轮数。0<=R<256。
+T     此变量是一个扩展密钥表的字数。总是2*(R+1)。 1<T<513。
+S     作为扩展密钥表的字数组，通过S[0],..,S[T-1]索引。
+N     此变量是明文消息的字节长度。
+P     作为名文消息以一个N字节数组形式存储，通过P[0],..,P[N-1]索引。
+C     作为密文输出以一个字节数组形式存储，通过C[0],C[1],...索引。
+I     作为CBC模式的初始向量以一个字节数组形式存储，通过I[0],..,I[BB-1]索引。
+
+4. RC5密钥的描述
+      像大多数密码块，RC5将一个小的用户密钥扩展为一个内部密钥表。用户密钥的字节
+长度是密码的参数之一。因此RC5的用户密钥对象必须能拥有可变长度密钥。一个C的可能
+的结构是：
+/* RC5的用户密钥对像的定义. */
+typedef struct rc5UserKey
+  {
+    int          keyLength; /* In Bytes. */
+    unsigned char   *keyBytes;
+  } rc5UserKey;
+      对密钥的基本操作是创建，销毁和设置。为了避免将密钥资料暴露给一个应用的其他
+部分，，密钥的销毁操作应该在将分配给密钥的空间释放给存储管理者之前将该存储空间置
+零。一个一般的密钥对象可以支持其他的操作像产生一个新的随机密钥和从协商的密钥信息
+中获取密钥。
+4.1 创建一个RC5密钥
+       创建一个密钥，密钥对象的存储空间必须被分配和初始化。下面的C代码假设一个
+称作“malloc”的函数将从堆返回一个未初始化的存储空间块，或0指出一个错误。
+/* 分配和初始化一个RC5用户密钥.
+   * 如果有问题返回0.
+   */
+  rc5UserKey *RC5_Key_Create ()
+  {
+    rc5UserKey *pKey;
+
+    pKey = (rc5UserKey *) malloc (sizeof(*pKey));
+    if (pKey != ((rc5UserKey *) 0))
+    {
+        pKey->keyLength = 0;
+        pKey->keyBytes = (unsigned char *) 0;
+    }
+    return (pKey);
+  }
+
+4.2 销毁一个RC5密钥
+       为了销毁一个密钥，存储空间必须被置零和被释放给一个存储管理者。以下C代码
+假设称作“free”的函数将返回一个存储块给堆。
+/* 置零且释放一个RC5用户密钥.
+   */
+  void RC5_Key_Destroy (pKey)
+    rc5UserKey      *pKey;
+  {
+    unsigned char   *to;
+    int          count;
+
+    if (pKey == ((rc5UserKey *) 0))
+        return;
+    if (pKey->keyBytes == ((unsigned char *) 0))
+        return;
+    to = pKey->keyBytes;
+    for (count = 0 ; count < pKey->keyLength ; count++)
+        *to++ = (unsigned char) 0;
+    free (pKey->keyBytes);
+    pKey->keyBytes = (unsigned char *) 0;
+    pKey->keyLength = 0;
+    free (pKey);
+
+4.3 设置一个RC5密钥
+       设置一个密钥对象将密钥拷贝到一个从堆分配的存储空间。
+/* 设置RC5用户密钥的值.
+   * 拷贝密钥字节以便调用者能置零和释放原来的值.
+   * 如果出现问题返回0
+   */
+  int RC5_Key_Set (pKey, keyLength, keyBytes)
+    rc5UserKey  *pKey;
+    int          keyLength;
+    unsigned char   *keyBytes;
+  {
+    unsigned char   *keyBytesCopy;
+    unsigned char   *from, *to;
+    int          count;
+
+    keyBytesCopy = (unsigned char *) malloc (keyLength);
+    if (keyBytesCopy == ((unsigned char *) 0))
+        return (0);
+    from = keyBytes;
+    to = keyBytesCopy;
+    for (count = 0 ; count < keyLength ; count++)
+        *to++ = *from++;
+    pKey->keyLength = count;
+    pKey->keyBytes = keyBytesCopy;
+    return (1);
+  }
+
+5.设置一个RC5密钥
+这部分描述了密钥扩展算法。作为特殊的定义，示例代码假设块的大小为64位。几
+个编程参数依赖于块大小。
+/*定义 RC5 为一个 64 位块密码. */
+  /* The "unsigned int" will be 32 bits on all but */
+  /* the oldest compilers, which will make it 16 bits. */
+  /* On a DEC Alpha "unsigned long" is 64 bits, not 32. */
+  #define RC5_WORD     unsigned int
+  #define W            (32)
+  #define WW           (W / 8)
+  #define ROT_MASK     (W - 1)
+  #define BB           ((2 * W) / 8) /* Bytes per block *／
+  /* Define macros used in multiple procedures. */
+  /* These macros assumes ">>" is an unsigned operation, */
+  /* and that x and s are of type RC5_WORD. */
+  #define SHL(x,s)    ((RC5_WORD)((x)<<((s)&ROT_MASK)))
+  #define SHR(x,s,w)  ((RC5_WORD)((x)>>((w)-((s)&ROT_MASK))))
+  #define ROTL(x,s,w) ((RC5_WORD)(SHL((x),(s))|SHR((x),(s),(w))))
+
+5.1 初始常量定义
+       两个常量，Pw和Qw，定义为可以使用任意大小的Ｗ表达式如下：
+        Pw=Odd((e-2)*2**W)
+        Qw=Odd((phi-1)*2**W)
+       ｅ是自然对数的底（2.71828..．），phi是黄金比例（1.61803．．．），２**W是２的W
+此方，Odd（x）等于x如果x是奇数或等于x+1如果x是偶数。W等于16，32和64，Pw和
+Qw常量是下面的16进制值：
+  #define P16  0xb7e1
+  #define Q16  0x9e37
+  #define P32  0xb7e15163
+  #define Q32  0x9e3779b9
+  #define P64  0xb7e151628aed2a6b
+  #define Q64  0x9e3779b97f4a7c15
+  #if W == 16
+  #define Pw   P16 /* Select 16 bit word size */
+  #define Qw   Q16
+  #endif
+  #if W == 32
+  #define Pw   P32 /* Select 32 bit word size */
+  #define Qw   Q32
+  #endif
+  #if W == 64
+  #define Pw   P64 /* Select 64 bit word size */
+  #define Qw   Q64
+  #endif
+
+5.2 接口定义
+       密钥扩展规则转换b-byte密钥，K，为一个扩展密钥，S，是一个T=2*(R+1)个字的
+序列。扩展算法使用了两个常量是来自常量e和phi.这些被用于初始化S,然后使用K进行
+修改。使用这个规则的一个C代码程序头如下：
+  /* Expand an RC5 user key.
+   */
+  void RC5_Key_Expand (b, K, R, S)
+    int      b; /* Byte length of secret key */
+    char        *K; /* Secret key */
+    int      R; /* Number of rounds */
+    RC5_WORD *S;    /* Expanded key buffer, 2*(R+1) words */
+  {
+
+5.3 转换密钥从字节到字
+       这个步骤转换了b-byte密钥为一个存储在L数组中的字序列。在一个小端字节序的
+处理器上通过将L数组置零再拷贝K的b个字节实现。下面的代码将在所有的处理器上获得
+这个效果：
+    int i, j, k, LL, t, T;
+    RC5_WORD    L[256/WW];  /* Based on max key size */
+    RC5_WORD    A, B;
+
+    /* LL is number of elements used in L. */
+    LL = (b + WW - 1) / WW;
+    for (i = 0 ; i < LL ; i++)  {
+        L[i] = 0;
+    }
+    for (i = 0 ; i < b ; i++)  {
+        t = (K[i] & 0xFF) << (8*(i%4)); /* 0, 8, 16, 24*/
+        L[i/WW] = L[i/WW] + t;
+    }
+
+5.4 初始化扩展密钥表
+       这一步使用一个基于Pw加Qw再模２的W次方的算术级的固定伪随机数模式来填充
+S表。元素S[i]等于i*Qw+Pw模２的W次方。这个表可以被预计算和按所需进行拷贝或在空
+闲时间计算。C代码如下：
+T = 2*(R+1);
+    S[0] = Pw;
+    for (i = 1 ; i < T ; i++)  {
+        S[i] = S[i-1] + Qw;
+    }
+
+5.5 混合密钥
+       这一步混合密钥Ｋ到扩展密钥Ｓ。混合函数的循环次数Ｋ为被初始化的Ｌ元素的个
+数的３倍，表示为LL，S中的元素个数表示为Ｔ。每个循环类似一个加密内部循环的反复因
+为两个变量A和B是由这个加密循环的第一部分和第二部分更新的。
+       A和B的初始值为０，i作为Ｓ数组的索引，j作为Ｌ数组的索引。第一个循环左移
+式的局部结果通过计算S[i]，A和B的和得到。然后将这个结果循环左移３位后赋给A。接
+着将A的值赋给S[i]。第二个循环左移的局部结果通过计算Ｌ[i]，A和B的和得到。然后
+将这个结果循环左移A+B位后赋给B。接着将B的值赋给L[j]。在循环结束前i、j的值
+加１模各自对应的数组的长度。C代码如下：
+i = j = 0;
+    A = B = 0;
+    if (LL > T)
+        k = 3 * LL; /* Secret key len > expanded key. */
+    else
+        k = 3 * T;  /* Secret key len < expanded key. */
+    for ( ; k > 0 ; k--)  {
+        A = ROTL(S[i] + A + B, 3, W);
+        S[i] = A;
+        B = ROTL(L[j] + A + B, A + B, W);
+        L[j] = B;
+        i = (i + 1) % T;
+        j = (j + 1) % LL;
+    }
+    return;
+  } /* End of RC5_Key_Expand */
+
+６. RC5块密码的描述
+这部分通过解释对一个简单输入块进行加密操作的步骤来说明RC5块密码。解密处理
+与加密处理步骤相反，因此在此不对此进行解释。RC5密码的参数有一个版本号,V,一个轮
+数,R,一个以位计数的字尺寸,W。此处的描述对应RC5的原始版本（V=16 十六进制数）囊括
+了R的任意正值和W的值16,32和64。
+这一处理的输入是密钥扩展表，S，轮数，R，输入缓冲区的指针，in，和输出缓冲区
+的指针，out。一个可能的C代码程序头定义如下：
+void RC5_Block_Encrypt (S, R, in, out)
+    RC5_WORD    *S;
+    int  R;
+    char    *in;
+    char    *out;
+  {
+
+6.1 加载A和B的值
+这一步转换输入字节为两个无符号整数称作A和B。当RC5被用作64位块密码A和B
+是32位的值。第一个输入的字节作为A的低位字节。第四个输入的字节作为A的高位字字
+节，第五个输入字节作为B的低位字节，最后一个输入的字节作为B的高位字节。这种转换
+对于小端字节序处理器是非常有效率的例如Intel系列。C代码表达如下：
+int  i;
+    RC5_WORD    A, B;
+
+    A  =  in[0] & 0xFF;
+    A += (in[1] & 0xFF) << 8;
+    A += (in[2] & 0xFF) << 16;
+    A += (in[3] & 0xFF) << 24;
+    B  =  in[4] & 0xFF;
+    B += (in[5] & 0xFF) << 8;
+    B += (in[6] & 0xFF) << 16;
+    B += (in[7] & 0xFF) << 24;
+
+6.2  重申轮函数
+       这一步将扩展密钥与输入混合在一起做基本的加密操作。扩展密钥数组的头两个字]
+被分别填充到A和B，然后轮函数被重复R次。
+       轮函数的前半部分基于A、B和扩展密钥中下一个未用的字的值为A计算一个新的
+值。首先A与B异或然后将此结果循环左移B次。循环每次循环W位（例如：对于有64
+位块密码的RC5版本循环32位）。实际的循环次数至少是B的W位以2为底的对数。接着
+加扩展密钥数组的下一个未用的字形成A的新值。
+       轮函数的后半部分操作是相同的除了A、B的角色互换一下。特别B保存A与B异
+或的结果然后将此结果循环左移A次，接着加上下一个扩展密钥数组中未用的字成为B的
+新值。
+
+用C代码表达的一种方式如下：
+    A = A + S[0];
+    B = B + S[1];
+    for (i = 1 ; i <= R ; i++) {
+        A = A ^ B;
+        A = ROTL(A, B, W) + S[2*i];
+        B = B ^ A;
+        B = ROTL(B, A, W) + S[(2*i)+1];
+    }
+
+6.3  存储A和B的值
+       最后一步是转换A和B为一个字节序列。这是打开操作的反变换。C代码可能的表
+达如下：
+    out[0] = (A >>  0) & 0xFF;
+    out[1] = (A >>  8) & 0xFF;
+    out[2] = (A >> 16) & 0xFF;
+    out[3] = (A >> 24) & 0xFF;
+    out[4] = (B >>  0) & 0xFF;
+out[5] = (B >>  8) & 0xFF;
+    out[6] = (B >> 16) & 0xFF;
+    out[7] = (B >> 24) & 0xFF;
+    return;
+  } /* End of RC5_Block_Encrypt */
+
+7． RC5-CBC和RC5-CBC-Pad模式的描述
+      这部分描述了RC5密码的CBC和CBC-Pad模式。这一描述是基于RC5密钥对象和
+较早的RC5块密码。
+
+7.1  创建密码对象
+       密码对象需要明了填充模式，轮数，扩展密钥，初始向量，CBC链接块和输入缓冲
+区。C代码可能的结构定义形式如下：
+/* Definition of the RC5 CBC algorithm object.
+   */
+  typedef struct rc5CBCAlg
+  {
+    int          Pad;   /* 1 = RC5-CBC-Pad, 0 = RC5-CBC. */
+    int          R;     /* Number of rounds. */
+    RC5_WORD        *S;     /* Expanded key. */
+    unsigned char    I[BB]; /* Initialization vector. */
+    unsigned char    chainBlock[BB];
+    unsigned char    inputBlock[BB];
+    int          inputBlockIndex; /* Next inputBlock byte. */
+  } rc5CBCAlg;
+      创建一个密码算法对象，参数必须被检查然后为扩展密钥表分配空间。扩展密钥使用
+早先描述的方法来进行初始化。最后，状态变量（填充模式、轮数和输入缓冲区）被赋予初
+始值。C代码可能的实现方式如下：
+   /* Allocate and initialize the RC5 CBC algorithm object.
+   * Return 0 if problems.
+   */
+  rc5CBCAlg *RC5_CBC_Create (Pad, R, Version, bb, I)
+    int      Pad;       /* 1 = RC5-CBC-Pad, 0 = RC5-CBC. */
+    int      R;         /* Number of rounds. */
+    int      Version;   /* RC5 version number. */
+    int      bb;        /* Bytes per RC5 block == IV len. */
+    char     *I;        /* CBC IV, bb bytes long. */
+  {
+    rc5CBCAlg    *pAlg;
+    int           index;
+
+    if ((Version != RC5_FIRST_VERSION) ||
+        (bb != BB) ||   (R < 0) || (255 < R))
+        return ((rc5CBCAlg *) 0);
+    pAlg = (rc5CBCAlg *) malloc (sizeof(*pAlg));
+    if (pAlg == ((rc5CBCAlg *) 0))
+        return ((rc5CBCAlg *) 0);
+    pAlg->S = (RC5_WORD *) malloc (BB * (R + 1));
+    if (pAlg->S == ((RC5_WORD *) 0))    {
+        free (pAlg);
+        return ((rc5CBCAlg *) 0);
+    }
+    pAlg->Pad = Pad;
+    pAlg->R = R;
+    pAlg->inputBlockIndex = 0;
+    for (index = 0 ; index < BB ; index++)
+        pAlg->I[index] = I[index];
+    return (pAlg);
+  }
+
+7.2  撤消密码对象
+       撤消密码是创建它的反变换所关心的问题是在将存储空间返回给存储管理者之前将
+其值置为0。C代码的可能实现方式如下：
+/* Zero and free an RC5 algorithm object.
+   */
+  void RC5_CBC_Destroy (pAlg)
+    rc5CBCAlg   *pAlg;
+  {
+    RC5_WORD    *to;
+    int      count;
+
+    if (pAlg == ((rc5CBCAlg *) 0))
+        return;
+    if (pAlg->S == ((RC5_WORD *) 0))
+        return;
+    to = pAlg->S;
+    for (count = 0 ; count < (1 + pAlg->R) ; count++)
+    {
+        *to++ = 0;  /* Two expanded key words per round. */
+        *to++ = 0;
+    }
+    free (pAlg->S);
+    for (count = 0 ; count < BB ; count++)
+   {
+        pAlg->I[count] = (unsigned char) 0;
+        pAlg->inputBlock[count] = (unsigned char) 0;
+        pAlg->chainBlock[count] = (unsigned char) 0;
+    }
+    pAlg->Pad = 0;
+    pAlg->R = 0;
+    pAlg->inputBlockIndex = 0;
+    free (pAlg);
+  }
+
+7.3  为密码对象设置初始向量
+对于CBC密码对象，算法的状态依赖于扩展密钥，CBC链接块和任何内部缓存的
+输入。经常相同的密钥被许多管理者使用每一个拥有独一无二的初始向量。消除创建新的密
+码对象的系统开销，提供一个允许调用者为一个以存在的密码对象改变初始向量的操作将更
+有意义。C代码的可能实现方式如下：
+/* Setup a new initialization vector for a CBC operation
+   * and reset the CBC object.
+   * This can be called after Final without needing to
+   * call Init or Create again.
+   * Return zero if problems.
+   */
+  int RC5_CBC_SetIV (pAlg, I)
+    rc5CBCAlg   *pAlg;
+    char        *I;     /* CBC Initialization vector, BB bytes. */
+  {
+    int     index;
+
+    pAlg->inputBlockIndex = 0;
+    for (index = 0 ; index < BB ; index++)
+    {
+        pAlg->I[index] = pAlg->chainBlock[index] = I[index];
+        pAlg->inputBlock[index] = (unsigned char) 0;
+    }
+    return (1);
+  }
+
+7.4  绑定一个密钥到一个密码对象
+       绑定一个密钥到一个密码对象的操作执行了密钥扩展。密钥扩展可能是在密钥上进
+行的一个操作，但是当他们操作时修改扩展密钥将使之不能为正确的为密码工作。扩展密钥
+后，这个操作必须用初始向量初始化CBC链接块并且为接受第一个字符准备缓冲区。C代
+码的操作如下：
+  /* Initialize the encryption object with the given key.
+   * After this routine, the caller frees the key object.
+   * The IV for this CBC object can be changed by calling
+   * the SetIV routine.  The only way to change the key is
+   * to destroy the CBC object and create a new one.
+   * Return zero if problems.
+   */
+  int RC5_CBC_Encrypt_Init (pAlg, pKey)
+    rc5CBCAlg       *pAlg;
+    rc5UserKey  *pKey;
+  {
+    if ((pAlg == ((rc5CBCAlg *) 0)) ||
+        (pKey == ((rc5UserKey *) 0)))
+        return (0);
+    RC5_Key_Expand (Key->keyLength, pKey->keyBytes,
+                    pAlg->R, pAlg->S);
+    return (RC5_CBC_SetIV(pAlg, pAlg->I));
+  }
+
+7.5  消息的处理部分
+此处的加密操作使用Init-Update-Final过程描述。Update操作被用于消息部分的一
+个序列为了递增的产生密文。在最后部分被处理后，Final被调用获得任意的明文字节或填
+充被缓存在密码对象内的明文字节。这个操作的一个合适的程序头如下：
+  /* Encrypt a buffer of plaintext.
+   * The plaintext and ciphertext buffers can be the same.
+   * The byte len of the ciphertext is put in *pCipherLen.
+   * Call this multiple times passing successive
+   * parts of a large message.
+   * After the last part has been passed to Update,
+   * call Final.
+   * Return zero if problems like output buffer too small.
+   */
+  int RC5_CBC_Encrypt_Update (pAlg, N, P,
+                              pCipherLen, maxCipherLen, C)
+    rc5CBCAlg   *pAlg;      /* Cipher algorithm object. */
+    int          N;         /* Byte length of P. */
+    char        *P;         /* Plaintext buffer. */
+    int         *pCipherLen;/* Gets byte len of C. */
+    int          maxCipherLen;  /* Size of C. */
+    char        *C;         /* Ciphertext buffer. */
+  {
+
+7.5.1 输出缓冲区大小的检查
+        明文处理的第一步是确保输出缓冲区有足够大的空间存储密文。密文将以块大小的
+倍数被产生依赖于被传递给这个操作的明文字符的个数加任意位于密码对象内部缓冲区的
+字符。C代码如下：
+int      plainIndex, cipherIndex, j;
+
+    /* Check size of the output buffer. */
+    if (maxCipherLen < (((pAlg->inputBlockIndex+N)/BB)*BB))
+    {
+        *pCipherLen = 0;
+        return (0);
+    }
+
+7.5.2 将明文分成块
+        下一步是填充字符到内部的缓冲区直到一个块被填满。此时，缓冲区指针被复位输
+入缓冲区和CBC链接密码块相异或。链接密码块的字节序和输入块相同。例如：第9个输
+入字节和第一个密文字节相异或。结果然后被传递给先前描述的RC5块密码。为了减少数
+据的移动和字节调整的问题，RC5的输出能被直接的写到CBC链接块。最后，这个输出被
+拷贝到由用户提供的密文缓冲区。在返回前，密文的实际大小被传递给调用者。C代码如下：
+plainIndex = cipherIndex = 0;
+    while (plainIndex < N)
+    {
+        if (pAlg->inputBlockIndex < BB)
+        {
+            pAlg->inputBlock[pAlg->inputBlockIndex]
+                    = P[plainIndex];
+            pAlg->inputBlockIndex++;
+            plainIndex++;
+        }
+        if (pAlg->inputBlockIndex == BB)
+        {   /* Have a complete input block, process it. */
+            pAlg->inputBlockIndex = 0;
+            for (j = 0 ; j < BB ; j++)
+            {   /* XOR in the chain block. */
+                pAlg->inputBlock[j] = pAlg->inputBlock[j]
+                                 ^ pAlg->chainBlock[j];
+            }
+            RC5_Block_Encrypt(pAlg->S, pAlg->R
+                             pAlg->inputBlock,
+                             pAlg->chainBlock);
+            for (j = 0 ; j < BB ; j++)
+            {   /* Output the ciphertext. */
+                C[cipherIndex] = pAlg->chainBlock[j];
+                cipherIndex++;
+            }
+        }
+    }
+    *pCipherLen = cipherIndex;
+    return (1);
+  } /* End of RC5_CBC_Encrypt_Update */
+
+7.6  最后块的处理
+       这一步处理明文的最后一个块。对于RC5-CBC，这一步只是做错误检查确保明文长
+度确实是块长度的倍数。对于RC5-CBC-Pad，填充的字节被添加到明文。填充的字节都是
+相同的其值被置为填充的字节数。例如如果填充了8个字节，填充的字节其值都为16进制
+的0x08。将包含1到BB个填充字节。C代码如下：
+  /* Produce the final block of ciphertext including any
+   * padding, and then reset the algorithm object.
+   * Return zero if problems.
+   */
+  int RC5_CBC_Encrypt_Final (pAlg, pCipherLen, maxCipherLen, C)
+    rc5CBCAlg   *pAlg;
+    int         *pCipherLen;    /* Gets byte len of C. */
+    int          maxCipherLen;  /* Len of C buffer. */
+    char        *C;             /* Ciphertext buffer. */
+  {
+    int     cipherIndex, j;
+    int     padLength;
+
+    /* For non-pad mode error if input bytes buffered. */
+    *pCipherLen = 0;
+    if ((pAlg->Pad == 0) && (pAlg->inputBlockIndex != 0))
+        return (0);
+
+    if (pAlg->Pad == 0)
+        return (1);
+    if (maxCipherLen < BB)
+        return (0);
+
+    padLength = BB - pAlg->inputBlockIndex;
+    for (j = 0 ; j < padLength ; j++)
+    {
+        pAlg->inputBlock[pAlg->inputBlockIndex]
+               = (unsigned char) padLength;
+        pAlg->inputBlockIndex++;
+    }
+    for (j = 0 ; j < BB ; j++)
+    {   /* XOR the chain block into the plaintext block. */
+        pAlg->inputBlock[j] = pAlg->inputBlock[j]
+                             ^ pAlg->chainBlock[j];
+    }
+    RC5_Block_Encrypt(pAlg->S, pAlg->R,
+                      pAlg->inputBlock, pAlg->chainBlock);
+    cipherIndex = 0;
+    for (j = 0 ; j < BB ; j++)
+    {   /* Output the ciphertext. */
+        C[cipherIndex] = pAlg->chainBlock[j];
+        cipherIndex++;
+    }
+    *pCipherLen = cipherIndex;
+
+    /* Reset the CBC algorithm object. */
+    return (RC5_CBC_SetIV(pAlg, pAlg->I));
+  } /* End of RC5_CBC_Encrypt_Final */
+
+8. RC5-CTS的描述
+块密码的密码文本偷窃模式在Schneier的应用密码学的195和196页有叙述。这个
+模式处理任意长度的明文并且产生于明文长度相匹配的密文。CTS模式除了明文的最后两个
+块的处理不同外和CBC一致。下面几步描述了如何处理明文的最后两个块，称作Pn-1和Pn，
+Pn-1的长度等于块大小，BB，最后一个块Pn长度是Ln字节。注意Ln从１到BB变化，因
+此Pn实际上可以成为一个完整的块。
+１、	异或Pn-1和以前的密文块，Cn-2，创建Xn-1。
+２、	加密Xn-1得En-1。
+３、	选择En-1的前Ln个字节创建Cn。
+４、	在Pn末尾用０填充Pn创建长度为BB的P。
+５、	异或En-1和P创建Dn。
+６、	加密Dn得Cn-1。
+７、	密文的最后两部分分别为Cn-1和Cn。
+实现CTS加密，RC5-CTS对象必须拥有至多2*BB个字节的明文存储空间当
+RC5_CTS_Encrypt_Final规则被调用时单独处理他们。
+下面的步骤描述如何解密Cn-1和Cn。
+１、	解密Cn得Dn。
+２、	在末尾用０填充Cn创建长度为BB的C。
+３、	将Dn和C相异或得Xn。
+４、	选择Xn的前Ln个字节创建Pn。
+５、	将Xn尾部的BB-Ln个字节添加到Cn得En。
+６、	解密En得Pn-1。
+７、	明文的最后两个部分分别是Pn-1和Pn。
+       
+9.测试程序和向量
+       帮助证实实现的正确性，这一部分提供了测试程序和一组测试向量的结果。
+
+9.1  测试程序和向量
+下面用C写的测试程序从输入流中读测试向量结果写到输出流中。下面的子过程给
+了一组测试向量用于输入和结果输出。
+#include <stdio.h>
+
+  #define BLOCK_LENGTH     (8 /* bytes */)
+  #define MAX_KEY_LENGTH   (64 /* bytes */)
+  #define MAX_PLAIN_LENGTH (128 /* bytes */)
+  #define MAX_CIPHER_LENGTH(MAX_PLAIN_LENGTH + BLOCK_LENGTH)
+  #define MAX_ROUNDS       (20)
+  #define MAX_S_LENGTH     (2 * (MAX_ROUNDS + 1))
+
+  typedef struct test_vector
+  {
+    int padding_mode;
+    int rounds;
+    char    keytext[2*MAX_KEY_LENGTH+1];
+    int key_length;
+    char    key[MAX_KEY_LENGTH];
+    char    ivtext[2*BLOCK_LENGTH+1];
+    int iv_length;
+    char    iv[BLOCK_LENGTH];
+    char    plaintext[2*MAX_PLAIN_LENGTH+1];
+    int plain_length;
+    char    plain[MAX_PLAIN_LENGTH];
+    char    ciphertext[2*MAX_CIPHER_LENGTH+1];
+    int cipher_length;
+    char    cipher[MAX_CIPHER_LENGTH];
+    RC5_WORD    S[MAX_S_LENGTH];
+  } test_vector;
+
+  void show_banner()
+  {
+    (void) printf("RC5 CBC Tester.\n");
+    (void) printf("Each input line should contain the following\n");
+    (void) printf("test parameters separated by a single space:\n");
+    (void) printf("- Padding mode flag.  Use 1 for RC5_CBC_Pad, else
+  0.\n");
+    (void) printf("- Number of rounds for RC5.\n");
+    (void) printf("- Key bytes in hexadecimal.  Two characters per
+  byte like '01'.\n");
+    (void) printf("- IV bytes in hexadecimal.  Must be 16 hex
+  characters.\n");
+    (void) printf("- Plaintext bytes in hexadecimal.\n");
+    (void) printf("An end of file or format error terminates the
+  tester.\n");
+    (void) printf("\n");
+  }
+/* Convert a buffer from ascii hex to bytes.
+   * Set pTo_length to the byte length of the result.
+   * Return 1 if everything went OK.
+   */
+  int hex_to_bytes (from, to, pTo_length)
+    char    *from, *to;
+    int     *pTo_length;
+  {
+    char    *pHex;  /* Ptr to next hex character. */
+    char    *pByte;     /* Ptr to next resulting byte. */
+    int  byte_length = 0;
+    int  value;
+
+    pByte = to;
+    for (pHex = from ; *pHex != 0 ; pHex += 2)  {
+        if (1 != sscanf(pHex, "%02x", &value))
+            return (0);
+        *pByte++ = ((char)(value & 0xFF));
+        byte_length++;
+    }
+    *pTo_length = byte_length;
+    return (1);
+  }
+
+  /* Convert a buffer from bytes to ascii hex.
+   * Return 1 if everything went OK.
+   */
+  int bytes_to_hex (from, from_length, to)
+    char    *from, *to;
+    int from_length;
+  {
+    char    *pHex;  /* Ptr to next hex character. */
+    char    *pByte;     /* Ptr to next resulting byte. */
+    int  value;
+
+    pHex = to;
+    for (pByte = from ; from_length > 0 ; from_length--)  {
+        value = *pByte++ & 0xFF;
+        (void) sprintf(pHex, "%02x", value);
+        pHex += 2;
+    }
+    return (1);
+  }
+
+  /* Return 1 if get a valid test vector. */
+  int get_test_vector(ptv)
+    test_vector *ptv;
+  {
+if (1 != scanf("%d", &ptv->padding_mode))
+        return (0);
+    if (1 != scanf("%d", &ptv->rounds))
+        return (0);
+    if ((ptv->rounds < 0) || (MAX_ROUNDS < ptv->rounds))
+        return (0);
+    if (1 != scanf("%s", &ptv->keytext))
+        return (0);
+    if (1 != hex_to_bytes(ptv->keytext, ptv->key,
+                         &ptv->key_length))
+        return (0);
+    if (1 != scanf("%s", &ptv->ivtext))
+        return (0);
+    if (1 != hex_to_bytes(ptv->ivtext, ptv->iv,
+                         &ptv->iv_length))
+        return (0);
+    if (BLOCK_LENGTH != ptv->iv_length)
+        return (0);
+    if (1 != scanf("%s", &ptv->plaintext))
+        return (0);
+    if (1 != hex_to_bytes(ptv->plaintext, ptv->plain,
+                         &ptv->plain_length))
+        return (0);
+    return (1);
+  }
+
+  void run_test (ptv)
+    test_vector *ptv;
+  {
+    rc5UserKey  *pKey;
+    rc5CBCAlg       *pAlg;
+    int          numBytesOut;
+
+    pKey = RC5_Key_Create ();
+    RC5_Key_Set (pKey, ptv->key_length, ptv->key);
+
+    pAlg = RC5_CBC_Create (ptv->padding_mode,
+                    ptv->rounds,
+                    RC5_FIRST_VERSION,
+                    BB,
+                    ptv->iv);
+    (void) RC5_CBC_Encrypt_Init (pAlg, pKey);
+    ptv->cipher_length = 0;
+    (void) RC5_CBC_Encrypt_Update (pAlg,
+                    ptv->plain_length, ptv->plain,
+                    &(numBytesOut),
+                    MAX_CIPHER_LENGTH - ptv->cipher_length,
+                    &(ptv->cipher[ptv->cipher_length]));
+ptv->cipher_length += numBytesOut;
+    (void) RC5_CBC_Encrypt_Final (pAlg,
+                    &(numBytesOut),
+                    MAX_CIPHER_LENGTH - ptv->cipher_length,
+                    &(ptv->cipher[ptv->cipher_length]));
+    ptv->cipher_length += numBytesOut;
+    bytes_to_hex (ptv->cipher, ptv->cipher_length,
+                 ptv->ciphertext);
+    RC5_Key_Destroy (pKey);
+    RC5_CBC_Destroy (pAlg);
+  }
+
+  void show_results (ptv)
+    test_vector *ptv;
+  {
+    if (ptv->padding_mode)
+        printf ("RC5_CBC_Pad ");
+    else
+        printf ("RC5_CBC     ");
+    printf ("R = %2d ", ptv->rounds);
+    printf ("Key = %s ", ptv->keytext);
+    printf ("IV = %s ", ptv->ivtext);
+    printf ("P = %s ", ptv->plaintext);
+    printf ("C = %s", ptv->ciphertext);
+    printf ("\n");
+  }
+
+  int main(argc, argv)
+    int argc;
+    char *argv[];
+  {
+    test_vector tv;
+    test_vector *ptv = &tv;
+
+    show_banner();
+    while (get_test_vector(ptv))  {
+        run_test(ptv);
+        show_results(ptv);
+    }
+    return (0);
+  }
+
+9.2  测试向量
+        下面的文本是前一节测试程序的输入文件。输出在下一节中给出。
+
+  0 00 00                 0000000000000000 0000000000000000
+  0 00 00                 0000000000000000 ffffffffffffffff
+  0 00 00                 0000000000000001 0000000000000000
+  0 00 00                 0000000000000000 0000000000000001
+  0 00 00                 0102030405060708 1020304050607080
+  0 01 11                 0000000000000000 0000000000000000
+  0 02 00                 0000000000000000 0000000000000000
+  0 02 00000000           0000000000000000 0000000000000000
+  0 08 00                 0000000000000000 0000000000000000
+  0 08 00                 0102030405060708 1020304050607080
+  0 12 00                 0102030405060708 1020304050607080
+  0 16 00                 0102030405060708 1020304050607080
+  0 08 01020304           0000000000000000 ffffffffffffffff
+  0 12 01020304           0000000000000000 ffffffffffffffff
+  0 16 01020304           0000000000000000 ffffffffffffffff
+  0 12 0102030405060708   0000000000000000 ffffffffffffffff
+  0 08 0102030405060708   0102030405060708 1020304050607080
+  0 12 0102030405060708   0102030405060708 1020304050607080
+  0 16 0102030405060708   0102030405060708 1020304050607080
+  0 08 01020304050607081020304050607080
+                          0102030405060708 1020304050607080
+  0 12 01020304050607081020304050607080
+                          0102030405060708 1020304050607080
+  0 16 01020304050607081020304050607080
+                          0102030405060708 1020304050607080
+
+  0 12 0102030405         0000000000000000 ffffffffffffffff
+  0 08 0102030405         0000000000000000 ffffffffffffffff
+  0 08 0102030405         7875dbf6738c6478 0808080808080808
+  1 08 0102030405         0000000000000000 ffffffffffffffff
+
+  0 08 0102030405         0000000000000000 0000000000000000
+  0 08 0102030405         7cb3f1df34f94811 1122334455667701
+
+  1 08 0102030405         0000000000000000
+  ffffffffffffffff7875dbf6738c647811223344556677
+
+9.3  测试结果
+        下面的文本是测试程序运行于前一节给定输入的输出文本。
+RC5 CBC 测试器。
+每个输入行应该包含下面用空格号分隔的测试参数：
+－填充模式标志。使用１表示RC5-CBC-Pad，其余用０表示。
+－RC5的轮数。
+－16进制的密钥。每字节两个字符像‘０１’。
+－16进制的初始向量。必须是16进制的字节。
+－16进制的明文字节。
+到达文件末尾或格式错误终止测试器。
+
+RC5_CBC     R =  0 Key = 00 IV = 0000000000000000
+   P = 0000000000000000 C = 7a7bba4d79111d1e
+  RC5_CBC     R =  0 Key = 00 IV = 0000000000000000
+   P = ffffffffffffffff C = 797bba4d78111d1e
+  RC5_CBC     R =  0 Key = 00 IV = 0000000000000001
+   P = 0000000000000000 C = 7a7bba4d79111d1f
+  RC5_CBC     R =  0 Key = 00 IV = 0000000000000000
+   P = 0000000000000001 C = 7a7bba4d79111d1f
+  RC5_CBC     R =  0 Key = 00 IV = 0102030405060708
+   P = 1020304050607080 C = 8b9ded91ce7794a6
+  RC5_CBC     R =  1 Key = 11 IV = 0000000000000000
+   P = 0000000000000000 C = 2f759fe7ad86a378
+  RC5_CBC     R =  2 Key = 00 IV = 0000000000000000
+   P = 0000000000000000 C = dca2694bf40e0788
+  RC5_CBC     R =  2 Key = 00000000 IV = 0000000000000000
+   P = 0000000000000000 C = dca2694bf40e0788
+  RC5_CBC     R =  8 Key = 00 IV = 0000000000000000
+   P = 0000000000000000 C = dcfe098577eca5ff
+  RC5_CBC     R =  8 Key = 00 IV = 0102030405060708
+   P = 1020304050607080 C = 9646fb77638f9ca8
+  RC5_CBC     R = 12 Key = 00 IV = 0102030405060708
+   P = 1020304050607080 C = b2b3209db6594da4
+  RC5_CBC     R = 16 Key = 00 IV = 0102030405060708
+   P = 1020304050607080 C = 545f7f32a5fc3836
+  RC5_CBC     R =  8 Key = 01020304 IV = 0000000000000000
+   P = ffffffffffffffff C = 8285e7c1b5bc7402
+  RC5_CBC     R = 12 Key = 01020304 IV = 0000000000000000
+   P = ffffffffffffffff C = fc586f92f7080934
+  RC5_CBC     R = 16 Key = 01020304 IV = 0000000000000000
+   P = ffffffffffffffff C = cf270ef9717ff7c4
+  RC5_CBC     R = 12 Key = 0102030405060708 IV = 0000000000000000
+   P = ffffffffffffffff C = e493f1c1bb4d6e8c
+RC5_CBC     R =  8 Key = 0102030405060708 IV = 0102030405060708
+   P = 1020304050607080 C = 5c4c041e0f217ac3
+  RC5_CBC     R = 12 Key = 0102030405060708 IV = 0102030405060708
+   P = 1020304050607080 C = 921f12485373b4f7
+  RC5_CBC     R = 16 Key = 0102030405060708 IV = 0102030405060708
+   P = 1020304050607080 C = 5ba0ca6bbe7f5fad
+  RC5_CBC     R =  8 Key = 01020304050607081020304050607080
+   IV = 0102030405060708
+   P = 1020304050607080 C = c533771cd0110e63
+  RC5_CBC     R = 12 Key = 01020304050607081020304050607080
+   IV = 0102030405060708
+   P = 1020304050607080 C = 294ddb46b3278d60
+  RC5_CBC     R = 16 Key = 01020304050607081020304050607080
+   IV = 0102030405060708
+   P = 1020304050607080 C = dad6bda9dfe8f7e8
+  RC5_CBC     R = 12 Key = 0102030405 IV = 0000000000000000
+   P = ffffffffffffffff C = 97e0787837ed317f
+  RC5_CBC     R =  8 Key = 0102030405 IV = 0000000000000000
+   P = ffffffffffffffff C = 7875dbf6738c6478
+  RC5_CBC     R =  8 Key = 0102030405 IV = 7875dbf6738c6478
+   P = 0808080808080808 C = 8f34c3c681c99695
+  RC5_CBC_Pad R =  8 Key = 0102030405 IV = 0000000000000000
+   P = ffffffffffffffff C = 7875dbf6738c64788f34c3c681c99695
+  RC5_CBC     R =  8 Key = 0102030405 IV = 0000000000000000
+   P = 0000000000000000 C = 7cb3f1df34f94811
+  RC5_CBC     R =  8 Key = 0102030405 IV = 7cb3f1df34f94811
+   P = 1122334455667701 C = 7fd1a023a5bba217
+  RC5_CBC_Pad R =  8 Key = 0102030405 IV = 0000000000000000
+   P = ffffffffffffffff7875dbf6738c647811223344556677
+   C = 7875dbf6738c64787cb3f1df34f948117fd1a023a5bba217
+
+10.安全考虑
+        RC5密码相对来说是比较新的所以鉴定的评论仍在进行。然而，密码的简单结构使
+它易于分析而且有希望更容易的评定它的的强度。迄今为止的评论是有前途的。
+        早期的结果暗示12轮64位块大小的RC5将有足够的能力抗拒线性和差分密码分
+析。128位的块版本还未像64位的块版本进行多次研究。但是明显的16轮是一个合适的最
+小值。小于64位的块尺寸学术上的兴趣但是不应被用于密码安全。更大的安全可以通过增
+加轮数获得其代价是减少密码的吞吐量。
+        密钥的长度帮助决定密码对穷举攻击的抵抗力。一个128位的密钥长度应该几十年
+的时间里为抗拒资金雄厚的对手的穷举攻击提供保护。12轮的RC5，密钥的建立时间和数据
+加密时间对于所有长度小于832位的密钥来说都是相同的。因此没有因为不需要为了性能要
+求而选择短密钥。对于大的密钥，因为用户的密钥表，L，将比扩展密钥表，S，长所以密钥
+扩展的步骤会运行的比较慢。然而，加密时间将不会改变因此它只是一个轮数的函数。
+        未了配合出口规则可能需要选择密钥只有40个未知位。进行这一步处理的简单方
+式是选择一个简单的５个字节的密钥。这应该被避免因为对手可以容易的预计算密钥搜索信
+息。另一个一般的机制是选择128位的密钥出版头88位。这个方法揭示了大量的通往用户
+密钥表，L，的路径。且是否RC5密钥扩展表在这种情况下提供了足够的安全还未进行研究。
+尽管它可能是好的。一个与40位密钥限制一致的一种保守的方法是选择128位的种子值，
+出版这个种子的前88位，通过像MD5的散列函数运行整个种子值，使用这个散列函数的128
+位的输出作为RC5的密钥。
+        在有40位未知密钥和88位已知密钥的情况下，对于64位RC5块版本应该有12
+轮或更高的轮数，否则增加给密钥的88位的值可能被丢失。
+        密钥的生存期也是影响安全的关键。对于高安全的应用，任何64位块密码的密钥
+应该在加密了2**32个块后被改变（2**64个块对于128位的块密码）。这将帮助防范线性
+和差分密码分析。对于64位的块，这个规则将推荐在2**40个字节被加密后改变密钥。进
+一步的讨论见Schneier应用密码学183页。
+
+11. ASN.1标识符
+        对于使用ASN.1描述的应用，有必要为这些与他们参数块格式相一致的密码定义算
+法标识符。一个算法标识符的ASN.1的定义已经存在，以下列出作为参考。
+AlgorithmIdentifier ::= SEQUENCE {
+    algorithm    OBJECT IDENTIFIER,
+    parameters   ANY DEFINED BY algorithm OPTIONAL
+  }
+
+  The values for the algorithm field are:
+
+  RC5_CBC  OBJECT IDENTIFIER ::=
+    { iso (1) member-body (2) US (840) rsadsi (113549)
+      encryptionAlgorithm (3) RC5CBC (8) }
+
+  RC5_CBC_Pad OBJECT IDENTIFIER ::=
+  { iso (1) member-body (2) US (840) rsadsi (113549)
+    encryptionAlgorithm (3) RC5CBCPAD (9) }
+
+   The structure of the parameters field for these algorithms is given
+   below.  NOTE: if the iv field is not included, then the
+   initialization vector defaults to a block of zeros whose size depends
+   on the blockSizeInBits field.
+
+  RC5_CBC_Parameters ::= SEQUENCE {
+    version           INTEGER (v1_0(16)),
+    rounds            INTEGER (8..127),
+    blockSizeInBits   INTEGER (64, 128),
+    iv                OCTET STRING OPTIONAL
+  }
+
+12.参考
+   [1] Kaliski, Burton S., and Yinqun Lisa Yin, "On Differential and
+   Linear Cryptanalysis of the RC5 Encryption Algorithm", In Advances
+   in Cryptology - Crypto '95, pages 171-184, Springer-Verlag, New
+   York, 1995.
+
+   [2] Rivest, Ronald L., "The RC5 Encryption Algorithm", In
+   Proceedings of the Second International Workshop on Fast Software
+   Encryption, pages 86-96, Leuven Belgium, December 1994.
+
+   [3] Rivest, Ronald L., "RC5 Encryption Algorithm", In Dr. Dobbs
+   Journal, number 226, pages 146-148, January 1995.
+
+   [4] Rivest, Ronald L., "The MD5 Message-Digest Algorithm", RFC
+   1321.
+
+   [5] RSA Laboratories, "Public Key Cryptography Standards (PKCS)",
+   RSA Data Security Inc.  See ftp.rsa.com.
+
+   [6] Schneier, Bruce, "Applied Cryptography", Second Edition, John
+   Wiley and Sons, New York, 1996.  Errata: on page 195, line 13, the
+   reference number should be [402].
+
+   [7] Business Software Alliance, Matt Blaze et al., "Minimum Key
+   Length for Symmetric Ciphers to Provide Adequate Commercial
+   Security", http://www.bsa.org/bsa/cryptologists.html.
+
+   [8] RSA Data Security Inc., "RC5 Reference Code in C", See the web
+   site: www.rsa.com, for availability.  Not available with the first
+   draft of this document.
+
+13.作者地址
+
+   Robert W. Baldwin
+   RSA Data Security, Inc.
+   100 Marine Parkway
+   Redwood City, CA 94065
+
+   Phone: (415) 595-8782
+   Fax:   (415) 595-1873
+   EMail: baldwin@rsa.com, or baldwin@lcs.mit.edu
+
+
+   Ronald L. Rivest
+   Massachusetts Institute of Technology
+   Laboratory for Computer Science
+   NE43-324
+   545 Technology Square
+   Cambridge, MA 02139-1986
+
+   Phone: (617) 253-5880
+   EMail: rivest@theory.lcs.mit.edu
+
+
+
+
+RFC2040――The RC5, RC5-CBC, RC5-CBC-Pad, and RC5-CTS Algorithms
+                                         RC5,RC5-CBC,RC5-CBC-PAD和RC5-CTS算法
+
+
+2
+RFC文档中文翻译计划

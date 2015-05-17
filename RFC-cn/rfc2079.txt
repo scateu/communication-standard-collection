@@ -1,0 +1,106 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：鲁嘉俊（用户名：C--   信箱：biodio@kali.com.cn）
+译文发布时间：2002-3-2
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                          M. Smith
+Request for Comments: 2079                      Netscape Communications
+Category: Standards Track                                  January 1997
+
+
+X.500 属性类型和对象类别去掌握统一资源定位器(URIs)的定义
+(RFC―2079  Definition of an X.500 Attribute Type and an Object Class
+ to Hold Uniform Resource Identifiers (URIs) )
+
+* 备忘录的地位
+
+这个文件详细说明了一个因特网标准为因特网共同体寻找协议，以及为改进提出讨论和建议。如果想知道这个协议的标准生命和情况，请查阅最新版本的《因特网官方协议标准》。这个备忘录的发行是无限制的。
+
+
+* 摘要
+
+URLs正在被广泛用于精确定位因特网资源的位置。能够把URLs包含于符合LDAP和X.500信息模式的目录下成了迫切需要，同时也要求能包含其它被定义的统一资源定位器。一些独立的团体已经开始试验LDAP和X.500目录下包含同一资源位置。到此为止这篇文章是建立在试验上，定义新的用标准的方法储存于目录入口的属性类型和辅助对象类来承认统一资源定位器、来包含URLs。
+
+
+* 背景和打算用途
+
+由[1]所定义的URLs是几种由工程任务组正在定义的统一资源定位器（URIs）中的第一个。统一资源定位器正在因特网上被广泛使用，特别是大多数用在超文本链接标示语言[2]中。这篇文章定义了一个被称为标示统一资源定位器（LabeledURI）的X.500[3,4]属性类型和一个被称为标示辅助对象类的辅助对象类（labeled URI Object）来支持所有种类的统一资源定位器，包括URLs。这些定义是为LDAP 和X.500 目录而设计的，也可以被用于其它的文章。
+
+
+
+
+
+标示统一资源定位器的计划定义
+
+
+* 关于标示统一资源定位器的讨论
+
+标示统一资源定位器的属性类型有着客观精确排列语法（后来统一资源定位器是客观灵敏地），而且它有多值。属性里的值必须由一个随机带着一个或更多的空格字符的统一资源定位器（现在是URLs）和一个标识组成。因为空格字符不允许在统一资源定位器未编码地出现，所以不会出现不明确标识从何处开始的情况。现在，统一资源定位器部分必须遵守URL规则。多样的标示统一资源定位器的值一般表示不同的与X.500对象完全有关联的资源，但是可能对同一资源表示不同的位置。
+
+标识是用来描述统一资源定位器指向的资源，对人们消费是一个很好的名词。这篇文章不打算详细说明关于标识方面语法。在某些事例中它对包含URI引用的一些指示或者资源的大小。
+
+标识可能包含任何客观精确排列语法所允许的字符，但是非IA-5(非ASCII)字符的用途是不支持的，因为不是全部的目录用户都能用同样的方式处理它们。如果包含了非IA-5字符，它们必须使用X.500格式，而不是HTML格式（例如，有一串字符在前边的字符"a"必须被编码用T.61次序的有0xCA的"a"，而不是用HTML的换码顺序 "&aring"）
+
+
+
+* 标示统一资源定位器属性值举例
+
+labeledURI属性值不包括a的例子。标识:
+ftp://ds.internic.net/rfc/rfc822.txt。 
+一个labeledURI 属性值的URL中包含一个tilde字符（URL中的特殊字符必须按照URL文件指定的被编码）的例子。标识是"LDAP Home Page": 
+http://www.umich.edu/%7Ersug/ldap/ LDAP Home Page
+另一个例子，这个在标识中包含了一个线索来帮助用户们了解到这个URL指向一个图片文件：
+http://champagne.inria.fr/Unites/rennes.gif Rennes [photo]
+
+
+
+
+labeledURIObject对象类的计划定义
+
+
+* LabeledURI对象类的讨论
+
+LabeledURI对象类是顶端的一个子集，可能包含着LabeledURI的性质。目的是为了这个对象类可以被加到现有的目录对象中来照应URI的包含值。这个步骤不排除适当地在其他对象类中直接包含labeledURI属性类型。
+
+* 安全因素
+
+安全因素不在本备忘录的讨论范围之内，除非是盲目地把labeledURI 的标签部分插入到一个HTML文档中，这是不提倡的，因为这可能会让带有恶意的人把HTML标记符混入标签部分因而误导整篇LabeledURI值已经加入的文档的读者。
+
+
+鸣谢：
+Paul-Andre Pays, Martijn Koster, Tim Howes, Rakesh Patel, Russ Wright和Hallvard Furuseth 在这篇文章创作中提供了无价的帮助。这份材料部分是基于国家科学基金会执照为No. NCR-9416667的工作中。
+
+
+附录: labeledURL属性类型 (被否定)
+这篇文章早期的草稿详细说明了一个叫做labeledURL附加的属性类型。这种属性类型已被否定，当新的值被加入目录入口时不能使用。最初的用包含一个单独的属性类型来支持URLs的目的是这可以更好地使有效率的程序访问明确种类的URIs。经过一些考虑，IETF-ASID 工作组得出结论：使用一种属性比使用两种好。
+
+这里涉及到LabeledURL的计划定义仅仅作为历史参考。目录用户软件可能会支持这个计划定义（除了labeledURI 之外）是为了减轻那些使用它的站点的从labeledURL的转变。
+
+注释：
+   [1] Berners-Lee, T., Masinter, L., and M. McCahill, "Uniform
+   Resource Locators (URL)", RFC 1738, CERN, Xerox Corporation,
+   University of Minnesota, December 1994.
+   <URL:ftp://ds.internic.net/rfc/rfc1738.txt>
+
+   [2] Berners-Lee, T., and D. Connolly, "Hypertext Markup Language -
+   2.0", RFC 1866, <URL:ftp://ds.internic.net/rfc/rfc1866.txt>
+
+   [3] The Directory: Overview of Concepts, Models and Service.  CCITT
+   Recommendation X.500, 1988.
+
+   [4] Information Processing Systems -- Open Systems Interconnection --
+   The Directory: Overview of Concepts, Models and Service.  ISO/IEC JTC
+   1/SC21; International Standard 9594-1, 1988.
+
+
+作者的地址：
+   Mark Smith
+   Netscape Communications Corp.
+   501 E. Middlefield Rd.
+   Mountain View, CA 94043, USA
+电话:  +1 415 937-3477
+E-Mail:  mcs@netscape.com
+
+

@@ -1,0 +1,33 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：顾国飞（ggfei    ggfei@263.net ）
+译文发布时间：2001-4-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                          J. Postel
+Request for Comments: 865                                            ISI
+                                                                May 1983
+ 
+RFC865  引用day协议
+(RFC865-Quote of the Day Protocol)
+
+本RFC规范了一个ARPA Internet community上的标准。在ARPA Internet上的所有主机应当采用和实现这个标准。
+一个有用的调试和检测的工具就是引用day服务。 这个服务只是简单的送回一个端消息而不管输入。
+* 基于TCP的字符产生器服务 
+可以让服务基于TCP，端口为17，在连接建立后，一个短消息将由此端口传送到连接方，在传送完后关闭连接。接收到的信息被抛弃。 
+* 基于UD的字符产生器服务 
+当然，这个服务也可以基于UDP协议，端口号也是17，其中的数据报包括一个引用，也就是短消息。 
+* 引用语法Da 
+现在没有规定好的语法，推荐使用ASCII可打印字符，空格，回车和换行。引用可以是一行或几行，但不应该大于512个字节。
+
+
+RFC865 Quote of the Day Protocol                             RFC865  引用day协议              
+
+1
+
+
+1
+中文文档翻译计划
+
+

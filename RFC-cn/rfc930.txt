@@ -1,0 +1,66 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王亮（redar１   wl_prj_01@263.net）
+译文发表时间：
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                     Marvin Solomon
+Request for Comments: 930                                 Edward Wimmers
+Supersedes: RFC 884                    University of Wisconsin - Madison
+                                                            January 1985
+Telnet终端类型选项
+（RFC930――Telnet Terminal Type Option）
+  
+本备忘录的状态
+
+本RFC规范了一个ARPA Internet community上的标准。在ARPA Internet上的所有主机应当采用和实现这个标准。本文的发布不受任何限制。
+本标准是对RFC884的更新。唯一的变化是定义了TERMINAL-TYPE  IS子谈判只能在对TERMINAL-TYPE  SEND子谈判作出回应时送出。详文见下。
+
+1．命令和代码
+
+TERMINAL    24
+
+2．命令意义
+
+IAC　WILL　TERMINAL-TYPE
+发送端可在一个后续子谈判中发送终端信息。
+IAC　WON’T　TERMINAL-TYPE
+发送端拒绝发送终端信息。
+IAC　DO　TERMINAL　-TYPE
+发送端可在一个后续子谈判中接收终端信息。
+IAC　DON’T　TERMINAL-TYPE
+发送端拒绝接收终端类型信息。
+IAC　SB　TEMINAL-TYPE　SEND　IAC　SE
+发送端请求接受端将其终端类型传给自己。SEND的命令码是１。（见下）
+IAC　SB　TERMINAL-TYPE　IS　　　IAC　SE
+发送端正在声明其终端类型。此命令的代码是０。（见下）
+
+３．默认值
+
+WON’T　TERMINAL-TYPE
+终端类型信息不变。
+DON’T　TERMINAL-TYPE
+终端类型信息不便。
+
+４．选项产生的原因
+
+这个选项能够允许telnet服务器确认已连接到用户telnet程序的终端类型。类型信息的传输并不意味着处理过程会马上变化，这些信息可能传递给一个过程，这个过程对其为适应特定终端类型所发出的数据给以警告。例如，某些操作系统有终端驱动程序，所以可以接受用来表明驱动终端类型的代码。利用TERMANAL　TYPE和BINARY选项，在这些操作系统上的telnet服务器程序就可以驱动客户终端了，而且和直接连接的效果一样，包括鼠标的位置，丰富的颜色等，而这些是没有包括在虚拟网络终端的定义中的。通过推迟向SB命令传送状态信息，这个选项可以和普通TELNET选项的结构保持一致。
+
+５．选项说明
+
+WILL和DO只能用于获取和保证将来讨论的许可。实际的状态信息交换与选项子命令同时发生。（IAC　SB　TERMINAL-TYPE）。
+一旦两个主机开始进行WILL和DO的交换，处于DO　TERMINAL-TYPEDE发送端就空闲以备请求类型信息。只有DO类型的发送端端可以发送请求（IAC　SB　TERMINAL-TYPE　SEND　IAC　SE），只有WILL类型的发送端可以传送实际的类型信息（用IAC　SB　RMINAL-TYPE　IS…IAC　SE命令）。终端类型信息不能以自动方式传送，而只能是以请求―响应的方式。
+终端类型信息是NVT　ASCII　String字符串类型。这种编码不考虑大小写的差别。有效终端类型的完整列表可在最近的RFC“Assigned　Numbers”找到。
+接下来是一个选项应用的例子：
+主机１：IAC　DO　TERMINAL-TYPE
+主机２：IAC　WILL　TERMINAL-TYPE
+（主机１可随时请求状态信息）
+主机１：IAC　SB　TERMINAL-TYPE　SEND　IAC　SE
+主机２：IAC　SB　TERMINAL-TYPE　IS　IBM-３７２８-２　IAC　SE
+
+６．实现
+
+“终端类型”信息可以是任何对谈判双方有意义的NVT　ASCII　字符串。在“Assigned　Number”中命名的终端类型表是用来降低由终端类型名称多样所引起的混乱。例如，如果一个终端被一部分人叫作“IBM3278-2”型，而另一部分人称其为“IBM3278／2”，在这个时侯就产生了混乱。对于终端类型未知的情况，是不能作出否定确认的，但是在有效终端类型名还未被确认的情况下，一些其他选项（如转换到BINARY模式）可能会被拒绝。在某些情况下，一个特定的终端可能会有不止一个名字，即一个特定类型可能对应于多个普通类型。在这些情况下，TERMINAL-TYPE　IS命令可能会用很多不同的名字来回应连续的TERMINAL-TYPE　SEND命令。而在这种方式下，不明白第一次相应的telnet服务器会要求终端重发。然而如果服务器两次都收到了同样的响应，它就停止发送TERMINAL-TYPE　SEND命令。同样的，发送端应该用重复前一个类型名的方法表明它已经将所有有效的类型名发送完毕。注意：TERMINAL-TYPE　SEND命令在回应请求（TERMINAL-TYPE　SEND），这是因为发送TERMINAL-TYPE　SEND和接收TERMINAL-TYPE　SEND的主机不能确定其他主机是正在请求第二个选项，还是TERMINAL-TYPE　SEND和TERMINAL-TYPE　IS两个命令在中途混淆了。
+“UNKNOWN”类型可被用于当终端类型不确定或不可能被其他人认出的情况。
+在“Assigned　Numbers”中保持着完整并且是最新的终端类型名。终端类型名的最大长度为４０个字符。

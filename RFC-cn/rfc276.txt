@@ -1,0 +1,26 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+NWG/RFC# 276                                  8-NOV-71 09:23 7936
+NIC Course at SRI on Nov. 29, 30              Richard W. Watson
+                                              SRI-ARC
+
+NIC过程
+（NIC Course）
+网络信息中心计划在它的联机系统的应用(NLS)上（包括在SRI上的日志应用中）运行一个教程。日期订在11月29和30日。
+显然，我们的这个课程是面向站点代理或者干事的。他们可以帮助他人在这个站点上使用NIC，而且可以转录在NLS中的文档和通知。不过，欢迎任何人。唯一的限制是只有12个名额。
+愿意参加的人请打电话(415) 326-6200转3370或者2013联系Dirk Van Nouhuys或者Dick Watson。
+我们将为每一位参加者预订汽车旅馆。通常，我们预订的是位于Menlo Park 的Mermaid Motel。
+[这个RFC文档是由BBN公司在Alex McKenzie指导下以计算机可读的文件格式归档到在线RFC文档库的，12/96]
+RFC276――NIC Course                                                               NIC过程
+
+
+
+
+1
+RFC文档中文翻译计划
+

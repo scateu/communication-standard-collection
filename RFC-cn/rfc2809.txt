@@ -1,0 +1,1751 @@
+
+
+
+
+
+
+Network Working Group                                          B. Aboba
+Request for Comments: 2809                                    Microsoft
+Category: Informational                                         G. Zorn
+                                                                  Cisco
+                                                             April 2000
+
+
+         Implementation of L2TP Compulsory Tunneling via RADIUS
+
+Status of this Memo
+
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+Abstract
+
+   This document discusses implementation issues arising in the
+   provisioning of compulsory tunneling in dial-up networks using the
+   L2TP protocol.  This provisioning can be accomplished via the
+   integration of RADIUS and tunneling protocols. Implementation issues
+   encountered with other tunneling protocols are left to separate
+   documents.
+   本文档讨论了在拨号网络中使用L2TP协议提供强制隧道连接服务中出现的应用问题。
+   此服务的提供能够通过RADIUS协议和隧道连接协议的结合来完成。其他隧道协议遇到
+   的应用问题遗留到其他独立的文档描述。
+
+1. Terminology
+
+   Voluntary Tunneling
+   自发隧道连接
+              In voluntary tunneling, a tunnel is created by the user,
+              typically via use of a tunneling client.
+              在自发隧道连接中，隧道由用户创建，典型的是通过应用隧道连
+              接客户端。
+   Compulsory Tunneling
+   强制隧道连接
+              In compulsory tunneling, a tunnel is created without any
+              action from the user and without allowing the user any
+              choice.
+              在强制隧道连接中，隧道的创建不涉及到任何的用户行为，并且不允许
+              用户有任何选择。
+   Tunnel Network Server
+   隧道网络服务器
+              This is a server which terminates a tunnel. In L2TP
+              terminology, this is known as the L2TP Network Server
+              (LNS).
+              这是用来终结隧道的服务器。在L2TP的术语中，此服务器被称为L2TP
+              网络服务器（LNS）。
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                      [Page 1]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   Network Access Server
+   网络接入服务器
+              The Network Access Server (NAS) is the device that clients
+              contact in order to get access to the network. In L2TP
+              terminology, a NAS performing compulsory tunneling is
+              referred to as the L2TP Access Concentrator (LAC).
+              网络接入服务器（NAS）是客户端为了接入网络而连接的网络设备。在L2TP
+              术语中，执行强制隧道连接的NAS被称为L2TP接入集中器（LAC）。
+
+   RADIUS authentication server
+   RADIUS 认证服务器
+              This is a server which provides for
+              authentication/authorization via the protocol described in
+              [1].
+              这是通过〔1〕协议提供认证/授权服务的服务器。
+
+   RADIUS proxy
+   RADIUS 代理
+              In order to provide for the routing of RADIUS
+              authentication requests, a RADIUS proxy can be employed.
+              To the NAS, the RADIUS proxy appears to act as a RADIUS
+              server, and to the RADIUS server, the proxy appears to act
+              as a RADIUS client.  Can be used to locate the tunnel
+              endpoint when realm-based tunneling is used.
+              为了提供RADIUS认证请求的转发功能，可以使用RADIUS 代理。
+              在NAS看来，RADIUS 代理表现为一个RADIUS服务器；对于Radius 服务器，
+              RADIUS 代理表现为一个RADIUS 客户端。当实现基于域的隧道连接时，
+              这可以用来定位隧道的终结点。
+
+2.  Requirements language
+
+   In this document, the key words "MAY", "MUST, "MUST NOT", "optional",
+   "recommended", "SHOULD", and "SHOULD NOT", are to be interpreted as
+   described in [4].
+
+3.  Introduction
+
+   Many applications of tunneling protocols involve dial-up network
+   access.  Some, such as the provisioning of secure access to corporate
+   intranets via the Internet, are characterized by voluntary tunneling:
+   the tunnel is created at the request of the user for a specific
+   purpose. Other applications involve compulsory tunneling: the tunnel
+   is created without any action from the user and without allowing the
+   user any choice.
+   许多隧道连接协议应用涉及到拨号网络。其中一些，如通过Internet提供到
+   企业Intranets的安全访问服务，表现出自发隧道连接的特征：隧道创建基于
+   用户的请求，是为了明确的目的。其他一些应用涉及到强制隧道连接：隧道的
+   创建没有任何用户的行为并且不允许任何用户的选择。
+
+   Examples of applications that might be implemented using compulsory
+   tunnels are Internet software upgrade servers, software registration
+   servers and banking services.  These are all services which, without
+   compulsory tunneling, would probably be provided using dedicated
+   networks or at least dedicated network access servers (NAS), since
+   they are characterized by the need to limit user access to specific
+   hosts.
+   如软件升级服务器、软件注册服务器和银行服务，是可以通过使用强制隧道的实现例子。
+   如果没有强制隧道连接的话，这些服务将可能使用专门的网络，或者至少是专门的
+   网络接入服务器（NAS）来实现。其原因是这些服务的需求特征是限制用户访问特
+   殊的服务器。
+
+   Given the existence of widespread support for compulsory tunneling,
+   however, these types of services could be accessed via any Internet
+   service provider (ISP).  The most popular means of authorizing dial-
+   up network users today is through the RADIUS protocol. The use of
+   RADIUS allows the dial-up users' authorization and authentication
+
+
+
+Aboba & Zorn                 Informational                      [Page 2]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   data to be maintained in a central location, rather than on each NAS.
+   It makes sense to use RADIUS to centrally administer compulsory
+   tunneling, since RADIUS is widely deployed and was designed to carry
+   this type of information.  New RADIUS attributes are needed to carry
+   the tunneling information from the RADIUS server to the NAS. Those
+   attributes are defined in [3].
+   但是，在存在对强制隧道连接分布广泛的支持的条件下，这些类型的服务能够通
+   过任何Internet服务提供商（ISP）得到。今天，拨号网络用户授权的最普遍的协
+   议是通过RADIUS。使用RADIUS允许拨号用户的认证和授权数据能被保存在一个中心
+   存储地，而不是在每个NAS上。使用RADIUS来集中的管理强制隧道连接是有意义的，
+   因为RADIUS被广泛的部署，并且被设计来承载此类型的信息。需要新的RADIUS属性
+   来承载从RADIUS服务器到NAS的隧道连接信息。这些属性被定义在〔3〕中。
+
+3.1.  Advantages of RADIUS-based compulsory tunneling
+      基于RADIUS的强制隧道连接的优点
+
+   Current proposals for routing of tunnel requests include static
+   tunneling, where all users are automatically tunneled to a given
+   endpoint, and realm-based tunneling, where the tunnel endpoint is
+   determined from the realm portion of the userID. User-based tunneling
+   as provided by integration of RADIUS and tunnel protocols offers
+   significant advantages over both of these approaches.
+   当前的对路由隧道请求的建议包括了静态隧道连接和基于域的隧道连接。静态隧道
+   连接中所有的用户被自动隧道定向到一个指定的终结点；基于域的隧道连接的终结
+   点由用户ID（userID)的域部分决定。基于用户的隧道连接，因为由RADIUS和隧道协
+   议相结合来提供，具有超过此两种方法的重要的优势。
+  
+
+   Static tunneling requires dedication of a NAS device to the purpose.
+   In the case of an ISP, this is undesirable because it requires them
+   to dedicate a NAS to tunneling service for a given customer, rather
+   than allowing them to use existing NASes deployed in the field. As a
+   result static tunneling is likely to be costly for deployment of a
+   global service.
+   静态隧道连接需要NAS设备来决定目的地。在ISP的情形下，这并不如其所愿，
+   因为这需要他们必须专用一个NAS设备于一个给定的用户提供隧道连接服务，而不是
+   允许他们使用已经部署在这地区的NAS设备。导致的结果，静态隧道连接如果全局部
+   署的话，将会导致高额成本。
+
+   Realm-based tunneling assumes that all users within a given realm
+   wish to be treated the same way. This limits flexibility in account
+   management.  For example, BIGCO may desire to provide Janet with an
+   account that allows access to both the Internet and the intranet,
+   with Janet's intranet access provided by a tunnel server located in
+   the engineering department. However BIGCO may desire to provide Fred
+   with an account that provides only access to the intranet, with
+   Fred's intranet access provided by a tunnel network server located in
+   the sales department. Such a situation cannot be accommodated with
+   realm-based tunneling, but can be accommodated via user-based
+   tunneling as enabled by the attributes defined in [3].
+   基于域的隧道连接认为所有的在给定域中的用户将被相同对待。这限制了账号管理的
+   灵活性。例如，BIGCO 可能希望提供Janet一个允许同时访问Internet和Intranet的
+   账号，Janet的Intranet连接由工程部的隧道网络服务器提供；然而，BIGCO可能希望
+   提供Fred只能访问Intranet的账号，而Fred的Intranet连接由销售部的隧道网络服务
+   器提供。这种的情况不能被基于域的隧道连接所兼容，但是能被基于用户的隧道连接
+   所包含。〔3〕中定义的属性使这种基于用户的连接成为可能。
+
+4.  Authentication alternatives
+    认证的两种选择
+
+   RADIUS-based compulsory tunneling can support both single
+   authentication, where the user is authenticated at the NAS or tunnel
+   server, or dual authentication, where the user is authenticated at
+   both the NAS and the tunnel server. When single authentication is
+   supported, a variety of modes are possible, including telephone-
+   number based authentication.  When dual-authentication is used, a
+   number of modes are available, including dual CHAP authentications;
+   
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                      [Page 3]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   CHAP/EAP authentication; CHAP/PAP(token) authentication; and EAP/EAP
+   authentication, using the same EAP type for both authentications. EAP
+   is described in [5].
+   基于RADIUS的强制隧道连接既能支持在NAS或隧道服务器的单一认证，又能支持需在
+   两端进行的双重认证。当支持单一认证的时候，多种模式就变为可能了，包括
+   基于电话号码的认证。当支持双重认证的时候，一些模式就可实现了，包括双重CHAP认证、
+   CHAP/EAP 认证、CHAP/PAP（token）认证、EAP/EAP认证（两端认证使用相同的EAP类型）。
+   EAP认证在〔5〕中描述。
+
+   The alternatives are described in more detail below.
+   认证方式在下面详细描述。
+
+4.1.  Single authentication
+      单一认证
+
+   Single authentication alternatives include:
+   单一认证包括：
+
+   NAS authentication
+   NAS authentication with RADIUS reply forwarding
+   Tunnel server authentication
+   NAS 认证
+   RADIUS回应转发的NAS认证
+   隧道服务器认证
+
+4.1.1.  NAS authentication
+        NAS 认证
+
+   With this approach, authentication and authorization (including
+   tunneling information) occurs once, at the NAS. The advantages of
+   this approach are that it disallows network access for unauthorized
+   NAS users, and permits accounting to done at the NAS.  Disadvantages
+   are that it requires that the tunnel server trust the NAS, since no
+   user authentication occurs at the tunnel server. Due to the lack of
+   user authentication, accounting cannot take place at the tunnel
+   server with strong assurance that the correct party is being billed.
+   使用这种方式，认证和授权（包括隧道连接信息）在NAS端发生一次。这种方式的
+   优点是，它不允许未授权的用户访问网络，而且可以在NAS端实现计费。缺点是它
+   必须建立在隧道服务器信任（trust）NAS的基础上，因为用户认证不发生在隧道服
+   务器端。由于没有用户认证，不能在隧道服务器端实现能确保正确部分被记帐的计费。
+
+   NAS-only authentication is most typically employed along with LCP
+   forwarding and tunnel authentication, both of which are supported in
+   L2TP, described in [2].  Thus, the tunnel server can be set up to
+   accept all calls occurring within authenticated tunnels, without
+   requiring PPP authentication.  However, this approach is not
+   compatible with roaming, since the tunnel server will typically only
+   be set up to accept tunnels from a restricted set of NASes. A typical
+   initiation sequence looks like this:
+   单一NAS认证最典型的应用是结合LCP转发和隧道认证，这两种在L2TP中都支持，
+   在〔2〕中有描述。因此，隧道服务器可以被设置为接受任何发生在认证通过的
+   隧道中的的呼叫，而并不需要进行PPP 认证。但是，这种方式并不能兼容漫游，
+   因为隧道服务器只能典型的被设置为接受来自有限数量的NAS设备的隧道。一个
+   典型的初始化序列如下：
+   
+
+   Client and NAS: Call Connected
+   Client and NAS: PPP LCP negotiation
+   Client and NAS: PPP authentication
+   NAS to RADIUS Server: RADIUS Access-request
+   RADIUS server to NAS: RADIUS Access-Accept/Access-Reject
+   NAS to Tunnel Server: L2TP Incoming-Call-Request w/LCP forwarding
+   Tunnel Server to NAS: L2TP Incoming-Call-Reply
+   NAS to Tunnel Server: L2TP Incoming-Call-Connected
+   Client and Tunnel Server: NCP negotiation
+   用户客户端 和 NAS：呼叫连接
+   用户客户端 和 NAS：PPP LCP 协商
+   NAS 到 RADIUS服务器：RADIUS 认证请求
+   RADIUS服务器 到 NAS：RADIUS 认证接受/认证拒绝
+   NAS 到 隧道服务器：L2TP Incoming-Call-Request w/LCP forwarding
+   隧道服务器 到 NAS：L2TP Incoming-Call-Reply
+   NAS 到 隧道服务器：L2TP Incoming-Call-Connected
+   用户客户端 和 隧道服务器：NCP 协商
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                      [Page 4]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   The process begins with an incoming call to the NAS, and the PPP LCP
+   negotiation between the client and the NAS. In order to authenticate
+   the client, the NAS will send a RADIUS Access-Request to the RADIUS
+   server and will receive a RADIUS Access-Accept including tunnel
+   attributes, or an Access-Reject.
+   此过程开始于到NAS的接入呼叫和用户客户端和NAS间的PPP LCP协商。为了认证
+   用户端，NAS将发送RADIUS认证请求到RADIUS服务器，并将收到RADIUS认证接受
+   回应或者拒绝回应，认证接受回应中包含隧道属性。
+
+   In the case where an L2TP tunnel is indicated, the NAS will now bring
+   up a control connection if none existed before, and the NAS and
+   tunnel server will bring up the call. At this point, data will begin
+   to flow through the tunnel.  The NAS will typically employ LCP
+   forwarding, although it is also possible for the tunnel server to
+   renegotiate LCP.  If LCP renegotiation is to be permitted, the NAS
+   SHOULD NOT send an LCP CONFACK completing LCP negotiation. Rather
+   than sending an LCP CONFACK, the NAS will instead send an LCP
+   Configure-Request packet, described in [6].  The Client MAY then
+   renegotiate LCP, and from that point forward, all PPP packets
+   originated from the client will be encapsulated and sent to the
+   tunnel server.
+   在L2TP隧道被指明的情况下，如果此隧道不存在，NAS将在此时建立一条控制
+   连接，NAS和隧道服务器将建立起这次呼叫。到此时，数据将开始在隧道上传送。
+   虽然隧道服务器重新进行LCP协商也是可能的，但典型的NAS将使用LCP转发。
+   如果LCP重新协商被允许，NAS不能（SHOULD NOT）发送LCP CONFACK，相反NAS
+   将发送一个LCP 配置请求（Configure-Request）包，在〔6〕中有描述。用户
+   客户端可能（MAY）进行LCP重新协商，从此时起，所有的从用户客户端发出的
+   PPP包将被封装发送到隧道服务器。
+
+   Since address assignment will occur at the tunnel server, the client
+   and NAS MUST NOT begin NCP negotiation. Instead, NCP negotiation will
+   occur between the client and the tunnel server.
+   因为地址分配将发生在隧道服务器那端，用户客户端和NAS不应该（MUST NOT）
+   启动NCP协商。相反，NCP协商将在用户客户端和隧道服务器间发生。
+
+4.1.2.  NAS authentication with RADIUS reply forwarding
+        RADIUS回应转发的NAS认证
+
+   With this approach, authentication and authorization occurs once at
+   the NAS and the RADIUS reply is forwarded to the tunnel server. This
+   approach disallows network access for unauthorized NAS users; does
+   not require trust between the NAS and tunnel server; and allows for
+   accounting to be done at both ends of the tunnel. However, it also
+   requires that both ends share the same secret with the RADIUS server,
+   since that is the only way that the tunnel server can check the
+   RADIUS Access-Reply.
+   在这种方式下，认证和授权将在NAS发生一次，RADIUS回应被转发到隧道服务器。
+   这种方式不允许未授权的用户访问网络；不需要NAS和隧道服务器间的相互信任；
+   允许计费同时在两端进行。但是，它需要两端共享相同的和RADIUS 服务器间
+   的共享密钥，因为这是隧道服务器能检查RADIUS认证回应的唯一方法。
+
+   In this approach, the tunnel server will share secrets with all the
+   NASes and associated RADIUS servers, and there is no provision for
+   LCP renegotiation by the tunnel server. Also, the tunnel server will
+   need to know how to handle and verify RADIUS Access-Accept messages.
+   在此方式下，隧道服务器将同所有的NAS设备共享和RADIUS服务器通信的共享密钥，
+   而且隧道服务器将不能提供LCP重新协商。另外，隧道服务器将需要知道如何去
+   处理和验证认证接受消息。
+
+   While this scheme can be workable if the reply comes directly from a
+   RADIUS server, it would become unmanageable if a RADIUS proxy is
+   involved, since the reply would be authenticated using the secret
+   shared by the client and proxy, rather than the RADIUS server. As a
+   result, this scheme is impractical.
+   如果回应直接来自一个RADIUS服务器的话这种方案是可行的。但如果RADIUS代理
+   被涉及，那将变得不可管理，因为此回应将被使用客户端和代理间的共享密钥进
+   行验证，而不是RADIUS服务器的密钥。导致的结果是此方案是不实际的。
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                      [Page 5]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+4.1.2.1. Tunnel server authentication
+         隧道服务器认证
+
+   In this scheme, authentication and authorization occurs once at the
+   tunnel server.  This requires that the NAS determine that the user
+   needs to be tunneled (through RADIUS or NAS configuration). Where
+   RADIUS is used, the determination can be made using one of the
+   following methods:
+   在这个方案中，认证和授权在隧道服务器端发生一次。这需要NAS判定需要被隧道定向的
+   用户（通过RADIUS或NAS 配置）。如果RADIUS被使用，此判定可使用下面的一种方法：
+
+   Telephone-number based authentication
+   UserID
+   基于电话号码的认证
+   用户ID（userID)
+
+4.1.2.2.  Telephone-number based authentication
+          基于电话号码的认证
+
+   Using the Calling-Station-Id and Called-Station-Id RADIUS attributes,
+   authorization and subsequent tunnel attributes can be based on the
+   phone number originating the call, or the number being called. This
+   allows the RADIUS server to authorize users based on the calling
+   phone number or to provide tunnel attributes based on the Calling-
+   Station-Id or Called-Station-Id.  Similarly, in L2TP the tunnel
+   server MAY choose to reject or accept the call based on the Dialed
+   Number and Dialing Number included in the L2TP Incoming-Call-Request
+   packet sent by the NAS.  Accounting can also take place based on the
+   Calling-Station-Id and Called-Station-Id.
+   使用主叫号码（Calling-Station-Id）和被叫号码（Called-Station-Id）RADIUS
+   属性，授权和随后的隧道属性可以基于以发起呼叫的电话号或被叫的号码。这允许
+   RADIUS服务器能够基于用户的呼叫电话号码来授权用户，或者根据主叫号码或被叫
+   号码来提供隧道属性。相似的，在L2TP中，隧道服务器可能（MAY）选择拒绝或接受
+   包含在NAS 发送的L2TP Incoming-Call-Request 包中的被拨叫号码和主拨叫号码。
+   计费也可基于主叫号码和被叫号码进行。
+
+   RADIUS as defined in [1] requires that an Access-Request packet
+   contain a User-Name attribute as well as either a CHAP-Password or
+   User-Password attribute, which must be non-empty.  To satisfy this
+   requirement the Called-Station-Id or Calling-Station-Id MAY be
+   furnished in the User-Name attribute and a dummy value MAY be used in
+   the User-Password or CHAP-Password attribute.
+   在〔1〕中定义的RADIUS需要在认证请求中包含一条用户名（User-Name）属性和CHAP密码
+   （CHAP-Password）或用户密码（User-Password）之一，而且必须为非空。为了满足这样
+   的要求，主叫号码或被叫号码可能（MAY）被置放在用户名属性，并且虚假值可能（MAY）
+   被用在用户密码（User-Password）或CHAP密码属性中。
+
+   In the case of telephone-number based authentication, a typical
+   initiation sequence looks like this:
+   在基于电话号码的认证情况下，一个典型的初始化序列如下：
+
+   Client and NS: Call Connected
+   NAS to RADIUS Server: RADIUS Access-request
+   RADIUS server to NAS: RADIUS Access-Accept/Access-Reject
+   NAS to Tunnel Server: L2TP Incoming-Call-Request
+   Tunnel Server to NAS: L2TP Incoming-Call-Reply
+   NAS to Tunnel Server: L2TP  Incoming-Call-Connected
+   Client and Tunnel Server: PPP LCP negotiation
+   Client and Tunnel Server: PPP authentication
+   Tunnel Server to RADIUS Server: RADIUS Access-request (optional)
+   RADIUS server to Tunnel Server: RADIUS Access-Accept/Access-Reject
+   Client and Tunnel Server: NCP negotiation
+   用户客户端 和 NAS：呼叫连接
+   NAS 到 RADIUS服务器：RADIUS认证请求
+   RADIUS服务器 到 NAS：RADIUS认证接受/认证拒绝
+   NAS 到 隧道服务器：L2TP  Incoming-Call-Request
+   隧道服务器 到 NAS：L2TP  Incoming-Call-Reply
+   NAS 到 隧道服务器：L2TP  Incoming-Call-Connected
+   用户客户端 和 隧道服务器：PPP LCP 协商
+   用户客户端 和 隧道服务器：PPP认证
+   隧道服务器 到 RADIUS服务器：RADIUS认证请求（可选）
+   RADIUS服务器 到 隧道服务器：RADIUS认证接受/认证拒绝
+   用户客户端 和 隧道服务器：NCP 协商
+
+
+
+
+
+
+Aboba & Zorn                 Informational                      [Page 6]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   The process begins with an incoming call to the NAS. If configured
+   for telephone-number based authentication, the NAS sends a RADIUS
+   Access-Request containing the Calling-Station-Id and the Called-
+   Station-Id attributes. The RADIUS server will then respond with a
+   RADIUS Access-Accept or Access-Reject.
+   此流程从到NAS的接入呼叫开始。如果被配置为基于电话号码的认证，NAS发送
+   包含主叫号码和被叫号码的认证请求，然后RADIUS服务器间回应认证接受或认
+   证拒绝。   
+
+   The NAS MUST NOT begin PPP authentication before bringing up the
+   tunnel.  If timing permits, the NAS MAY bring up the tunnel prior to
+   beginning LCP negotiation with the peer. If this is done, then LCP
+   will not need to be renegotiated between the peer and tunnel server,
+   nor will LCP forwarding need to be employed.
+   NAS不应该（MUST NOT）在建立隧道前开始PPP认证。如果相互配合的时间允许，
+   NAS可以（MAY）在和对端开始LCP协商之前建立隧道。如果这些完成，然后LCP
+   将不需要在对端和隧道服务器间被重新协商，LCP转发也不必进行。
+
+   If the initial telephone-number based authentication is unsuccessful,
+   the RADIUS server sends a RADIUS Access-Reject. In this case, the NAS
+   MUST send an LCP-Terminate and disconnect the user.
+   如果基于电话号码的初始化认证不成功，RADIUS服务器将回应一个RADIUS认证拒绝。
+   在这种情况下，NAS必须（MUST）发送一个LCP终结（LCP-Terminate）并切断用户。
+
+   In the case where tunnel attributes are included in the RADIUS
+   Access-Accept, and an L2TP tunnel is indicated, the NAS will now
+   bring up a control connection if none existed before. This is
+   accomplished by sending an L2TP Start-Control-Connection-Request
+   message to the tunnel server.  The tunnel server will then reply with
+   an L2TP Start-Control-Connection-Reply.  If this message indicates an
+   error, or if the control connection is terminated at any future time,
+   then the NAS MUST send an LCP-Terminate and disconnect the user.
+   在隧道属性被包括在RADIUS认证接受回应中，并且一个L2TP隧道被指明的情况下，
+   如果以前没有连接存在的话，NAS将在此时建立一条控制连接。这是通过发送一个
+   L2TP Start-Control-Connection-Request消息到隧道服务器来完成。如果这个
+   消息指示出错，或者这控制连接在不久后就要被终结，NAS必须（MUST）发送
+   一个LCP终结（LCP-Terminate）并切断用户。
+
+   The NAS will then send an L2TP Incoming-Call-Request message to the
+   tunnel server. Among other things, this message will contain the Call
+   Serial Number, which along with the NAS-IP-Address and Tunnel-
+   Server-Endpoint is used to uniquely identify the call. The tunnel
+   server will reply with an L2TP Incoming-Call-Reply message. If this
+   message indicates an error, then the NAS MUST send an LCP-Terminate
+   and disconnect the user. If no error is indicated, the NAS then
+   replies with an L2TP Incoming-Call-Connected message.
+   接着NAS将发送一个L2TP Incoming-Call-Request消息到隧道服务器。在其他事件中，
+   这个消息将包含呼叫序列号，它和NAS地址属性（NAS-IP-Address）和隧道服
+   务器终结点属性（Tunnel-Server-Endpoint）一起被用来唯一的确定一次呼叫。
+   隧道服务器将回应一个L2TP Incoming-Call-Reply 消息。如果这个消息指示出错，
+   NAS必须（MUST）发送一个LCP终结（LCP-Terminate）并切断用户。如果没有错误被
+   指明，NAS将回应一个L2TP Incoming-Call-Connected消息。
+
+   At this point, data can begin to flow through the tunnel. If LCP
+   negotiation had been begun between the NAS and the client, then LCP
+   forwarding may be employed, or the client and tunnel server will now
+   renegotiate LCP and begin PPP authentication. Otherwise, the client
+   and tunnel server will negotiate LCP for the first time, and then
+   move on to PPP authentication.
+   到了此时，数据可以开始通过隧道传输。如果NAS和用户客户端之间已经开始LCP协商，
+   LCP转发将会被使用，或者用户客户端和隧道服务器间将会在此时进行LCP重新协商，
+   并开始进行PPP认证。否则，用户客户端和隧道服务器将进行第一次LCP协商，然后
+   继续进行到PPP认证。
+
+   If a renegotiation is required, at the time that the renegotiation
+   begins, the NAS SHOULD NOT have sent an LCP CONFACK completing LCP
+   negotiation, and the client and NAS MUST NOT have begun NCP
+   negotiation.  Rather than sending an LCP CONFACK, the NAS will
+   instead send an LCP Configure-Request Packet, described in [6].  The
+   Client MAY then renegotiate LCP, and from that point forward, all PPP
+   packets originated from the client will be encapsulated and sent to
+
+
+
+Aboba & Zorn                 Informational                      [Page 7]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   the tunnel server.  When LCP re-negotiation has been concluded, the
+   NCP phase will begin, and the tunnel server will assign an address to
+   the client.
+   如果重新协商是必须的，在进行重新协商开始的时候，NAS不该（SHOULD NOT）
+   已经发送一个LCP CONFACK完成了LCP协商，并且用户客户端和NAS之间不应该
+   （MUST NOT）已经开始NCP协商。与发送一个LCP CONFACK相反，NAS将发送一个
+   LCP配置请求（LCP Configure-Request）包，此情况在〔6〕中描述。随后用户
+   客户端可能（MAY）进行LCP重新协商，并且从此以后，所有的源于用户客户端的
+   PPP包将被封装并发送到隧道服务器。到LCP重新协商已经终止的时候，NCP协商
+   阶段将开始，隧道服务器将给用户客户端分配地址。
+
+   If L2TP is being used as the tunnel protocol, and LCP renegotiation
+   is required, the NAS MAY in its initial setup notification include a
+   copy of the LCP CONFACKs sent in each direction which completed LCP
+   negotiation. The tunnel server MAY then use this information to avoid
+   an additional LCP negotiation. With L2TP, the initial setup
+   notification can also include the authentication information required
+   to allow the tunnel server to authenticate the user and decide to
+   accept or decline the connection. However, in telephone-number based
+   authentication, PPP authentication MUST NOT occur prior to the NAS
+   bringing up the tunnel.  As a result, L2TP authentication forwarding
+   MUST NOT be employed.
+   如果L2TP被用作隧道协议，并且LCP重新协商为必需，NAS可能（MAY）在初始化
+   建立阶段通知中包含一份两个方向的LCP CONFACK拷贝，此发向两个方向的
+   LCP CONFACK是用来完成LCP协商的。隧道服务器可以（MAY）使用这些信息来避免
+   额外的LCP协商。如果使用L2TP，初始化阶段通知中还可以包括需要的认证信息，来允
+   许隧道服务器认证用户，以决定是接受或拒绝此连接。但是，在基于电话号码的认证中，
+   PPP认证不应该（MUST NOT）在NAS建立隧道前发生。这导致的结果是，L2TP认证转发
+   不应该（MUST NOT）被使用。
+
+   In performing the PPP authentication, the tunnel server can access
+   its own user database, or alternatively can send a RADIUS Access-
+   Request.  The latter approach is useful in cases where authentication
+   forwarding is enabled, such as with roaming or shared use networks.
+   In this case, the RADIUS and tunnel servers are under the same
+   administration and are typically located close together, possibly on
+   the same LAN.  Therefore having the tunnel server act as a RADIUS
+   client provides for unified user administration. Note that the tunnel
+   server's RADIUS Access-Request is typically sent directly to the
+   local RADIUS server rather than being forwarded via a proxy.
+   在进行PPP认证时，隧道服务器能访问自己的用户信息库，或者可以发送RADIUS认证
+   请求。后一种方法在能进行认证转发的情况下是很有用的，例如漫游或共享网络。
+   在这种情况（后一种情况）下，RADIUS服务器和隧道服务器在相同的管理下，并且典型
+   的放在相近的地点，一种可能是在相同的LAN中。因此把隧道服务器用作RADIUS客户端，
+   这为统一的用户管理提供了条件。请注意隧道服务器的认证请求典型的直接发送到当地
+   的RADIUS服务器，而非通过RADIUS代理转发。
+
+   The interactions involved in initiation of a compulsory tunnel with
+   telephone-number based authentication are summarized below. In order
+   to simplify the diagram that follows, we have left out the client.
+   However, it is understood that the client participates via PPP
+   negotiation, authentication and subsequent data interchange with the
+   Tunnel Server.
+   支持基于电话号码的认证的强制隧道的初始化涉及的交互过程简述如下。为了简化
+   下面的流程，我们忽略了用户客户端。但是，用户客户端通过同隧道服务器的
+   PPP协商、认证和后继的数据交换参与流程是可以理解的。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                      [Page 8]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+                                  INITIATION SEQUENCE
+
+   NAS                            Tunnel Server       RADIUS Server
+   ---                            -------------       -------------
+   Call connected
+   Send RADIUS
+    Access-Request
+    with Called-Station-Id,
+    and/or Calling-Station-Id
+   LCP starts
+   呼叫请求
+   发送包含主叫和/或被叫号码的
+   RADIUS认证请求
+   LCP 开始
+                                                      IF authentication
+                                                      succeeds
+                                                       Send ACK
+                                                      ELSE Send NAK
+                                                      如果认证成功
+                                                          发送接受（ACK）
+                                                      否则
+                                                          发送拒绝（NAK）
+   IF NAK DISCONNECT
+   ELSE
+    IF no control
+     connection exists
+     Send
+     Start-Control-Connection-Request
+     to Tunnel Server
+   如果 拒绝（NAK） 切断连接
+   否则
+       如果 没有控制连接存在
+           发送Start-Control-Connection-Request
+           到隧道服务器
+                                Send
+                                Start-Control-Connection-Reply
+                                to NAS
+                                发送Start-Control-Connection-Reply
+                                到NAS
+    ENDIF
+    结束
+
+   Send
+   Incoming-Call-Request
+   message to Tunnel Server
+   发送Incoming-Call-Request
+   消息到隧道服务器
+                                Send Incoming-Call-Reply
+                                to NAS
+                                发送Incoming-Call-Reply
+                                到 NAS
+   Send
+   Incoming-Call-Connected
+   message to Tunnel Server
+   发送Incoming-Call-Connected
+   消息到隧道服务器
+
+   Send data through the tunnel
+   通过隧道发送数据
+                                Re-negotiate LCP,
+                                authenticate user,
+                                bring up IPCP,
+                                start accounting
+                                重新协商 LCP
+                                认证用户
+                                建立 IPCP
+                                开始计费
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                      [Page 9]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+4.1.2.3.  User-Name
+          用户名
+
+   Since authentication will occur only at the tunnel-server, tunnel
+   initiation must occur prior to user authentication at the NAS. As a
+   result, this scheme typically uses either the domain portion of the
+   userID or attribute-specific processing on the RADIUS server.  Since
+   the user identity is never verified by the NAS, either the tunnel
+   server owner must be willing to be billed for all incoming calls, or
+   other information such as the Calling-Station-Id must be used to
+   verify the user's identity for accounting purposes.
+   既然认证将仅仅在隧道服务器端发生，NAS端隧道的初始化必须发生在用户认证之
+   前。导致的结果，此方案典型的使用用户ID（userID）的域部分或在RADIUS服务器
+   上的具体属性处理。因为用户的身份将绝不被NAS验证，或者隧道服务器的所有者必
+   须愿意为所有的呼叫付费，或者其他信息如主叫号码为了计费的目的必须被用来验
+   证用户的身份。
+
+   In attribute-specific processing RADIUS may be employed and an
+   attribute is used to signal tunnel initiation.  For example, tunnel
+   attributes can be sent back if the User-Password attribute contains a
+   dummy value (such as "tunnel" or "L2TP"). Alternatively, a userID
+   beginning with a special character ('*') could be used to indicate
+   the need to initiate a tunnel.  When attribute-specific processing is
+   used, the tunnel server may need to renegotiate LCP.
+   在具体属性处理中RADIUS可能被使用，并且一条属性被用作触发隧道初始化。
+   例如：如果用户密码（User-Password）包含了一个虚假值（如“tunnel、L2TP”），
+   隧道属性就能被回送。相对应另一种，以字符（'*'）开头的用户ID（userID）能
+   被用来表明需要初始化一条隧道。当具体属性处理被使用的时候，隧道服务器可能
+   需要进行重新协商LCP。
+   
+
+   Another solution involves using the domain portion of the userID; all
+   users in domain X would be tunneled to address Y. This proposal
+   supports compulsory tunneling, but does not provide for user-based
+   tunneling.
+   另一种解决的方法涉及到使用用户ID（userID）的域部分；在域X中的所有用户将
+   被隧道定向到地址Y。此建议支持强制隧道连接，但不支持基于用户的隧道连接。
+
+   In order for the NAS to start accounting on the connection, it would
+   need to use the identity claimed by the user in authenticating to the
+   tunnel server, since it did not verify the identity via RADIUS.
+   However, in order for that to be of any use in accounting, the tunnel
+   endpoint needs to have an account relationship with the NAS owner.
+   Thus even if a user has an account with the NAS owner, they cannot
+   use this account for tunneling unless the tunnel endpoint also has a
+   business relationship with the NAS owner. Thus this approach is
+   incompatible with roaming.
+   因为不通过RADIUS进行对用户身份验证，为了NAS能对连接开始计费，需要使用
+   用户声明在到隧道服务器的认证中的用户身份。但是，为了计费的完全有效，
+   隧道终结端需要和NAS所有者有账号上的关系。因此甚至用户在NAS所有者这边有
+   账号，他并不能使用此账号来实现隧道连接，除非隧道终结点也和NAS所有者间
+   有商业上的关系。因此此方式并不兼容漫游。
+
+   A typical initiation sequence involving use of the domain portion of
+   the userID looks like this:
+   一个典型的涉及到用户ID的域的初始化序列如下：
+
+   Client and NAS: Call Connected
+   Client and NAS: PPP LCP negotiation
+   Client and NAS: Authentication
+   NAS to Tunnel Server: L2TP Incoming-Call-Request
+   Tunnel Server to NAS: L2TP Incoming-Call-Reply
+   NAS to Tunnel Server: L2TP  Incoming-Call-Connected
+   Client and Tunnel Server: PPP LCP re-negotiation
+   Client and Tunnel Server: PPP authentication
+   Tunnel Server to RADIUS Server: RADIUS Access-request (optional)
+   RADIUS server to Tunnel Server: RADIUS Access-Accept/Access-Reject
+   Client and Tunnel Server: NCP negotiation
+   用户客户端和NAS：呼叫连接
+   用户客户端和NAS：PPP LCP协商
+   用户客户端和NAS：认证
+   NAS 到 隧道服务器：L2TP Incoming-Call-Request
+   隧道服务器到NAS：L2TP Incoming-Call-Reply
+   NAS 到隧道服务器： L2TP  Incoming-Call-Connected
+   用户客户端和隧道服务器：PPP LCP 重新协商
+   用户客户端和隧道服务器：PPP 认证
+   隧道服务器到RADIUS服务器：RADIUS认证请求（可选）
+   RADIUS服务器到隧道服务器：RADIUS 认证接受/拒绝
+   用户客户端和隧道服务器：NCP协商
+
+
+
+Aboba & Zorn                 Informational                     [Page 10]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   The process begins with an incoming call to the NAS, and the PPP LCP
+   negotiation between the Client and NAS. The authentication process
+   will then begin and based on the domain portion of the userID, the
+   NAS will now bring up a control connection if none existed before,
+   and the NAS and tunnel server will bring up the call. At this point,
+   data MAY begin to flow through the tunnel.  The client and tunnel
+   server MAY now renegotiate LCP and will complete PPP authentication.
+   此过程开始于到NAS的呼叫和用户客户端和NAS间的PPP LCP协商。然后认证过程
+   将开始并基于用户ID（userID）的域部分，此时如果还没有建立控制连接，NAS
+   将建立，接着NAS和隧道服务器将建立此次呼叫。到此时，数据可以（MAY）通过
+   隧道传递。现在用户客户端和隧道服务器间可能（MAY）重新协商LCP并完成PPP
+   认证。
+
+   At the time that the renegotiation begins, the NAS SHOULD NOT have
+   sent an LCP CONFACK completing LCP negotiation, and the client and
+   NAS MUST NOT have begun NCP negotiation. Rather than sending an LCP
+   CONFACK, the NAS will instead send an LCP Configure-Request packet,
+   described in [6].  The Client MAY then renegotiate LCP, and from that
+   point forward, all PPP packets originated from the client will be
+   encapsulated and sent to the tunnel server.  In single authentication
+   compulsory tunneling, L2TP authentication forwarding MUST NOT be
+   employed.  When LCP re-negotiation has been concluded, the NCP phase
+   will begin, and the tunnel server will assign an address to the
+   client.
+   在重新协商开始的时候，NAS不能（SHOULD NOT）已经发送了LCP CONFACK来完成
+   LCP协商，并且用户客户端和NAS间不应该（MUST NOT）已经开始NCP协商。与发送
+   一个LCP CNFACK相反，NAS将发送一个LCP配置请求（LCP Configure-Request）包，
+   在〔6〕中描述。然后用户客户端可以（MAY）重新协商LCP，自此以后，所有的源于
+   用户客户端PPP包将被封装并发送到隧道服务器。在单一认证的强制隧道连接中，
+   L2TP认证转发不应该（MUST NOT）被使用。当LCP重新协商已经被终结，NCP协商
+   阶段将开始，隧道服务器将给用户客户端分配地址。
+
+   In performing the PPP authentication, the tunnel server can access
+   its own user database, or it MAY send a RADIUS Access-Request. After
+   the tunnel has been brought up, the NAS and tunnel server can start
+   accounting.
+   在进行PPP认证的时，隧道服务器可以访问自己的用户数据库，或者可以发送RADIUS
+   认证请求。在隧道被建立后，NAS和隧道服务器可以开始计费。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 11]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   The interactions are summarized below.
+   交互过程简述如下：
+
+                                  INITIATION SEQUENCE
+
+   NAS                            Tunnel Server       RADIUS Server
+   ---                            -------------       -------------
+   Call accepted
+   LCP starts
+   Authentication
+    phase starts
+   IF no control
+    connection exists
+    Send
+    Start-Control-Connection-Request
+    to Tunnel Server
+   ENDIF
+   呼叫接受
+   LCP 协商开始
+   认证阶段开始
+   如果 没有控制连接存在
+        发送Start-Control-Connection-Request
+        到隧道服务器
+   结束
+                                IF no control
+                                 connection exists
+                                 Send
+                                 Start-Control-Connection-Reply
+                                 to NAS
+                                ENDIF
+                                如果 没有控制连接存在
+                                发送 Start-Control-Connection-Reply
+                                到NAS
+                                结束
+
+   Send
+   Incoming-Call-Request
+   message to Tunnel Server
+   发送 Incoming-Call-Request
+   消息到隧道服务器
+                                Send Incoming-Call-Reply
+                                to NAS
+                                发送 Incoming-Call-Reply
+                                到 NAS
+   Send
+   Incoming-Call-Connected
+   message to Tunnel Server
+   发送 Incoming-Call-Connected
+   消息到隧道服务器
+
+   Send data through the tunnel
+   通过隧道传送数据
+                                Re-negotiate LCP,
+                                authenticate user,
+                                bring up IPCP,
+                                start accounting
+                                重新协商LCP
+                                认证用户
+                                建立 IPCP
+                                开始计费
+
+4.2.  Dual authentication
+      双重认证
+
+   In this scheme, authentication occurs both at the NAS and the tunnel
+   server. This requires the dial-up client to handle dual
+   authentication, with attendant LCP re-negotiations. In order to allow
+   the NAS and tunnel network server to authenticate against the same
+   database, this requires RADIUS client capability on the tunnel
+   network server, and possibly a RADIUS proxy on the NAS end.
+   在此方案中，认证在NAS端和隧道服务器端都发送。这需要拨号用户客户端使用
+   辅助的LCP重新协商来处理双重认证。为了允许NAS和隧道服务器能在相同的
+   数据库认证，需要RADIUS客户端和隧道服务器相兼容，并有可能在NAS端使用
+   RADIUS代理。
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 12]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   Advantages of dual authentication include support for authentication
+   and accounting at both ends of the tunnel; use of a single
+   userID/password pair via implementation of RADIUS on the tunnel
+   network server; no requirement for telephone-number based
+   authentication, or attribute-specific processing on the RADIUS
+   server.
+   双重认证的优点包括：对在两端认证和计费的支持；通过在隧道网络服务器的RADIUS实现，
+   使用单一的用户ID/用户密码对；不需要基于电话号码的认证或在RADIUS服务器的
+   属性说明处理。
+
+   Dual authentication allows for accounting records to be generated on
+   both the NAS and tunnel server ends, making auditing possible. Also
+   the tunnel endpoint does not need to have an account relationship
+   with the NAS owner, making this approach compatible with roaming.
+   双重认证允许NAS和隧道服务器两端的计费记录的确保，使审计对帐成为可能。
+   并且隧道终结点不需要和NAS所有者有账号上的关系，使此方式兼容了漫游。
+
+   A disadvantage of dual authentication is that unless LCP forwarding
+   is used, LCP will need to be renegotiated; some clients do not
+   support it at all, and others only support only a subset of the dual
+   authentication combinations. Feasible combinations include
+   PAP/PAP(token), PAP/CHAP, PAP/EAP, CHAP/PAP(token), CHAP/CHAP,
+   CHAP/EAP, EAP/CHAP, and EAP/EAP.  EAP is described in [5].
+   双重认证的一个缺点是除非LCP转发被使用，LCP将需要重新协商；一些用户客户
+   端完全不支持，另外一些仅仅支持双重认证集合的一个子集。可行的集合包括
+   PAP/PAP（token），PAP/CHAP，PAP/EAP，CHAP/PAP（token），CHAP/CHAP，
+   CHAP/EAP，EAP/CHAP，和EAP/EAP。EAP在〔5〕中描述。
+
+   In the case of a dual authentication, a typical initiation sequence
+   looks like this:
+   在双重认证的情况下，典型的初始化序列如下：
+
+   Client and NAS: PPP LCP negotiation
+   Client and NAS: PPP authentication
+   NAS to RADIUS Server: RADIUS Access-request
+   RADIUS server to NAS: RADIUS Access-Accept/Access-Reject
+   NAS to Tunnel Server: L2TP Incoming-Call-Request
+   Tunnel Server to NAS: L2TP Incoming-Call-Reply
+   NAS to Tunnel Server: L2TP  Incoming-Call-Connected
+   Client and Tunnel Server: PPP LCP re-negotiation (optional)
+   Client and Tunnel Server: PPP authentication
+   Tunnel Server to RADIUS Server: RADIUS Access-request (optional)
+   RADIUS server to Tunnel Server: RADIUS Access-Accept/Access-Reject
+   Client and Tunnel Server: NCP negotiation
+   用户客户端和NAS：PPP LCP协商
+   用户客户端和NAS：PPP认证
+   NAS 到 RADIUS服务器：RADIUS 认证请求
+   RADIUS服务器 到 NAS：RADIUS认证接受/拒绝
+   NAS 到 隧道服务器：L2TP Incoming-Call-Request
+   隧道服务器 到 NAS：L2TP Incoming-Call-Reply
+   NAS 到 隧道服务器：L2TP  Incoming-Call-Connected
+   用户客户端和隧道服务器：PPP LCP 重新协商（optional）
+   用户客户端和隧道服务器：PPP 认证
+   隧道服务器 到 RADIUS服务器：RADIUS 认证请求
+   RADIUS服务器 到 隧道服务器：RADIUS认证接受/拒绝
+   用户客户端和隧道服务器：NCP协商
+
+   The process begins with an incoming call to the NAS. The client and
+   NAS then begin LCP negotiation. Subsequently the PPP authentication
+   phase starts, and the NAS sends a RADIUS Access-Request message to
+   the RADIUS server. If the authentication is successful, the RADIUS
+   server responds with a RADIUS Access-Accept containing tunnel
+   attributes.
+   此过程开始于到NAS的呼叫。然后用户客户端和NAS开始LCP协商。接着PPP认证
+   阶段开始，并且NAS发送RADIUS认证请求消息到RADIUS服务器。如果认证成功，
+   认证服务器回应包含隧道属性的认证接受。
+
+   In the case where an L2TP tunnel is indicated, the NAS will now bring
+   up a control connection if none existed before, and the NAS and
+   tunnel server will bring up the call. At this point, data MAY begin
+   to flow through the tunnel. The client and tunnel server MAY now
+   renegotiate LCP and go through another round of PPP authentication.
+   At the time that this renegotiation begins, the NAS SHOULD NOT have
+   
+
+Aboba & Zorn                 Informational                     [Page 13]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   sent an LCP CONFACK completing LCP negotiation, and the client and
+   NAS MUST NOT have begun NCP negotiation. Rather than sending an LCP
+   CONFACK, the NAS will instead send an LCP Configure-Request packet,
+   described in [6].  The Client MAY then renegotiate LCP, and from that
+   point forward, all PPP packets originated from the client will be
+   encapsulated and sent to the tunnel server.  When LCP re-negotiation
+   has been concluded, the NCP phase will begin, and the tunnel server
+   will assign an address to the client.
+   在L2TP隧道被指明的情况下，如果控制连接不存在，NAS将在现在建立。到此时，
+   数据可以（MAY）开始通过隧道传送。用户客户端和隧道服务器可以（MAY）现在
+   重新协商LCP并进而进入下一轮的认证。在这重新协商开始的时候，NAS不能
+   （SHOULD NOT）已经发送了一个LCP CONFACK 来结束LCP协商，并且NAS不应该
+   （MUST NOT）已经开始NCP协商。于发送一个LCPCONFACK相反，NAS将发送一个
+   LCP 配置请求（LCP Configure-Request）包，在〔6〕描述。然后用户客户端
+   可以〔MAY〕重新协商LCP，从此时起，所有的源于用户客户端的PPP包将被封装
+   并发送到隧道服务器。当LCP重新协商终结，NCP协商阶段将开始，隧道服务器
+   将给用户客户端分配地址。
+   
+
+   If L2TP is being used as the tunnel protocol, the NAS MAY in its
+   initial setup notification include a copy of the LCP CONFACKs sent in
+   each direction which completed LCP negotiation. The tunnel server MAY
+   then use this information to avoid an additional LCP negotiation.
+   With L2TP, the initial setup notification can also include the
+   authentication information required to allow the tunnel server to
+   authenticate the user and decide to accept or decline the connection.
+   However, this facility creates a vulnerability to replay attacks, and
+   can create problems in the case where the NAS and tunnel server
+   authenticate against different RADIUS servers. As a result, where
+   user-based tunneling via RADIUS is implemented, L2TP authentication
+   forwarding SHOULD NOT be employed.
+   如果L2TP被用作为隧道协议，NAS可以在初始化建立通知中包含一份发向各方向的
+   LCP CONFACK拷贝，此LCP CONFACK是用来完成LCP协商的。然后隧道服务器可以
+   （MAY）使用这些信息来避免LCP重新协商。对于L2TP，初始化建立通知还能包含
+   必要的认证信息，这些信息允许隧道服务器来认证用户并觉得是接受或拒绝连接。
+   但是，这中便利会导致回应攻击的弱点，并在NAS和隧道服务器使用不同的RADIUS
+   服务器的情况下导致问题。其结果，当通过RADIUS基于用户的隧道连接被应用的
+   话，L2TP认证转发不能（SHOULD NOT）被使用。
+
+   In performing the PPP authentication, the tunnel server can access
+   its own user database, or it MAY send a RADIUS Access-Request.  After
+   the tunnel has been brought up, the NAS and tunnel server can start
+   accounting.
+   在进行PPP认证的时候，隧道服务器能访问自己的用户数据库，或者可以（MAY）
+   发送RADIUS认证请求。在隧道建立以后，NAS和隧道服务器可以开始计费。
+
+   The interactions involved in initiation of a compulsory tunnel with
+   dual authentication are summarized below.、
+   使用双重认证的强制隧道初始化涉及的交互过程简述如下：
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 14]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+                                  INITIATION SEQUENCE
+
+   NAS                            Tunnel Server       RADIUS Server
+   ---                            -------------       -------------
+   Call accepted
+   LCP starts
+   PPP authentication
+    phase starts
+   Send RADIUS
+    Access-Request
+    with userID and
+    authentication data
+  呼叫接受
+  LCP 协商开始
+  PPP 认证阶段开始
+  发送 RADIUS 认证请求
+      包含用户ID和认证数据
+  
+                                                      IF authentication
+                                                      succeeds
+                                                       Send ACK
+                                                      ELSE Send NAK
+                                                      如果 认证成功
+                                                          发送 ACK
+                                                      否则
+                                                           发送 NAK
+   IF NAK DISCONNECT
+   ELSE
+    IF no control
+     connection exists
+     Send
+     Start-Control-Connection-Request
+     to Tunnel Server
+   如果 NAK 切断连接
+   否则
+     如果 没有控制连接存在
+     发送 Start-Control-Connection-Request
+     到隧道服务器
+                                Send
+                                Start-Control-Connection-Reply
+                                to NAS
+                                发送Start-Control-Connection-Reply
+                                到 NAS
+    ENDIF
+    结束
+
+   Send
+   Incoming-Call-Request
+   message to Tunnel Server
+   发送Incoming-Call-Request
+   消息到隧道服务器
+                                Send Incoming-Call-Reply
+                                to NAS
+                                发送Incoming-Call-Reply
+                                到 NAS
+   Send
+   Incoming-Call-Connected
+   message to Tunnel Server
+   发送Incoming-Call-Connected
+   消息到隧道服务器
+
+   Send data through the tunnel
+   通过隧道传送数据
+                                Re-negotiate LCP,
+                                authenticate user,
+                                bring up IPCP,
+                                start accounting
+                                重新协商 LCP
+                                认证用户
+                                建立IPCP
+                                开始计费
+   ENDIF
+   结束
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 15]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+5.  Termination sequence
+    终结步骤
+
+   The tear down of a compulsory tunnel involves an interaction between
+   the client, NAS and Tunnel Server. This interaction is virtually
+   identical regardless of whether telephone-number based
+   authentication, single authentication, or dual authentication is
+   being used.  In any of the cases, the following events occur:
+
+        Tunnel Server to NAS: L2TP Call-Clear-Request (optional)
+        NAS to Tunnel Server: L2TP Call-Disconnect-Notify
+
+   Tunnel termination can occur due to a client request (PPP
+   termination), a tunnel server request (Call-Clear-Request), or a line
+   problem (call disconnect).
+   强制隧道的拆除涉及用户客户端的交互、NAS和隧道服务器间的交互。此交互过程
+   实质上是相同的，不管使用的是基于电话号码的认证，单一认证还是双重认证。在
+   所有的情形下，如下的事件发生：
+       
+        隧道服务器到NAS：L2TP Call-Clear-Request（optional）
+        NAS 到 隧道服务器：L2TP Call-Disconnect-Notify
+        
+   隧道终结会由于用户客户端请求（PPP 终结）、隧道服务器请求（Call-Clear-Request）
+   或者线路问题（呼叫断线）而发生。
+
+   In the case of a client-requested termination, the tunnel server MUST
+   terminate the PPP session. The tunnel server MUST subsequently send a
+   Call-Clear-Request to the NAS. The NAS MUST then send a Call-
+   Disconnect-Notify message to the tunnel server, and will disconnect
+   the call.
+
+   The NAS MUST also respond with a Call-Disconnect-Notify message and
+   disconnection if it receives a Call-Clear-Request from the tunnel
+   server without a client-requested termination.
+
+   In the case of a line problem or user hangup, the NAS MUST send a
+   Call-Disconnect-Notify to the tunnel server. Both sides will then
+   tear down the call.
+
+   The interactions involved in termination of a compulsory tunnel are
+   summarized below. In order to simplify the diagram that follows, we
+   have left out the client. However, it is understood that the client
+   MAY participate via PPP termination and disconnection.
+   在用户客户端请求的终结情况下，隧道服务器应该（MUST）终结PPP会话。隧道
+   服务器应该（MUST）随后发送一个Call-Clear-Request到NAS。然后NAS必须
+   （MUST）发送一个Call-Disconnect-Notify消息到隧道服务器，并将切断呼叫
+   连接。
+   
+   如果NAS从隧道服务器收到一个没有用户客户端请求终结的Call-Clear-Request，
+   NAS 也必须（MUST）回应一个Call-Disconnect-Notify消息并切断连接。
+   
+   在线路问题或用户挂断的情形下，NAS必须（MUST）发送一个Call-Disconnect-Notify
+   到隧道服务器。两端都将拆除呼叫连接。
+   
+   强制隧道终结涉及的交互过程简述如下。为了简化下面的流程，我们忽略了用户
+   客户端。但是，用户客户端通过PPP终结和切断来参与流程是可理解的。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 16]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+                                  TERMINATION SEQUENCE
+
+   NAS                            Tunnel Server         RADIUS Server
+   ---                            -------------         -------------
+   IF user disconnected
+    send
+    Call-Disconnect-Notify
+    message to tunnel server
+   如果  用户断线
+       发送Call-Disconnect-Notify
+       消息到隧道服务器
+                                  Tear down the call
+                                  stop accounting
+                                  拆除呼叫连接
+                                  停止计费
+   ELSE IF client requests
+    termination
+    否则如果 用户客户端请求终结
+                                  send
+                                  Call-Clear-Request
+                                  to the NAS
+                                  发送 Call-Clear-Request
+                                  到 NAS
+    Send
+    Call-Disconnect-Notify
+    message to tunnel server
+    Disconnect the user
+    发送 Call-Disconnect-Notify
+    消息到隧道服务器
+    切断用户
+                                  Tear down the call
+                                  stop accounting
+                                  拆除呼叫连接
+                                  停止计费
+   ENDIF
+   结束
+
+6.  Use of distinct RADIUS servers
+    使用独立的RADIUS服务器
+
+   In the case that the NAS and the tunnel server are using distinct
+   RADIUS servers, some interesting cases can arise in the provisioning
+   of compulsory tunnels.
+   在NAS和隧道服务器各自使用独立的RADIUS服务器的情况下，强制隧道提供中
+   一些有趣的情况会出现。
+
+6.1.  Distinct userIDs
+      独立的用户ID（userIDs）
+
+   If distinct RADIUS servers are being used, it is likely that distinct
+   userID/password pairs will be required to complete the RADIUS and
+   tunnel authentications. One pair will be used in the initial PPP
+   authentication with the NAS, and the second pair will be used for
+   authentication at the tunnel server.
+
+   This has implications if the NAS attempts to forward authentication
+   information to the tunnel server in the initial setup notification.
+   Since the userID/password pair used for tunnel authentication is
+   different from that used to authenticate against the NAS, forwarding
+   authentication information in this manner will cause the tunnel
+   authentication to fail. As a result, where user-based tunneling via
+   RADIUS is implemented, L2TP authentication forwarding SHOULD NOT be
+   employed.
+   
+   如果独立的RADIUS服务器被使用，可能将需要独立的用户ID/密码对
+   （userID/password pairs）来完成RADIUS和隧道认证。一对将被用作NAS的初始化
+   PPP认证，第二队将被用作在隧道服务器的认证。
+   
+   如果NAS尝试在初始化建立通知中转发认证信息到隧道服务器，这就会有牵连。
+   既然用来隧道认证的用户ID/密码对和用来NAS认证的不同，通过这种方式转发
+   认证信息将会导致隧道认证失败。此导致的结果，在通过RADIUS的基于用户的隧道
+   连接被应用的话，L2TP认证转发不该（SHOULD NOT）被使用。
+   
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 17]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   In order to provide maximum ease of use in the case where the
+   userID/password pairs are identical, tunnel clients typically attempt
+   authentication with the same userID/password pair as was used in the
+   initial PPP negotiation. Only after this fails do they prompt the
+   user for the second pair. Rather than putting up an error message
+   indicating an authentication failure, it is preferable to present a
+   dialog requesting the tunnel userID/password combination.
+
+   A similar issue arises when extended authentication methods are being
+   used, as is enabled by EAP, described in [5]. In particular, when
+   one-time passwords or cryptographic calculators are being used,
+   different passwords will be used for the first and second
+   authentications. Thus the user will need to be prompted to enter the
+   second password.
+   
+   为了提供在用户ID/密码对一致情况下最大的简易度，隧道客户端典型的尝试使用
+   PPP协商中的相同的用户ID/密码对来进行认证。只有这失败后，客户端提示用户
+   输入第二对。相比提供出错消息来表示认证失败，更好的是显示一个请求（输入）
+   隧道用户ID/密码结合的对话框。
+   
+   使用扩展认证方法时会出现相似的问题，如EAP，在〔5〕中描述。详细说，当
+   一次性密码和密码计算器被使用的时候，第一次和第二次认证将使用不同的密码。
+   因此用户需要被提示输入第二个密码。
+
+6.2.  Multilink PPP issues
+      多链路 PPP 问题
+
+   It is possible for the two RADIUS servers to return different Port-
+   Limit attributes.  For example, it is conceivable that the NAS RADIUS
+   server will only grant use of a single channel, while the tunnel
+   RADIUS server will grant more than one channel. In this case, the
+   correct behavior is for the tunnel client to open a connection to
+   another NAS in order to bring up a multilink bundle on the tunnel
+   server. The client MUST NOT indicate to the NAS that this additional
+   link is being brought up as part of a multilink bundle; this will
+   only be indicated in the subsequent negotiation with the tunnel
+   server.
+
+   It is also conceivable that the NAS RADIUS server will allow the
+   client to bring up multiple channels, but that the tunnel RADIUS
+   server will allow fewer channels than the NAS RADIUS server. In this
+   case, the client should terminate use of the excess channels.
+   
+   两个RADIUS服务器返回不同的端口限制属性是可能的。例如：NAS的RADIUS服务器
+   将仅仅同意一个通道的使用，而隧道的RADIUS服务器将同意多个通道的使用，这种
+   情况是可以想像得到的。在这中情况下，正确的行为是隧道客户端打开到另一NAS
+   的连接来在隧道服务器上建立一束多链路。用户客户端不应该（MUST NOT）对NAS
+   指明这另加的链路是被当做一束多链路的部分被创建的；这将仅仅在随后的和隧道
+   服务器的协商中被指明。
+   
+   NAS RADIUS 服务器将允许用户客户端来创建多通道，但隧道RADIUS服务器将允许
+   比NAS RADIUS服务器少的通道，此情况也是可以想像的。在这中情况下，用户客户端
+   须停止多余通道的使用。
+
+7.  UserID Issues
+    用户ID问题
+
+   In the provisioning of roaming and shared use networks, one of the
+   requirements is to be able to route the authentication request to the
+   user's home RADIUS server. This authentication routing is
+   accomplished based on the userID submitted by the user to the NAS in
+   the initial PPP authentication. The userID is subsequently relayed by
+   the NAS to the RADIUS server in the User-Name attribute, as part of
+   the RADIUS Access-Request.
+
+   Similarly, [2] refers to use of the userID in determining the tunnel
+   endpoint, although it does not provide guidelines for how RADIUS or
+   tunnel routing is to be accomplished. Thus the possibility of
+   conflicting interpretations exists.
+   
+   在提供漫游和共享网络的情况下，其中的一种需求就是能转发认证请求到用户的
+   宿主RADIUS服务器。这种转发是基于在初始化PPP认证中用户提供给NAS的用户ID
+   （userID）来完成的。此用户ID（userID）随后被NAS在用户名（User-Name）属性
+   中作为RADIUS认证的一部分转递到RADIUS服务器。
+
+   相似的，〔2〕指明了用户ID在决定隧道终结点中的使用，虽然它并没有提供RADIUS
+   或隧道服务器如何完成转发的指导策略。因此存在相互冲突的解释的可能。
+
+
+Aboba & Zorn                 Informational                     [Page 18]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+   The use of RADIUS in provisioning of compulsory tunneling relieves
+   the userID from having to do double duty. Rather than being used both
+   for routing of the RADIUS authentication/authorization request as
+   well for determination of the tunnel endpoint, the userID is now used
+   solely for routing of RADIUS authentication/authorization requests.
+   Tunnel attributes returned in the RADIUS Access-Response are then
+   used to determine the tunnel endpoint.
+
+   Since the framework described in this document allows both ISPs and
+   tunnel users to authenticate users as well as to account for
+   resources consumed by them, and provides for maintenance of two
+   distinct userID/password pairs, this scheme provides a high degree of
+   flexibility.  Where RADIUS proxies and tunneling are employed, it is
+   possible to allow the user to authenticate with a single
+   userID/password pair at both the NAS and the tunnel endpoint. This is
+   accomplished by routing the NAS RADIUS Access-Request to the same
+   RADIUS server used by the tunnel server.
+   
+   在强制隧道连接中使用RADIUS解除了用户ID需要做的双重工作。与同时被使用来
+   转发RADIUS认证/授权请求和决定隧道终结点相反，用户ID现在仅仅被使用为转发
+   RADIUS 认证/授权请求。由在RADIUS接受回应中返回的隧道属性来决定隧道的终结点。
+   
+   因为此文档中描述的框架结构允许ISP和隧道用户同时认证和对耗费资源的计费，并提供
+   对两对不同用户ID/密码对的支持，此方案提供了高度的灵活性。在RADIUS代理和隧道连接
+   被使用的情况下，允许用户使用单一用户ID/密码在NAS和隧道终结点进行认证是可能的。
+   这通过转发NAS RADIUS认证请求到隧道服务器使用的相同RADIUS服务器来完成。
+
+8.  References
+
+   [1]  Rigney C., Rubens A., Simpson W. and S. Willens, "Remote
+        Authentication Dial In User Service (RADIUS)", RFC 2138, April
+        1997.
+
+   [2]  Townsley, W., Valencia, A., Rubens, A., Pall, G., Zorn, G. and
+        Palter, B., "Layer Two Tunneling Protocol "L2TP"", RFC 2661,
+        August 1999.
+
+   [3]  Zorn, G., Leifer, D., Rubens, A., Shriver, J., Holdrege, M. and
+        Goyret, I., "RADIUS Attributes for Tunnel Protocol Support",
+        Work in Progress.
+
+   [4]  Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+
+   [5]  Blunk, L. anf J. Vollbrecht, "PPP Extensible Authentication
+        Protocol (EAP)", RFC 2284, March 1998.
+
+   [6]  Simpson, W., Editor, "The Point-to-Point Protocol (PPP)", STD
+        51, RFC 1661, July 1994.
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 19]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+9.  Security Considerations
+
+   In PPP-based tunneling, PPP security is negotiated between the client
+   and the tunnel server, and covers the entire length of the path. This
+   is because the client does not have a way to know that they are being
+   tunneled. Thus, any security the NAS may negotiate with the tunnel
+   server will occur in addition to that negotiated between the client
+   and NAS.
+
+   In L2TP compulsory tunneling, this means that PPP encryption and
+   compression will be negotiated between the client and the tunnel
+   server.  In addition, the NAS may bring up an IPSEC security
+   association between itself and the tunnel server. This adds
+   protection against a number of possible attacks.
+
+   Where RADIUS proxies are deployed, the Access-Reply sent by the
+   RADIUS server may be processed by one or more proxies prior to being
+   received by the NAS.  In order to ensure that tunnel attributes
+   arrive without modification, intermediate RADIUS proxies forwarding
+   the Access-Reply MUST NOT modify tunnel attributes. If the RADIUS
+   proxy does not support tunnel attributes, then it MUST send an
+   Access-Reject to the NAS. This is necessary to ensure that the user
+   is only granted access if the services requested by the RADIUS server
+   can be provided.
+
+   Since RADIUS tunnel attributes are used for compulsory tunneling,
+   address assignment is handled by the tunnel server rather than the
+   NAS.  As a result, if tunnel attributes are present, the NAS MUST
+   ignore any address assignment attributes sent by the RADIUS server.
+   In addition, the NAS and client MUST NOT begin NCP negotiation, since
+   this could create a time window in which the client will be capable
+   of sending packets to the transport network, which is not permitted
+   in compulsory tunneling.
+   
+   在基于PPP的隧道连接中，PPP安全在用户客户端和隧道服务器间被协商，并贯穿
+   了整个长度的路径。这是因为用户客户端并不知道它们使用了隧道。因此，NAS
+   可以和隧道服务器协商的所有的安全性都可以附加在用户客户端和NAS的协商上
+   发生。
+   
+   在L2TP的强制隧道连接中,这意味着PPP加密和压缩可以在用户客户端和隧道服务器
+   间协商。作为附加，NAS可以在自己和隧道服务器间创建一条IPSEC 安全连接。这
+   为一些可能的攻击提供了保护。
+   
+   当RADIUS代理被部署时，RADIUS服务器发送的认证接受在到达NAS前可能被一个或
+   多个代理处理。为了保证到达的隧道属性没有被修改，中间的转发接受回应的
+   RADIUS代理不应该（MUST NOT）修改隧道属性。如果RADIUS代理不支持隧道属性，
+   那么它必须（MUST）发送一个认证拒绝到NAS。为了确保用户仅仅在RADIUS服务器
+   能提供被要求的服务的情况下被授权访问，这是必须的。
+   
+   既然RADIUS隧道属性被强制隧道连接使用，地址分配由隧道服务器完成，而不是NAS。
+   导致的结果，到隧道属性被提供，NAS必须（MUST）任何RADIUS服务器发送的地址
+   分配属性。另外，NAS和用户客户端间不应该（MUST NOT）开始NCP协商，因为这可能
+   会创建一个时间窗，在这用户客户端将能发送包到传输网络，而这种情况在强制隧道
+   连接中是不允许的。
+
+10.  Acknowledgements
+
+   Thanks to Gurdeep Singh Pall of Microsoft for many useful discussions
+   of this problem space, and to Allan Rubens of Tut Systems and
+   Bertrand Buclin of AT&T Labs Europe for their comments on this
+   document.
+
+   Most of the work on this document was performed while Glen Zorn was
+   employed by the Microsoft Corporation.
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 20]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+11.  Chair's Address
+
+   The RADIUS Working Group can be contacted via the current chair:
+
+   Carl Rigney
+   Livingston Enterprises
+   4464 Willow Road
+   Pleasanton, California  94588
+
+   Phone: +1 510-426-0770
+   EMail: cdr@livingston.com
+
+12.  Authors' Addresses
+
+   Bernard Aboba
+   Microsoft Corporation
+   One Microsoft Way
+   Redmond, WA 98052
+
+   Phone: +1 425-936-6605
+   EMail: bernarda@microsoft.com
+
+
+   Glen Zorn
+   Cisco Systems, Inc.
+   500 108th Avenue N.E., Suite 500
+   Bellevue, WA 98004
+   USA
+
+   Phone: +1 425 438 8218
+   FAX:   +1 425 438 1848
+   EMail: gwz@cisco.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 21]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+13.  Intellectual Property Statement
+
+   The IETF takes no position regarding the validity or scope of any
+   intellectual property or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; neither does it represent that it
+   has made any effort to identify any such rights.  Information on the
+   IETF's procedures with respect to rights in standards-track and
+   standards-related documentation can be found in BCP-11.  Copies of
+   claims of rights made available for publication and any assurances of
+   licenses to be made available, or the result of an attempt made to
+   obtain a general license or permission for the use of such
+   proprietary rights by implementors or users of this specification can
+   be obtained from the IETF Secretariat.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights which may cover technology that may be required to practice
+   this standard.  Please address the information to the IETF Executive
+   Director.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 22]
+
+RFC 2809          L2TP Compulsory Tunneling via RADIUS        April 2000
+
+
+14.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aboba & Zorn                 Informational                     [Page 23]
+

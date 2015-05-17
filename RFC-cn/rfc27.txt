@@ -1,0 +1,135 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang   mcsewang@21cn.com）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group						S. Crocker
+RFC-27							              UCLA
+  9 December 69
+
+文档规范
+（RFC 27 ── DOCUMENTATION CONVENTIONS）
+
+此文档是NWG/RFC 10,16,和24的修订版。
+网络工作组(Network Working Group)是由来自现存的或潜在的ARPA 网络站点的志愿
+人士组成的。成员资格没有限制。
+网络工作组关注的是主机软件、网络使用策略及网络应用的初始经验。
+NWG工作文件通过类似于本文档的文件形式记录。任何站点的任何人都可以提出这种
+文档并将其加入到本系列中。
+
+内容
+NWG笔记记录的内容可以是任何与主机软件或其他与网络的特性相关的想法、建议等。
+文档不要求字斟句酌，但应尽量保证其内容的即时性。以下几种内容的文档也是可以接受的，
+如：只给出立场观点而没有举出例子和其他一些细节；提出特别的建议或实施方案而没有给
+出相关的介绍或背景知识；只是明确的提出一个问题而没有给出任何答案。
+一份笔记要求不少于一句话。
+这些标准是基于下面两个原因制定的：第一，人们倾向于将文件记录当做事实上的权
+威，我们希望推动交流和讨论而不是盲从于权威性的结论。第二，人们通常不愿发表那些未
+经认真修饰的文章，我们希望消除这种顾虑。
+
+格式
+每篇NWG 文档都应该包括下列信息：
+1． “ Network Working Group ”
+    “ Request for Comnments : X”( X下划线 )
+    其中X是一个序号，它由UCLA的Steve Crocker 给出
+2.	作者及联系方法
+3.	日期
+4.	题目
+标题不要求唯一
+
+
+发布
+文档的一份拷贝仅需由作者的站点发至下列成员：
+
+	1.  Abhai Bhushan, MIT
+	2.  Steve Carr, Utah
+	3.  Gerry Cole, SDS
+	4.  Steve Crocker, UCLA
+	5.  Bill English, SRI
+	6.  Kim Fry, MITRE
+	7.  John Haefner, RAND
+	8.  Bob Kahn, BB&N
+	9.  Thomas O'Sullivan, Raytheon
+    10. Larry Roberts, ARPA
+    11. Paul Rovner, LL
+    12. Ron Stoughton, UCSB
+
+若有需要，副本可以自行处理。
+
+地址
+以下是我知道的最新的地址，必要时请更正：
+
+	Abhai Bhushan			MIT
+	Room 807 - Project MAC		(617) 864-6900 X5857
+	545 Technology Square
+	Cambridge, Mass. 02139
+
+	Steve Carr			Utah
+	Computer Science Dept.		(801) 322-8224
+	University of Utah
+	Salt Lake City, Utah  84112
+
+	Gerry Cole			SDC
+	7842 Croyden			2500 Colorado
+	Los Angeles, Calif. 90024	Santa Monica, Calif 90406
+					(213) 393-9411, X6l35
+							X6019 (Sec'y)
+
+	Steve Crocker			UCLA
+	3732 Boelter Hall		(213) 825-4864
+	UCLA				      825-2543 (Sec'y)
+	Los Angeles, Calif. 90024
+
+	Bill English			SRI
+	Stanford Research Institute	(415) 326-6200
+	333 Ravenswood			
+	Menlo Park, Calif. 94025
+
+	Kim Fry				MITRE
+	The MITRE Corp			(703) 893-3500, X355
+	Westgate Research Park				X318
+	McLean, Va. 22101
+
+	John Heafner			RAND
+	The Rand Corporation		(213) 393-0411
+	1700 Main Street
+	Santa Monica, Calif. 90406
+
+	Robert Kahn			BB&N
+	Bolt, Beranek and Newman	(617) 491-1850
+	50 Moulton St.
+	Cambridge, Mass. 02138
+
+	Thomas O'Sullivan		Raytheon
+	Raytheon Company		(617) 899-8400
+	Equipment Division Headquarters
+	40 Second Ave.
+	Waltham, Mass. 02l54
+
+	Larry Roberts			ARPA
+	ODS/ARPA			(202) OX7-8663
+	3D167				      OX7-8654
+	Washington, D.C.  2030l
+
+	Paul D. Rovner			LL
+	Mass. Inst. of Tech.		(617) 562-5500 X7211
+	Lincoln Laboratory B-115	              
+	P.O. Box 73
+	Lexington, Mass 02173
+
+	Ron Stoughton			UCSB
+	Computer Research Lab		(805) 961-3221
+	UCSB
+	Santa Barbara, Calif. 93106
+
+
+RFC27 DOCUMENTATION CONVENTIONS		文档规范
+
+
+1
+RFC文档中文翻译计划
+
+

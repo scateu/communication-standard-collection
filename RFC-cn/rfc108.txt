@@ -1,0 +1,109 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-16
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         R. Watson
+Request for Comments: 108                                       SRI-ARC
+NIC: 5807                                                 25 March 1971
+
+
+
+               
+
+1971年2月17-19日在 Urbana 举行的 NWG 会议的人员列表  
+（Attendance list at the Urbana NWG meeting, February 17-19, 1971. R.W）
+
+
+NWG会议记录补遗，NIC (5762)
+1971年2月17-19日在 Urbana 举行的 NWG 会议的人员列表：
+
+    BBN
+      Robert Kahn
+      Ray Tomlinson
+      Alex McKenzie
+
+    Case
+      Patrick Foulk
+
+    CCA
+      Richard Winter
+
+    Harvard
+      Bob Metcalfe
+
+    ILLINOIS
+      Carlton Mills
+      David Grothe
+      Gary R. Grossman
+      Michael S. Sher
+      J. Bouknight
+      J. Madden
+      Stewart Denenberg
+
+    IBM Research
+      Douglas McKay
+      Hans Schlaeppi
+
+    LINCOLN LAB
+      Richard Kalin
+      Joel Winett
+      Tom Barkalow
+
+    MIT
+      Bob Skinner
+
+    MIT-MAC
+      Edwin W. Meyer, Jr.
+      Bob Bressler
+      A. Vezza
+
+    MITRE
+      P. M. Karp
+
+    RADC
+      Tom Lawrence
+      Robt. K. Walker
+
+    RAND
+      John Heafner
+      Raytheon
+      Tom O'Sullivan
+
+    SDC
+      Robert E. Long
+      Jerry Cole
+
+    SRI
+      John Melvin
+      Dick Watson
+
+    UCLA
+      Steve Crocker
+      Jon Postel
+
+    UCSB
+      Jim White
+
+    Utah
+      Barry Wessler
+
+
+
+          [ This RFC was put into machine readable form for entry ]
+          [ into the online RFC archives by Via Genie 3/99 ]
+
+
+
+RFC108―Attendance list at the Urbana NWG meeting, February 17-19, 1971. R.W 
+1971年2月17-19日在Urbana举行的 NWG 会议的人员列表
+
+
+1
+RFC文档中文翻译计划

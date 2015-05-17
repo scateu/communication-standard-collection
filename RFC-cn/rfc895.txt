@@ -1,0 +1,97 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：沈进 （simon_shen    shen_jin@263.net）
+译文发布时间：2001-9-6
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                     	  Jon Postel
+Request for Comments: 894            								 ISI
+                                                              April 1984
+
+IP 数据包通过实验以太网网络传输标准
+(RFC895――A Standard for the Transmission of IP Datagrams over Experimental
+Ethernet Networks)
+目录
+1.介绍：	1
+2.帧格式：	2
+3.地址映射：	2
+4.跟踪格式：	2
+5.字节约定：	2
+6.参考：	3
+
+本备忘录的状态：
+	本RFC文档讲述了在实验以太网[2]中封装IP[1]的一种标准方法。本RFC文档讲述了ARP
+A网络社区的一种标准协议。
+
+1.介绍：
+	本备忘录用于3MB/S，8位地址的实验以太网。IP数据包在10MB/S，48位地址的以太网
+中的传输过程见[3]。
+
+2.帧格式：
+	IP数据包以标准的实验以太网帧格式方式传输。以太网帧类型字段必须包含值513(100
+1八进制)。帧数据字段要包含IP首部和IP数据。
+	如果需要，帧数据字段会被填充成实验以太网的最小长度。这种填充并不是IP包的一
+部份，也不算在IP头的长度字段中。
+	在实验以太网上发送的数据包最大长度为1536个字节。推荐实现支持最大长度的包。
+网关的设计必须能够接收最大长度的包，并且在必要的情况下，可以将过大的包分片。如
+果一个系统不能接收最大长度的包，它应该采取步骤，在发送时减小包长，例如使用TCP最
+大段长度[4]。
+	注意：在以太网上的数据包可能不再是一般Internet上默认的576字节的最大包长。连
+接在一个以太网上的主机在向另一个以太网上的主机发送数据包时，应该注意。比较合适
+的方法是发送一个较小的数据包以避免在中间的网关处被不必要地分割。在这一点上，请
+参考[4]以得到更多的信息。
+
+3.地址映射：
+	32位的IP地址映射到8位的实验以太网地址有多种方法。
+	最简单的方法是使用IP地址主机部份的最后8比特作为在实验以太网上的地址。这是推
+荐方法。
+	广播地址：
+    Internet上的广播地址（在局域网上的地址是48个全1）可以被映射为广播实验以太网
+地址（全0）。
+
+4.跟踪格式：
+	一些版本的Unix 4.2bsd使用一种不同的掩盖法，为了在VAX虚拟内存结构下得到更好
+的性能。在同一个以太网中的兼容的系统可能在它们中使用这种格式。
+	主机不要求去实现这种方式。没有数据包能在这种方式下发送给其它主机，除非发送
+者肯定接受者将能够解释它们。
+	（注意：现在Unix 4.2bsd系统可以一直使用追踪方式，也可以不使用它们，这取决于
+引导式的选项。这种状况希望将来能被改变。Unix 4.2bsd系统还使用全0的以太网地址作
+为广播地址，这也将在将来被改变。）
+
+5.字节约定：
+	如在Internet协议说明[1]的附录B中所描述的，被发送至以太网的IP数据包以8位为
+一字节。
+
+6.参考：
+   [1]  Postel, J., "Internet Protocol", RFC-791, USC/Information
+   Sciences Institute, September 1981.
+
+   [2]  Metcalfe, R. and D. Boggs, "Ethernet: Distributed Packet
+   Switching for Local Computer Networks", Communications of the ACM,
+   V.19, N.7, pp 395-402, July 1976.
+
+   [3]  Hornig, C., "A Standard for the Transmission of IP Datagrams
+   over Ethernet Networks", RFC-894, Symbolics Cambridge Research
+   Center, April 1984.
+
+   [4]  Postel, J., "The TCP Maximum Segment Size Option and Related
+   Topics", RFC-879, USC/Information Sciences Institute, November 1983.
+
+   [5]  Plummer, D., "An Ethernet Address Resolution Protocol", RFC-826,
+   Symbolics Cambridge Research Center, November 1982.
+
+   [6]  Leffler, S., and M. Karels, "Trailer Encapsulations", RFC-893,
+   University of California at Berkeley, April 1984.
+
+RFC895――A Standard for the Transmission of IP Datagrams over Experimental Ethernet Networks
+IP 数据包通过实验以太网网络传输标准
+
+
+1
+RFC文档中文翻译计划
+
+

@@ -1,0 +1,111 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：高明辉（roamer21cn     minghuigao@263.net）
+译文发布时间：2001-10-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                              R. Ullmann
+Request for Comments: 1090                                   Prime Computer, Inc.
+                                                                February 1989
+
+SMTP在X.25上
+(RFC1090---- SMTP on X.25)
+目录
+1.本备忘录的状态	1
+2.简介	2
+3.协议ID和呼叫用户数据	2
+4.数据流	2
+5.识别数据	2
+6.电路复位	2
+7.呼叫业务	2
+8.字符编码	3
+9.关闭连接	3
+10.超时	3
+10.1 呼叫请求	3
+10.2 已经建立的呼叫	3
+10.3 关闭	3
+10.4 清除	3
+11.其他特性	3
+参考：	4
+作者地址：	4
+
+1.本备忘录的状态
+本备忘录讲述了一种基于CCITT的X.25标准提供的虚电路业务的SMTP标准。
+本备忘录的发布不受任何限制。
+2.简介
+在RFC821（"SIMPLE MAIL TRANSPORT PROTOCOL"，SMTP，简单邮件传输协议）
+的附录D中提到了直接将SMTP置于X.25虚电路（ISO第3层）上的可能性。并建议“利
+用一种类似于TCP可靠的端到端协议在X.25的连接上”。在1981年时，考虑到PSDNs的
+总体的可靠性，这毫无疑问是可行的。这一业务现在（1989年）已经非常可靠，它允许直
+接将其置于虚电路业务上。
+在包括22个不同的国家的24个PSDN网的许多产品，证明了这种方法是成功的，结
+果证明，即使使用在一些花费比较昂贵的PSDN中，这种方法还是十分经济的，在X.25专
+网和X.25局域网中，这种方法也是成功。
+每一个SMTP会话必须打开一条X.25虚电路（Virtual Circuit ，VC），SMTP会话将
+使用由VC提供的全双工通道。通常，VC是由发起呼叫的一方关闭的。
+3.协议ID和呼叫用户数据
+呼叫用户数据区的前4个字节应该是0xC0F7,0000（十六进制），十进制是192 247 0 0 。
+这个字段通常用来标识一个协议ID，或者PRID。
+但是在实际的操作中，应该有能力在基本前缀地址上配置呼叫用户数据，包括协议ID
+字段。
+4.数据流
+在发送端通常把SMTP数据分成许多数据包，相应地，在数据包封装的时候应该置M
+位（表示有后续数据包）。数据包的总长度可以达到2048个字节。
+通常我们建议SMTP命令和响应应在一个数据包发送出去，或者只有一个后续数据包。
+只要对调试协议方便即可。但这并不要求是必须的。
+5.识别数据
+Q比特被置位的分组和中断分组是没有用的。如果收到了，应该被忽略掉。
+6.电路复位
+如果收到了一个3层的电路复位指示，这条VC应该清除，SMTP连接应该重新建立。
+重新建立会带来一些时延，也可能是不同的呼叫业务。
+7.呼叫业务
+任何被X.25呼叫请求业务选择的协商特征都可以使用。使用时应有能力为每一个被叫
+地址指定业务。
+8.字符编码
+X.25使用的字符编码是完整的8位ASCII码，没有任何遗漏和修改。一行应该以CRLF
+（十进制：13 10）结尾，也可以仅仅以LF（十进制：10）来标识一行的结束。
+9.关闭连接
+跟TCP协议不同，在清除请求的过程中，X.25不提供数据的同步传送；当清除虚电
+路时，就丢弃所有正在传送的数据包。因此，当收到“服务关闭”消息时，主叫的一边关闭
+SMTP会话层（在X.25上），这种消息要么是QUIT命令的响应，或者是因为服务必须中止。
+10.超时
+SMTP通常不提供超时会话，在X.25，以下几项是有效的：
+10.1 呼叫请求
+如果在100秒内没有收到“呼叫接受”信息，或者在120秒（另外）内没有收到“服
+务准备好”信息，那么应该清除这次呼叫，然后重试。
+10.2 已经建立的呼叫
+当协议会话建立之后，在10分钟内如果没有收到任何响应，那么就应该清除这条虚
+电路。
+10.3 关闭
+执行QUIT命令后，超时时间缩短为20秒。这可能会导致不经意地退出，但它不会影
+响已经完成的SMTP业务。
+10.4 清除
+当X.25“清除请求”发出时，这条虚电路将在X.25协议指定的时间内超时。
+11.其他特性
+X.25的其他特性，如永久虚电路和D比特的选择，都没有用到。
+
+参考：
+ [1]  Postel, J., "Simple Mail Transfer Protocol", RFC 821, USC Information Sciences Institute, 
+August 1982.
+ [2]  CCITT Recommendation X.25, "Interface Between Data Terminal Equipment (DTE) and 
+Data Circuit-Terminating Equipment (DCE) for Terminals Operating in the Packet Mode and 
+Connected to Public Data Networks by Dedicated Circuit", International Telegraph and Telephone 
+Consultative Committee, Fascicle VIII.3, Geneva, 1976; amended at Geneva, 1980 and 
+Malaga-Torremolinos, 1984. ("Red Book")
+作者地址：
+Robert Ullmann 23A-32
+Prime Computer, Inc.
+Technology Drive
+Milford, MA 01757
+Phone: +1 508 478 8600 x1736
+Email: Ariel@Relay.Prime.COM
+
+RFC1090---- SMTP on X.25                                                     SMTP在X.25上
+
+
+1
+RFC文档中文翻译计划

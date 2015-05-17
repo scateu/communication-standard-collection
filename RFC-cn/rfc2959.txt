@@ -1,0 +1,1015 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang  anpengwnag@263.net）
+译文发布时间：2001-4-20
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                        M. Baugher
+Request for Comments: 2959                                    B. Strahm
+Category: Standards Track                                   Intel Corp.
+                                                            I. Suconick
+                                                      VideoServer Corp.
+                                                           October 2000
+
+
+实时传输协议管理信息库
+(RFC2959 Real-Time Transport Protocol Management Information Base)
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+版权声明
+Copyright (C) The Internet Society (2001).
+
+摘要
+本备忘录定义了在Internet社区中用于网络管理协议的管理信息库（MIB）的一部分，特别是定义了管理实时传输协议（RTP）系统（RFC1889）的对象。
+
+
+
+
+
+
+
+
+
+
+
+
+目录
+1.  SNMP管理框架	2
+2. 概述	3
+2.1 组件	3
+2.2 MIB对于RTP系统应用的适用性	3
+2.3  RTP MIB的结构	4
+3. 定义	5
+4. 安全考虑（Security Considerations）	24
+5.  致谢（Acknowledgements）	25
+6.  知识产权（Intellectual Property）	25
+7.  引用（References）	25
+8. 作者地址（Authors' Addresses）	27
+9. 版权声明	28
+
+
+1.  SNMP管理框架
+* SNMP管理框架目前包括五个主要的组成部分：
+* 总体框架，参见RFC 2571[RFC2571]的叙述。
+* 用于管理目的的对象及事件的描述和命名机制。这个管理信息结构（SMI）的第一个版本称为SMIv1，参见STD 16, RFC 1155, STD 16, RFC 1212和RFC 1215。第二版称为SMIv2，参见STD 58, RFC 2578 [RFC2578], RFC 2579 [RFC2579] 和RFC 2580的描述。
+* 用于传输管理信息的消息协议。SNMP消息协议的第一版称为SNMPv1，由STD 15,   RFC 1157 [RFC1157]描述。SNMP消息协议的第二版――不是一项Internet标准跟踪协议――称为SNMPv2c，由RFC 1901 [RFC1901] and RFC 1906 [RFC1906]描述。消息协议的第三版称为SNMPv3，由RFC 1906[RFC1906], RFC 2572 [RFC2572]和 RFC 2574 [RFC2574]描述。
+* 访问管理信息的协议操作。采用PDU格式的第一个协议操作集合由STD 15, RFC 1157 [RFC1157]描述，采用PDU格式的第二个协议操作集合由RFC 1905 [RFC1905]描述。
+* RFC 2573 [RFC2573]描述了一系列基础应用，RFC 2575 [RFC2575]描述了基于视图的访问控制机制。
+
+关于SNMP管理框架的更加详细的描述参见RFC 2570 [RFC2570]。  
+通过虚拟信息存储访问管理对象称为管理信息库或者MIB。MIB的对象使用SMI定义的机制定义。
+
+本备忘录描述了适应SMIv2的MIB模型。通过适当的转化可以得到遵循SMIv1的MIB。转换后的MIB必须在语义上式等价的，除非不可能转换而不得不忽略的对象及事件（Counter64的使用)。  SMIv2的一些机器易读的信息在转换的过程中必须转化成SMIv1的文本描述。不过这种极其易读信息的损失不认为是改变了MIB的语义。
+
+2. 概述
+
+一个“RTP系统”可能是运行着发送或者接受RTP数据包的应用程序的主机终端系统，也可能是转发RTP包的中介系统。接收方和发送方通过发送RTP控制协议（RTCP）包交换RTP包传输和接收的信息 [RFC1889]。RTP监视器可以在接收方或发送方上采集发往或者来自主机/中介系统的RTCP信息。
+本文档中的关键字“必须”、 “不能”、“需要”、“应”、“不应”、“应该”、“不应该”、“建议”、“可以”和“可选”的含义与RFC 2119的解释一致。
+
+2.1 组件
+
+   RTP MIB是围绕着“Session”、“Receiver”和“Sender”等抽象概念建立的。
+
+   2.1.1  按照[RFC1889]节3的定义，“RTP会话”是“...参与者与RTP通信的连接。每个参与者都有一个会话，会话是由一个特定的目标传输地址对定义的（网络地址和用于RTP及RTCP的一对端口）。可能所有的参与者使用同一个目标传输地址，比如IP多点传送的情况；也可能每个参与者都有不同的目标传输地址，比如单个的单点传送地址加上一个通用的端口对。” 
+   2.1.2 在RTP会话中“发送方”表示为一个32位的数字――“同步资源”或者“SRRC”，根据[RFC1889]节3的定义，它是“......RTP数据包流的源头”。
+   2.1.3 如前面2.1.1节所述，“RTP数据包流”的“接收方”可以是单点传送，也可以是多点传送的接受者。RTP接收方有对于该会话唯一的SSRC值。如[RFC1889]节6所述，RTP接收方是RTCP接收方报告的一个来源。
+
+2.2 MIB对于RTP系统应用的适用性
+
+   RTP MIB可用于两种类型的RTP应用：
+1、 RTP主机系统（终端系统）和RTP监视器，参见[RFC1889]节3；
+2、 RTP MIB在RTP翻译器（Translators）和混合器中（Mixers）的应用――参见[RFC1889]节7――还有待于进一步研究。
+
+   2.2.1 RTP主机系统是可以使用RTP MIB采集主机发送/接收RTP会话和RTP流数据的终端系统，网络管理员可以利用这些数据――比如在“帮助桌面”中――检查和诊断RTP会话生命期中出现的故障。
+
+   2.2.2 多点传送RTP会话中的RTP监视器可以是第三方，也可以放在RTP主机上。RTP监视器可以使用RTP MIB采集RTP会话和流的统计数据，网络管理员可以利用这些数据编制网络容量计划或者用于其他的网络管理目标。RTP监视器可以通过RTP MIB采集数据以便网络管理员检查和诊断RTP会话故障或者设置其操作。
+
+   2.2.3 许多主机系统需要保留自身收发数据以外的流的记录。在主机监视系统中，主机代理可以利用来自主机的RTP数据维护主机发送流和接收流的数据，利用其RTCP数据采集会话中其它主机的数据。举例来说，发送流的主机代理可以利用其RTP系统数据维护表rtpSenderTable，但是可能还需要为接收流的对方维护rtpRcvrTable表。要做到这一点，RTP代理必须从流的接收方采集RTCP数据构造rtpRcvrTable表。主机监视器系统必须（MUST）把对象rtpSessionMonitor设定为“true(1)”，但不一定要接受在其表中创建或者清除行的管理操作。
+
+2.3  RTP MIB的结构
+
+在RTP MIB中有6个表。表rtpSessionTable包括描述主机或者监视器上的活动会话的对象。 表tpSenderTable保存了RTP会话中发送方的信息。表rtpRcvrTable包含RTP会话数据中接收方的信息。表rtpSessionInverseTable、 表rtpSenderInverseTable和表 rtpRcvrInverseTable分别保存了有效查找rtpSessionTable， rtpSenderTable，和 rtpRcvrTable索引的信息 。
+
+   逆序检索表(rtpSessionInverseTable，rtpSenderInverseTable，和 rtpRcvrInverseTable) 是可选的表，用于帮助管理程序有效的访问其他表中的逻辑行。如果不能从其他方的MIB访问表索引（rtpSessionTable表的索引rtpSessionIndex、rtpSenderTable的索引rtpSenderSSRC、rtpRcvrTable的SSRC对），执行MIB的这一方应该为多点传送的RTP会话实现这些表。否则，管理程序就得遍历巨大的包括会话、发送方和接收方的树。  
+
+   对于一些特殊的RTP会话，对象rtpSessionMonitor标明了是否需要对RTP会话中的远程的接收方或者发送方进行监视。如果rtpSessionMonitor为真（1），那么会话中的发送方和接收方都必须在rtpSenderTable和rtpRcvrTable中建立相应的条目予以监视。RTP代理负责监视RTP会话，根据来自远程发送方或者接收方的RTCP报告的信息分别更新相应的  rtpSenderTable和rtpRcvrTable对象。
+
+   RtpSessionNewIndex是一个全局对象，使网络管理程序能够为在rtpSessionTable中创建的逻辑行保持一个索引。 这样就可以使用SNMP的SET操作配置监视器。  
+
+3. 定义
+
+RTP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+       Counter32, Counter64, Gauge32, mib-2, Integer32, MODULE-IDENTITY,
+       OBJECT-TYPE, Unsigned32                     FROM SNMPv2-SMI
+       RowStatus, TAddress,
+       TDomain, TestAndIncr,
+       TimeStamp, TruthValue                       FROM SNMPv2-TC
+       OBJECT-GROUP, MODULE-COMPLIANCE             FROM SNMPv2-CONF
+       Utf8String                                  FROM SYSAPPL-MIB
+       InterfaceIndex                              FROM IF-MIB;
+
+rtpMIB MODULE-IDENTITY
+    LAST-UPDATED "200010020000Z"  -- 2000年10月2日
+    ORGANIZATION
+                 "IETF AVT Working Group
+    Email:   rem-conf@es.net"
+    CONTACT-INFO
+            "Mark Baugher
+    Postal: Intel Corporation
+            2111 NE 25th Avenue
+            Hillsboro, OR   97124
+            United States
+    Tel:    +1 503 466 8406
+    Email:  mbaugher@passedge.com
+
+            Bill Strahm
+    Postal: Intel Corporation
+            2111 NE 25th Avenue
+            Hillsboro, OR   97124
+            United States
+    Tel:    +1 503 264 4632
+    Email:  bill.strahm@intel.com
+
+            Irina Suconick
+    Postal: Ennovate Networks
+            60 Codman Hill Rd.,
+            Boxboro, Ma 01719
+    Tel:    +1 781-505-2155
+    Email:  irina@ennovatenetworks.com"
+
+        说明
+        “RTP系统的管理对象。MIB是基于三种类型的信息建立的。
+        1. RTP会话的通用信息，如会话的地址。
+        2. 关于某个特定的发送方发送到RTP会话的RTP流的信息。
+        3. 关于某个特定的接收方通过RTP会话从特定的发送方接收的RTP流的信息。
+         RTP系统有两种类型，RTP主机和RTP监视器。如后面所讲的，特定的对象适用于特定类型的RTP系统。RTP主机也可以像RTP监视器一样运行。定义参见RFC 1889“RTP：实时程序的传输协议”第三节。  ”
+   REVISION     "200010020000Z"  -- 2 October 2000
+         说明  “MIB初始版本，公布为RFC 2959” "
+
+::= { mib-2 87 }
+
+--
+-- OBJECTS
+--
+rtpMIBObjects OBJECT IDENTIFIER ::= { rtpMIB 1 }
+rtpConformance OBJECT IDENTIFIER ::= { rtpMIB 2 }
+
+--
+-- 新会话索引（SESSION NEW INDEX）
+--
+rtpSessionNewIndex 对象类型
+    语法          TestAndIncr
+    最高访问限制  读写
+    状态          当前
+    说明
+      “按照“SMIv2文本约定”的描述，这个对象用来为rtpSessionIndex赋值。 对于支持创建行的RTP系统，网络管理员可以读取这个对象，然后使用SET方法回写创建新的rtpSessionEntry实例。如果SET返回错误码“inconsistentValue”，必须重复这个过程；如果SET成功，对象就增加了，按照管理员的指示创建了新的实例。但是如果RTP代理不是担任监视器的角色，只有RTP代理能够在RTP会话表中创建逻辑行。”
+    ::= { rtpMIBObjects 1 }
+
+--
+-- 会话逆序表（SESSION INVERSE TABLE）
+--
+rtpSessionInverseTable 对象类型
+    语法          SEQUENCE OF RtpSessionInverseEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “把rtpSessionDomain, rtpSessionRemAddr和rtpSessionLocAddr Taddress对映射为一个或多个rtpSessionIndex值，每个值对应rtpSessionTable表的一行。这样不需要遍历整个（可能是巨大的）rtpSessionTable表，就可以获得与给定的会话对应的一行或者几行。”
+    ::= { rtpMIBObjects 2 }
+
+rtpSessionInverseEntry 对象类型
+    语法          RtpSessionInverseEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “每个条目与表rtpSessionTable一个确定的条目相对应――每个条目包括元组、       rtpSessionDomain、 rtpSessionRemAddr、 rtpSessionLocAddr和 rtpSessionIndex。”
+    INDEX { rtpSessionDomain, rtpSessionRemAddr, rtpSessionLocAddr,
+            rtpSessionIndex }
+    ::= { rtpSessionInverseTable 1 }
+    RtpSessionInverseEntry ::= SEQUENCE {
+        rtpSessionInverseStartTime     TimeStamp
+        }
+
+rtpSessionInverseStartTime 对象类型
+    语法          TimeStamp
+    最高访问限制  只读
+    状态          当前
+    说明
+      “本行创建时SysUpTime的值 。”
+    ::= { rtpSessionInverseEntry 1 }
+
+--
+--  会话表（SESSION TABLE）
+--
+rtpSessionTable 对象类型
+    语法          SEQUENCE OF RtpSessionEntry
+    最高访问限制  不个访问
+    状态          当前
+    说明
+         “每个RTP会话――发送包、接收包和/或监视的会话――在rtpSessionTable表中都有对应的条目。”
+    ::= { rtpMIBObjects 3 }
+
+rtpSessionEntry 对象类型
+    语法          RtpSessionEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “rtpSessionTable中的数据唯一的标志了一个RTP会话。主机的RTP代理必须为每个发送包或接收包的会话建立一个只读的行。RTP代理必须在会话的一开始――在检测到一个或者多个发送方/接收方之前――创建行。会话结束后必须删除RTP创建的行，不应再有这个会话的rtpRcvrEntry和rtpSenderEntry条目。如果rtpSessionMonitor值为真“True（1）”，应监视会话中所有发送和接收的RTP流创建管理信息。RTP监视器应允许创建行，这样做的影响是造成RTP系统加入多点传送会话以收集管理信息（在rtpRcvrTable和rtpSenderTable表中增加额外的概念行）。因此表rtpSessionTable应只包含用于监视RTP会话的行，管理程序创建的行应通过SNMP操作删除，管理操作创建的行应由管理操作通过把rtpSessionRow的状态设为“destroy(6)”删除。”
+    INDEX { rtpSessionIndex }
+    ::= { rtpSessionTable 1 }
+
+RtpSessionEntry ::= SEQUENCE {
+        rtpSessionIndex         Integer32,
+        rtpSessionDomain        TDomain,
+        rtpSessionRemAddr       TAddress,
+        rtpSessionLocAddr       TAddress,
+        rtpSessionIfIndex       InterfaceIndex,
+        rtpSessionSenderJoins   Counter32,
+        rtpSessionReceiverJoins Counter32,
+        rtpSessionByes          Counter32,
+        rtpSessionStartTime     TimeStamp,
+        rtpSessionMonitor       TruthValue,
+        rtpSessionRowStatus     RowStatus
+        }
+
+rtpSessionIndex 对象类型
+    语法          Integer32 (1..2147483647)
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “逻辑行的索引，仅用于SNMP，与任何协议值无关。没有必要继续创建或者维护这些行。”
+    ::= { rtpSessionEntry 1 }
+
+rtpSessionDomain 对象类型
+    语法          TDomain
+    最高访问限制  读/创建
+    状态          当前
+    说明
+      “该会话发送或者接受RTP数据包流的传输层协议。如果rtpSessionRow处于激活（active）状态，不可改变。”
+    ::= { rtpSessionEntry 2 }
+
+rtpSessionRemAddr 对象类型
+    语法          TAddress
+    最高访问限制  读/创建
+    状态          当前
+    说明
+      “RTP系统发送RTP包的目标地址。在IP多点传送RTP会话中，这是RTP会话数据的所有发送方和接收方使用的唯一地址。在单点传送RTP会话中，这是远程RTP系统的单点传送地址。‘所有的参与者可能共享一个目标地址，比如IP多点传送的情况；也可能各自具有不同的目标地址，比如单个的单点传送网络地址对’。参见RFC 1889[RTP：实时程序的传输协议]第三节。传输服务由rtpSessionDomain标志。对于snmpUDPDomain，它是一个IP地址和一个偶数UDP端口，相邻较大的奇数端口发送RTCP，见RFC 1889第五节。”
+       ::= { rtpSessionEntry 3 }
+
+rtpSessionLocAddr 对象类型
+    语法          TAddress
+    最高访问限制  只读
+    状态          当前
+    说明
+      “RTP系统使用的本地地址。在IP多点传送RTP会话中，rtpSessionRemAddr是与rtpSessionLocAddr相同的IP多点传送地址。 在单点传送RTP会话中，       rtpSessionRemAddr和rtpSessionLocAddr 具有不同的单点传送地址。参见RFC 1889，‘RTP: 实时程序的传输协议’第三节。传输服务由rtpSessionDomain标志。对于snmpUDPDomain，它是一个IP地址和一个偶数UDP端口，相邻较大的奇数端口发送RTCP，见RFC 1889第五节。”
+    ::= { rtpSessionEntry 4 }
+
+rtpSessionIfIndex 对象类型
+    语法          InterfaceIndex
+    最高访问限制  读/创建
+    状态          当前
+    说明
+     “ifIndex的值被设为IF-MIB的响应值(见 RFC 2233, ‘应用SMIv2的界面组（Interfaces Group）MIB’)。 这是RTP流发送和接收的界面，对于RTP监视器则是接收RTCP包的界面。如果rtpSessionRowStatus为‘active’不可修改。”
+    ::= { rtpSessionEntry 5 }
+
+rtpSessionSenderJoins 对象类型
+    语法          Counter32
+    最高访问限制  只读
+    状态          当前
+    说明
+      “自本概念行创建（rtpSessionStartTime）起检测到的参与会话的发送方的数目。发送方通过向会话发送数据参与会话。在RTCP BYE（见RFC 1889，‘RTP：实时程序的传输协议’6.6节）之后中途离开又重新参与的发送方或者会话超时可能被重复计数。只要检测到新的RTP发送方，无论使用RTP还是RTCP，这个计数都会增加。”  
+    ::= { rtpSessionEntry 6 }
+
+rtpSessionReceiverJoins 对象类型
+    语法          Counter32
+    最高访问限制  只读
+    状态          当前
+    说明
+       “自本概念行创建（rtpSessionStartTime）起检测到的参与会话的接收方的数目。接收方通过向会话发送RTCP接收报告参与会话。在RTCP BYE（见RFC 1889，‘RTP：实时程序的传输协议’6.6节）之后中途离开又重新参与的接收方或者会话超时可能被重复计数。”  
+    ::= { rtpSessionEntry 7 }
+
+rtpSessionByes 对象类型
+    语法          Counter32
+    最高访问限制  只读
+    状态          当前
+    说明
+      “该实体收到的RTCP BYE（见RFC 1889，‘RTP：实时程序的传输协议’6.6节）消息的计数。”
+    ::= { rtpSessionEntry 8 }
+
+rtpSessionStartTime 对象类型
+    语法          TimeStamp
+    最高访问限制  只读
+    状态          当前
+    说明
+      “该行创建时SysUpTime的值。”
+    ::= { rtpSessionEntry 9 }
+
+rtpSessionMonitor 对象类型
+    语法          TruthValue
+    最高访问限制  只读
+    状态          当前
+    说明
+      “布尔值，如果除了本地RTP系统之外，还需要使用RTCP监视远程的发送方或者接收方，将该值设为真‘true(1)’。RTP监视器必须初始化为‘true(1)’，RTP主机则应初始化为‘false(2)’。注意，‘主机监视器’从远程伙伴接收RTCP，因此必须把这个值设为‘true(1)’。”
+    ::= { rtpSessionEntry 10 }
+
+rtpSessionRowStatus 对象类型
+    语法          RowStatus
+    最高访问限制  读/创建
+    状态          当前
+    说明
+      “在一个RTP系统发送/接收RTP或RTCP消息时其值为‘Active’。新建的概念行在其所有读/创建对象初始化完成之前不会处于激活状态‘Active’。处于‘notReady’或者‘notInService’状态的概念行可能在5分钟之后删除。”
+    ::= { rtpSessionEntry 11 }
+
+--
+-- 发送方逆序表（SENDER INVERSE TABLE）
+--
+rtpSenderInverseTable 对象类型
+    语法          SEQUENCE OF RtpSenderInverseEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “把rtpSenderAddr和rtpSessionIndex映射成rtpSenderTable表的rtpSenderSSRC索引。该表允许管理程序根据rtpSenderAddr排序而不是根据rtpSessionIndex排序查找条目。给定了rtpSessionDomain和rtpSenderAddr，可以通过遍历树返回一系列的rtpSessionIndex和rtpSenderSSRC值。如果在SNMP的Get-Next操作中指定rtpSessionIndex，可以返回一个或多个rtpSenderSSRC值。”
+    ::= { rtpMIBObjects 4 }
+
+rtpSenderInverseEntry 对象类型
+    语法          RtpSenderInverseEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “每个条目都和rtpSenderTable表中确定的条目相对应――条目包含索引对、              rtpSessionIndex和rtpSenderSSRC。”
+    INDEX { rtpSessionDomain, rtpSenderAddr, rtpSessionIndex,
+            rtpSenderSSRC }
+    ::= { rtpSenderInverseTable 1 }
+
+RtpSenderInverseEntry ::= SEQUENCE {
+        rtpSenderInverseStartTime     TimeStamp
+        }
+
+rtpSenderInverseStartTime 对象类型
+    语法          TimeStamp
+    最高访问限制  只读
+    状态          当前
+    说明
+      “改行创建时SysUpTime的值 。“
+    ::= { rtpSenderInverseEntry 1 }
+
+--
+-- 发送方表（SENDERS TABLE）
+--
+rtpSenderTable 对象类型
+    语法          SEQUENCE OF RtpSenderEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “保存RTP会话中发送方的信息的表。必须为每个RTP流的发送主机在该表中建立相应的条目，该表还可能包含这些发送流的接收方主机的条目。如果rtpSessionTable的一个概念行被管理器（manager）激活（Active），则RTP监视器必须为多点传送会话中的每个检测到的发送方建立相应的条目。
+    ::= { rtpMIBObjects 5 }
+
+rtpSenderEntry 对象类型
+    语法          RtpSenderEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “每个条目包含一个RTP发送方同步资源（SSRC，见RFC 1889 ‘RTP：实时程序的传输协议’）的信息。会话作为SNMP实体使用rtpSessionIndex区分。如果受到来自发送方的BYE消息，或者发送方超时（见RFC 1889 6.2.1节），或者rtpSessionEntity被删除，RTP代理就删掉这一行。”
+    INDEX { rtpSessionIndex, rtpSenderSSRC }
+    ::= { rtpSenderTable 1 }
+
+RtpSenderEntry ::= SEQUENCE {
+        rtpSenderSSRC           Unsigned32,
+        rtpSenderCNAME          Utf8String,
+        rtpSenderAddr           TAddress,
+        rtpSenderPackets        Counter64,
+        rtpSenderOctets         Counter64,
+        rtpSenderTool           Utf8String,
+        rtpSenderSRs            Counter32,
+        rtpSenderSRTime         TimeStamp,
+        rtpSenderPT             INTEGER,
+        rtpSenderStartTime      TimeStamp
+        }
+
+rtpSenderSSRC 对象类型
+    语法          Unsigned32
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “RTP SSRC，或者说发送方的同步资源标识符。RTP会话地址加上SSRC唯一确定了某个RTP会话中的一个发送方（见RFC 1889，‘RTP：实时程序的传输协议’第3节 ）。 ”
+    ::= { rtpSenderEntry 1 }
+
+rtpSenderCNAME 对象类型
+    语法          Utf8String
+    最高访问限制  只读
+    状态          当前
+    说明
+      “发送方的RTP规范名称。”
+    ::= { rtpSenderEntry 2 }
+
+rtpSenderAddr 对象类型
+    语法          TAddress
+    最高访问限制  只读
+    状态          当前
+    说明
+      “发送方的单点传送资源地址，对于RTP监视器它是发送方用来发送‘RTCP发送报告’的地址。”
+    ::= { rtpSenderEntry 3 }
+
+rtpSenderPackets 对象类型
+    语法          Counter64
+    最高访问限制  只读
+    状态          当前
+    说明
+      “自rtpSenderStartTime起，该发送方发出的RTP包的个数，或者RTP监视器监测到的RTP包的个数。”
+    ::= { rtpSenderEntry 4 }
+
+rtpSenderOctets 对象类型
+    语法            Counter64
+    最高访问限制    只读
+    状态            当前
+    说明
+      “自rtpSenderStartTime起，该发送方发出的非报头RTP8位字节数，或者RTP监视器监测到的字节数”
+    ::= { rtpSenderEntry 5 }
+
+rtpSenderTool 对象类型
+    语法          Utf8String (SIZE(0..127))
+    最高访问限制  只读
+    状态          当前
+    说明
+      “流的应用程序资源名称。”
+    ::= { rtpSenderEntry 6 }
+
+rtpSenderSRs 对象类型
+    语法          Counter32
+    最高访问限制  只读
+    状态          当前
+    说明
+      “自rtpSenderStartTime 起，该发送方发出的‘RTCP发送报告’个数，如果RTP实体是一个监视器就是检测到的发送报告数。”
+    ::= { rtpSenderEntry 7 }
+
+rtpSenderSRTime 对象类型
+    语法          TimeStamp
+最高访问限制  只读
+状态          当前
+    说明
+      “对于监视器或者接收主机而言，rtpSenderSRTime是最后一个SR收到的那一刻SysUpTime的值，对于发送主机则是发出最后一个SR的那一刻。” 
+    ::= { rtpSenderEntry 8 }
+
+rtpSenderPT 对象类型
+    语法          INTEGER (0..127)
+    最高访问限制  只读
+    状态          当前
+    说明
+      “最近收到的RTP包的RTP头中的有效载荷类型（见RFC 1889‘RTP：实时程序的传输协议’）。”
+    ::= { rtpSenderEntry 9 }
+
+rtpSenderStartTime 对象类型
+    语法          TimeStamp
+    最高访问限制  只读
+    状态          当前
+    说明
+      “该行创建时SysUpTime的值。”
+    ::= { rtpSenderEntry 10 }
+
+--
+-- 接收方逆序表（RECEIVER INVERSE TABLE）
+--
+rtpRcvrInverseTable 对象类型
+    语法          SEQUENCE OF RtpRcvrInverseEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “把rtpRcvrAddr和rtpSessionIndex映射成rtpRcvrTable的索引表rtpRcvrSRCSSRC和rtpRcvrSSRC。该表允许管理程序根据rtpRcvrAddr排序查找条目，而不是根据rtpSessionIndex。对于给定的rtpSessionDomain和rtpRcvrAddr，通过遍历树可以返回一系列的rtpSessionIndex、rtpRcvrSRCSSRC和rtpRcvrSSRC值。如果在SNMP的Get-Next操作中指定了rtpSessionIndex ，则返回一个或多个rtpRcvrSRCSSRC/ rtpRcvrSSRC对。”
+    ::= { rtpMIBObjects 6 }
+
+rtpRcvrInverseEntry 对象类型
+    语法          RtpRcvrInverseEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “每一项恰恰与表rtpRcvrTable的一项对应，包括索引对、rtpSessionIndex、 rtpRcvrSSRC 。”
+    INDEX { rtpSessionDomain, rtpRcvrAddr,  rtpSessionIndex,
+            rtpRcvrSRCSSRC, rtpRcvrSSRC }
+    ::= { rtpRcvrInverseTable 1 }
+
+RtpRcvrInverseEntry ::= SEQUENCE {
+        rtpRcvrInverseStartTime     TimeStamp
+        }
+
+rtpRcvrInverseStartTime 对象类型
+    语法          TimeStamp
+    最高访问限制  只读
+    状态          当前
+    说明
+      “该行创建时SysUpTime 的值。”
+    ::= { rtpRcvrInverseEntry 1 }
+
+--
+-- 接收方表（RECEIVERS TABLE）
+--
+rtpRcvrTable 对象类型
+    语法          SEQUENCE OF RtpRcvrEntry
+    最高访问限制  不可访问e
+    状态          当前
+    说明
+      “保存RTP会话数据中接收方（可能有多个）信息的表。必须为收/发对中接收RTP会话包的RTP主机在该表中创建相应的条目，使用RTP组的RTCP反馈信息，该表也可以为每个接收方创建相应的发送RTP会话包的主机条目。如果rtpSessionTable的某个概念行被管理器（manager）激活‘Active’，RTP监视器就为该会话中每个检测到的接收方创建相应的条目。 ”
+    ::= { rtpMIBObjects 7 }
+
+rtpRcvrEntry 对象类型
+    语法          RtpRcvrEntry
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “每一项都保存了一个接收包的RTP同步资源的信息，相应的发送方由rtpRcvrSRCSSRC标识（SSRC，见RFC 1889，‘RTP：实时程序的传输协议’节6）。RTP代理实体使用rtpSessionIndex标识会话。如果收到发送方的BYE消息、或者发送方超时、或者rtpSessionEntity被删除，RTP代理将删除该行。”
+    INDEX { rtpSessionIndex, rtpRcvrSRCSSRC, rtpRcvrSSRC }
+    ::= { rtpRcvrTable 1 }
+
+RtpRcvrEntry ::= SEQUENCE {
+        rtpRcvrSRCSSRC        Unsigned32,
+        rtpRcvrSSRC           Unsigned32,
+        rtpRcvrCNAME          Utf8String,
+        rtpRcvrAddr           TAddress,
+        rtpRcvrRTT            Gauge32,
+        rtpRcvrLostPackets    Counter64,
+        rtpRcvrJitter         Gauge32,
+        rtpRcvrTool           Utf8String,
+        rtpRcvrRRs            Counter32,
+        rtpRcvrRRTime         TimeStamp,
+        rtpRcvrPT             INTEGER,
+        rtpRcvrPackets        Counter64,
+        rtpRcvrOctets         Counter64,
+        rtpRcvrStartTime      TimeStamp
+        }
+
+rtpRcvrSRCSSRC 对象类型
+    语法          Unsigned32
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “RTP SSRC，或者说发送方的同步资源标识符。RTP会话地址加上SSRC唯一确定了某个RTP会话中的一个发送方（见RFC 1889，‘RTP：实时程序的传输协议’第3节 ）。 ”
+    ::= { rtpRcvrEntry 1 }
+
+rtpRcvrSSRC 对象类型
+    语法          Unsigned32
+    最高访问限制  不可访问
+    状态          当前
+    说明
+      “RTP SSRC，或者说接收方的同步资源标识符。RTP会话地址加上SSRC唯一确定了某个RTP流中的一个发送方（见RFC 1889，‘RTP：实时程序的传输协议’第3节 ）。 ”
+    ::= { rtpRcvrEntry 2 }
+
+rtpRcvrCNAME 对象类型
+    语法          Utf8String
+    最高访问限制  只读
+    状态          当前
+    说明
+      “接收方的RTP规范名称。“
+    ::= { rtpRcvrEntry 3 }
+
+rtpRcvrAddr 对象类型
+    语法           TAddress
+    最高访问限制   只读
+    状态           当前
+    说明
+      “接收方接收RTP包和/或RTCP接受报告的单点传送地址。”
+    ::= { rtpRcvrEntry 4 }
+
+rtpRcvrRTT 对象类型
+    语法           Gauge32
+    最高访问限制   只读
+状态           当前
+说明
+      “基于RFC 1889‘RTP：实时程序的传输协议’节6描述的算法，RTP流的源对往返时间的测度。如果RTP代理和流的发送方使用相同的时钟（对于特定的接收方来说RTP监视器同时也是发送主机），该算法能够产生有意义的结果。否则，该实体返回‘noSuchInstance’响应对rtpRcvrRTT的查询。”
+    ::= { rtpRcvrEntry 5 }
+
+rtpRcvrLostPackets 对象类型
+    语法          Counter64
+    最高访问限制  只读
+    状态          当前
+    说明
+      “自rtpRcvrStartTime起该接收方检测到的丢失的RTP包的数量。”
+    ::= { rtpRcvrEntry 6 }
+
+rtpRcvrJitter 对象类型
+    语法          Gauge32
+    最高访问限制  只读
+    状态          当前
+    说明
+      “对该接收方检测到的延迟变化的评估。（见RFC 1889, ‘RTP: 实施程序的传输协议’节6.3.1及A.8）”
+    ::= { rtpRcvrEntry 7 }
+
+rtpRcvrTool 对象类型
+    语法          Utf8String (SIZE(0..127))
+    最高访问限制  只读
+    状态          当前
+    说明
+      “流的应用程序资源名称。”
+    ::= { rtpRcvrEntry 8 }
+
+rtpRcvrRRs 对象类型
+    语法          Counter32
+    最高访问限制  只读
+    状态          当前
+    说明
+      “自rtpRcvrStartTime起，该接收方发出的RTCP接收方报告的数量，对于RTP监视器则是其检测到的接收方报告数量。”
+    ::= { rtpRcvrEntry 9 }
+
+rtpRcvrRRTime 对象类型
+    语法         TimeStamp
+    最高访问限制 只读
+    状态         当前
+    说明
+       “对于监视器或者RR接收方（RTP的发出者），rtpRcvrRRTime是收到最后一份RTCP接收方报告的那一刻SysUpTime的值。如果是RTP接收方发送RR的情况，它就是该接收方发出最后也各RR时SysUpTime 的值。”
+    ::= { rtpRcvrEntry 10 }
+
+rtpRcvrPT 对象类型
+    语法          INTEGER (0..127)
+    最高访问限制  只读
+    状态          当前
+    说明
+      “RTP头中动态或静态的有效载荷的类型。（见RFC 1889，‘RTP：实时程序的传输协议’节5）”
+    ::= { rtpRcvrEntry 11 }
+
+rtpRcvrPackets 对象类型
+    语法          Counter64
+    最高访问限制  只读
+    状态          当前
+    说明
+      “自rtpRcvrStartTime起，该RTP主机接收方收到的RTP包的数量。”
+    ::= { rtpRcvrEntry 12 }
+
+rtpRcvrOctets 对象类型
+    语法          Counter64
+    最高访问限制  只读
+    状态          当前
+    说明
+      “自rtpRcvrStartTime起，该RTP接收主机收到的非RTP头的8位字节数。” 
+::= { rtpRcvrEntry 13 }
+
+rtpRcvrStartTime 对象类型
+    语法          TimeStamp
+    最高访问限制  只读
+    状态          当前
+    说明
+      “该行创建时SysUpTime的值。”
+    ::= { rtpRcvrEntry 14 }
+
+--
+--  模型组（ODULE GROUPS）
+--
+--
+-- 有两种类型的RTP系统：RTP主机和RTP监视器。因而有三种对象：1）适用于两种系统--的通用对象；2）仅用于RTP主机的对象；3）仅用于RTP监视器的对象。另外还有一组，--4）将用于多点传送主机和RTP监视器的对象
+
+rtpGroups OBJECT IDENTIFIER ::= { rtpConformance 1 }
+rtpSystemGroup      OBJECT-GROUP
+    OBJECTS         {
+                    rtpSessionDomain,
+                    rtpSessionRemAddr,
+                    rtpSessionIfIndex,
+                    rtpSessionSenderJoins,
+                    rtpSessionReceiverJoins,
+                    rtpSessionStartTime,
+                    rtpSessionByes,
+                    rtpSessionMonitor,
+                    rtpSenderCNAME,
+                    rtpSenderAddr,
+                    rtpSenderPackets,
+                    rtpSenderOctets,
+                    rtpSenderTool,
+                    rtpSenderSRs,
+                    rtpSenderSRTime,
+                    rtpSenderStartTime,
+                    rtpRcvrCNAME,
+                    rtpRcvrAddr,
+                    rtpRcvrLostPackets,
+                    rtpRcvrJitter,
+                    rtpRcvrTool,
+                    rtpRcvrRRs,
+                    rtpRcvrRRTime,
+                    rtpRcvrStartTime
+                    }
+    状态          当前
+    说明
+        “适用于所有RTP系统的对象”
+    ::= { rtpGroups 1 }
+
+rtpHostGroup    OBJECT-GROUP
+    OBJECTS     {
+                rtpSessionLocAddr,
+                rtpSenderPT,
+                rtpRcvrPT,
+                rtpRcvrRTT,
+                rtpRcvrOctets,
+                rtpRcvrPackets
+                }
+    状态      当前
+    说明
+           “适用于RTP主机系统但可能不是用于RTP监视器系统的对象。”
+    ::= { rtpGroups 2 }
+
+rtpMonitorGroup OBJECT-GROUP
+    OBJECTS     {
+                rtpSessionNewIndex,
+                rtpSessionRowStatus
+                }
+    状态     当前
+    说明
+        “在RTP会话表中创建行的对象，如果系统不创建行则不需要这些对象。”
+    ::= { rtpGroups 3 }
+
+rtpInverseGroup OBJECT-GROUP
+    OBJECTS     {
+                rtpSessionInverseStartTime,
+                rtpSenderInverseStartTime,
+                rtpRcvrInverseStartTime
+                }
+    状态      当前
+    说明
+            “用于逆序查找表（Inverse Lookup Table）的对象。”
+    ::= { rtpGroups 4 }
+
+--
+--  一致性（Compliance）
+--
+rtpCompliances OBJECT IDENTIFIER ::= { rtpConformance 2 }
+
+rtpHostCompliance MODULE-COMPLIANCE
+    状态          当前
+    说明
+            “主机系统必须遵循。”
+    MODULE           RTP-MIB
+    MANDATORY-GROUPS {
+                     rtpSystemGroup,
+                     rtpHostGroup
+                     }
+    GROUP            rtpMonitorGroup
+    说明
+        “主机系统可以选择支持创建和删除行，从而可以作为RTP监视器使用。”
+    GROUP            rtpInverseGroup
+    说明
+        “多点传送RTP系统应实现这个可选的表。”
+        OBJECT  rtpSessionNewIndex
+            最低访问限制  不可访问
+            说明
+                 “RTP系统对创建行与删除行的支持是可选的，因而该对象的实现也是可选的。”
+        OBJECT  rtpSessionDomain
+            最低访问限制 只读
+            说明
+                 “RTP系统对创建行与删除行的支持是可选的。如果不支持，写操作也是可选的。“
+        OBJECT  rtpSessionRemAddr
+            最低访问限制 只读
+            说明
+                “RTP系统对创建行与删除行的支持是可选的，因而该对象的读/创建操作也是可选的。”
+        OBJECT  rtpSessionIfIndex
+            最低访问限制 只读
+              说明
+                “行的创建与删除是可选的，因而该对象的读/创建操作也是可选的。”
+        OBJECT  rtpSessionRowStatus
+            最低访问限制 不可访问
+              说明
+                “行的创建与删除是可选的，因而该对象的读/创建操作也是可选的。”
+        OBJECT  rtpSessionInverseStartTime
+            最低访问限制 不可访问
+              说明
+               “多点传送RTP系统应实现该可选表。”
+        OBJECT  rtpSenderInverseStartTime
+            最低访问限制不可访问
+              说明
+               “多点传送RTP系统应实现该可选表。”
+        OBJECT  rtpRcvrInverseStartTime
+            最低访问限制不可访问
+              说明
+               “多点传送RTP系统应实现该可选表。”
+    ::= { rtpCompliances 1 }
+
+rtpMonitorCompliance MODULE-COMPLIANCE
+    状态          当前
+    说明
+          “监视器应用必须遵循。不要求RTP监视器支持创建和删除。”
+    MODULE           RTP-MIB
+    MANDATORY-GROUPS     {
+                         rtpSystemGroup,
+                         rtpMonitorGroup
+                         }
+    GROUP                rtpHostGroup
+    说明
+        “监视器应用可能无法访问rtpHostGroup的值。”
+    GROUP                rtpInverseGroup
+    说明
+        “多点传送RTP系统应实现该可选表。”
+        OBJECT  rtpSessionLocAddr
+            最低访问限制 不可访问
+              说明
+               “RTP监视器追踪RTP或者RTCP包的来源是可选的，因而该对象的应用也是可选的。”
+        OBJECT  rtpRcvrPT
+            最低访问限制 不可访问
+              说明
+               “RTP监视器可能不支持从RTP头中访问RTP由载荷类型（仅仅接收RTCP消息）。用于获取有效载荷类型信息。” 
+        OBJECT  rtpSenderPT
+            最低访问限制 不可访问
+              说明
+               "RTP monitor systems may not support
+                retrieval of the RTP Payload Type from the RTP
+                header (and may receive RTCP messages only).  When
+                queried for the payload type information."
+        OBJECT  rtpRcvrOctets
+            最低访问限制 不可访问
+              说明
+               “RTP监视器可能只接收RTCP消息，而不接收包含8位字节个数的RTP消息，因而该对象的应用是可选的。”
+        OBJECT  rtpRcvrPackets
+            最低访问限制 不可访问
+              说明
+               “RTP监视器可能只接收RTCP消息，而不接收包含8位字节个数的RTP消息，因而该对象的应用是可选的。”
+        OBJECT  rtpSessionIfIndex
+            最低访问限制 不可访问
+              说明
+               “行的创建和删除是可选的，因而该对象的读/创建访问也是可选的。”
+        OBJECT  rtpSessionInverseStartTime
+            最低访问限制 不可访问
+              说明
+               “多点传送RTP系统应实现这个可选的表。”
+        OBJECT  rtpSenderInverseStartTime
+            最低访问限制 不可访问
+              说明
+               “多点传送RTP系统应实现这个可选的表。”
+        OBJECT  rtpRcvrInverseStartTime
+            最低访问限制 不可访问
+              说明
+               “多点传送RTP系统应实现这个可选的表。”
+    ::= { rtpCompliances 2 }
+END
+4. 安全考虑（Security Considerations）
+
+大多数情况下，MIB本身没有安全性风险；如果计划处理SNMP的安全性，查看系统的信息或者修改系统的某些参数时，MIB是一个工具而不是一个威胁。不过本MIB定义的管理对象中，由几个带有标明读写和/或读-创建的最高访问限制子句。这些对象可能被认为在某些网络环境下是敏感的或者说容易受到攻击。在不安全的、缺乏适当保护的环境下，对SET操作的支持可能对网络操作带来负面的影响。
+
+本MIB中没有一个只读对象会报告密码，尽管一些SDES[RFC1889]项如CANME――规范名――可能被认为敏感地依赖于某个特定公司的安全策略。如果没有适宜的访问控制策略限制对这些对象的访问，这些对象可能造成对系统配置信息和系统服务的攻击。有些企业既查看网络和系统配置，又浏览使用和性能的信息，甚至还有企业的资产状况，这样的企业可能会希望限制对MIB中大部分对象的SNMP访问。本MIB支持对rtpSessionNewIndex的读写操作，带来的副作用是在对该项进行写操作时，需要在表rtpSessionTable中创建相应的条目。rtpSessionEntry中有5个对象可以进行读/创建访问：rtpSessionDomain、 rtpSessionRemAddr、 rtpSessionIfIndex、rtpSessionRowStatus、和rtpSessionIfAddr确定了在特定界面上（interface）监视的一个RTP会话。这些对象的值一经创建就不能改变，对这些对象的初始化仅仅影响对会话的监视，而不影响主机终端系统对RTP会话的操作。因为rtpSessionNewIndex的写操作和rtpSessionEntry中的5个对象影响监视器的操作，对这些对象的写操作应该遵从适宜的访问控制策略。
+
+RTP和RTCP数据包的机密性在RTP规范[RTP1899]中的节9中定义。可以对RTP包或者RTCP包加密，也可以对二者都加密。对RTCP包加密可能对第三方监视器带来问题，尽管“对于RTCP，允许把混合RTCP包分解成两个低层的包，一个加密而另一个明文发送。比如，可以把SDES信息加密，而接受报告则以明文发送以适应第三方监视器[RFC1889]。”
+
+SNMPv1本身不是一个安全的环境。即使网络本身是可靠的（比如使用了IPSec），仍然没有这样的控制，以许可这个安全的网络上的某人访问并读写（GET/SET）MIB中的对象。建议应用者考虑SNMPv3框架提供的安全特性。特别推荐使用基于用户的安全模型[RFC2574]和基于视图的访问控制模型[RFC2575]。最后，消费者/用户有责任保证用于访问本MIB实例的SNMP实体必须正确设置，以保证只有那些具有合法权限的主要用户才能访问这些对象并真正地读取（GET）或设定（SET）――更新、创建、删除――这些对象。
+
+5.  致谢（Acknowledgements）
+
+笔者感谢Bert Wijnen和来自ITU SG-16管理计划的同仁，他们提出了很好的建议。Intel公司的Alan Batie和Bill Lewis也为RTP MIB作出了巨大的贡献，他们审阅了多份MIB草案并致力于SNMP RTP监视器的实现。3Com的Stan Naudus 和Intel的 John Du为RTP MIB的最初设计作出了贡献，他们也参与了RTP MIB最初草案的写作；他们的工作仍然体现在现在的RTP MIB版本中。Bill Fenner为最终文本的完善提供了极好的资料。 
+
+6.  知识产权（Intellectual Property）
+
+   The IETF takes no position regarding the validity or scope of any
+   intellectual property or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; neither does it represent that it
+   has made any effort to identify any such rights.  Information on the
+   IETF's procedures with respect to rights in standards-track and
+   standards-related documentation can be found in BCP-11.  Copies of
+   claims of rights made available for publication and any assurances of
+   licenses to be made available, or the result of an attempt made to
+   obtain a general license or permission for the use of such
+   proprietary rights by implementors or users of this specification can
+   be obtained from the IETF Secretariat.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights which may cover technology that may be required to practice
+   this standard.  Please address the information to the IETF Executive
+   Director.
+7.  引用（References）
+
+   [RFC1889]   Shulzrinne, H., Casner, S., Frederick, R. and V.
+               Jacobson, "RTP: A Transport Protocol for real-time
+               applications," RFC 1889, January 1996.
+
+   [RFC2571]   Harrington, D., Presuhn, R. and B. Wijnen, "An
+               Architecture for Describing SNMP Management Frameworks",
+               RFC 2571, April 1999.
+
+   [RFC1155]   Rose, M. and K. McCloghrie, "Structure and Identification
+               of Management Information for TCP/IP-based Internets",
+               STD 16, RFC 1155, May 1990.
+
+   [RFC1212]   Rose, M. and K. McCloghrie, "Concise MIB Definitions",
+               STD 16, RFC 1212, March 1991.
+
+   [RFC1215]   Rose, M., "A Convention for Defining Traps for use with
+               the SNMP", RFC 1215, March 1991.
+
+   [RFC2578]   McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J.,
+               Rose, M. and S. Waldbusser, "Structure of Management
+               Information Version 2 (SMIv2)", STD 58, RFC 2578, April
+               1999.
+
+   [RFC2579]   McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J.,
+               Rose, M. and S. Waldbusser, "Textual Conventions for
+               SMIv2", STD 58, RFC 2579, April 1999.
+
+   [RFC2580]   McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J.,
+               Rose, M. and S. Waldbusser, "Conformance Statements for
+               SMIv2", STD 58, RFC 2580, April 1999.
+
+   [RFC1157]   Case, J., Fedor, M., Schoffstall, M. and J. Davin,
+               "Simple Network Management Protocol", STD 15, RFC 1157,
+               May 1990.
+
+   [RFC1901]   Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+               "Introduction to Community-based SNMPv2", RFC 1901,
+               January 1996.
+
+   [RFC1906]   Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+               "Transport Mappings for Version 2 of the Simple Network
+               Management Protocol (SNMPv2)", RFC 1906, January 1996.
+   [RFC2572]   Case, J., Harrington D., Presuhn R. and B. Wijnen,
+               "Message Processing and Dispatching for the Simple
+               Network Management Protocol (SNMP)", RFC 2572, April
+               1999.
+
+   [RFC2574]   Blumenthal, U. and B. Wijnen, "User-based Security Model
+               (USM) for version 3 of the Simple Network Management
+               Protocol (SNMPv3)", RFC 2574, April 1999.
+
+   [RFC1905]   Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+               "Protocol Operations for Version 2 of the Simple Network
+               Management Protocol (SNMPv2)", RFC 1905, January 1996.
+
+   [RFC2573]   Levi, D., Meyer, P. and B. Stewart, "SNMPv3
+               Applications", RFC 2573, April 1999.
+
+   [RFC2575]   Wijnen, B., Presuhn, R. and K. McCloghrie, "View-based
+               Access Control Model (VACM) for the Simple Network
+               Management Protocol (SNMP)", RFC 2575, April 1999.
+
+   [RFC2570]   Case, J., Mundy, R., Partain, D. and B. Stewart,
+               "Introduction to Version 3 of the Internet-standard
+               Network
+                Management Framework", RFC 2570, April 1999.
+
+8. 作者地址（Authors' Addresses）
+
+   Mark Baugher
+   Intel Corporation
+   2111 N.E.25th Avenue
+   Hillsboro, Oregon  97124
+   U.S.A.
+
+   EMail: mbaugher@passedge.com
+
+
+   Bill Strahm
+   Intel Corporation
+   2111 N.E.25th Avenue
+   Hillsboro, Oregon  97124
+   U.S.A.
+
+   EMail: Bill.Strahm@intel.com
+
+
+   Irina Suconick
+   Ennovate Networks
+   60 Codman Hill Rd.,
+   Boxboro, Ma 01719
+   U.S.A.
+
+   EMail: irina@ennovatenetworks.com
+
+9. 版权声明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+感谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC2959 Real-Time Transport Protocol  Management Information Base 
+RFC2959实时传输协议管理信息库
+
+1
+
+
+2
+ＲＦＣ文档中文翻译计划
+
+

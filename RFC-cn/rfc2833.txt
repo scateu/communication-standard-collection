@@ -1,0 +1,815 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者： 吴晶（wing_wujing@sina.com）李超（licc_li@sina.com）
+译文发布时间：2001-6-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                      H. Schulzrinne
+Request for Comments: 2833                            Columbia University
+Category: Standards Track                                      S. Petrack
+                                                            MetaTel
+                                                            May 2000
+
+
+用于DTMF数字信号、电话音和电话信号的RTP负载格式
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+
+版权声明
+Copyright (C) The Internet Society (2001).
+
+摘要
+    本备忘录描述了在RTP数据包中传送双音多频(DTMF)信号、其它电话信号音和电话事
+件的方法。
+目录
+1 介绍	2
+1．1术语	3
+2．语音与事件	3
+3．用于命名电话事件的RTP负载格式	4
+3．1介绍	4
+3．2同时产生音频和事件	4
+3．3事件类型	4
+3．4 RTP头用法	5
+3．5负载格式	5
+3．6发送事件数据包	6
+3．7可靠性	6
+3．8举例	7
+3．9接收端使用SDP性能的表述	7
+3．10 DTMF事件	8
+3．11数据调制解调器和传真事件	8
+3．12线路事件	10
+3．13扩展线路事件	12
+3．14信息通路事件	12
+4．用于电话话音的RTP负载格式	13
+4．1介绍	13
+4．2公共电话话音信号实例	14
+4．3 RTP头字段的使用	15
+4．4 负载格式	15
+4．5可靠性	16
+5．信号音合并和命名事件	16
+6．MIME注册	16
+6．1 audio/telephone-event	16
+6．2 audio/tone	17
+7．安全考虑	18
+8. IANA考虑	18
+鸣谢	18
+作者地址	18
+参考书目	19
+版权说明	20
+致谢	21
+
+1 介绍
+    本备忘录定义了两种负载格式，一种用于在RTP包中传送双音多频数字信号、其它线
+路和干线信号（第三节），第二种则用于RTP包中普通多频电话音的传输（第四节）。由于
+低速率声音编解码器无法保证能完全正确地自动识别重现的电话音信号，所以需要单独定义
+RTP负载格式。定义独立负载格式也使得在保持低比特率的同时系统能有更高的冗余性。
+这里描述的负载格式将至少可应用于以下三种场合的DTMF处理：网关、终端系统和
+“RTP干线”。在第一种应用中，因特网电话网关检测引入网路的DTMF并发送描述该内容
+的RTP负载而不是通常的音频数据包。网关一般必须得有数字信号处理器和相应的算法，
+因为它经常要检测DTMF，例如在双阶段拨号中。由网关检测话音可减轻Internet终端系统
+的工作负担，同时也避免诸如G.723.1等低比特率编解码器误解DTMF音。第二，如“因特
+网电话”等因特网终端系统能够仿真DTMF的功能性，而不考虑自身产生精确的电话音对，
+也不影响接收端的语音识别负担能力。
+    在“RTP干线” 应用中，RTP常用于取代两点间通常的电路开关干线，这在仍然以电
+路开关为主的电话网络中犹为重要。这时，RTP干线端点将对音频通道中信号进行适当的编
+码，如按G.723.1 或G.729。然而，这种编码过程破坏了通过最低位携带的带内信令信息，
+也会干扰MF数字语音等段内信令话音。另外，如ANSam音中的相位反转等语音属性不支
+持语音编码。因而，网关需要从比特流中除去这些带内信令信息。它可以以带外方式通过待
+定义的信令传输机制传送，也可以使用本备忘录描述的机制进行传送。（如果两个干线端点
+在同一个媒体网关控制器可控范围内，媒体网关控制器也可处理该信令。）带内传送可以简
+化音频数据包和电话音或信号信息之间的时间同步。这在具有持续性和计时的事件中尤其重
+要，如DTMF信号传送。
+1．1术语
+   本文中的关键字“必须”，“必须不”，“要求的”，“应该”，“不应该”，“会”，“不会”，“建
+议”，“或许”，“可选的”在 RFC 2119 中解释。
+2．语音与事件
+网关处理DTMF数字信号和事件的方式有两种。第一种，它可以简单测量声音波段信
+号的频率成分并将这些信息传送到RTP接收端（第四节）。在这种模式下，网关仅从语音信
+号中简单辨别话音，无需鉴别话音的含义。用于PSTN且人可感知的所有话音信号都是一系
+列简单正弦波的组合，经过叠加或调制。（至少有一种话音使用了周期性相位反转，如在话
+音线路上指示数据传输的ANSam tone [3]。）
+  第二种，网关可以识别电话音并将它们译为名称，如振铃或忙音。接收端即产生电话音
+信号或其它相应的信号描述。通常，由于信号识别依赖开/关模式或个别电话音序列，这种
+识别会花几秒钟。另一方面，网关可以访问产生电话音的真实信令信息，因此能够立刻生成
+RTP包，无需绕开声音信号。
+    在电话网络中，电话音产生于不同的地方，取决于开关技术和音调特性。这就决定了当
+一个人给国外打电话时所听见的是她所熟悉的本地音调还是被叫国使用的音调。
+    对于模拟线路而言，拨号音通常是通过本地开关产生的。ISDN终端可以在本地产生拨
+号音，然后发送包含所拨数字的Q.931 SETUP消息。如果终端只发送SETUP消息而没有任
+何被叫方号码，开关收集由终端KEYPAD提供的数字，并由B通道发出拨号音。终端可在B
+通道使用音频信号，或是用Q.931消息触发本地产生拨号音。
+     振铃声（也称为回响音）由被呼叫方的本地开关产生，被呼叫方电话一响就打开一个
+单向声音通道。（这减少了修剪被呼叫当事人应答后响应的机会。它也允许预应答通告或带
+内呼叫过程指示在振铃前/中到达呼叫者。）拥塞音及特殊信息音可由通路中任何开关产生，
+也可由呼叫者开关根据接收到的ISUP消息产生。在模拟设备或ISDN终端中，忙音由呼叫
+者开关产生，并由相应ISUP消息触发。
+通过RTP发送信号事件的网关在一次单独RTP会话中会发送命名信号（第三节）以
+及话音表述（第四节），使用3.7节中定义的冗余机制插入这两项表述。因为它允许接收端
+自由选择合适的表述，所以这种方法也是一种比较通用的好办法。
+如果网关不能给出电话音表述，除命名信号外，它还应该在常规RTP音频数据包中（如
+在PCMU负载中）发送音频音。
+3．用于命名电话事件的RTP负载格式
+3．1介绍
+    下面描述的命名电话事件的负载格式适合于网关和终端到终端的场合。在网关中，将语
+音包网络连接到PSTN网络上的Internet电话网关重新生成DTMF音或其它电话事件并将它
+们插入到PSTN。由于识别DTMF数字等操作会占用几十毫秒，则最开始的数毫秒内数字将
+作为常规音频数据包到达。因此，为了避免在接收端产生虚假数字信号，必须注意音频样本
+及事件间的时间及功率（音量）队列。
+DTMF数字信号及命名电话事件作为音频流的一部分进行发送，且为了简化网关中音频
+波形的产生必须使用以相同序号和时间戳为基础的常规音频信道。默认的时钟频率为8000
+赫兹，但时钟频率可在动态分配负载类型时重定义。
+    这里描述的负载格式与Voice over Frame Relay Implementation Agreement[4]所提出
+的方式相比，即使在连续数据包丢失的情况下也可达到更高的冗余性。
+    若终端系统直接与Internet相连且不必再产生电话音信号，那么时间队列和功率标准就
+不相关了。这些系统依赖PSTN网关或Internet端系统产生DTMF事件，并且不执行自己的
+音频波形分析。例如Internet交互式声音应答系统（IVR）就是这样一种系统。
+  在某些环境中，音频流和DTMF数字信号或其它事件间的时间对齐并不重要，如果象
+前面提到的IVR一样，数据采用单播方式发送，最好采用比RTP更可靠的控制协议。这时
+就不能再使用本文定义的负载格式。
+3．2同时产生音频和事件
+    使用事件作为音频流的冗余编码，信号源可以同时发送事件和已编码的音频数据包，或
+者它会在事件音活动时阻塞发出的音频，只发送作为主编码和冗余编码的命名事件。
+值得注意的是，一种已编码音的周期在时间上会与用其它方式编码的音产生周期交叠。
+这在该信号音开始时就会发生，因此对远程终端重现信号音译码时必须避免此类错误。支持
+这种负载格式的实现应能处理这种交叠。由于音频中会包含音频压缩算法产生的假话音，建
+议网关只处理已译码的音。不过，一般而言这些额外音通常并不会干扰远端的识别。
+3．3事件类型
+      这种负载格式用于5种不同的信号格式：
+?	DTMF音（3。10小节）
+?	传真相关音（3。11小节）
+?	标准用户线路音（3。12小节）
+?	特定国家用户线路音（3。13小节）
+?	干线事件（3。14小节）
+
+    本文档兼容的实现必须支持表1中除“Flash”外的所有事件。如果使用其它方式，如
+带外机制实现信令线路条件，就不必实现其它事件。
+     在某些情况下，具体实现时有些事件可以简单忽略掉，例如传真音，在特定环境下它
+可能没什么意义。3.9小节指出了实现中如何使用SDP描述的 "fmtp"参数以表示它无法理解
+某一事件或一定范围内的事件。
+    依靠可用的用户接口，实现可以翻译表5中的所有电话音，更适合的方式是使用在并发
+“tone”负载或其它RTP音频负载所传送的电话音。作为可选项，它可以提供文本表述。
+    注意到由于MF主干也携带了大部分"line"信令，仿真电话的终端系统只需支持3.10小
+节和3.12小节中提到的事件，而接收主干信令的系统需要实现3.10、3.11、3.12和3.14小
+节提到的事件。 不支持传真和调制解调器功能的系统不用支持3.11描述的和传真相关的事
+件。
+    RTP的负载格式定为“telephone-event”，MIME类型为“audio/telephone-event”。
+默认的时间戳频率为8000赫兹，当然也可以定义其它频率。为了同现有的实现一致，这种
+负载格式没有静态负载类型号，而使用动态带外方式建立的RTP负载类型号。
+3．4 RTP头用法
+时间戳：RTP时间戳反映了当前数据包的测量点。3.5小节描述的事件持续时间就从该
+点算起。接收方根据所有数据包的时间戳计算RTCP接收报告中需要的波动。注意：波动值
+应主要用来比较两个用户或是两个时间段内的接收质量，并非是绝对的度量。
+
+标志位：RTP标志位指示一个新事件的开始。
+3．5负载格式
+     图一所示为负载格式。
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     event     |E|R| volume    |          duration             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+图一：命名事件的负载格式
+
+事件：事件按照3.10到3.14小节所示编码。
+volume：音量，对于DTMF数字信号及其它可表示为音频的事件，本字段描述音频
+的功率级，以dBm0标记。功率级范围从0 到-63 dBm0。有效的DTMF范围是从0 到-36 dBm0
+（必须做到）；低于-55 dBm0则必须丢弃（TR-TSY-000181,ITU-T Q.24A）。因而，值越大表
+明音量越小。这里的值只为DTMF数字定义。对于其它事件，发送端设置为零且接收端将
+忽略该值。
+duration：数字信号的宽度以时间戳单元表示。这样，事件从RTP时间戳表示的瞬间
+开始，并一直持续到该参数表示的长度。事件可以已经结束也可以没有结束。以8000赫兹
+取样来说，本字段最长可以表示8秒。
+E：结束位若设置为1表明数据包中含有事件的结束。因此上述的duration参数即测定
+了事件的完整宽度。
+发送方重发电话音的最后一个数据包才设置结束位，而不是第一次传送时就发送。这
+就避免了不断等待测定话音是否真正结束。接收端的实现可以使用不同算法产生话音，下面
+列出了两种。第一种，接收端简单地在音频播放缓冲区中时间戳描述的位置上放置给定宽度
+的话音。接收到扩充同一音频的附加数据时，播放缓冲区中的波形相应扩展。（但要特别注
+意，播放缓冲区中的音频可能要经过混合，例如叠加，而不是简单拷贝。）所以，如果一个
+数据包话音持续时间长于丢失的间隔时间且播放延迟很短，则会出现话音间隙。另外一种方
+法，接收端可以开始一段音频并一直播放至接收到有结束位的数据包，下一个话音可通过不
+同的时间戳值或给定的流失周期区分。此举提高了数据丢失时的鲁棒性，但如果事件的最后
+数据包在所有重发中都丢失了，则会造成话音扩展。为了避免话音“粘滞”，必须限制扩展
+音频的时间周期。无论使用哪种算法，话音不应该扩展到三个以上数据包间隔时间。轻微的
+扩展和短暂的暂停一般都是无害的。
+R：本字段为以后使用而保留。发送方必须将它设为0，接收端则应忽略它。
+3．6发送事件数据包
+音源一识别到事件就应开始发送事件数据包，之后按每50毫秒或根据会话中使用的音
+频编解码器的时间间隔连续发送。（由于时间戳中包含了时间信息，发送方无须为了保持精
+确的inter-event次数而维持精确的事件数据包间隔）
+Q.24 [5]，表A-1，指出了所有测量管理使用40毫秒的最小信号宽度，和不低于93毫
+秒的信令速率（话音及中止）。
+若一个事件延续了一个周期以上，信号源产生事件将发送一个新的事件数据包，其RTP
+时间戳值为事件开始时刻加上事件已经持续的时间。（RTP序列号按每个数据包依次增一。）
+如果最后间隔中没有新事件发生，那么事件应重发3次或直到下个事件被识别。这确保了即
+使最后一个数据包丢失，也能正确识别事件的宽度。
+    为了避免接收端等待事件的完成，DTMF数字信号及事件按递增形式发送。由于一些音
+频长达2秒，将造成实际延迟。发送方并不知道事件长度是否重要，因而需要立即且递增式
+地传送。如果接收端应用不在乎事件持续时间，那么这样的递增传输机制就避免了延迟。而
+有些应用则同时要关心延迟和事件持续时间，如PSTN网关等。
+3．7可靠性
+在一个事件中，RTP事件负载格式提供了事件的递增更新。错误恢复性取决于接收端的
+播放延迟。例如，如果播放延迟为120毫秒，包间隙为50毫秒，一行丢失两个数据包不会
+造成接收端产生音频间隙。
+RFC 2198 [6]中描述的音频冗余机制可以用于恢复数据包中丢失的事件。有效的数据速
+率是每50毫秒r个64位（32位作为冗余头，32位作为电话事件负载）或每秒r个1280位，
+其中r是每个数据包中携带的冗余事件数。r值可在具体实现时确定，建议可以使用5。
+冗余设计中时间戳的偏移量有14位，在采样频率8000Hz下，它可以携带2.048秒的电
+话事件。网关能利用其中包含的前一事件的开始时间精确地重建音频序列。该机制可更具弹
+性地处理2.048秒或r个信号的连续数据包丢失。对于前一数字信号只表示其平均响度。  
+     解码器将事件负载视为当前音频帧的高压缩版。在那种模式下，事件中每个RTP数据
+包都会包含当前音频编解码器对这些数字信号的翻译（在G.723.1或 G.729提到）以及3.5
+小节提到的表述，加上更早的事件。
+    这种方法使得那些不理解该格式的哑网关也能运行。参见第1节。
+3．8举例
+    一个典型的RTP数据包，用户正在拨DTMF序列的最后数字“911”。第一个数字信号
+200毫秒长（1600个时间戳单元）且在0时间开始，第二个数字信号持续了250毫秒（2000
+个时间戳单元）且在800毫秒时开始（6400个时间戳单元），第三个数字信号在1.4秒处（11200
+个时间戳单元）被压缩且数据包显示出是在1.45秒时（11600个时间戳单元）发出。整个帧
+宽度为50毫秒。为能看清各部分，以下整体上忽视字节对齐。假定时间戳和顺序号在第一
+个数字开始设为0。冗余机制和电话事件负载的动态负载类型分别为96和97。
+3．9接收端使用SDP性能的表述
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |V=2|P|X|  CC   |M|     PT      |       sequence number         |
+   | 2 |0|0|   0   |0|     96      |              28               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           timestamp                           |
+   |                             11200                             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           synchronization source (SSRC) identifier            |
+   |                            0x5234a8                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |F|   block PT  |     timestamp offset      |   block length    |
+   |1|     97      |            11200          |         4         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |F|   block PT  |     timestamp offset      |   block length    |
+   |1|     97      |   11200 - 6400 = 4800     |         4         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |F|   Block PT  |
+   |0|     97      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     digit     |E R| volume    |          duration             |
+   |       9       |1 0|     7     |             1600              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     digit     |E R| volume    |          duration             |
+   |       1       |1 0|    10     |             2000              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     digit     |E R| volume    |          duration             |
+   |       1       |0 0|    20     |              400              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                   图2：拨“911”之后的RTP数据包示例
+
+     接收端会指出它可以处理哪个命名事件，例如，使用SDP协议（RFC 2327 [7]）。负载
+格式使用了下列fmtp格式以列出可接受的事件值：
+   a=fmtp:<format> <list of values>
+    这个值列表由逗号分开成员，它可以是一个十进制数也可以是由连字符（波折号）隔开
+的两个十进制数，且第二个数字要大于第一个。数字或连字符间不允许空格。列表无需排序。
+例如，如果负载格式使用负载类型号为100，可处理DTMF音（事件0到15）和拨号
+音和铃声，那它在SDP消息中可如下表述：
+   a=fmtp:100 0-15,66,70
+    因为所有实现必须能接收事件0～15，所以在a=fmtp行上这些事件是可列可不列。
+相应的MIME参数是“events”，所以下面的样本媒体类型定义要和上面SDP的例子相
+对应：
+   audio/telephone-event;events="0-11,66,67";rate="8000"
+3．10 DTMF事件
+    表1总结了电话事件负载格式中与DTMF有关的命名事件。
+                     Event  encoding (decimal)
+                     _________________________
+                     0--9                0--9
+                     *                     10
+                     #                     11
+                     A--D              12--15
+                     Flash                 16
+表1：DTMF命名事件
+3．11数据调制解调器和传真事件
+表3.11总结了出现在为传真机或调制解调器服务的用户线路中的事件及音频。音频
+部分如下描述，其详细说明在表7中介绍。
+ANS：这种频率为2100 +/- 15 Hz的话音用于禁止数据传输中[8,9]的回声抑止。对于
+传真机，建议T.30 [9]中引用了这种音频，称为终端标识（CED）应答。
+      /ANS：本信号与ANS相同，但每450 +/- 25 ms会反相。它可以同时禁止回声消除和
+回声抑止。在ITU的建议V.25 [8]中，本信号表示为ANS（带上划线）。
+      ANSam：改进的应答话音(ANSam) [3]是频率为2100 +/- 1 Hz的不带反相的正弦波信
+号，调幅正弦波为15 +/- 0.1 Hz。如果不需要禁止网络回声消除效，则该音可由调制解调器
+发送。
+/ANSam：改进的带相位反转的应答音(ANSam) [3] 是频率为2100 +/- 1 Hz，反相间隔
+为450 +/- 25 ms的正弦波信号，调幅正弦波为15 +/- 0.1 Hz。话音[10,8]由解调器[11]和传真
+机发送以禁止回声抑止。
+      CNG：在拨被呼叫的传真机电话号码之后（应答之前），呼叫群III的传真机（可选
+择其一）开始发送1100 Hz有断续的CalliNG（CNG）音。[9]
+          CRdi：性能请求（CRd），初始化端[12]，是400毫秒长，频率为1375 Hz 和2002 
+Hz的双音信号，其后是一段100毫秒，1900 Hz的单音信号。“这个信号要求远程站点从电
+话模式切换到信息传输模式并要求远程站点传输性能列表。特别地，Crdi是在呼叫过程中由
+初始站点传送，或在呼叫建立阶段由呼叫站点作为对CRe 或 Mre的响应发送。”
+         CRdr：CRdr是对Crdi（见上）的应答音。它是由400毫秒的频率为1529 Hz 和 2225 
+Hz的双音信号组成，且其后为100毫秒、1900 Hz的单音信号。
+          CRe：性能请求(CRe) [12]是长度400毫秒、频率1375 Hz 和2002 Hz的双音信
+号，其后为长度100毫秒、频率400 Hz的单音信号。“这个信号要求远程站点从电话模式转
+换为信息传输模式，并要求远程站点传输性能列表消息。特别地，CRe是呼叫建立时由自动
+应答站点来发送。”
+           CT：“本呼叫音由一串二进制信号1或1300 Hz的中断脉冲信号组成，正脉冲
+宽度为0.5s到0.7s，负脉冲宽度为1.5s到2.0s。” 不采用V.8呼叫初始化音的调制解调器经
+常使用该音。
+          Esi：溢出信号(ESi) [12]是 400毫秒的频率为1375 Hz 和2002 Hz的双音信号，
+其后为100毫秒、频率为980 Hz的单音信号。“这个信号要求远程站点从电话模式到信息传
+输模式。ESi是由初始化站点来发送。”
+      Esr：溢出信号(ESr) [12]是 400毫秒的频率为1529 Hz 和2225 Hz的双音信号，其后
+为100毫秒、频率为1650Hz的单音信号。与ESi相同，但是由应答站点发送。
+          Mrdi：性能要求（MRd）[12]，初始化方，是400毫秒、频率为1375 Hz 和2002 
+Hz的双音信号组成，其后为100毫秒、频率1150 Hz的单音信号。“这个信号要求远程站点
+从电话模式转换到信息传输模式，并要求远程站点发送模式选择消息。特别地，MRdi 信号
+是由初始站点在通话过程中传送，或是由呼叫站点在呼叫建立时作为对Mre的应答发送。”
+           MRdr：MRdr 是对MRdi（见上）的应答话音。它是由400毫秒的频率为1529 
+Hz 和 2225 Hz的双话音信号组成，且紧随于100毫秒的频率为1150 Hz的单话音信号。
+           Mre：它的模式要求(MRe) [12]是指400毫秒的频率为1375 Hz 和2002 Hz双话
+音信号，，且紧随于100毫秒的频率为650 Hz的单话音信号。“这个信号要求从电话模式到
+信息传输模式的远程站点传输以及要求远程站点进行的选择消息模式的传输。通常，MRe
+是由专门为呼叫所设立的自动应答站点来发送。”
+      V.21：V.21描述了使用频移键控(FSK)的300 b/s的全双工调制解调器。它被用于群组
+III中传真机交换T.30信息。呼叫方在通道1发送，在通道2接收；应答方在通道2发送，
+通道1接收。每一位的值都有不同的音，所以V.21信令包含了所有4种不同的音。
+     表2总结了常用过程：
+           过程                      标识
+           ___________________________________________________
+           V.25 and V.8                  		ANS
+           V.25, echo canceller disabled  		ANS, /ANS, ANS, /ANS
+           V.8                            	ANSam
+           V.8, echo canceller disabled   		/ANSam
+
+表2：V.x 建议中ANS, ANSam and /ANSam的使用
+           事件                    编码（十进制）
+           ___________________________________________________
+           Answer tone (ANS)             32
+           /ANS                         33
+           ANSam                       34
+           /ANSam                       35
+           Calling tone (CNG)              36
+           V.21 channel 1, "0" bit            37
+           V.21 channel 1, "1" bit            38
+           V.21 channel 2, "0" bit            39
+           V.21 channel 2, "1" bit            40
+           CRdi                          41
+           CRdr                          42
+           CRe                           43
+           ESi                            44
+           ESr                           45
+           MRdi                         46
+           MRdr                          47
+           MRe                          48
+           CT                            49
+表3：数据和传真的命名事件
+3．12线路事件
+    表4概述了在用户线路中可能出现的事件和音频。
+    ITU建议E.182 [13]定义了何时使用哪种音。它下面定义了呼叫者接听到的标准音：
+    拨号音：交换机准备接收地址信息。
+    PABX内部拨号音：PABX准备接收地址信息。
+    特殊拨号音：类似于拨号音，但呼叫者线路处于特殊条件，例如呼叫转移或语音信件就
+绪（如“Stutter拨号音”）。
+    二次拨号音：网络已经接受地址信息，但还需要额外信息。
+    铃音：该事件引发接收器产生警示信号（“响铃”）。受话方可以自己设置实际使用的振
+铃声或用其它方式通知呼叫到达。（这不同于下面所提的呼叫方听到的振铃音。）
+    振铃音：呼叫已发到受话方且呼叫信号（振铃）正被传送到被呼叫方。这种话音也称为
+“回响”。
+    特殊振铃音：一种特殊服务，诸如呼叫转移或呼叫等待，拨号完后激活。
+    忙音：被呼叫电话号码正忙。
+    拥塞音：呼叫必须的设施暂时无法使用。
+    呼叫卡服务音：呼叫卡服务音由60毫秒的941 Hz 和 1477 Hz的话音叠加组成（DTMF 
+'#'），其后为940毫秒的350 Hz 和 440 Hz的话音（U.S. 拨号音），按200毫秒定时成指数
+衰减。
+    特殊信息音：受话方无法接通，但原因既不是“忙”也不是“拥塞”。为了便于使用自
+动设备，本话音在所有呼叫失败通知前使用。
+    安慰音：呼叫正在进行。在长时转拨延时中使用，例如，国际呼叫连接。
+    保持音：呼叫方处于保持状态。
+    录音音：呼叫方已经被连接到自动应答服务且被提示开始讲话。
+    呼叫方等待音：被呼叫站点忙，但提供了呼叫等待服务。
+    收费音：收费电话一端的呼叫方被提醒支付硬币。
+积极指示音：附加服务启动。
+    消极指示音：无法启动附加服务。
+    挂断警告音：呼叫方已经挂断设备超过一段时间。
+    被呼叫方或接听方在通话中还可以收到以下话音： 
+    呼叫等待音：另一用户想接通本用户。
+    警告音：呼叫正被录音。本话音并非必需。
+    侵扰音：呼叫被监听，例如被接线员。
+CPE提示信号：一种提示设备有带内FSK数据到达的信号音。CPE提示信号是2130 
+Hz和2750 Hz音的组合，允许0.5%的误差和80到0.80ms的宽度。CPE提示信号与ADSI
+服务以及呼叫等待标识服务[14]共同使用。
+    接线员可以听到下列信号音：
+    收费电话识别音：一个人正在使用收费电话呼叫或接听（因此收集该呼叫是不妥的）。
+          Event                      encoding (decimal)
+          _____________________________________________
+          Off Hook                                  64
+          On Hook                                   65
+          Dial tone                                 66
+          PABX internal dial tone                   67
+          Special dial tone                         68
+          Second dial tone                          69
+          Ringing tone                              70
+          Special ringing tone                      71
+          Busy tone                                 72
+          Congestion tone                           73
+          Special information tone                  74
+          Comfort tone                              75
+          Hold tone                                 76
+          Record tone                               77
+          Caller waiting tone                       78
+          Call waiting tone                         79
+          Pay tone                                  80
+          Positive indication tone                  81
+          Negative indication tone                  82
+          Warning tone                              83
+          Intrusion tone                            84
+          Calling card service tone                 85
+          Payphone recognition tone                 86
+          CPE alerting signal (CAS)                 87
+          Off-hook warning tone                     88
+          Ring                                      89
+                       表4：E.182线路事件
+3．13扩展线路事件
+    表5总结了可能出现在用户线路中的特定区域（国家）事件和信号音。
+3．14信息通路事件
+    表6总结了可能出现在主干的事件和话音。应注意的是主干也会传送线路事件，因为
+MF信令不包括逆向信号（3.12小节）。
+      过渡性ABCD：在数字主干中使用的4位信号。对于N状态信令，使用第一个N值
+被。
+
+       Event                            encoding (decimal)
+       ___________________________________________________
+       Acceptance tone                                  96
+       Confirmation tone                                97
+       Dial tone, recall                                98
+       End of three party service tone                  99
+       Facilities tone                                 100
+       Line lockout tone                               101
+       Number unobtainable tone                        102
+       Offering tone                                   103
+       Permanent signal tone                           104
+       Preemption tone                                 105
+       Queue tone                                      106
+       Refusal tone                                    107
+       Route tone                                      108
+       Valid tone                                      109
+       Waiting tone                                    110
+       Warning tone (end of period)                    111
+       Warning Tone (PIP tone)                         112
+表5：特定地区（国家）线路事件
+    T1 ESF（扩展的超级帧格式）允许2，4和16状态信令位选项。这些信令位被命名为A、
+B、C和D。当使用ESF T1帧时，信令信息作为帧中的强制位6，12，18以及24发送。A D4
+超级帧只用A和B位发送4状态信令。当使用CEPT E1结构时，每帧发送双通道16状态
+信令，所有信令都在时间槽16中携带。
+     由于这些是状态信息而不是改变信令，实现中应该使用下面的三倍冗余机制，类似于
+ITU-T Rec. I.366.2 [16]中规定的Annex L。发送时，相同的ABCD信息以5ms为间隔发送3
+次。若在此期间其它信息发送，也要继续。在经过一段时间没有任何改变后，ABCD信息每
+隔5秒发送一次。
+      闪烁：一种短暂的转换，典型的是以120－290ms为周期，从挂机到摘机再到挂机，
+由接入交换机使用表示呼叫地址信令可以继续。
+      来电捕获：呼叫尝试（摘机）的来到信息指示。
+
+       Event                           encoding (decimal)
+       __________________________________________________
+       MF 0... 9                                128...137
+       MF K0 or KP (start-of-pulsing)                 138
+       MF K1                                          139
+       MF K2                                          140
+       MF S0 to ST (end-of-pulsing)                   141
+       MF S1... S3                              142...143
+       ABCD signaling (see below)               144...159
+       Wink                                           160
+       Wink off                                       161
+       Incoming seizure                               162
+       Seizure                                        163
+       Unseize circuit                                164
+       Continuity test                                165
+       Default continuity tone                        166
+       Continuity tone (single tone)                  167
+       Continuity test send                           168
+       Continuity verified                            170
+       Loopback                                       171
+       Old milliwatt tone (1000 Hz)                   172
+       New milliwatt tone (1004 Hz)                   173
+
+表6：信息通路事件
+
+        Seizure：由应答交换机捕捉，对输出捕捉的响应。
+        Unseize电路：呼叫结束时从摘机到挂机的电路转换。
+        闪烁关闭：一种短暂转换，典型的是以100-350ms为周期，从摘机到挂机再回到摘
+机的，在接线员服务主干使用。
+        连续音发送：一种频率为2010 Hz的信号音。
+        连续音检测：一种频率为2010 Hz的信号音。
+        连续测试发送：一种频率为1780 Hz的信号音由呼叫交换机发送。如果被叫交换机
+接收到，则返回“连续检验”话音。
+      连续验证：一种频率为2010 Hz的音。它是用于双音过程的一种应答音。
+4．用于电话话音的RTP负载格式
+4．1介绍
+    第3节中介绍了通过名称描述信号音和事件方法，这里介绍另外一种通过波形属性描述
+的方法。特别是由于它不依赖于识别宽度和暂停，所以识别速度要比命名信号快。
+    对于拨号音、铃音、忙音、拥塞音，特殊通知音以及其它特殊信号音，如收费电话识别
+音、呼叫等待或录音话音等还没有独立的国际标准。然而，各地区的信号音都有很多共同的
+特性[17]：
+  
+?	电话音包括单音，两三种附加音，或者双音调制。（几乎所有电话音都用双频；
+只有匈牙利的“特殊拨号音”为三频。）混和音都有相同的振幅且无衰减。      
+?	电话事件的信号音在25 Hz（安哥拉铃音）到1800 Hz的范围内。CED是最高的
+使用频率为2100 Hz。电话频率范围限制在3400 Hz之内。（钢琴的音频范围可
+从27.5 Hz到4186 Hz。）
+?	调制频率范围在15 Hz（ANSam音）到480 Hz（牙买加）之间。非整数频率只
+有16 2/3 和 33 1/3 Hz。（这些分数频率来自早期的交流电网频率。）   
+?	非连续性音宽度不小于4秒。
+?	ITU建议E.180 [18]指出不同的电话公司要求音准在0.5到1.5%之间。建议提出
+频差为1％。
+4．2公共电话话音信号实例
+作为对实现者的辅助，表7中概述了一些公共话音。标明“ITU ...”的行中表示这是E.180 
+[18]的建议。注意这里并没有对这些音以特殊指导。表中符号“＋”表示没有调制的附加音，
+“*”则表示调幅。一些音的含义在3.12小节或3.11小节（对V.21而言）中有介绍。
+
+     音名             		频率  		开周期  闭周期
+     ______________________________________________________
+     CNG                        1100        0.5         3.0
+     V.25 CT                    1300        0.5         2.0
+     CED                        2100        3.3          --
+     ANS                        2100        3.3          --
+     ANSam                   2100*15        3.3          --
+     V.21 "0" bit, ch. 1        1180    0.00333
+     V.21 "1" bit, ch. 1         980    0.00333
+     V.21 "0" bit, ch. 2        1850    0.00333
+     V.21 "1" bit, ch. 2        1650    0.00333
+     ITU dial tone               425         --          --
+     U.S. dial tone          350+440         --          --
+     ______________________________________________________
+     ITU ringing tone            425  0.67--1.5        3--5
+     U.S. ringing tone       440+480        2.0         4.0
+     ITU busy tone               425
+     U.S. busy tone          480+620        0.5         0.5
+     ______________________________________________________
+     ITU congestion tone         425
+     U.S. congestion tone    480+620       0.25        0.25
+表7：电话音实例
+
+4．3 RTP头字段的使用
+      时间戳：RTP时间戳反映了当前数据包的采样点。在3.5小节中讨论事件宽度就从该
+时刻开始。
+4．4 负载格式
+    根据前面描述的特征，本文定义了称之为“信号音”的RTP负载格式，它可表示单频
+或多频信号音。（相应的MIME类型为“audio/tone”。）默认时间戳频率为8000 Hz，但也可
+定义其它频率。注意的是时间戳频率不影响频率的解释，只影响宽度。
+    与当前惯例一致，这种负载格式没有静态负载类型编号，而使用动态和带外方式建立的
+RTP负载类型。
+    这在图3中说明。
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |    modulation   |T|  volume   |          duration             |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |R R R R|       frequency       |R R R R|       frequency       |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |R R R R|       frequency       |R R R R|       frequency       |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    ......
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |R R R R|       frequency       |R R R R|      frequency        |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                               图3：信号音负载格式
+   负载包括以下字段： 
+      调制：用赫兹表示的调制频率。该字段是9位无符号整数，允许频率一直到511 Hz。
+如果没有调制，该字段值为0。
+      T：如果“T”位设为1，调制频率要被3除。否则，就使用本来的调制频率。由于实
+际中还在使用16 2/3 Hz这样的调制频率，该位允许调制频率精确到1/3 Hz。
+音量：话音的功率级别，以dBm0标记，范围从0 到-63 dBm0。（注意：对于数字信
+号发生器首选的范围是从-8 dBm0到 -3 dBm0。）
+宽度：话音的宽度，用时间戳单元度量。话音由RTP时间戳标志的瞬间开始，持续
+到整个宽度值。宽度的定义与基于采样的编译码器一致，时间戳描述了第一个样本的采样点。
+      频率：增加的信号音频率，以赫兹为单位，以12位无符号整数发送。字段的长度足
+够表示到4095 Hz，超出了电话网的范围。0值表示静音。单音可包含任何数目的频率。
+      R：本字段为保留字段。发送方必须将它设为0，接收端则应忽略它。
+4．5可靠性
+     本负载格式采用3.7小节中描述的可靠性机制。
+5．信号音合并和命名事件
+    利用RFC 2198中指定方法，可以把第3及第4节的负载格式组合为单独的负载。例如
+图4中的RTP数据包由两个“信号音”和一个“电话事件”负载合并而成。负载类型可分
+别选97和98，采样频率8000 Hz。这里冗余格式动态负载类型为96。 
+    数据包说明了美国铃音的瞬态图， 1.5秒（12000个时间戳单元）即到达2.0/4.0第二节
+拍的第二个正脉冲，整个铃音周期为7.5秒（60000个时间戳单元）。第二节拍下频率为440 
++ 480 Hz的话音开始第48000个RTP时间戳处。后面是4秒的静音。但由于RFC 2198只用
+14位偏移，只能表示出2.05秒（16383个时间戳单元）。尽管信号音序列不完整，发送方也
+可以判断这的确是回响，从而包括了响应的命名事件。
+6．MIME注册
+6．1 audio/telephone-event
+      MIME媒体类型名：audio
+      MIME子类型名：telephone-event
+      必需参数：无
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | V |P|X|  CC   |M|     PT      |       sequence number         |
+    | 2 |0|0|   0   |0|     96      |              31               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                           timestamp                           |
+    |                             48000                             |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |           synchronization source (SSRC) identifier            |
+    |                            0x5234a8                           |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |F|   block PT  |     timestamp offset      |   block length    |
+    |1|     98      |            16383          |         4         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |F|   block PT  |     timestamp offset      |   block length    |
+    |1|     97      |            16383          |         8         |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |F|   Block PT  |
+    |0|     97      |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |  event=ring   |0|0| volume=0  |     duration=28383            |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | modulation=0    |0| volume=63 |     duration=16383            |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |0 0 0 0|     frequency=0       |0 0 0 0|    frequency=0        |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | modulation=0    |0| volume=5  |     duration=12000            |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |0 0 0 0|     frequency=440     |0 0 0 0|    frequency=480      |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+图4：一个组合了话音和事件的RTP数据包
+      可选参数：“events”参数列出了实现支持的事件。表中的多个事件元素由逗号分隔。
+每个元素是单个整数或由连字符分开的两个整数。参数间不允许空白。整数指出了实现支持
+的事件号。所有的实现都必须支持事件0～15，所以如果执行只支持这些事件的话，参数表
+就可以省略。
+      “rate”参数描述了采样速率，以赫兹为单位。数值可写为浮点或整数形式。若忽略
+不写，则为默认值8000 Hz。
+      编码考虑：这种类型只定义为通过RTP[1]传送。
+      安全考虑：见本文中的“安全考虑“部分（第7节）。
+      互操作性考虑：无
+     已发行规范：本文
+      使用该媒体的应用：电话事件音频子类型支持在Internet上传输电话系统事件。
+      附加信息：
+          1．幻数：N/A
+          2．文件扩展名：N/A
+          3．Macintosh 的文件类型代码：N/A
+6．2 audio/tone
+      MIME媒体类型名：audio
+      MIME子类型名：tone
+      必需参数：无
+      可选参数：“rate”描述了取样品的速率，以赫兹为单位。数值可写为浮点或整数形式。
+若忽略不写，则为默认值8000 Hz。
+      编码考虑：只定义为通过RTP [1]传输。
+      安全考虑：见本文中的“安全考虑“部分（第7节）。
+互操作性考虑：无
+       已发行规范：本文
+      使用该媒体的应用：电话音音频子类型支持纯合成话音的传输，例如那些常用于当前
+电话系统中表示呼叫进程的电话音。
+      附加信息：
+           1．幻数：N/A
+           2．文件扩展名：N/A
+           3．Macintosh 的文件类型代码：N/A
+7．安全考虑
+    使用本规范定义的负载格式的RTP数据包在安全考虑上要依照RTP规范(RFC 1889 
+[1])，及任何合适的RTP框架（如RFC 1890 [19]）。这意味着媒体数据流的机密性要通过加
+密来实现。因为负载格式的数据压缩应用于端到端场合，所以加密可在压缩之后进行，这样
+两种操作间就不会有冲突。
+    这种负载类型不会引起接收端包处理过程中在计算复杂性方面明显的不一致性，从而避
+免了潜在的拒绝服务。
+    在早期网络采用带内信令且缺乏相应的信号音滤波器，3.14小节中介绍的话音可以用于
+收费欺诈。
+    附加安全考虑在RFC 2198 [6]中描述。
+8. IANA考虑
+    本文定义了两种新的RTP负载格式，电话事件和电话音，以及相关的MIME类型，即
+audio/event和audio/tone。
+    在audio/event类型中，附加的事件必须由IANA注册。注册要得到当前IETF视听传输
+工作组主席的正式批准，或者如果AVT组已经关闭，也可由传输领域主管任命的一个专家
+正式批准。新事件的含义必须以RFC文档或者由其它标准化团体（如ITU-T）的等价标准
+化文档形式发行。
+鸣谢
+    对Megaco工作组的建议表示万分感激。具体建议和意见由Fred Burg,，Steve Casner， 
+Fatih Erdin， Bill Foster， Mike Fox，Gunnar Hellstrom，Terry Lyons，Steve Magnell,，Vern 
+Paxson and Colin Perkins提供。
+作者地址
+   Henning Schulzrinne
+   Dept. of Computer Science
+   Columbia University
+   1214 Amsterdam Avenue
+   New York, NY 10027
+   USA
+   EMail:  schulzrinne@cs.columbia.edu
+   Scott Petrack
+   MetaTel
+   45 Rumford Avenue
+   Waltham, MA 02453
+   USA
+   EMail:  scott.petrack@metatel.com
+参考书目
+   [1]  Schulzrinne, H., Casner, S., Frederick, R. and V. Jacobson,
+        "RTP:  A Transport Protocol for Real-Time Applications", RFC
+        1889, January 1996.
+
+   [2]  Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+   [3]  International Telecommunication Union, "Procedures for starting
+        sessions of data transmission over the public switched telephone
+        network," Recommendation V.8, Telecommunication Standardization
+        Sector of ITU, Geneva, Switzerland, Feb. 1998.
+   [4]  R. Kocen and T. Hatala, "Voice over frame relay implementation
+        agreement", Implementation Agreement FRF.11, Frame Relay Forum,
+        Foster City, California, Jan. 1997.
+  [5]  International Telecommunication Union, "Multifrequency push-
+        button signal reception," Recommendation Q.24, Telecommunication
+        Standardization Sector of ITU, Geneva, Switzerland, 1988.
+   [6]  Perkins, C., Kouvelas, I., Hodson, O., Hardman, V., Handley, M.,
+        Bolot, J., Vega-Garcia, A. and S. Fosse-Parisis, "RTP Payload
+        for Redundant Audio Data", RFC 2198, September 1997.
+   [7]  Handley M. and V. Jacobson, "SDP: Session Description Protocol",
+        RFC 2327, April 1998.
+   [8]  International Telecommunication Union, "Automatic answering
+        equipment and general procedures for automatic calling equipment
+        on the general switched telephone network including procedures
+        for disabling of echo control devices for both manually and
+        automatically established calls," Recommendation V.25,
+        Telecommunication Standardization Sector of ITU, Geneva,
+        Switzerland, Oct. 1996.
+   [9]  International Telecommunication Union, "Procedures for document
+        facsimile transmission in the general switched telephone
+        network," Recommendation T.30, Telecommunication Standardization
+        Sector of ITU, Geneva, Switzerland, July 1996.
+   [10] International Telecommunication Union, "Echo cancellers,"
+        Recommendation G.165, Telecommunication Standardization Sector
+        of ITU, Geneva, Switzerland, Mar. 1993.
+   [11] International Telecommunication Union, "A modem operating at
+        data signaling rates of up to 33 600 bit/s for use on the
+        general switched telephone network and on leased point-to-point
+        2-wire telephone-type circuits," Recommendation V.34,
+        Telecommunication Standardization Sector of ITU, Geneva,
+        Switzerland, Feb. 1998.
+   [12] International Telecommunication Union, "Procedures for the
+        identification and selection of common modes of operation
+        between data circuit-terminating equipments (DCEs) and between
+        data terminal equipments (DTEs) over the public switched
+        telephone network and on leased point-to-point telephone-type
+        circuits," Recommendation V.8bis, Telecommunication
+        Standardization Sector of ITU, Geneva, Switzerland, Sept. 1998.
+
+   [13] International Telecommunication Union, "Application of tones and
+        recorded announcements in telephone services," Recommendation
+        E.182, Telecommunication Standardization Sector of ITU, Geneva,
+        Switzerland, Mar. 1998.
+   [14] Bellcore, "Functional criteria for digital loop carrier
+        systems," Technical Requirement TR-NWT-000057, Telcordia
+        (formerly Bellcore), Morristown, New Jersey, Jan. 1993.
+   [15] J. G. van Bosse, Signaling in Telecommunications Networks
+        Telecommunications and Signal Processing, New York, New York:
+        Wiley, 1998.
+   [16] International Telecommunication Union, "AAL type 2 service
+        specific convergence sublayer for trunking," Recommendation
+        I.366.2, Telecommunication Standardization Sector of ITU,
+        Geneva, Switzerland, Feb. 1999.
+   [17] International Telecommunication Union, "Various tones used in
+        national networks," Recommendation Supplement 2 to
+        Recommendation E.180, Telecommunication Standardization Sector
+        of ITU, Geneva, Switzerland, Jan. 1994.
+   [18] International Telecommunication Union, "Technical
+        characteristics of tones for telephone service," Recommendation
+        Supplement 2 to Recommendation E.180, Telecommunication
+        Standardization Sector of ITU, Geneva, Switzerland, Jan. 1994.
+   [19] Schulzrinne, H., "RTP Profile for Audio and Video Conferences
+        with Minimal Control", RFC 1890, January 1996.
+版权说明
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+致谢
+   Funding for the RFC Editor function is currently provided by the Internet Society.
+
+RFC 2833――RTP Payload for DTMF Digits,                          用于DTMF数字信号、电话音
+Telephony Tones and Telephony Signals                     和电话信号的RTP负载格式
+
+
+1
+RFC文档中文翻译计划

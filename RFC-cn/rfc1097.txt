@@ -1,0 +1,101 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：boniter（boniter    boniter@etang.com）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                                  B. Miller
+Request for Comments: 1097                                            CMU-NetDev
+                                                                    1 April 1989
+ 
+Telnet潜意识-信息选项
+(RFC1097――TELNET SUBLIMINAL-MESSAGE Option)
+本备忘录的状态
+这篇RFC为Internet社会定义了一个标准。在Internet上通过Telnet协议显示潜
+意识信息的主机被期望采用和执行这个标准。此备忘录的发布是无限的。
+目录
+命令名和代码	1
+命令含义	1
+默认值	2
+选项的动机	2
+描述和执行注意	2
+例子	3
+承谢	3
+
+命令名和代码
+      SUBLIMINAL-MESSAGE        257
+命令含义
+IAC WILL SUBLIMINAL-MESSAGE
+    这个命令的发送者需要允许来，或是确认它将显示潜意识信息。
+
+    IAC WONT SUBLIMINAL-MESSAGE
+    命令的发送者拒绝显示潜意识信息。
+
+    IAC DO SUBLIMINAL-MESSAGE
+    命令的发送者需要接收者，或是承认接受者的允许来显示潜意识信息。
+
+    IAC DONT SUBLIMINAL-MESSAGE
+    命令的发送者要求接收者不显示潜意识信息。
+
+    IAC SB SUBLIMINAL-MESSAGE <16-bit value> <16-bit value> <string> IAC SE
+    发送者定义了一条通过远程的服务器潜意识地显示的信息。如果客户端已经同意（通过
+标准WILL WONT DO DONT机制）来显示潜意识信息，它必须接受这个潜在的商议并尝试在定
+义持续时间的用户控制台上显示信息字符串，而且不需在固定间隔内持续地显示，直到接收
+到另一个潜意识-信息潜在商议。执行信息的位置和描述具有依赖性。
+    第一个16-bit值定义了毫秒级的信息持续时间。它是先发送MSB。第二个16-bit值定
+义了信息显示所伴随的频率。它描述了在现实之间的秒数，而且也是先发送MSB。最后的参
+数是信息本身。
+    这个潜在商定的语法是：
+              IAC SB SUBLIMINAL-MESSAGE
+                    DURATION[1] DURATION[0]
+                    FREQUENCY[1] FREQUENCY[0]
+                    MESSAGE_STRING
+                IAC SE
+    就像按照Telnet协议需求一样，任何在潜在商议中的255的出现必须加倍以便与IAC
+字符（值是255）区别开。
+默认值
+WONT SUBLIMINAL-MESSAGE
+
+  DONT SUBLIMINAL-MESSAGE
+
+   i.e.,潜意识信息将不被显示。
+选项的动机
+“Message of the day”标语和时事通讯的频繁使用不足以使一些顽固的用户升级最近的
+telnet版本。一些用户可能会很多年都使用同样的过时版本。我有时也会遇到试图使人们
+使用REMOTE-FLOW-CONTROL Telnet选项。这些用户需要逐渐地“劝服”。
+描述和执行注意
+    客户端执行的性质将取决于它在一个很短的时间内显示和消除正文字符串的能力。在
+CMU上的通用执行在清除信息前计算等待时间的时候，必须考虑终端线程速度，更高级的视
+频能力，和屏幕的持续闪光现象。
+    当允许客户端“内嵌的”信息正文时，通过在控制台屏幕顶端或边缘打印信息获取最好
+的结果，而控制台屏幕正好捕获用户的视野角落。
+    译文通常在发展中，在CMU通过键盘caps-lock LED，使用morse-code显示信息。
+例子
+    以下的所有例子是使用十进制计数法。
+1．	服务器提出，客户端同意使用潜意识-信息。
+
+         (服务器发送) IAC DO SUBLIMINAL-MESSAGE
+         (客户端发送) IAC WILL SUBLIMINAL-MESSAGE
+    (服务器发送) IAC SB SUBLIMINAL-MESSAGE 0 5 0 20 "Use VMS" IAC SE
+[服务器“建议”用户使用稳定的操作系统，不是不合理的请求...]
+客户端应该立即开始显示信息并定期持续的这么做。
+
+2．	服务器早期占有潜意识信息。
+
+(服务器发送) IAC SB SUBLIMINAL-MESSAGE 0 5 0 20 "Go home" IAC SE
+客户端现在应该不再显示先前的信息并应立即开始显示新的信息。
+
+3．	服务器有一天弄乱了用户。
+
+(服务器发送) IAC SB SUBLIMINAL-MESSAGE 0 0 0 0 "" IAC SE
+客户端不许停止显示任何潜意识信息。
+承谢
+We do things just a little sneakier here at CMU.
+RFC1097――TELNET SUBLIMINAL-MESSAGE Option         Telnet潜意识-信息选项
+
+
+
+1
+RFC文档中文翻译计划

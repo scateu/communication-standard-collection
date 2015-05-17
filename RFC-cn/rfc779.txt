@@ -1,0 +1,68 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：刘小虎（stroller111   stroller111@sina.com.cn）
+译文发布时间：2001-10-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         E. Killian
+Request for Comments: 779                                            LLL
+April 1981
+
+
+TELNET的SEND-LOCATION选项
+（RFC779――TELNET SEND-LOCATION Option）
+目录
+1.命令名和编码	1
+2.命令意义	1
+3.缺省值.	2
+4.这个选项的动机	2
+5.这个选项的描述.	2
+
+1.命令名和编码
+  SEND-LOCATION   23
+2.命令意义
+   IAC WILL SEND-LOCATION
+     发送者请求或者同意使用SEND-LOCATION选项来
+     发送使用者的位置。
+   IAC WON'T SEND-LOCATION
+      发送者拒绝使用SEND-LOCATION。
+   IAC DO SEND-LOCATION
+      发送者请求或者同意对方使用SEND-LOCATION命令来
+      发送使用者的位置。
+   IAC DON'T SEND-LOCATION
+      发送者要求对方不使用SEND-LOCATION选项。
+   IAC SB SEND-LOCATION <location> IAC SE
+       发送者通过一个SEND-LOCATION的子项来向对方指
+       定使用者的位置。<location>是一个ASCII的可打印
+       字符序列；它由IAC SE来结束。
+3.缺省值.
+   WON'T SEND-LOCATION
+   DON'T SEND-LOCATION
+4.这个选项的动机
+   许多网络站点现在提供当前登录的用户列表，包括他们的
+姓名和地址（参见NAME/FINGER协议, RFC 742）。对于在物理
+位置上确定用户，如果这个用户在附近的话，或者是打电话给他们
+（通常会包含一个附近的电话号码的），这个地址就是有用的。
+然而，对于通过网络登录的用户而言，打印出来的地址只不过是
+初始的站点名。这个TELNET选项允许用户TELNET程序来发送使用
+者的位置给服务器TELNET，以便于它能够显示出除了站点名以外的
+用户位置。这个功能性已经在SUPDUP协议中提供了（RFC 734）。
+5.这个选项的描述.
+   当用户TELNET程序知道用户的位置，它就可以通过IAC WILL SEND-LOCATION
+来将这个位置信息传送给服务器TELNET。如果服务器的系统能使用这个信息
+（正如它自己的地址），然后服务器将用IAC DO SEND-LOCATION进行答复。
+用户TELNET然后可以在任何时间很自由地通过一个子项将位置信息发送出去。
+
+
+RFC779――TELNET SEND-LOCATION Option     TELNET的SEND-LOCATION选项
+
+
+
+
+2
+RFC文档中文翻译计划

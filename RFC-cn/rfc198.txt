@@ -1,0 +1,28 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                               J. Heafner - Rand
+Request for Comments #198                           20 July 1971
+NIC #7149
+Categories: D.4
+Updates:  RFC #193
+Obsoletes:  None
+
+站点证明-林肯实验室360/67
+（SITE CERTIFICATION - LINCOLN LABS 360/67）
+我们已经使用了林肯实验室（Lincoln Labs）的下列网络软件：NCP、ICP、ASCII Telnet(用户和服务器)、登录程序、对CMS的访问、以及操作员和控制台通讯。这些都是根据现行规范来运转的。
+在减轻/67的繁重载荷的情况下，多样的消息响应（诸如用户清单）是很流畅的。
+[这个RFC文档是由Josh Elliott以计算机可读的文件格式归档到在线RFC文档库的，1/98]
+
+RFC198――SITE CERTIFICATION - LINCOLN LABS 360/67                站点证明-林肯实验室360/67
+
+
+
+
+1
+RFC文档中文翻译计划
+

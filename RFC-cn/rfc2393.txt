@@ -1,0 +1,265 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：zxl_mailbox@yahoo.com.cn
+译者：（Sword）
+译文发布时间：2002-1-23
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                         A. Shacham
+Request for Comments: 2393                                         Cisco
+Category: Standards Track                                     R. Monsour
+                                                                   Hi/fn
+                                                              R. Pereira
+                                                                TimeStep
+                                                               M. Thomas
+                                                      AltaVista Internet
+                                                           December 1998
+
+                        IP有效载荷压缩协议(IPComp)
+本备忘录状态
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+版权声明
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+摘要
+   本文档描述用于在INTERNET环境中为IP层提供无损耗压缩的协议。
+  
+1. 介绍
+IP有效载荷压缩是一个减少IP数据报长度的协议。通过压缩数据报，这个协议将在一对通信主机/网关（“节点”）之间提升整体通信性能。倘若节点有足够的计算能力，透过CPU功能或者一个压缩协处理器，在慢速或者拥挤的链路上通信。
+  
+IP数据报加密时，IP有效载荷压缩特别有用。加密IP数据报使得数据看起来很随机，在较低协议层压缩效率低（例如，PPP压缩控制协议[RFC-1962]）。如果同时要求压缩和加密，压缩必须在加密之前进行。
+   
+本文档定义了IP有效载荷压缩协议(IPComp)、IPComp包结构、IPComp安全关联（IPCA），和几种协商IPCA的方式。
+  
+其他文档详细说明一个特定压缩算法如何与IP有效载荷压缩协议一起使用。这样的算法超出本文档范围之外。
+  
+1.1. 要求规范
+
+   本文档中的关键字"MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" 由RFC 2119 [RFC-2119]解释。
+
+2. 压缩过程
+IP数据报压缩处理过程包含两个阶段：出站IP数据报压缩和入站数据报解压。压缩处理必须是无损耗的，确保IP数据报在压缩和解压缩之后，与原始的IP数据报一致。
+   
+每个IP数据报单独地被压缩和解压，与其他数据报没有任何关联（无状态压缩）。因为IP数据报可能无序地到达或者丢失。每个压缩的IP数据报封装单个IP有效载荷。
+   
+入站IP数据报的处理必须支持压缩和未压缩IP数据报，以便满足非扩展策略要求，它在2.2节定义。出站IP数据报压缩必须在任何IP安全处理之前进行，例如加密和验证，必须在IP数据报分片之前进行。另外，IPv6中，出站IP数据报压缩必须在Hop-by-Hop选项头或者Routing头添加之前进行。因为它们被数据报传递路径上的各个节点检查和处理，所以必须以原始形式发送。
+    
+类似地，入站IP数据报的解压必须在IP数据报重组之后，在所有IP安全处理完成之后进行，例如验证和解密。
+   
+2.1.压缩的有效载荷
+
+压缩应用于单列字节，在IP数据报中它们相邻。这列字节总是以IP数据报有效载荷的最后字节结束。注意：IP数据报中相邻的一列字节可能在物理内存中不相邻。
+  
+IPv4中，压缩应用于IP数据报的上层协议有效载荷。IP头或者IP头中的选项不压缩。
+  
+IPv6中，IPComp被看作端到端的有效载荷，不允许用于hop-by-hop、 routing、和分片扩展头。压缩从第一个IP头选项字段开始，因为它没有必须由数据报传递路径上必须检测和处理的信息。如果这样的IP头选项存在，继续至IP数据报的上层协议载荷。
+  
+一个被压缩的有效载荷长度，由压缩算法产生的，必须以字节为单位。
+  
+按照第3节定义，一个IPComp头直接插入已压缩的有效载荷之前。原始IP头需要修改，以表明使用IPComp协议和减少的IP数据报长度。下一个头（IPv6）字段或者协议字段(IPv4)的原始内容保存在IPComp头。
+ 
+解压缩应用IP数据报中单列相邻的字节。这列字节的头紧跟IPComp头，以IP有效载荷的最后字节结束。如果解压缩完全成功，IP头需要修改，以便指示解压后IP数据报的长度，从IPComp头中恢复原始的下一个头字段值。IPComp头从IP数据报中删除，解压之后的有效载荷紧跟在IP头之后。
+  
+2.2.非扩展策略
+
+如果已压缩的上层协议数据和IPComp头的总长度，第3节定义的，不小于原来上层协议数据的长度，IP数据报必须以不压缩的格式发出。需要阐明：如果IP数据报没有压缩就发出，不会添加IPComp头。这个策略确保节省解压缩过程的循环，避免扩展数据报大于MTU时，IP数据报分片。
+
+小的IP数据报有可能压缩之后却扩大，所以，压缩之前应该定义一个最小的数值极限。如果IP数据报小于这个值，不压缩而以原始格式发出该数据报。最小数值极限的定义与实现有关。
+
+一个数据报的有效载荷已经压缩过，往往不再进一步压缩。先前已压缩的有效载荷可能是外部处理的结果，例如在通信栈高层应用的压缩，或者由离线压缩工具进行的压缩。应该实现一种适应性的算法避免性能受到影响。例如，如果一个IPCA上I个连续IP数据报压缩失败，下面k个 IP数据报将不尝试压缩而被发送出去。如果再下面j个数据报压缩又失败了，那么后面k+n个数据报将不尝试压缩直接发送。一旦一个数据报成功压缩，IPComp正常处理重新开始。这样的适应性算法，包括所有相关的最低限度， 与实现有关。
+有效载荷处理期间，压缩算法可能定期进行测试，确定被处理数据的可压缩性，类似与[V42BIS]的要求。测试的特性和算法相关。一旦压缩算法检测到数据不可压缩，算法应该停止处理数据，有效载荷以原始、不压缩格式传递。
+   
+  3.已压缩的IP数据报头结构
+
+一个已压缩的IP数据报通过修改IP头，在被压缩的有效载荷之前插入IPComp头，来封装它。本节定义IPv4和IPv6中IP头修改的字段和IPComp头结构。
+
+3.1. IPv4 头修改字段
+
+   下面IPv4头字段在传输已压缩的IP数据报之前设置：
+
+      Total Length 总长度
+整个被封装的IP数据报长度，包括IP头、IPComp头和已压缩的有效载荷。
+      
+      Protocol 协议
+设置为108，表示IPComp数据报。[RFC-1700]
+        
+      Header Checksum 首部校验和
+IP头的内部头校验和。[RFC-0791]
+         
+   所有其它IPv4头字段保持不变，包括所有头中的选项。
+
+3.2. IPv6 头修改
+
+下列IPv6头字段在传输压缩IP数据报之前设置。
+  
+      Payload Length 载荷长度
+压缩IP载荷长度
+       
+      Next Header 下一个头
+该字段设置为108，表示IPComp数据报[RFC-1700]
+       
+所有其他的IPv6头字段保持不变，包括任何没有压缩的头选项。
+  
+IPComp头放置在IPv6数据报中采用与IPv6 Fragment头一样的规则。然而，如果IPv6数据报同时包含IPv6 Fragment头和IPComp头，IPv6 Fragment头必须在IPComp头之前。
+ 
+3.3.  IPComp 头结构
+
+   4字节的头结构如下：
+
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Next Header  |     Flags     | Compression Parameter Index |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Next Header下一个头
+8位选择子。存储原始IP头中的IPv4协议字段或者IPv6 Next Header字段。
+      
+   Flags 标志
+8位字段，保留给将来使用。必须设置为0，接收节点必须忽略它。
+        
+   Compression Parameter Index (CPI) 压缩参数索引
+16位索引。按网络字节序存储。0-63定义了有名的压缩算法，这些算法不要求额外信息，用于手工设置。这些值本身与[SECDOI]定义的OMP转换标识符相同。参考[SECDOI]获取一组初始已定义的值，得到如何分配新值的指示。64-255保留给将来使用。256-61439在两个节点之间定义一个IPCA时协商。注意：当协商有名的算法之一时，节点可能选择预定义的0-63之间的值作为CPI。61440-65535主要是互相同意的各方私下使用。两个参与的节点可以选择一个CPI值，彼此独立，两个选择的CPI之间没有关系。出站IPComp头必须使用由解压缩节点选择的CPI值。CPI和目的IP地址一起，唯一地标识数据报压缩算法的特征。
+      
+4. IPComp Association (IPCA) 协商
+
+为了利用IPComp协议，两个节点彼此必须首先建立一个IPComp关联（IPCA）。IPCA包括IPComp操作要求的所有信息，包括CPI、操作模式、使用的压缩算法，和任何选择的压缩算法要求的参数。IPComp操作模式可以是节点对节点策略，即IPComp用于节点之间所有数据报，或者基于策略的一次上层协议会话，只有节点之间选择的上层协议对话使用IPComp。对于每个IPCA，在每个方向上，可能协商不同的压缩算法，或者只有单向压缩。默认“没有IPComp压缩”
+    
+IPCA可以通过动态协商或者手工配置创建。动态协商应该使用ISAKMP，在IPSEC出现的地方。动态协商可以通过不同的协议实现。
+  
+4.1. ISAKMP的使用
+
+IPComp用于IP安全时，ISAKMP提供建立IPCA必须的机制。IPComp关联由发起者使用提议载荷协商，提议载荷包含一个或多个转换载荷。提议载荷将在协议ID字段指定一个压缩协议，每个转换载荷容纳提供给响应者的具体的压缩方式。
+在Internet IPSEC DOI中，IPComp作为协议ID PROTO_IPCOMP来协商。压缩算法作为已定义的IPCOMP转换标识符之一来协商。    
+    
+4.2. 非ISAKMP协议的使用
+
+   动态协商可以通过不同与ISAKMP的协议来协商。这样的协议超出本文档的范围。
+
+4.3. 手工配置
+
+节点可以手工配置创建IPCA。这种方式下，有限数量的CPI被指定来代表一列特定压缩方式。
+
+5. 安全考虑
+
+IPComp应用于IPSEC时，它对IPSEC协议提供的、基本的安全功能性没有什么影响；即使用压缩不会降低或者改变基础安全架构的特性或者用于实现IPSEC的加密技术。
+如果IPComp没有配合IPSEC使用，IP有效载荷压缩潜在地降低了Internet安全，类似于IP封装的作用[RFC-2003]。例如，IPComp可能对于边界路由器根据头字段过滤数据报是很困难的。特别是，IP头的协议字段的原始值不能放在数据报中它正常的位置，数据报的任何传输层头字段，例如端口号，既不能放在它原始位置也不能在压缩之后以原始值出现。只有过滤边界路由器共享用于压缩的IPCA时，它才可以过滤数据报。在所有数据报都需要过滤的环境中（或者至少这样认为），为了允许这种类型的压缩，必须有一种机制使得接收节点安全地把IPCA传达给边界路由器。这可能，罕有地，也应用于出站数据报使用的IPCA。
+     
+
+6. 参考
+
+   [RFC-0791] Postel, J., Editor, "Internet Protocol", STD 5, RFC 791,
+              September 1981.
+
+   [RFC-1700] Reynolds, J., and J. Postel, "Assigned Numbers", STD 2,
+              RFC 1700, October 1994.  Or see:
+              http://www.iana.org/numbers.html
+
+   [RFC-2460] Deering, S., and R. Hinden, "Internet Protocol, Version 6
+              (IPv6) Specification", RFC 2460, December 1998.
+
+   [RFC-1962] Rand, D., "The PPP Compression Control Protocol (CCP)",
+              RFC 1962, June 1996.
+
+   [RFC-2003] Perkins, C., "IP Encapsulation within IP", RFC 2003,
+              October 1996.
+
+   [RFC-2119] Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [ISAKMP]   Maughan, D., Schertler, M., Schneider, M., and J. Turner,
+              "Internet Security Association and Key Management Protocol
+              (ISAKMP)", RFC 2408, November 1998.
+
+   [SECDOI]   Piper, D., "The Internet IP Security Domain of
+              Interpretation for ISAKMP", RFC 2407, November 1998.
+
+   [V42BIS]   CCITT, "Data Compression Procedures for Data Circuit
+              Terminating Equipment (DCE) Using Error Correction
+              Procedures", Recommendation V.42 bis, January 1990.
+
+Authors' Addresses
+
+   Abraham Shacham
+   Cisco Systems
+   170 West Tasman Drive
+   San Jose, California 95134
+   United States of America
+
+   EMail: shacham@cisco.com
+
+   Robert Monsour
+   Hi/fn Inc.
+   2105 Hamilton Avenue, Suite 230
+   San Jose, California 95125
+   United States of America
+
+   EMail: rmonsour@hifn.com
+
+   Roy Pereira
+   TimeStep Corporation
+   362 Terry Fox Drive
+   Kanata, Ontario K2K 2P5
+   Canada
+
+   EMail: rpereira@timestep.com
+
+   Matt Thomas
+   AltaVista Internet Software
+   30 Porter Road
+   Littleton, Massachusetts 01460
+   United States of America
+
+   EMail: matt.thomas@altavista-software.com
+
+Working Group
+
+   The IP Payload Compression Protocol (IPPCP) working group can be
+   contacted through its chair:
+
+   Naganand Dorswamy
+   Bay Networks
+
+   EMail: naganand@baynetworks.com
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+[ Index | Search | What's New | Comments | Help ] 
+Comments/Questions about this archive ? Send mail to rfc-admin@faqs.org 
+

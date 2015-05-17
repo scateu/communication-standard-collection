@@ -1,0 +1,75 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                         P. M. Karp
+Request for Comments: 188                                          MITRE
+Categories A.2                                               D. B. McKay
+                                                                     IBM
+                                                         28 January 1971
+数据管理会议通告
+                  （Data Management Meeting Announcement）
+第一次网络数据管理会议将于8月2日和3日（周一和周二）在技术广场的801和545房间召开。这次会议将由美国计算机协会的Richard Winter主持。已经以CCA的名义包租了下述房间的A区：
+Sonesta Hotel
+5 Cambridge Parkway
+Cambridge，Mass.，02139
+附有地图*，以供参考。Sonesta在坐落在Rt. 1；而技术中心坐落在Main大街大约1/2英里处。从Logan机场到Sonesta或技术广场，打车需要大约$4.00。
+这次的会议主要是使与会人员交流开发一套工作数据管理组的思想。提出的思路既可以论文的形式讨论，也可以以非正式方式进行讨论。
+在议程中列出了几个人，这几个人已经表示愿意参加讨论一些议题。在议程中列出的暂定人选可以出席，也可以不出席。希望他们出席，并且提出非正式的基本见解。
+也附上了两篇将要提交的论文*。我们推荐大家阅读一下RFC144/146/171/172/173和195。
+8月2日开会时再见吧。
+（注释：*  没有和这份拷贝一起附上）
+数据管理会议
+星期一，8月2日     上午9:00
+介绍
+    	D. McKay，IBM公司
+
+基本原理
+在计算机网络中实现共享的3种方法
+A. Shoshani，System Development公司
+
+统一数据管理系统(临时在RFC #144中进行描述)
+B. Wessler，犹他州立大学
+
+数据管理概述
+P. Karp，Mitre公司
+
+星期一，8月2日     下午1:30
+对语言方面的考虑
+DDL
+A. Mullery，IBM公司
+
+对Codasyl报告的讨论
+L. Haibt，IBM公司
+
+DDL和访问语言(RFC #195)
+*G. Mealy，哈佛大学
+
+数据分布
+*T. O'Sullivan，Raytheon数据系统
+
+星期一晚上 - 对提交的思路的非正式讨论。
+
+星期二，8月3日     上午9:00
+数据计算机
+R. Winter，美国计算机协会
+
+数据计算机的设计和用途
+R. Liuzzi，Rand公司
+
+实验
+*P. Karp，Mitre公司
+
+星期二，8月3日     下午1:30
+计划编制会议
+
+RFC188――Data Management Meeting Announcement                            数据管理会议通告
+
+
+
+
+2
+RFC文档中文翻译计划
+

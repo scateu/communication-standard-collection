@@ -1,0 +1,37 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王翌（mcsewang   mcsewang@21cn.com）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group						J. Postel
+RFC-45							          
+S.Crocker
+UCLA
+14 April 70
+
+未来的新协议
+（RFC45 New Protocol is Coming）
+
+我们目前正在准备一份新版本的网络协议，但愿能满足现在的要求。如公告中所言，我
+们将于4月28日发布这些特性。
+由于SJCC晚了一周，我们将于5月7日（星期四）的下午在亚特兰大主办一次会议，对我
+们来说，这场讨论会的目的是把我们4月29日的文档中存在的尚未弄清的细节阐释清楚，同
+时各位可以交换意见、建议和时间表。
+
+（请注意，网上会议由来自BBN的Larry Roberts执笔主持，时间定在周四的上午。）
+
+
+[ This RFC was put into machine readable form for entry ]
+[ into the online RFC archives by Josh Elliott 1/98 ]
+
+
+RFC45 New Protocol is Coming                              未来的新协议 
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,822 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：李兴娟（bloodrose    lxjuan@eyou.com）
+译文发布时间：2001-10-20
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                           SNMPv2 Working Group
+Request for Comments: 1904                                    J.Case 
+Obsoletes:1444                                     SNMP Research,Inc.
+Category: Standards Track                               K. McCloghrie
+ Cisco Systems, Inc.
+         M. Rose
+Dover Beach Consulting, Inc.
+      S. Waldbusser
+International Network Services
+      January 1996
+
+简单网络管理协议版本2（SNMPv2）的一致性声明
+   ( RFC1904- Conformance Statements for Version 2 of the Simple Network 
+Management Prototol(SNMPv2))
+
+本备忘录的状态
+本文档讲述了一种用于Internet团体的Internet标准思想协议，并且需要进行进一步的
+讨论和建议以得到改进。请参考“Internet Official Protocol Standards”(STD 1)的当前修订
+版，以获得标准化声明和本协议的状态。本备忘录的发布不受任何限制。
+
+目录
+
+1 介绍	3
+1．1 专业术语	3
+2 定义	3
+3 OBJECT-GROUP宏映射	9
+3．1 OBJECTS子句映射	9
+3．2 STATUS子句映射	10
+3．3 DESCRIPTION子句映射	10
+3．4 REFERENCE子句映射	10
+3．5 OBJECT-GROUP值映射	10
+3．6 语法举例	10
+4 NOTIFICATION-GROUP宏映射	11
+4．1 NOTIFICATIONS子句映射	11
+4．2 STATUS子句映射	11
+4．3 DESRIPTION子句映射	11
+4．4 REFERENCE子句映射	11
+4．5 NOTIFACATION-GROUP值映射	11
+4．6 用法举例	11
+5 MODULE-COMPLIANCE宏映射	12
+5．1 STATUS子句映射	12
+5．2 DESCRIPTION子句映射	12
+5．3 REFERENCE子句映射	12
+5．4 MODULE子句映射	12
+5．4．1 MANDATORY-GROUP子句映射	13
+5．4．2 GROUP子句映射	13
+5．4．3 OBJECT子句映射	13
+5．4．3．1 SYNTAX子句映射	13
+5．4．3．2 WRITE-SYNTAX子句映射	14
+5．4．3．3．MIN-ACCESS子句映射	14
+5．4．4 DESRIPTION子句映射	14
+5．5 MODULE-COMPLIANCE值映射	14
+5．6 用法举例	14
+6 AGENT-CAPABILITIES宏映射	15
+6．1 PRODUCT-RELEASE子句映射	16
+6．2 STATUS子句映射	16
+6．3 DESCRIPTION子句映射	16
+6．4 REFERENCE子句映射	16
+6．5 SUPPORTS子句映射	16
+6．5．1 INCLUDES子句映射	16
+6．5．2 VARIATION子句	16
+6．5．2．1 SYNTAX子句映射	17
+6．5．2．2 WRITE-SYTAX子句映射	17
+6．5．2．3 ACCESS子句映射	17
+6．5．2．4 CREATION-REQUIRES子句映射	17
+6．5．2．5 DEFVAL子句映射	18
+6．5．2．6 DESCRIPTION子句映射	18
+6．6 AGENT-CAPABLITIES值映射	18
+6．7 用法举例	18
+7 信息模块的扩展	20
+7．1 一致性组	20
+7．2 遵循定义	20
+7．3 性能定义	20
+8 安全考虑	20
+9 作者地址	21
+10 致谢	21
+11 参考书目	22
+
+1 介绍
+   一个管理系统包括：几个（潜在多个）节点，每个节点具有一个称为代理（agent）的处
+理实体，它负责访问管理的基础结构；至少一个管理站；一种管理协议，用于在代理和管理
+站之间传送管理信息。协议操作的执行位于一种管理框架下，该框架定义了认证、授权、访
+问控制和保密策略。
+
+   管理站管理的应用程序，用来监测和控制被管理元素。被管理元素是一些设备，诸如主
+机、路由器、终端服务器等等，通过访问这些元素的管理信息来监测和控制它们。
+
+   管理信息看起来是一个被管理对象的集合，它位于一个虚拟的信息存储库中，这个库称
+为管理信息库（MIB）。相关对象的集合定义在MIB模块中。使用OSI抽象语法符号（ASN.1）
+[1]的一个子集书写这些模块，称为管理信息的结构（SMI）[2]。
+
+   在达到实际级别的实现时，定义可以接受的更为低层的实现将是有用的。本文档定义了
+针对这一目的的符号。
+1．1 专业术语
+   为了论述的目的，在FRCs1155 (STD 16)、1157（STD 15）、1212(STD 16)中描述的
+基于Internet标准的网络管理框架称为SNMP版本1框架（SNMPv1）。当前的框架称为
+SNMP版本2框架（SNMPv2）。
+2 定义
+   SNMPv2-CONF DEFINITIONS ::= BEGIN
+
+-- 一致性组的定义
+
+OBJECT-GROUP MACRO ::=
+BEGIN
+    TYPE NOTATION ::=
+                  ObjectsPart
+                  "STATUS" Status
+                  "DESCRIPTION" Text
+                  ReferPart
+
+    VALUE NOTATION ::=
+                  value(VALUE OBJECT IDENTIFIER)
+
+    ObjectsPart ::=
+                  "OBJECTS" "{" Objects "}"
+    Objects ::=
+                  Object
+                | Objects "," Object
+    Object ::=
+                  value(Name ObjectName)
+    Status ::=
+                  "current"
+                | "deprecated"
+                | "obsolete"
+    ReferPart ::=
+                  "REFERENCE" Text
+                | empty
+    -- 使用 NVT ASCII 字符集
+    Text ::= """" string """"
+END
+
+-- 一致性组的更多定义
+
+NOTIFICATION-GROUP MACRO ::=
+BEGIN
+    TYPE NOTATION ::=
+                  NotificationsPart
+                  "STATUS" Status
+                  "DESCRIPTION" Text
+                  ReferPart
+
+    VALUE NOTATION ::=
+                  value(VALUE OBJECT IDENTIFIER)
+
+    NotificationsPart ::=
+                  "NOTIFICATIONS" "{" Notifications "}"
+    Notifications ::=
+                  Notification
+                | Notifications "," Notification
+    Notification ::=
+                  value(Name NotificationName)
+    Status ::=
+                  "current"
+                | "deprecated"
+                | "obsolete"
+    ReferPart ::=
+                  "REFERENCE" Text
+                | empty
+
+    -- 使用NVT ASCII字符集
+Text ::= """" string """"
+END
+
+-- 遵循声明的定义
+
+MODULE-COMPLIANCE MACRO ::=
+BEGIN
+    TYPE NOTATION ::=
+                  "STATUS" Status
+                  "DESCRIPTION" Text
+                  ReferPart
+                  ModulePart
+    VALUE NOTATION ::=
+                  value(VALUE OBJECT IDENTIFIER)
+    Status ::=
+                  "current"
+                | "deprecated"
+                | "obsolete"
+    ReferPart ::=
+                "REFERENCE" Text
+              | empty
+    ModulePart ::=
+                  Modules
+                | empty
+    Modules ::=
+                  Module
+                | Modules Module
+    Module ::=
+                  -- name of module --
+                  "MODULE" ModuleName
+                  MandatoryPart
+                  CompliancePart
+    ModuleName ::=
+                  modulereference ModuleIdentifier
+                -- must not be empty unless contained
+                -- in MIB Module
+                | empty
+ModuleIdentifier ::=
+  value(ModuleID OBJECT IDENTIFIER)
+                | empty
+
+MandatoryPart ::=
+                "MANDATORY-GROUPS" "{" Groups "}"
+                | empty
+Groups ::=
+                Group
+                | Groups "," Group
+Group ::=
+               value(Group OBJECT IDENTIFIER)
+
+CompliancePart ::=
+                Compliances
+                | empty
+Compliances ::=
+               Compliance
+  | Compliances Compliance
+Compliance ::=
+               ComplianceGroup
+                | Object
+ComplianceGroup ::=
+                "GROUP" value(Name OBJECT IDENTIFIER)
+                "DESCRIPTION" Text
+Object ::=
+                "OBJECT" value(Name ObjectName)
+                 SyntaxPart
+                 WriteSyntaxPart
+                 AccessPart
+                 "DESCRIPTION" Text
+
+ -- 必须是对象SYNTAX 子句的精确描述
+SyntaxPart ::=
+                "SYNTAX" type(SYNTAX)
+                | empty
+
+ -- 必须是对象SYNTAX 子句的精确描述
+ WriteSyntaxPart ::=
+                  "WRITE-SYNTAX" type(WriteSYNTAX)
+  "WRITE-SYNTAX" type(WriteSYNTAX)
+                | empty
+    AccessPart ::=
+                  "MIN-ACCESS" Access
+                | empty
+    Access ::=
+                  "not-accessible"
+                | "accessible-for-notify"
+                | "read-only"
+                | "read-write"
+                | "read-create"
+
+  -- 使用 NVT ASCII字符集
+    Text ::= """" string """"
+END
+
+-- 性能声明的定义
+
+AGENT-CAPABILITIES MACRO ::=
+BEGIN
+    TYPE NOTATION ::=
+                  "PRODUCT-RELEASE" Text
+                  "STATUS" Status
+                  "DESCRIPTION" Text
+ReferPart
+                  ModulePart
+    VALUE NOTATION ::=
+                  value(VALUE OBJECT IDENTIFIER)
+    Status ::=
+                  "current"
+                | "obsolete"
+    ReferPart ::=
+                "REFERENCE" Text
+              | empty
+    ModulePart ::=
+                  Modules
+                | empty
+    Modules ::=
+                  Module
+                | Modules Module
+    Module ::=
+                  -- name of module --
+                  "SUPPORTS" ModuleName
+                  "INCLUDES" "{" Groups "}"
+                  VariationPart
+    ModuleName ::=
+  identifier ModuleIdentifier
+    ModuleIdentifier ::=
+                  value(ModuleID OBJECT IDENTIFIER)
+                | empty
+    Groups ::=
+                Group
+                | Groups "," Group
+    Group ::=
+                  value(Name OBJECT IDENTIFIER)
+    VariationPart ::=
+                  Variations
+                | empty
+    Variations ::=
+                  Variation
+                | Variations Variation
+    Variation ::=
+                  ObjectVariation
+                | NotificationVariation
+    NotificationVariation ::=
+                  "VARIATION" value(Name NotificationName)
+                  AccessPart
+                  "DESCRIPTION" Text
+    ObjectVariation ::=
+                  "VARIATION" value(Name ObjectName)
+                  SyntaxPart
+                  WriteSyntaxPart
+                  AccessPart
+                  CreationPart
+                  DefValPart
+"DESCRIPTION" Text
+
+    -- 必须是对象SYNTAX 子句的精确描述
+    SyntaxPart ::=
+                  "SYNTAX" type(SYNTAX)
+                | empty
+    -- 必须是对象SYNTAX 子句的精确描述
+    WriteSyntaxPart ::=
+                  "WRITE-SYNTAX" type(WriteSYNTAX)
+                | empty
+    AccessPart ::=
+                  "ACCESS" Access
+                | empty
+    Access ::=
+                  "not-implemented"
+                -- only "not-implemented" for notifications
+                | "accessible-for-notify"
+                | "read-only"
+                | "read-write"
+                | "read-create"
+                -- following is for backward-compatibility only
+                | "write-only"
+    CreationPart ::=
+                  "CREATION-REQUIRES" "{" Cells "}"
+                | empty
+    Cells ::=
+                  Cell
+                | Cells "," Cell
+Cell ::=
+                  value(Cell ObjectName)
+    DefValPart ::=
+                  "DEFVAL" "{" value(Defval ObjectSyntax) "}"
+                | empty
+
+    -- 使用NVT ASCII字符集
+    Text ::= """" string """"
+END
+
+END
+3 OBJECT-GROUP宏映射
+   为了一致性的目的，把相关的被管理对象定义成一个集合是很有用的。OBJECT-GROUP
+宏用来定义这样的每一个相关对象集合。应该注意的是，从概念上说，OBJECT-GROUP
+的宏扩展发生在实现阶段而不是运行阶段。
+
+  为了“操作”一个对象，针对管理协议的检索操作，担任代理角色的SNMPv2实体必须
+返回一个有意义的精确数值。与此类似，如果对象是可写的，那么要响应管理协议的设置操
+作，SNMPv2实体必须有能力且有意义的改变下面的被管理实体。如果担任代理角色的
+SNMPv2实体不能操作一个对象，管理协议为SNMPv2实体提供了一个返回异常或错误，
+例如noSuchObject [4]。在任何情况下，SNMPv2实体都不应该返回一个没有进行操作的
+对象的数值――必须返回一个相应的异常或错误，在协议规范[4]中对此进行了描述。
+3．1 OBJECTS子句映射
+   OBJECTS子句用来命名包括在一致性组中的所有对象，该子句必须出现。有
+OBJECT-GROUP宏出现时，每一个被命名的对象必须定义在同一个信息模块中，并且必
+须有一个MAX-ACCESS子句，其值为"accessible-for-notify"、 "read-only" 、"read-write"
+或者"read-create"。
+  
+   有必要的是，每一个定义在信息模块中对象，如果具有一个MAX-ACCESS子句而不
+是"not-accessible"，那么至少应该有一个对象组包括该对象。这避免了把一个新对象加入
+到信息模块中而忘记把其加入到一个组中时常犯的错误。
+3．2 STATUS子句映射
+STATUS子句表明了本定义是当前状态还是历史状态，该子句必须出现。
+
+"current"和"obsolete"值本身说明的很清楚。"deprecated"值表明该定义是过的，但是操
+作者可能希望支持这个组与旧的操作协同工作。
+3．3 DESCRIPTION子句映射
+   DESCRIPTION子句是组的文本定义，描述了与其他组的所有关系，该子句是必须出现
+的。注意，一般的遵循需求不应该在该子句中说明。然而，本组与其他组的实现关系可以定
+义在该子句中。
+3．4 REFERENCE子句映射
+   REFERENCE子句包括一个组的文本交叉引用，该组定义在其他的信息模块中，这个子
+句不一定要出现。当分离一个其他组织生成的MIB模块时是很有用的。
+3．5 OBJECT-GROUP值映射
+   OBJECT-GROUP宏调用的一个值是组名，它是一个OBJECT IDENTIFIER，即一个被
+管理分配的名字。
+3．6 语法举例
+   SNMP Group [3]的描述如下：
+
+snmpGroup OBJECT-GROUP
+    OBJECTS { snmpInPkts,
+              snmpInBadVersions,
+              snmpInASNParseErrs,
+              snmpBadOperations,
+              snmpSilentDrops,
+              snmpProxyDrops,
+              snmpEnableAuthenTraps }
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic instrumentation and
+            control of an SNMPv2 entity."
+    ::= { snmpMIBGroups 8 }
+
+   根据这种调用，一致性组名字为{ snmpMIBGroups 8 }，包括7个对象。
+4 NOTIFICATION-GROUP宏映射
+   为了一致性的目的，定义一个通知集合是有用的。NOTIFICATION-GROUP宏就是为这
+一目的服务的。应该注意的是，从概念上讲NOTIFICATION-GROUP宏扩展发生在实现阶
+段而不是在运行阶段。
+4．1 NOTIFICATIONS子句映射
+   NOTIFACATONS子句用来命名一致性组中包括的每一个通知，该子句必须出现。当出
+现NOTIFACATION-GROUP宏时，每一个命名的通知必须定义在相同的信息模块中。
+4．2 STATUS子句映射
+STATUS子句表明了本定义是当前状态还是历史状态，该子句必须出现。
+
+"current"和"obsolete"值本身说明的很清楚。"deprecated"值表明该定义是过的，但是操
+作者可能希望支持这个组与旧的操作协同工作。
+4．3 DESRIPTION子句映射
+DESCRIPTION子句是组的文本定义，描述了与其他组的所有关系，该子句是必须出
+现的。注意，一般的遵循需求不应该在该子句中说明。然而，本组与其他组的实现关系可以
+定义在该子句中。
+4．4 REFERENCE子句映射
+   REFERENCE子句包括一个组的文本交叉引用，该组定义在其他的信息模块中，这个子
+句不一定要出现。当分离一个其他组织生成的MIB模块时是很有用的。
+4．5 NOTIFACATION-GROUP值映射
+   NOTIFACTION-GROUP宏调用的一个值是组名，它是一个OBJECT IDENTIFIER，即
+一个被管理分配的名字。
+4．6 用法举例
+   SNMP Basic Notifications Group [3]的描述如下：
+
+snmpBasicNotificationsGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { coldStart, authenticationFailure }
+    STATUS        current
+    DESCRIPTION
+            "The two notifications which an SNMPv2 entity is required to
+            implement."
+    ::= { snmpMIBGroups 7 }
+
+根据这种调用，一致性组的名字为{ snmpMIBGroups 1 }，它包括两个通知。
+5 MODULE-COMPLIANCE宏映射
+   MODULE-COMPLIANCE宏根据一个或多个MIB模块的实现，用来传达需求的最小集
+合。应该注意的是，从概念上讲，MODULE-COMPLIANCE宏扩展发生在实现阶段而不是
+运行阶段。
+ 
+   对所有“标准”MIB模块的一种需求是还要定义一种相应的MODULE-COMPLIANCE
+规范，可以在相同的信息模块中定义，也可以在一个相伴的信息模块中定义。
+5．1 STATUS子句映射
+STATUS子句表明了本定义是当前状态还是历史状态，该子句必须出现。
+
+"current"和"obsolete"值本身说明的很清楚。"deprecated"值表明该定义是过的，但是操
+作者可能希望支持这个组与旧的操作协同工作。
+5．2 DESCRIPTION子句映射
+   DESCRIPTION子句包括本遵循说明的文本定义，并且应该包括与本说明关联的以
+ASN.1注释形式通信的任何信息，该子句是必须出现的。
+5．3 REFERENCE子句映射
+REFERENCE子句包括一个组的文本交叉引用，该组定义在其他的信息模块中，这个
+子句不一定要出现。
+5．4 MODULE子句映射
+   MODULE子句被重复的用来命名每一个MIB模块，以规范这些模块所遵循的需求，该
+子句必须出现。每一个MIB模块由其模块名命名，作为可选项，有时也带上它的OBJECT 
+IDENTIFIER。当MODULE-COMPLIANCE调用发生在一个MIB模块内部，并且指向的是
+围绕的这个MIB模块时，可以省略模块名。
+5．4．1 MANDATORY-GROUP子句映射
+   MANDATORY-GROUP子句命名一个或多个对象或通知组，它们位于一个相应的MIB
+模块中，该模块是无条件强制实现的。这个子句没有必要出现。如果一个担任代理角色的
+SNMPv2实体声明遵循这个MIB模块，那么它必须实现每一个一致性组列出的所有对象和
+通知。也就是说，如果SNMPv2实体在响应管理协议的获取操作[4]时，返回了一个
+noSuchObject异常，而这个对象位于MIB视图的任意强制性一致组中；或者SNMPv2实
+体在合适的情况下不能产生任意一致性组中列出的所有通知，那么该SNMPv2实体就不是
+这个MIB模块的一致性执行实体。
+5．4．2 GROUP子句映射
+   GROUP子句用来重复的命名每一个对象和通知组，这些组有条件的强制遵循MIB模块
+或者无条件的可选择性遵循该MIB模块。GROUP子句没有必要出现。在GROUP组中命
+名的一个组绝对不能出现在相应的MANDATORY-GROUPS子句中。
+
+   有条件强制性组包括那些只有实现特定协议或实现另外的一个组时才是强制的组。
+GROUP子句的DESCRIPTION说明了在什么条件下这个组才是有条件强制性的组。
+
+   既没有在MANDATORY-GROUPS子句中命名，没有在GROUP子句中命名的组对MIB
+模块来说是无条件可选择性的。
+5．4．3 OBJECT子句映射
+   OBJECT子句用来重复的命名每一个MIB对象，根据MIB模块的定义，这些对象遵循
+一种精确的必要条件。OBJECT子句没有必要出现。MIB对象必须出现在一个一致性组中，
+该组由MANDOTORY-GROUP子句或者GROUP子句命名。
+
+   根据定义，OBJECT子句中说明的每一个对象后面跟随一个MODULE子句，该子句命
+名了定义该对象的信息模块。因此，使用一个IMPORTS语句来说明从哪里引入的这些对象
+在信息模块中是多余的、没有必要的。
+5．4．3．1 SYNTAX子句映射
+   SYNTAX子句用来为相应OBJECT子句中命名的对象提供精确的SYNTAX，该子句没
+有必要出现。注意，如果同时出现了该子句和WRITE-SYNTAX子句，那么，只有当读取
+OBJECT子句中命名的对象的实例时，才应用该子句。
+
+   参考[2]的第9部分，获取精确语法的更多信息。
+5．4．3．2 WRITE-SYNTAX子句映射
+   当写在相应OBJECT子句中命名的对象的实例时，WRITE-SYNTAX子句提供该对象的
+精确SYNTAX，该子句不是必要的。
+
+参考[2]的第9部分，获取精确语法的更多信息。
+5．4．3．3．MIN-ACCESS子句映射
+   MIN-ACCESS子句用来定义在相应OBJECT子句中命名的对象的最低级别访问权，该子
+句没有必要出现。如果省略了该子句，那么最低级别访问与OBJECT-TYPE宏调用中确定
+的最高级别访问相同。如果该子句出现，那么它绝对不能设置比OBJECT-TYPE宏调用中
+的确定的访问级别还要高的级别。
+
+   特定类型对象的访问级别与它们的语法定义紧密一致。这些类型包括：概念表和行、辅
+助对象、以及语法为Counter32, Counter64 (也有可能是文本惯例的特殊类型)的对象。对于
+这些对象，不应该出现MIN-ACCESS子句。
+   
+   如果一种操作提供的访问级别高于或等于MODULE-COMPLIANCE宏中定义的最低访
+问且低于或等于OBJECT-TYPE宏中定义的最高访问，则该操作是规范的。
+5．4．4 DESRIPTION子句映射
+   使用每一个GROUP或OBJECT子句时，必须出现DESCRIPTION子句。对于一个
+OBJECT子句，它包括一个精确定义的遵循需求的文本描述。对于一个GROUP子句，它包
+括的是条件文本描述，这些条件确定了组在什么时候是有条件强制的，在什么时候是无条件
+可选的。
+5．5 MODULE-COMPLIANCE值映射
+   MODULE-COMPLIANCE宏的调用值是一个OBJECT IDENTIFIER。因此，当指向包括
+在该宏调用中的遵循声明时，这个只可能是命令式分配的。
+5．6 用法举例
+   包括在XYZv2-MIB（假设的一个MIB）中的遵循声明可能为：
+
+xyzMIBCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for XYZv2 entities which implement
+            the XYZv2 MIB."
+    MODULE  -- compliance to the containing MIB module
+        MANDATORY-GROUPS { xyzSystemGroup,
+                           xyzStatsGroup, xyzTrapGroup,
+                           xyzSetGroup,
+                           xyzBasicNotificationsGroup }
+
+        GROUP   xyzV1Group
+        DESCRIPTION
+            "The xyzV1 group is mandatory only for those
+             XYZv2 entities which also implement XYZv1."
+::= { xyzMIBCompliances 1 }
+
+根据这种调用，要生成名为{ xyzMIBCompliances 1 }的遵循声明的队列，系统必须实
+现XYZv2-MIB的xyzSystemGroup, xyzStatsGroup, xyzTrapGroup, xyzSetGroup对象一致
+性组以及xyzBasicNotificationsGroup通知组。进一步说，如果XYZv2实体也操作XYZv1，
+那么它必须支持XYZv1Group组，如果没有生成遵循声明。
+6 AGENT-CAPABILITIES宏映射
+   AGENT-CAPABILITIES宏用来表达担任代理角色的某个SNMPv2实体的性能集合。应
+该注意的是，从概念上讲，AGENT-CAPABILITIES宏扩展发生实现阶段而不是运行阶段。
+
+当书写一个MIB模块时，把它分成几个一致性组单元。如果担任代理角色的SNMPv2
+实体声明要操作一个组，那么它必须操作这个组中的所有对象。当然，无论什么原因，
+SNMPv2实体都可以只操作MIB模块中的某些组的子集。此外，一些MIB对象的定义遗弃
+了某些定义特征，这些特征用来判断操作者。
+
+   实际经验证明，需要根据一个或多个MIB模块简洁的描述一个代理的性能。
+AGENT-CAPABILITIES宏允许代理执行者描述其根据MIB组声明的所支持的准确级别，还
+允许其把这种描述和sysORID[3]的一个实例值绑定。有其特殊的是，一些对象可能具有受
+限制的或有争议的语法或访问级别。
+  
+   如果管理站的执行者受到了AGENT-CAPABILITIESA调用，那么该执行者能建立管理
+应用程序，当与一个特殊的代理通信时，这些应用程序可以自我优化。例如，管理者可以维
+护调用它们的数据库。当一个管理站与一个代理交互时，它从代理检索到sysORID[3]所有
+实例的值。基于这一点，建议数据库定位每一条与sysORID检索值匹配的入口。使用定位
+的入口，管理应用程序现在就可以相应的优化自己的行为。
+ 
+   注意，AGENT-CAPABILITIES宏根据MIB模块中OBJECT-TYPE和
+NOTIFICATION-TYPE宏做详细的说明或变化，而不是根据遵循声明中的
+MODULE-COMPLIANCE宏。
+6．1 PRODUCT-RELEASE子句映射
+   PRODUCT-RELEASE子句包括产品发布的文本描述，该版本包括了这个性能集合。
+PRODUCT-RELEASE子句是必须出现的。
+6．2 STATUS子句映射
+   STATUS子句说明了这个定义是当前状态("current")还是历史状态("obsolete")，该子句
+是必须出现的。
+6．3 DESCRIPTION子句映射
+   DESCRIPTION子句包括了对这个性能集合的文本描述，是必须出现的。
+6．4 REFERENCE子句映射
+   REFERENCE子句包括了一个性能声明的文本交叉引用，该声明定义在其他的信息模块
+中。该子句没有必要出现。
+6．5 SUPPORTS子句映射
+   SUPPORTS子句重复的用来命名每一个MIB模块，对这些模块，代理声明了全部或部分
+操作。SUPPORTS子句没有必要出现。每一个MIB模块由其模块名命名，作为选择，还可
+以带上它的OBJECT IDENTIFIER。
+6．5．1 INCLUDES子句映射
+   INCLUDES子句用来命名每一个与SUPPORTS子句关联的MIB组，代理对此MIB组声
+明了操作。当使用SUPPORTS子句时必须出现INCLUDES子句。
+6．5．2 VARIATION子句
+   VARIATION子句用来重复的命名代理在某些变动中或以更精确形式操作的对象或通知，
+这些操作是根据OBJECT-TYPE或NOTIFICATION-TYPE宏的相应引用作出的。
+VARIATION子句没有必要出现。
+ 
+   注意，变动的概念是指对一般操作进行了限制，也就是说，如果一个对象的变动依赖于
+其它对象的值，那么应该在合适的DESCRIPTION子句中进行标注。
+
+   按照定义，在VARIATION子句中规定的每个对象都跟随着一个SUPPORTS子句，该子
+句命名了定义这个对象的信息模块。因此，使用一个IMPORTS语句来说明从哪里引入的这
+些对象在信息模块中是多余的、没有必要的。
+6．5．2．1 SYNTAX子句映射
+   SYNTAX子句为相应VARIATION子句中命名的对象提供了精确的SYNATX，该子句没
+有必要出现。注意，如果同时出现了该子句和WRITE-SNYTAX子句，那么只有当读取相应
+VARIATION子句中命名的对象实例时，才运用该子句。
+
+   参考[2]的第9部分，获取精确语法的更多信息。
+6．5．2．2 WRITE-SYTAX子句映射
+   当写对象实例时，WRITE-SYNTAX子句为在相应VARIATION子句中命名的对象提供精
+确语法。WRITE-SYNTAX子句没有必要出现。
+
+参考[2]的第9部分，获取精确语法的更多信息。
+6．5．2．3 ACCESS子句映射
+   ACCESS子句说明了代理为相应VARIATION子句中命名的对象或通知提供了低于最大
+访问级别的访问级别。该子句没有必要出现。
+
+   唯一适用于通知的值为“not-implemented”。
+
+   值“not-implemented”表明代理不操作这个对象或通知，在可能数值的排序中，等同于
+“not-accessible”。
+
+   值“write-only”单独提供了向后兼容的能力，不应该用来定义新的对象类型。在可能数
+值的排序中，“write-only”小于“not-accessible”。
+6．5．2．4 CREATION-REQUIRES子句映射
+   CREATION-REQUIRES子句用来命名一个概念行的柱状对象，在代理允许行柱状对象
+的实例被设置为'active'前，必须通过管理协议的设置操作，明确的为这些对象赋值。
+CREATTION-REQUIRES子句没有必要出现。（参考RowStatus[5]的定义。）
+
+   如果概念行没有一个状态栏（也就是说，使用[6，7]中的机制定义相应概念表中的对象），
+那么没有必要出现的CREATION-REQUIRES子句用来命名概念行的柱状对象，在代理创
+建行中对象的实例前，必须通过管理协议的设置操作，明确为这些柱状对象赋值。   
+
+   除非在相应VARIATION子句中命名的对象是一个概念行（也就是说，该对象具有一个
+解析成SQUENCE包含柱状对象的语法），否则，这个子句绝对不能出现。在这个子句中命
+名的对象通常指向在概念行的柱状对象。然而，也可以说明与概念行无关的对象。
+
+   在CREATION-REQUIRES子句中命名的概念行的所有对象以及概念行的的所有柱状对
+象必须具有“read-create”的访问级别。
+6．5．2．5 DEFVAL子句映射
+   DEFVAL子句为相应VARIATION子句中命名的对象提供一个精确的DEFVAL值，该子
+句没有必要出现。该子句的语义与OBJECT-TYPE宏的DEFVAL子句是一致的。
+6．5．2．6 DESCRIPTION子句映射
+   当使用VARIATION子句时，必须出现DESCRIPTION子句，它包括对对象或通知的变
+动或精确实现的文本描述。
+6．6 AGENT-CAPABLITIES值映射
+   AGENT-CAPABILITES的宏调用值是一个OBJECT IDENTIFIER，它命名了对这个性能
+声明有效的sysORID[3]的值。
+6．7 用法举例
+   考虑一下代理的性能声明是如何描述的：
+
+exampleAgent AGENT-CAPABILITIES
+    PRODUCT-RELEASE      "ACME Agent release 1.1 for 4BSD"
+    STATUS               current
+    DESCRIPTION          "ACME agent for 4BSD"
+
+    SUPPORTS             SNMPv2-MIB
+        INCLUDES         { systemGroup, snmpGroup, snmpSetGroup,
+                           snmpBasicNotificationsGroup }
+
+        VARIATION        coldStart
+            DESCRIPTION  "A coldStart trap is generated on all
+                         reboots."
+
+    SUPPORTS             IF-MIB
+        INCLUDES         { ifGeneralGroup, ifPacketGroup }
+
+        VARIATION        ifAdminStatus
+            SYNTAX       INTEGER { up(1), down(2) }
+            DESCRIPTION  "Unable to set test mode on 4BSD"
+
+        VARIATION        ifOperStatus
+            SYNTAX       INTEGER { up(1), down(2) }
+            DESCRIPTION  "Information limited on 4BSD"
+
+    SUPPORTS             IP-MIB
+        INCLUDES         { ipGroup, icmpGroup }
+
+VARIATION        ipDefaultTTL
+            SYNTAX       INTEGER (255..255)
+            DESCRIPTION  "Hard-wired on 4BSD"
+
+        VARIATION        ipInAddrErrors
+            ACCESS       not-implemented
+            DESCRIPTION  "Information not available on 4BSD"
+
+        VARIATION        ipNetToMediaEntry 
+            CREATION-REQUIRES { ipNetToMediaPhysAddress }
+            DESCRIPTION  "Address mappings on 4BSD require
+                         both protocol and media addresses"
+
+    SUPPORTS             TCP-MIB
+        INCLUDES         { tcpGroup }
+        VARIATION        tcpConnState
+            ACCESS       read-only
+            DESCRIPTION  "Unable to set this on 4BSD"
+
+    SUPPORTS             UDP-MIB
+        INCLUDES         { udpGroup }
+
+SUPPORTS             EVAL-MIB
+INCLUDES         { functionsGroup, expressionsGroup }
+        VARIATION        exprEntry
+            CREATION-REQUIRES { evalString }
+            DESCRIPTION "Conceptual row creation supported"
+
+    ::= { acmeAgents 1 }
+
+   根据这种调用，一个sysORID值为{ acmeAgents 1 }的代理支持六个MIB模块。
+
+对于SNMPv2-MIB，支持五个一致性组。
+
+对于IF-MIB，支持ifGeneralGroup和ifPacketGroup组。然而，对象ifAdminStatus
+和ifOpenStatus的语法有限制。
+
+对于TCP-MIB，支持tcpGroup，但是只能读tcpConnState。
+
+对于UDP-MIB，支持所有的udpGroup。
+
+对于EVAL-MIB，支持包括在functionsGroup和expressionsGroup一致性组中的所有对象，
+没有任何变动。此外，支持在expr表中创建新的实例。
+7 信息模块的扩展
+   当从一种出版了的信息模块获得了经验时，就可能想修改该信息模块。
+   
+   [2]的第10部分定义了扩展信息模块的规则。这一章节的剩余部分定义了如何扩展一致
+性组、遵循声明和性能声明。
+7．1 一致性组
+   如果对一个对象组的任何子句作了任何非编辑上的改变，那么，与该对象组相关的
+OBJECT IDENTIFIER值以及其描述符也必须发生改变。
+7．2 遵循定义
+   如果对遵循定义的任何子句作了任何非编辑上的改变，那么，与该遵循定义相关的
+OBJECT IDENTIFIER值以及其描述符也必须发生改变。
+7．3 性能定义
+   如果对性能定义的任何子句作了任何非编辑上的改变，那么，与该性能定义相关的
+OBJECT IDENTIFIER值以及其描述符也必须发生改变。
+8 安全考虑
+   本备忘录没有讨论安全议题。
+9 作者地址
+   Keith McCloghrie
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA  95134-1706
+   US
+
+   Phone: +1 408 526 5260
+   EMail: kzm@cisco.com
+
+10 致谢
+   本文档是四个主要成员卓越工作的成果：
+
+   Jeffrey D. Case (SNMP Research, case@snmp.com)
+   Keith McCloghrie (Cisco Systems, kzm@cisco.com)
+   Marshall T. Rose (Dover Beach Consulting, mrose@dbc.mtview.ca.us)
+   Steven Waldbusser (International Network Services, stevew@uni.ins.com)
+
+   此外，要感谢SNMPv2 Working Group的参与。尤其要感谢的是下面的参与者：
+
+     Alexander I. Alten (Novell)
+     Dave Arneson (Cabletron)
+     Uri Blumenthal (IBM)
+     Doug Book (Chipcom)
+     Kim Curran (Bell-Northern Research)
+     Jim Galvin (Trusted Information Systems)
+     Maria Greene (Ascom Timeplex)
+     Iain Hanson (Digital)
+     Dave Harrington (Cabletron)
+     Nguyen Hien (IBM)
+     Jeff Johnson (Cisco Systems)
+     Michael Kornegay (Object Quest)
+     Deirdre Kostick (AT&T Bell Labs)
+     David Levi (SNMP Research)
+     Daniel Mahoney (Cabletron)
+     Bob Natale (ACE*COMM)
+     Brian O'Keefe (Hewlett Packard)
+     Andrew Pearson (SNMP Research)
+     Dave Perkins (Peer Networks)
+     Randy Presuhn (Peer Networks)
+     Aleksey Romanov (Quality Quorum)
+     Shawn Routhier (Epilogue)
+     Jon Saperia (BGS Systems)
+     Bob Stewart (Cisco Systems, bstewart@cisco.com), chair
+     Kaj Tesink (Bellcore)
+     Glenn Waters (Bell-Northern Research)
+     Bert Wijnen (IBM)
+
+11 参考资料
+[1]  Information processing systems - Open Systems Interconnection -
+     Specification of Abstract Syntax Notation One (ASN.1),
+     International Organization for Standardization.  International
+     Standard 8824, (December, 1987).
+
+[2]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Structure of Management Information for Version 2
+     of the Simple Network Management Protocol (SNMPv2)", RFC 1902,
+     January 1996.
+
+[3]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Management Information Base for Version 2 of the
+     Simple Network Management Protocol (SNMPv2)", RFC 1907,
+     January 1996.
+
+[4]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Protocol Operations for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1905, January 1996.
+
+[5]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Textual Conventions for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1903, January 1996.
+
+[6]  Rose, M., and K. McCloghrie, "Structure and Identification of
+     Management Information for TCP/IP-based internets", STD 16, RFC
+     1155, May 1990.
+
+[7]  Rose, M., and K. McCloghrie, "Concise MIB Definitions", STD 16,
+     RFC 1212, March 1991.
+RFC1904 Conformance Statements for Version 2 of the Simple Network Management Prototol(SNMPv2)
+简单网络管理协议版本2（SNMPv2）的一致性声明
+
+
+1
+RFC文档中文翻译计划

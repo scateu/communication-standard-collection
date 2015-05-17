@@ -1,0 +1,137 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：（   ）
+译文发布时间：2002-1-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                          T.Howes
+Request for Comments:1558                             University of Michigan 
+Category:Informational                                       December 1993
+
+
+
+                          LDAP研究过滤器的字符串表达
+(RFC1558――A String Representation of LDAP Search Filters)
+
+这备忘录的状况
+    这备忘录提供信息为了这个互连网社会。这备忘录不指定任何一种性质的互连网的标
+准。这备忘录的发行是无限期的。
+摘要
+这LDAP（1）定义了一个研究过滤器的网络表示法来传送给一个LDAP服务器。一些
+应用软件可以发现它的用处来拥有描绘这个研究过滤器的一个普通的方法以一个人类能读
+的形式。这个文档定义了一个人类能读的字符串格式为了LDAP研究过滤器。
+目录
+1。LDAP研究过滤器的定义	2
+2。 字符串研究过滤器定义	2
+3。 例子	3
+4。 安全考虑	3
+5。 参考	3
+6。 作者地址	4
+
+1。LDAP研究过滤器的定义
+    一个LDAP研究过滤器是被定义为如下（1）：
+    Filter ::=CHOICE (
+            and                 (0) SET OF Filter,
+            or                  (1) SET OF Filter,
+            not                 (2) Filter,
+            equalityMatch       (3) AttributeValueAssertion,
+            substrings         [4] SubstringFilter,
+            greaterOrEqual     [5] AttributeValueAssertion,
+            lessOrEqual        [6] AttributeValueAssertion,
+            present            [7] AttributeType,
+            approxMatch        [8] AttributeValueAssertion
+     }
+
+     SubstringFilter ::= SEQUENCE {
+             type    AttributeType,
+             SEQUENCE OF CHOICE {
+                     initial        [0] LDAPString,
+                     any            [1] LDAPString,
+                     final          [2] LDAPString
+             }
+     }
+
+     AttributeValueAssertion ::= SEQUENCE
+             attributeType   AttributeType,
+             attributeValue  AttributeValue
+     }
+
+     AttributeType ::= LDAPString
+
+     AttributeValue ::= OCTET STRING
+
+     LDAPString ::= OCTET STRING
+    这LDAPString上面的地方是有限在这IA5字符集里。这AttributeType是属性对象标识
+符的一个字符串的表示法在这个星罗棋布的OID格式(e.g.,"2.5.4.10"),或者这个属性的更短
+的字符串(e.g.,"organizationName",or"o").这AttributeValue
+OCTET STRING有形式定义在（2）。这过滤器是为了传送使用基本编码规则定义的网络而
+被编码在（3），以及简化描述在（1）。
+2。 字符串研究过滤器定义
+    一个LDAP研究过滤器的字符串表示法是通过下列的BNF而被定义的。它使用一个前
+缀格式。
+
+     <filter> ::= '(' <filtercomp> ')'
+     <filtercomp> ::= <and> | <or> | <not> | <item>
+     <and> ::= '&' <filterlist>
+     <or> ::= '|' <filterlist>
+     <not> ::= '!' <filter>
+     <filterlist> ::= <filter> | <filter> <filterlist>
+     <item> ::= <simple> | <present> | <substring>
+     <simple> ::= <attr> <filtertype> <value>
+     <filtertype> ::= <equal> | <approx> | <greater> | <less>
+     <equal> ::= '='
+     <approx> ::= '~='
+     <greater> ::= '>='
+     <less> ::= '<='
+     <present> ::= <attr> '=*'
+     <substring> ::= <attr> '=' <initial> <any> <final>
+     <initial> ::= NULL | <value>
+     <any> ::= '*' <starval>
+     <starval> ::= NULL | <value> '*' <starval>
+     <final> ::= NULL | <value>
+    <attr>是一个字符串象征一个AttributeType,和有一个格式定义在（1）。<value>是一个字
+符串象征AttributeValue, 
+或者一部分，和有这个格式定义在（2）。假如一个<value>必须包含字符‘*’或者‘（‘or’）’
+的一个，这些字符应该被避免包含这反斜线符号‘\’字符。
+3。 例子
+    这一段给予了一些使用这个标志的研究过滤器的一些例子。
+     (cn=Babs Jensen)
+     (!(cn=Tim Howes))
+     (&(objectClass=Person)(|(sn=Jensen)(cn=Babs J*)))
+     (o=univ*of*mich*) 
+4。 安全考虑
+    安全问题没在这个备忘录中讨论。
+5。 参考
+     [1] Yeong, W., Howes, T., and S. Kille, "Lightweight Directory Access
+       Protocol", RFC 1487, Performance Systems International,
+       University of Michigan, ISODE Consortium, July 1993.
+
+     [2] Howes, T., Kille, S., Yeong, W., and C. Robbins, "The String
+       Representation of Standard Attribute Syntaxes", RFC 1488,
+       University of Michigan, ISODE Consortium, Performance Systems
+       International, NeXor Ltd., July 1993.
+
+     [3] "Specification of Basic Encoding Rules for Abstract Syntax
+       Notation One (ASN.1)", CCITT Recommendation X.209, 1988.
+6。 作者地址
+       Tim Howes
+       University of Michigan
+       ITD Research Systems
+       535 W William St.
+       Ann Arbor, MI 48103-4943
+       USA
+
+       Phone: +1 313 747-4454
+       EMail: tim@umich.edu
+
+
+RFC1558――A String Representation of LDAP Search Filters     LDAP研究过滤器的字符串表达
+
+
+2
+RFC文档中文翻译计划

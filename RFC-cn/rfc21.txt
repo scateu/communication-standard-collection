@@ -1,0 +1,74 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-4-26
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working 					October 17, 1969
+RFC-21							UCLA
+							    V. Cerf
+
+              
+网络会议   
+(RFC 21  Network Working)   
+
+10月10日（1969年）在加州大学洛杉矶分校召开了一次网络会议，与会人员有： 
+	科学数据中心（SDC）				   
+       John Kreznar		Dick Linde	 	 Marty Bleier		Bob Long	
+	加州大学洛杉矶分校（UCLA）
+	   Vint Cerf 			 Steve Crocker  	Jon Postel 		Michel Elie
+	加州大学巴巴拉分校（UCSB）
+       Ron Stoughton  	Nancy O'Hara  	George Gregg
+
+
+讨论主题：
+
+	1.  修订BBN备忘录1822
+	2.  修订NWG/RFC 11
+	3.  多重控制消息的传输
+
+1.  修订BBN备忘录No. 1822 (强调)――由Dave Wa非正式通知 
+
+    页11 “IMP程序可以同时处理最多63个活动的发送连接和63个活动的接收连接。如
+果已经存在63个活动的发送连接，在主机试图通过一个新的连接发送消息时，IMP将向主
+机发出一个‘连接表满’的消息，而要发送的消息被抛弃。 ”
+    
+    页11 “1.  如果连接在26秒钟内没有使用，IMP程序将自动删除该项。”
+
+[Cerf:  如果在发送连接表满时仅仅删除怎么样？ 
+ Crocker:  不行，因为没有其他的办法删除连接，它们将不断地堆积。况且，可能一个站点
+的表满了而另一个站点可能还没有满。
+
+    页13  “抛弃的5条规则”
+
+    由于在到达目标主机IMP的IMP-HOST队列的顶端时将被抛弃，这将导致IMP系统即
+使实际上没有抵达任何主机也发生通信量。网络监测中心（Network Measurement Center）
+可以利用这一特性。
+
+    页13  不再分配消息类型6，消息类型10事实上是八进制的因而实际上就是类型8。
+不再分配类型9-15。
+
+    页17   类型10实为类型8。
+
+2.  修订NWG/RFC 11
+
+    经过UCLA的发展和其它节点的讨论，该备忘录已被废止。NWG/RFC 22包含了一些
+重要的改动。即将发布NWG/RFC 11的更新版本。
+
+3.  来自UCSB的George Gregg 将发布NWG/RFC 23 ，内容是关于
+在控制连接上传输多重控制消息。
+
+
+
+
+
+
+
+
+
+
+RFC 21  Network Meeting		网络会议   
+RFC 文档翻译计划

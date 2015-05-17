@@ -1,0 +1,1305 @@
+组织：中国互动出版网（http://www.china-pub.com）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：方 园（srdfy  srdfy@sina.com ）
+译文发布时间：2001-5-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必
+须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          J. Barnes
+Request for Comments: 1696                                Xylogics, Inc.
+Category: Standards Track                                       L. Brown
+                                                                Motorola
+                                                              R. Royston
+                                                       US Robotics, Inc.
+                                                           S. Waldbusser
+                                              Carnegie Mellon University
+                                                             August 1994
+
+
+用SMIv2定义的调制解调器MIB
+(RFC1696  Modem MIB using SMIv2)
+本文状态
+本文讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议
+以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程
+度和状态。本备忘录的发布不受任何限制。
+
+
+目  录
+1.  介绍	2
+2.  SNMPV2网络管理框架	2
+2.1.  对象定义	2
+3.  定义（因MIB格式上的要求，关键字与标识符不能翻译――译注）	3
+4.  致谢	30
+5.  安全考虑	30
+6.  作者们的地址	30
+
+1.  介绍
+本文定义了在互联网网络管理协议中使用的部分管理信息库(MIB)。特别描述了用于管
+理拨号调制解调器(Modem)和类似拨号设备的管理对象。该MIB模块规定了用于提供对这些
+设备进行监视和控制功能所需的最小对象集合，并且和SNMP框架及现行SNMP标准相一致。
+2.  SNMPv2网络管理框架
+SNMPv2网络管理框架由四个主要部分组成。它们是：
+o RFC1442定义的SMI，为管理目的而描述与命名对象的机制。
+
+o STD 17，RFC 1213定义的MIB-II，Internet协议族的核心管理对相集。
+
+o RFC 1445定义的该框架下管理及体系结构方面的内容。
+
+o RFC 1448定义的用于对管理对象进行网络访问的协议。
+
+该框架允许为实验与评估定义新的对象。
+2.1.  对象定义
+管理对象通过一个称作管理信息库(MIB)的虚拟信息存储来访问。MIB中的对象用SMI
+中定义的抽象语法标注1(ASN.1)的子集来定义。尤其，每一个对象类型由一个管理方分配
+的对象标识符来命名。对象类型与一个对象实例用于唯一标识该对象的一次具体实例化。为
+人们方便，我们经常用一个叫做描述符的文本串来引用该对象类型。
+3.	定义
+（因MIB格式上的要求，关键字与标识符不能直接翻译――译注）
+
+Modem-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, OBJECT-IDENTITY,
+    Counter32, Integer32 FROM SNMPv2-SMI
+    DisplayString FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    mib-2 FROM RFC1213-MIB;
+
+mdmMIB MODULE-IDENTITY
+    LAST-UPDATED "9406120000Z"
+    ORGANIZATION "IETF Modem管理工作组"
+    CONTACT-INFO
+        "         Steven Waldbusser
+            地址：Carnegie Mellon University
+                  5000 Forbes Ave
+                  Pittsburgh, PA, 15213
+                  US
+
+            电话：+1 412 268 6628
+            传真：+1 412 268 4987
+        电子邮件：waldbusser@cmu.edu"
+    DESCRIPTION
+        "管理拨号调制解调器的MIB模块。"
+    ::= { mdmMIB 1 }
+
+mdmMib OBJECT IDENTIFIER ::= { mib-2 38 }
+
+mdmMIBObjects OBJECT IDENTIFIER ::= { mdmMIB 1 }
+
+
+-- 一致性信息
+
+mdmConformance OBJECT IDENTIFIER ::= { mdmMIB 2 }
+
+mdmCompliances OBJECT IDENTIFIER ::= { mdmConformance 1 }
+mdmGroups      OBJECT IDENTIFIER ::= { mdmConformance 2 }
+
+-- 一致性单元
+
+mdmIDGroup    OBJECT-GROUP
+    OBJECTS { mdmIDManufacturerOID, -- 厂商对象标识符
+        mdmIDProductDetails         -- 产品详细信息
+    }
+    STATUS  current
+    DESCRIPTION
+        "一组标识Modem厂商与型号信息的对象。"
+    ::= { mdmGroups 1 }
+
+mdmLineInterfaceGroup    OBJECT-GROUP
+    OBJECTS { mdmLineCarrierLossTime,       -- 载波丢失时间
+        mdmLineState,                       -- 状态
+        mdmLineCapabilitiesID,              -- 能力标识
+        mdmLineCapabilitiesEnableRequested, -- 请求使能的能力
+        mdmLineCapabilitiesEnableGranted    -- 给予使能的能力
+    }
+    STATUS  current
+    DESCRIPTION
+        "一组描述Modem线路接口的配置与状态的对象。"
+    ::= { mdmGroups 2 }
+
+mdmDTEInterfaceGroup    OBJECT-GROUP
+    OBJECTS { mdmDTEActionDTROnToOff, -- DTR丢失时的动作
+        mdmDTEActionDTROffToOn,       -- DTR建立时的动作
+        mdmDTESyncTimingSource,       -- 同步时钟源
+        mdmDTESyncAsyncMode,          -- 同步异步模式
+        mdmDTEInactivityTimeout       -- 空闲超时
+    }
+    STATUS  current
+    DESCRIPTION
+        "一组描述Modem DTE接口的配置与状态的对象。"
+    ::= { mdmGroups 3 }
+
+mdmCallControlGroup    OBJECT-GROUP
+    OBJECTS { mdmCCRingsBeforeAnswer, -- 应答前的振铃次数
+        mdmCCCallSetUpFailTimer,      -- 呼叫建立失败时间
+        mdmCCResultCodeEnable,        -- 允许的结果代码形式
+        mdmCCEscapeAction,            -- 转换符的动作
+        mdmCCCallDuration,            -- 呼叫持续时间
+        mdmCCConnectionFailReason,    -- 连接断开原因
+        mdmCCStoredDialString         -- 存储拨号字符串
+    }
+    STATUS  current
+    DESCRIPTION
+        "一组描述Modem呼叫控制能力的配置以及该Modem发出呼叫状态的对象。"
+    ::= { mdmGroups 4 }
+
+mdmErrorControlGroup   OBJECT-GROUP
+    OBJECTS { mdmECErrorControlUsed -- 使用的错误控制
+    }
+    STATUS  current
+    DESCRIPTION
+        "一组描述Modem错误控制的配置与状态的对象。"
+    ::= { mdmGroups 5 }
+
+mdmDataCompressionGroup   OBJECT-GROUP
+    OBJECTS { mdmDCCompressionTypeUsed -- 使用的压缩类型
+    }
+    STATUS  current
+    DESCRIPTION
+        "一组描述Modem数据压缩的配置与状态的对象。"
+    ::= { mdmGroups 6 }
+
+mdmSignalConvertorGroup   OBJECT-GROUP
+    OBJECTS { mdmSCCurrentLineReceiveRate, -- 当前线路接收速率
+        mdmSCCurrentLineTransmitRate,      -- 当前线路发送速率
+        mdmSCInitialLineReceiveRate,       -- 初始线路接收速率
+        mdmSCInitialLineTransmitRate,      -- 初始线路发送速率
+        mdmSCModulationSchemeUsed          -- 使用的调制模式
+    }
+    STATUS  current
+    DESCRIPTION
+        "一组描述Modem信号转换的配置与状态的对象。"
+    ::= { mdmGroups 7 }
+
+mdmStatisticsGroup  OBJECT-GROUP
+    OBJECTS { mdmStatsRingNoAnswers,           -- 振铃后没有应答
+        mdmStatsIncomingConnectionFailures,    -- 拨入连接失败
+        mdmStatsIncomingConnectionCompletions, -- 拨入连接成功
+        mdmStatsFailedDialAttempts,            -- 试拨失败
+        mdmStatsOutgoingConnectionFailures,    -- 拨出连接失败
+        mdmStatsOutgoingConnectionCompletions, -- 拨出连接成功
+        mdmStatsRetrains,                      -- 重新训练
+        mdmStats2400OrLessConnections,         -- 小于等于2400的连接
+        mdmStats2400To14400Connections,        -- 2400到14400的连接
+        mdmStatsGreaterThan14400Connections,   -- 大于14400的连接
+        mdmStatsErrorControlledConnections,    -- 使用错误控制的连接
+        mdmStatsCompressedConnections,         -- 使用压缩的连接
+        mdmStatsCompressionEfficiency,         -- 压缩效率
+        mdmStatsSentOctets,                    -- 发送字节
+        mdmStatsReceivedOctets,                -- 接收字节
+        mdmStatsSentDataFrames,                -- 发送数据帧
+        mdmStatsReceivedDataFrames,            -- 接收数据帧
+        mdmStatsResentFrames,                  -- 重发帧
+        mdmStatsErrorFrames                    -- 错误帧
+    }
+    STATUS  current
+    DESCRIPTION
+        "一组描述Modem呼叫状态的对象。"
+    ::= { mdmGroups 8 }
+
+mdmNumber OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+        "在Modem表中的Modem行数。该值定义了mdmIndex对象的最大值。"
+    ::= { mdmMIBObjects 1 }
+
+-- Modem标识表
+
+mdmIDTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmIDEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该MIB所管理Modem的基本表。线路表，DTE接口表，呼叫控制表与状态表都
+扩充了该表中定义的行集。"
+    ::= { mdmMIBObjects 2 }
+
+mdmIDEntry OBJECT-TYPE
+    SYNTAX      MdmIDEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该表中的记录仅由代理创建。一条记录代表由代理所管理的一个Modem。"
+    INDEX       { mdmIndex }
+    ::= { mdmIDTable 1 }
+
+MdmIDEntry ::= SEQUENCE {
+    mdmIndex                Integer32,         -- 索引
+    mdmIDManufacturerOID    OBJECT IDENTIFIER, -- 厂商对象标识符
+    mdmIDProductDetails     DisplayString      -- 产品详细信息
+}
+
+mdmIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "从1到mdmNumber的唯一代表每个Modem的数值。该值必须至少从网络管理代
+理重新初始化到下次初始化之间保持不变。"
+    ::= { mdmIDEntry 1 }
+
+mdmIDManufacturerOID OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "该值用于标识该Modem的厂商、型号与版本。可以用于标识存在的厂商定义的功
+能及性能。"
+    REFERENCE
+        "V.58中属性manufacturerID的子域ManufacturerOI"
+        
+    ::= { mdmIDEntry 2 }
+
+mdmIDProductDetails OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..79))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "该设备的一个文本描述，包括厂商名称、Modem型号、硬件版本、固件版本以及
+可选的序列号。该描述信息的实际格式由供应商定义。该描述信息只能包括NVT ASCII字
+符集中的字符。"
+    REFERENCE
+        "V.58中属性manufacturerID的子域productDetails"
+
+    ::= { mdmIDEntry 3 }
+
+-- Modem线路接口表
+
+mdmLineTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmLineEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Modem线路接口表扩充了Modem标识表。"
+
+    ::= { mdmMIBObjects 3 }
+
+mdmLineEntry OBJECT-TYPE
+    SYNTAX      MdmLineEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该表中的记录仅由代理创建。一条记录代表由代理管理的一个Modem。"
+    AUGMENTS    { mdmIDEntry }
+    ::= { mdmLineTable 1 }
+
+MdmLineEntry ::= SEQUENCE {
+    mdmLineCarrierLossTime    Integer32, -- 载波丢失时间
+    mdmLineState              INTEGER    -- 线路状态
+}
+
+mdmLineCarrierLossTime OBJECT-TYPE
+    SYNTAX      Integer32 (1..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Modem在载波丢失到挂断要等待的1/10秒数。如果该值设为'255'，Modem将不
+会在丢失载波后挂断。这样允许Modem区分是线路质量的瞬间下降还是真正的断开连接，
+也可用于调整Modem对低质量线路的容错能力。"
+    REFERENCE "V.58的lineSignalFailDisconnectTimer"
+    ::= { mdmLineEntry 1 }
+
+mdmLineState OBJECT-TYPE
+    SYNTAX    INTEGER {
+                  unknown(1),   -- 未知
+                  onHook(2),    -- 挂机
+                  offHook(3),   -- 摘机且未连接
+                  connected(4), -- 已连接
+                  busiedOut(5), -- 忙
+                  reset(6)      -- 复位
+              }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "允许查看和调整Modem的状态。管理命令可以从任何状态改为‘挂机 ’、‘忙’
+或‘复位’。管理协议不允许进行其它的调整。当该对象被设为复位时，Modem则应该被复
+位并且该值将改为与Modem实现相关的新值。"
+    ::= { mdmLineEntry 2 }
+
+mdmLineCapabilitiesTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmLineCapabilitiesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该Modem的协议能力列表。"
+
+    ::= { mdmMIBObjects 4 }
+
+mdmLineCapabilitiesEntry OBJECT-TYPE
+    SYNTAX      MdmLineCapabilitiesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "一个Modem能支持的协议列表。该表中的记录仅由代理创建。一条记录代表一个
+Modem能支持的协议，而无论该协议是否使能。该表用于提供一个Modem能力的清单，并
+允许管理员从可选菜单中使能或禁止这些能力。使能或禁止这些能力不要求创建行。"
+    INDEX       { mdmIndex, mdmLineCapabilitiesIndex }
+    ::= { mdmLineCapabilitiesTable 1 }
+
+MdmLineCapabilitiesEntry ::= SEQUENCE {
+    mdmLineCapabilitiesIndex            Integer32,         -- 索引
+    mdmLineCapabilitiesID               OBJECT IDENTIFIER, -- 标识
+    mdmLineCapabilitiesEnableRequested  INTEGER,           -- 请求使能
+    mdmLineCapabilitiesEnableGranted    INTEGER            -- 给予使能
+}
+
+mdmLineCapabilitiesIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该能力记录的一个唯一索引。"
+    ::= { mdmLineCapabilitiesEntry 1 }
+
+mdmLineCapabilitiesID OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "该能力的一个标识符。标准协议能力将具有在本文或其它有关标准文档中注册的
+标识符。私有协议能力将由它们相应的组织注册。所有能力，包括标准的或厂商定义的，都
+应在该表中注册。"
+    ::= { mdmLineCapabilitiesEntry 2 }
+
+mdmLineCapabilitiesEnableRequested OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    disabled(1), -- 禁止
+                    optional(2), -- 可选
+                    preferred(3) -- 首选
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "该能力所要求的配置。如果该值为‘禁止(1)’，则要求禁止使用该协议。如果该
+值为‘首选(3)’，则要求启用该协议，并在与其它有值为‘可选(2)’的相应协议进行协商时
+提出使用。"
+    DEFVAL      { preferred }
+    ::= { mdmLineCapabilitiesEntry 3 }
+
+mdmLineCapabilitiesEnableGranted OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    disabled(1), -- 禁止
+                    optional(2), -- 可选
+                    preferred(3) -- 首选
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "该能力的实际配置。代理应该试图将其设为与相关
+mdmLineCapabilitiesEnableRequested尽可能接近的值。代理应在考虑了其它能力配置或其它
+因素的特定实现方式下作出该决定。Modem将在具有相同（非禁止）值的多个互斥能力的
+特定实现中进行选择。当然，Modem必须优先选择所有值为‘首选(3)’的能力而非所有值
+为‘可选(2)’的能力。换句话说，如果有一个或多个互斥能力（如V.32和V.32bis）被设为
+‘首选’，代理必须在特定实现方式中选择一个。另外，如果有一个或多个互斥能力被设为
+‘可选’，代理也必须在特定实现方式中选择一个。"
+    ::= { mdmLineCapabilitiesEntry 4 }
+
+mdmLineCapabilities   OBJECT IDENTIFIER ::= { mdmMIBObjects 5 }
+
+mdmLineCapabilitiesV21 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.21"
+    ::= { mdmLineCapabilities 1 }
+
+mdmLineCapabilitiesV22 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.22"
+    ::= { mdmLineCapabilities 2 }
+
+mdmLineCapabilitiesV22bis OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.22bis"
+    ::= { mdmLineCapabilities 3 }
+
+mdmLineCapabilitiesV23CC OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.23CC"
+    ::= { mdmLineCapabilities 4 }
+
+mdmLineCapabilitiesV23SC OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.23SC"
+    ::= { mdmLineCapabilities 5 }
+
+mdmLineCapabilitiesV25bis OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.25bis"
+    ::= { mdmLineCapabilities 6 }
+
+mdmLineCapabilitiesV26bis OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.26bis"
+    ::= { mdmLineCapabilities 7 }
+
+mdmLineCapabilitiesV26ter OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.26ter"
+    ::= { mdmLineCapabilities 8 }
+
+mdmLineCapabilitiesV27ter OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.27ter"
+    ::= { mdmLineCapabilities 9 }
+
+mdmLineCapabilitiesV32 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.32"
+    ::= { mdmLineCapabilities 10 }
+
+mdmLineCapabilitiesV32bis OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.32bis"
+    ::= { mdmLineCapabilities 11 }
+
+mdmLineCapabilitiesV32terbo OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.32terbo"
+    ::= { mdmLineCapabilities 12 }
+
+mdmLineCapabilitiesVFC OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.FC"
+    ::= { mdmLineCapabilities 13 }
+
+mdmLineCapabilitiesV34 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.34"
+    ::= { mdmLineCapabilities 14 }
+
+mdmLineCapabilitiesV42 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.42"
+    ::= { mdmLineCapabilities 15 }
+
+mdmLineCapabilitiesV42bis OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.42bis"
+    ::= { mdmLineCapabilities 16 }
+
+mdmLineCapabilitiesMNP1 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP1"
+    ::= { mdmLineCapabilities 17 }
+
+mdmLineCapabilitiesMNP2 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP2"
+    ::= { mdmLineCapabilities 18 }
+
+mdmLineCapabilitiesMNP3 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP3"
+    ::= { mdmLineCapabilities 19 }
+
+mdmLineCapabilitiesMNP4 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP4"
+    ::= { mdmLineCapabilities 20 }
+
+mdmLineCapabilitiesMNP5 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP5"
+    ::= { mdmLineCapabilities 21 }
+
+mdmLineCapabilitiesMNP6 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP6"
+    ::= { mdmLineCapabilities 22 }
+
+mdmLineCapabilitiesMNP7 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP7"
+    ::= { mdmLineCapabilities 23 }
+
+mdmLineCapabilitiesMNP8 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP8"
+    ::= { mdmLineCapabilities 24 }
+
+mdmLineCapabilitiesMNP9 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP9"
+    ::= { mdmLineCapabilities 25 }
+
+mdmLineCapabilitiesMNP10 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "MNP10"
+    ::= { mdmLineCapabilities 26 }
+
+mdmLineCapabilitiesV29 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.29"
+    ::= { mdmLineCapabilities 27 }
+
+mdmLineCapabilitiesV33 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "ITU V.33"
+    ::= { mdmLineCapabilities 28 }
+
+mdmLineCapabilitiesBell208 OBJECT-IDENTITY
+    STATUS  current
+    DESCRIPTION
+        "Bell 208"
+    ::= { mdmLineCapabilities 29 }
+
+
+-- DTE接口表
+
+mdmDTEInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmDTEInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Modem的DTE接口表扩充了Modem标识表。"
+    ::= { mdmMIBObjects 6 }
+
+mdmDTEInterfaceEntry OBJECT-TYPE
+    SYNTAX      MdmDTEInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该表中的记录仅由代理创建。一条记录代表由代理管理的一个Modem。"
+    AUGMENTS    { mdmIDEntry }
+    ::= { mdmDTEInterfaceTable 1 }
+
+MdmDTEInterfaceEntry ::= SEQUENCE {
+    mdmDTEActionDTROnToOff      INTEGER,  -- DTR丢失时的动作
+    mdmDTEActionDTROffToOn      INTEGER,  -- DTR建立时的动作
+    mdmDTESyncTimingSource      INTEGER,  -- 同步时钟源
+    mdmDTESyncAsyncMode         INTEGER,  -- 同步异步模式
+    mdmDTEInactivityTimeout     Integer32 -- 空闲超时
+}
+
+mdmDTEActionDTROnToOff OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    ignore(1),              -- 忽略
+                    escapeToCommandMode(2), -- 转到命令模式
+                    disconnectCall(3),      -- 断开呼叫
+                    resetModem(4)           -- 复位Modem
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "定义了DTR丢失时Modem的动作。如果该值设为忽略(1)，DTR丢失时Modem
+不做任何处理。通常，若该对象被设为忽略(1)则式(2)，Modem保持连接并进入命令模式。
+如果该值为断开呼叫(3)，当前呼叫（存在的话）被终止并且Modem在DTR为关时不予自
+动应答。如果该值为复位Modem(4)，当前呼叫（存在的话）被终止并且Modem被复位。"
+    DEFVAL      { disconnectCall }
+    ::= { mdmDTEInterfaceEntry 1 }
+
+mdmDTEActionDTROffToOn OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    ignore(1),              -- 忽略
+                    enableDial(2),          -- 允许拨号
+                    autoAnswerEnable(3),    -- 允许自动应答
+                    establishConnection(4)  -- 建立连接
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "定义DTR建立时Modem的动作。如果该值被设为忽略(1)，当DTR建立时Modem
+不做任何处理。通常，若该对象被设为忽略(1)则mdmDTEActionDTROnToOff也将被设为忽
+略(1)。如果该值被设为允许拨号(2)，Modem准备拨出一次呼叫。如果该值被设为自动应答
+(3)，Modem将被配置为应答任何拨入的呼叫。如果该值被设为建立连接(4)，Modem拨一
+个特定实现的号码。Modem刚复位或上电时，如果DTR为高电平，在这里指定的动作将被
+执行。"
+    DEFVAL      { autoAnswerEnable }
+    ::= { mdmDTEInterfaceEntry 2 }
+
+mdmDTESyncTimingSource OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    internal(1), -- 内部
+                    external(2), -- 外部
+                    loopback(3), -- 环回
+                    network(4)   -- 网络
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "用于同步传输的时钟源。如果设为内部(1)，Modem为时钟源并传送该时钟信号到
+DTE。如果设为外部(2)，传输时钟信号由DTE提供。如果是环回(3)，Modem的接收时钟
+用于传输时钟。如果是网络(4)，该时钟信号由DCE接口提供。若Modem不是在同步模式，
+设置该对象将对Modem的当前操作没有影响。"
+    REFERENCE   "V.58的transmitClockSource"
+    DEFVAL      { internal }
+    ::= { mdmDTEInterfaceEntry 3 }
+
+mdmDTESyncAsyncMode OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    async(1),        -- 异步
+                    sync(2),         -- 同步
+                    syncAfterDial(3) -- 拨号后同步
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Modem的工作模式。如果该值为拨号后同步(3)，Modem将在异步模式下接受命
+令并在执行一个拨号序列后改为同步模式传送数据。"
+    DEFVAL      { async }
+    ::= { mdmDTEInterfaceEntry 4 }
+
+mdmDTEInactivityTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "在断开一个连接前Modem将等待的空闲分钟数。当呼叫建立并在该指定的时间内
+103和104两条电路上都没有传送数据（连续标志条件），DCE断开该呼叫。如果该值为0，
+空闲断开不会发生。该功能只对异步拨号操作提供且用于对空闲连接进行管理控制。"
+    REFERENCE   "V.58的inactivityTimerSelect"
+    DEFVAL { 0 }
+    ::= { mdmDTEInterfaceEntry 5 }
+
+
+-- 呼叫控制表
+
+mdmCallControlTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmCallControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Modem呼叫控制表扩充了Modem标识表。"
+    ::= { mdmMIBObjects 7 }
+
+mdmCallControlEntry OBJECT-TYPE
+    SYNTAX      MdmCallControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该表中的记录仅由代理创建。一条记录代表由代理管理的一个Modem。"
+    AUGMENTS    { mdmIDEntry }
+    ::= { mdmCallControlTable 1 }
+
+MdmCallControlEntry ::= SEQUENCE {
+    mdmCCRingsBeforeAnswer      Integer32, -- 应答前的振铃次数
+    mdmCCCallSetUpFailTimer     Integer32, -- 呼叫建立失败时间
+    mdmCCResultCodeEnable       INTEGER,   -- 允许的结果代码类型
+    mdmCCEscapeAction           INTEGER,   -- 转换符的动作
+    mdmCCCallDuration           Integer32, -- 呼叫持续时间
+    mdmCCConnectionFailReason   INTEGER    -- 连接失败的原因
+}
+
+mdmCCRingsBeforeAnswer OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "确定应答电话要等待的振铃次数。如果该值为‘0’，Modem在检测到振铃信号时
+将不摘机应答。"
+    REFERENCE   "V.58的ringsBeforeAnswer"
+    DEFVAL      { 1 }
+    ::= { mdmCallControlEntry 1 }
+
+mdmCCCallSetUpFailTimer OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "该参数指定了Modem在或者应答一个呼叫（自动或手工）或完成拨号到与远端
+Modem建立连接应允许等待的秒数。若在该时间内没有建立连接，Modem断开线路连接并
+返回一个指明断开原因的结果代码。在TIA-602中，它由寄存器S7中的值控制。"
+    REFERENCE   "V.58的callSetUpFailTimer"
+    DEFVAL      { 30 }
+    ::= { mdmCallControlEntry 2 }
+
+mdmCCResultCodeEnable OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    disabled(1),       -- 禁止
+                    numericEnabled(2), -- 允许数字
+                    verboseEnabled(3)  -- 允许文字
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "当禁止时，DCE应该不给DTE任何形式的‘结果代码’无论是对自发事件（如
+振铃信号）或是命令。在TIA-602中，它由ATQ命令控制。当允许数字时，DCE应以数字
+形式给出结果代码。当允许文字时，DCE应以冗长的文字方式给出结果。"
+    REFERENCE   "V.58的responseModeSelect"
+    DEFVAL      { verboseEnabled }
+    ::= { mdmCallControlEntry 3 }
+
+mdmCCEscapeAction OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    ignoreEscape(1),    -- 忽略转换
+                    hangUp(2),          -- 挂断
+                    enterCommandMode(3) -- 进入命令模式
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Modem在成功识别‘转入命令模式’的字符序列时的动作。"
+    DEFVAL { ignoreEscape }
+    ::= { mdmCallControlEntry 4 }
+
+-- 呼叫控制表的呼叫状态部分
+
+mdmCCCallDuration OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "当前或上一次完成连接的秒数。如果没有先前的连接，该值应为-1。"
+    ::= { mdmCallControlEntry 5 }
+
+
+mdmCCConnectionFailReason OBJECT-TYPE
+    SYNTAX  INTEGER {
+            -- 通用
+                unknown(1),            -- 未知
+                other(2),              -- 其它
+                managementCommand(3),  -- 管理命令
+                inactivityTimeout(4),  -- 超时
+                mnpIncompatibility(5), -- MNP不兼容
+                protocolError(6),      -- 协议错误
+            -- DCE
+                powerLoss(10),         -- 掉电
+                equipmentFailure(11),  -- 设备故障
+            -- DTE接口
+                dtrDrop(20),           -- DTR丢失
+            -- 线路接口
+                noDialTone(30),        -- 无拨号音
+                lineBusy(31),          -- 线路忙
+                noAnswer(32),          -- 无应答
+                voiceDetected(33),     -- 检测到话音
+            -- 信号转换
+                carrierLost(40),       -- 丢失载波
+                trainingFailed(41),    -- 训练失败
+                faxDetected(42)        -- 检测到传真
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+
+        "指示上次连接或尝试失败的原因。每个原因代码的含义解释如下：
+            未知：
+        该代码表示失败原因未知或没有先前的呼叫。
+            其它：
+        当没有其它代码可用时使用这个代码。附加的厂商信息可以从其它地方得到。
+             管理命令：
+        管理命令会结束呼叫。这些命令包括转换命令模式，开始拨号，恢复线路和断开连
+接。
+            空闲超时：
+        该呼叫因在指定的最小时间内一直处于非活动状态而被终止。
+            MNP不兼容：
+        这些Modem无法处理MNP协议的差异。
+            协议错误：
+        使用中的某个协议发生错误。需要进一步的信息来确定是哪个协议发生错误以及错
+误的确切类型。
+            掉电：
+        Modem掉电并断开呼叫。
+            设备故障
+        Modem设备故障。
+            DTR丢失
+        当Modem会因DTR丢失而断开连接时DTR被关闭。（参阅：V.58的
+cct108TurnedOff）
+           无拨号音：
+        若Modem要监视呼叫进程音，但又在试图拨号时无法检测到拨号音。
+           线路忙：
+        在允许忙音检测时检测到忙音,或者使用了'W'或'@'拨号修饰符。（参阅：V.58的
+engagedTone）
+           无应答：
+        该呼叫未被应答。
+           检测到语音：
+        该呼叫检测到语音。
+           丢失载波：
+        表明Modem因检测到载波丢失而断开。在TIA-602中，S10寄存器确定了Modem
+在断开连接前必须进行载波丢失检测的时间。
+           训练失败：
+        表明Modem在上次连接时没有成功训练并到达数据模式。
+           检测到传真：
+        该呼叫检测到传真。"
+
+    REFERENCE   "V.58的callCleared"
+    ::= { mdmCallControlEntry 6 }
+
+-- 存储拨号字符串表
+
+mdmCCStoredDialStringTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmCCStoredDialStringEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "存储拨号字符串表。"
+    REFERENCE   "V.58的telephoneNumbers"
+    ::= { mdmMIBObjects 8 }
+
+mdmCCStoredDialStringEntry OBJECT-TYPE
+    SYNTAX      MdmCCStoredDialStringEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "存储拨号字符串。"
+    INDEX  { mdmIndex, mdmCCStoredDialStringIndex }
+    ::= { mdmCCStoredDialStringTable 1 }
+
+MdmCCStoredDialStringEntry ::= SEQUENCE {
+    mdmCCStoredDialStringIndex     Integer32,    -- 存储拨号字符串索引
+    mdmCCStoredDialString          DisplayString -- 存储拨号字符串
+}
+
+mdmCCStoredDialStringIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "一个特定拨号字符串的唯一索引。"
+    ::= { mdmCCStoredDialStringEntry 1 }
+
+mdmCCStoredDialString OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "一个存储在Modem中的拨号字符串。"
+    ::= { mdmCCStoredDialStringEntry 2 }
+
+-- Modem纠错组
+
+mdmECTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmECEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Modem纠错表扩充了Modem标识表。"
+    ::= { mdmMIBObjects 9 }
+
+mdmECEntry OBJECT-TYPE
+    SYNTAX      MdmECEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该表中的记录仅由代理创建。一条记录代表一个由代理管理的Modem。"
+    AUGMENTS    { mdmIDEntry }
+    ::= { mdmECTable 1 }
+
+MdmECEntry ::= SEQUENCE {
+    mdmECErrorControlUsed   OBJECT IDENTIFIER -- 使用的错误控制
+}
+
+mdmECErrorControlUsed OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "表明在当前或上次呼叫中使用的错误控制方式。它应该是在该Modem的性能表中
+注册的错误控制协议中的某个值。如果没有使用错误控制协议，该对象的值应为{0 0}。"
+    REFERENCE   "V.58的errorControlActive"
+    ::= { mdmECEntry 1 }
+
+-- Modem数据压缩组
+
+mdmDCTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmDCEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Modem数据压缩表扩充了Modem标识表。"
+    ::= { mdmMIBObjects 10 }
+
+mdmDCEntry OBJECT-TYPE
+    SYNTAX      MdmDCEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该表中的记录仅由代理创建。一条记录代表一个由代理管理的Modem。"
+    AUGMENTS    { mdmIDEntry }
+    ::= { mdmDCTable 1 }
+
+MdmDCEntry ::= SEQUENCE {
+    mdmDCCompressionTypeUsed    OBJECT IDENTIFIER -- 使用的压缩类型
+}
+
+mdmDCCompressionTypeUsed OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "表明在当前或上次呼叫中使用的数据压缩方式。它应该是在该Modem的性能表中
+注册的数据压缩协议中的某个值。如果没有使用压缩协议，该对象的值应为{0 0}。"
+    ::= { mdmDCEntry 1 }
+
+-- Modem信号转换组
+
+mdmSCTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmSCEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Modem信号转换表扩充了Modem标识表。"
+
+    ::= { mdmMIBObjects 11 }
+
+mdmSCEntry OBJECT-TYPE
+    SYNTAX      MdmSCEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该表中的记录仅由代理创建。一条记录代表一个由代理管理的Modem。"
+    AUGMENTS    { mdmIDEntry }
+    ::= { mdmSCTable 1 }
+
+MdmSCEntry ::= SEQUENCE {
+    mdmSCCurrentLineTransmitRate    Integer32,        -- 当前线路发送速率
+    mdmSCCurrentLineReceiveRate     Integer32,        -- 当前线路接收速率
+    mdmSCInitialLineTransmitRate    Integer32,        -- 初始线路发送速率
+    mdmSCInitialLineReceiveRate     Integer32,        -- 初始线路接收速率
+    mdmSCModulationSchemeUsed       OBJECT IDENTIFIER -- 使用的调制方式
+}
+
+mdmSCCurrentLineTransmitRate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "连接的当前链路发送速率，或上次连接的最终链路发送速率，单位bps。"
+    REFERENCE   "V.58的transmissionSignallingRateActive"
+    ::= { mdmSCEntry 1 }
+
+mdmSCCurrentLineReceiveRate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "连接的当前链路接收速率，或上次连接的最终链路接收速率，单位bps。"
+    REFERENCE   "V.58的transmissionSignallingRateActive"
+    ::= { mdmSCEntry 2 }
+
+mdmSCInitialLineTransmitRate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "当前连接的初始链路发送速率，或上次连接的初始链路发送速率，单位bps。"
+    ::= { mdmSCEntry 3 }
+
+mdmSCInitialLineReceiveRate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "当前连接的初始链路接收速率，或上次连接的初始链路接收速率，单位bps。"
+    ::= { mdmSCEntry 4 }
+
+mdmSCModulationSchemeUsed OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "当前或上次呼叫的调制方式。它应该是在该Modem性能表中注册的调制协议中的
+某个值。"
+    REFERENCE   "V.58的gstnModulationSchemeActive"
+    ::= { mdmSCEntry 5 }
+
+-- Modem统计表
+
+mdmStatsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF MdmStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Modem统计表扩充了Modem标识表。"
+    ::= { mdmMIBObjects 12 }
+
+mdmStatsEntry OBJECT-TYPE
+    SYNTAX      MdmStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "该表中的记录仅由代理创建。一条记录代表一个由代理管理的Modem。"
+    AUGMENTS    { mdmIDEntry }
+    ::= { mdmStatsTable 1 }
+
+MdmStatsEntry ::= SEQUENCE {
+    mdmStatsRingNoAnswers                   Counter32, -- 应答前的振铃次数
+    mdmStatsIncomingConnectionFailures      Counter32, -- 拨入连接失败
+    mdmStatsIncomingConnectionCompletions   Counter32, -- 拨入连接成功
+    mdmStatsFailedDialAttempts              Counter32, -- 试呼失败
+    mdmStatsOutgoingConnectionFailures      Counter32, -- 拨出连接失败
+    mdmStatsOutgoingConnectionCompletions   Counter32, -- 拨出连接成功
+    mdmStatsRetrains                        Counter32, -- 重新训练
+    mdmStats2400OrLessConnections           Counter32, -- 小于等于2400的连接
+    mdmStats2400To14400Connections          Counter32, -- 从2400到14400的连接
+    mdmStatsGreaterThan14400Connections     Counter32, -- 大于14400的连接
+    mdmStatsErrorControlledConnections      Counter32, -- 使用错误控制的连接
+    mdmStatsCompressedConnections           Counter32, -- 使用压缩的连接
+    mdmStatsCompressionEfficiency           Integer32, -- 压缩效率
+    mdmStatsSentOctets                      Counter32, -- 发送字节
+    mdmStatsReceivedOctets                  Counter32, -- 接收字节
+    mdmStatsSentDataFrames                  Counter32, -- 发送数据帧
+    mdmStatsReceivedDataFrames              Counter32, -- 接收数据帧
+    mdmStatsResentFrames                    Counter32, -- 重发数据帧
+    mdmStatsErrorFrames                     Counter32  -- 错误帧
+}
+
+mdmStatsRingNoAnswers OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "检测到振铃但没有应答该呼叫的次数。"
+    ::= { mdmStatsEntry 1 }
+
+mdmStatsIncomingConnectionFailures OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Modem应答但无法与另一DCE训练的呼入连接请求次数。"
+    ::= { mdmStatsEntry 2 }
+
+mdmStatsIncomingConnectionCompletions OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Modem应答并与另一DCE成功训练的入呼叫请求次数。"
+    ::= { mdmStatsEntry 3 }
+
+mdmStatsFailedDialAttempts OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "因Modem未摘机或无拨号音而失败的试呼次数。"
+        ::= { mdmStatsEntry 4 }
+
+mdmStatsOutgoingConnectionFailures OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "从该Modem发出呼叫，成功摘机并拨号但无法与另一DCE训练的次数。"
+    ::= { mdmStatsEntry 5 }
+
+mdmStatsOutgoingConnectionCompletions OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "从该Modem发出呼叫并与另一DCE成功训练的次数。"
+    ::= { mdmStatsEntry 6 }
+
+mdmStatsRetrains OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "在该线路的连接上进行重新训练的次数。"
+    ::= { mdmStatsEntry 7 }
+
+
+-- 使用计数器
+
+mdmStats2400OrLessConnections OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "初始建立的调制速率在2400bps或以下的连接次数。"
+    ::= { mdmStatsEntry 8 }
+
+
+mdmStats2400To14400Connections OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "初始建立的调制速率大于2400bps并且小于14400bps的连接次数。"
+    ::= { mdmStatsEntry 9 }
+
+mdmStatsGreaterThan14400Connections OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "初始建立的调制速率大于14400bps的连接次数。"
+    ::= { mdmStatsEntry 10 }
+
+mdmStatsErrorControlledConnections OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+         "使用错误控制协议的建立连接数。"
+    ::= { mdmStatsEntry 11 }
+
+mdmStatsCompressedConnections OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+         "使用压缩协议的建立连接数。"
+    ::= { mdmStatsEntry 12 }
+
+mdmStatsCompressionEfficiency OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "对当前或上次呼叫，用传入压缩编码器的字节数除传出编码器的字节数，再乘以
+100。如果未使用压缩协议，该值应为‘100’。"
+    REFERENCE   "V.58的compressionEfficiency"
+    ::= { mdmStatsEntry 13 }
+
+mdmStatsSentOctets OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "DTE送到Modem的字节数。"
+    ::= { mdmStatsEntry 14 }
+
+mdmStatsReceivedOctets OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Modem送到DTE的字节数。"
+    ::= { mdmStatsEntry 15 }
+
+mdmStatsSentDataFrames OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "线路接口上发送的数据帧数。如果在该线路接口上没有使用面向帧的协议，该计
+数器应当不变。"
+    ::= { mdmStatsEntry 16 }
+
+mdmStatsReceivedDataFrames OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "线路接口上接收的数据帧数。如果在该线路接口上没有使用面向帧的协议，该计
+数器应当不变。"
+    ::= { mdmStatsEntry 17 }
+
+mdmStatsResentFrames OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "该Modem在其线路接口上重传的帧数。如果在该线路接口上没有使用面向帧的协
+议，该计数器应当不变。"
+    ::= { mdmStatsEntry 18 }
+
+mdmStatsErrorFrames OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "该链路上接收到的块错误数。如果在该线路接口上没有使用面向帧的协议，该计
+数器应当不变。"
+    ::= { mdmStatsEntry 19 }
+
+
+-- 顺应性申明
+
+mdmCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+        "对实现该Modem管理信息库的SNMPv2记录的顺应性申明。"
+
+    MODULE  -- 本模块
+        MANDATORY-GROUPS { mdmIDGroup,   -- 标识组
+            mdmLineInterfaceGroup,       -- 线路接口组
+            mdmDTEInterfaceGroup,        -- DTE接口组
+            mdmCallControlGroup,         -- 呼叫控制组
+            mdmSignalConvertorGroup,     -- 信号转换组
+            mdmStatisticsGroup           -- 统计组
+        }
+        GROUP mdmErrorControlGroup -- 错误控制组
+        DESCRIPTION
+            "该组只有实现了纠错协议的那些Modem才必须遵循。"
+
+        GROUP mdmDataCompressionGroup -- 数据压缩组
+        DESCRIPTION
+            "该组只有实现了数据压缩协议的Modem才必须遵循。"
+    ::= { mdmCompliances 1 }
+
+END
+4.  致谢
+本文由Modem管理工作组提出。
+此外，作者们感谢Tom Holodnik和Mark S. Lewis提出的建议。
+5.  安全考虑
+安全问题不在本文中讨论。
+
+6.  作者们的地址
+   Jim Barnes
+   Xylogics, Inc.
+   53 Third Avenue
+   Burlington, MA  01803
+   USA
+
+   电话：617-272-8140
+   传真：617-272-2618
+   电子邮件：barnes@xylogics.com
+
+
+   Les Brown
+   Motorola
+
+   电话：416-507-7200
+   电子邮件：brown_l@msm.cdx.mot.com
+
+
+   Rick Royston
+   US Robotics, Inc.
+   8100 N. McCormick Boulevard
+   Skokie, IL  60076-2999
+   USA
+
+   电话：708-933-5430
+   传真：708-982-1348
+   电子邮件：rroyston@usr.com
+
+
+   Steven Waldbusser
+   Carnegie Mellon University
+   Computing and Communications
+   Cyert Hall 130
+   5000 Forbes Avenue
+   Pittsburgh, PA  15213-3890
+   USA
+
+   电话：412-268-6628
+   传真：412-268-4987
+   电子邮件：swol@andrew.cmu.edu
+RFC1696  Modem MIB using SMIv2                用SMIv2定义的调制解调器MIB
+
+
+1
+RFC文档中文翻译计划

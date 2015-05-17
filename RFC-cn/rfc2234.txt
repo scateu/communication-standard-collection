@@ -1,0 +1,369 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：（prockick   prockick@163.net）
+译文发布时间：2002-1-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                     D. Crocker, Ed.
+Request for Comments: 2234                       Internet Mail Consortium
+Category: Standards Track                                      P. Overell
+                                                      Demon Internet Ltd.
+                                                            November 1997
+
+语法规范的扩展巴科斯范式：ABNF
+（RFC2234――Augmented BNF for Syntax Specifications: ABNF）
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程
+度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1997).
+
+
+目录
+1.  介绍	2
+2.  规则定义	2
+2.1  规则命名	2
+2.2  规则格式	3
+2.3  终结符值	3
+2.4  外部编码	4
+3.   操作符	4
+3.1  连接               规则1  规则2	4
+3.2  选择	      规则1 / 规则2	4
+3.3  增式选择	         规则1 =/ 规则2	5
+3.4  值域选择	          %c##-##	5
+3.5  序列组	          (Rule1 Rule2)	5
+3.6  不定循环	          *Rule	5
+3.7  指定循环	           nRule	6
+3.8  可选序列	           [RULE]	6
+3.9  ；注释	6
+3.10操作符优先级	6
+4.   扩展巴克斯范式形式的扩展巴克斯范式定义	7
+5.   安全考虑	7
+6.   附录A-核心	8
+6.1  核心规则	8
+6.2  公共编码	9
+7.   致谢	9
+8.   参考	9
+9.   作者地址	9
+10.  完整版权声明	10
+
+1.  介绍
+互联网技术规范经常需要定义一种格式化语法并能自由地使用作者认为是有用的任何符
+号。多年来，巴克斯范式（BNF）的一个修订版，即扩展巴克斯范式(ABNF)，已经在许多互
+联网规范中流行。该版本平衡了压缩性和简单性，具有合理的表达能力。在早期的ARPA网
+络中，每个规范都包含了自己的一个扩展巴克斯范式定义。这样的规范包括电子邮件规范
+RFC733和之后的RFC822，这些规范已经成为定义扩展巴克斯范式的公共引用。本文档将
+这些定义分离出来，以供有选择的引用。可以预言，它也进行了一些修改和增强。
+标准巴克斯范式与扩展巴克斯范式的区别包括命名规则，循环，选择，次序独立以及值
+域。附录A（核心）提供了一组规则定义和编码，该规则定义和编码适用于某些互联网规范
+的核心词法分析器。作为一种便利，在此给出了这些规则定义和编码，另一方面，将它从本
+文正文中定义的元语言中抽取出来，同时也是将它从它的形式状态中的分离出来。
+
+2.  规则定义
+2.1  规则命名
+一个规则的名字简而言之就是名字本身；即，一个符号序列，该符号序列以字母打头，
+后跟一个字母或数字或连字符（下划线）的组合。
+注意：规则名大小写不敏感
+规则名<rulename>，<Rulename>，<RULENAME>和<rULENamE>都指同一个规则。
+与原版的巴克斯范式不同，扩展巴克斯范式中的中括号（“<”，“>”）不再需要。不过，
+无论何时只要中括号有利于辨别规则名字的使用，它们都可以用来包括规则名字。这种表示
+典型地用于限制自由格式的行文中规则名字的引用，或是区分结合在字符串中的未用空格符
+分割的局部规则，这样的例子，将在后边讨论循环时给出。
+2.2  规则格式
+一个规则是由下面的序列定义的：
+name =  elements crlf
+此处<name>指规则名，<elements>指一个或多个规则名或是终结符，<crlf>是行结束标
+志，回车符后紧跟换行符。等号将规则名和规则的定义分隔开。元素构成一个或多个规则名
+（和/或）值的定义的序列，这些规则名（和/或）值依照本文中定义的各种操作符，如选择
+和循环，结合在一起。
+为了视觉舒适，规则定义按左对齐格式。当一个规则需要多行时，连续行要缩进。左对
+齐和缩进是相对于扩展巴克斯范式规则首行而言的，不必与文档左边界相齐。
+2.3  终结符值
+规则分解成一串终结符值，有时也叫字符。在扩展巴克斯范式中，一个字符仅仅是一个
+非负整数。在某些特定环境中，将指定从值到字符集（如ASCII码）的一个特殊映射（编码）。
+终结符由一个或多个数字字符说明，这些数字字符的基本说明由其他字符显式指出。以
+下的基是目前已经定义的：
+        b           =  binary
+        d           =  decimal
+        x           =  hexadecimal
+因此：
+        CR          =  %d13
+        CR          =  %x0D
+分别说明了[US-ASCII]中回车符的十进制和十六进制的表示。
+下例是一个连续串值的压缩表示，使用句点（“.”）来说明在值中的符号间的分隔。因此：
+        CRLF        =  %d13.10
+扩展巴克斯范式允许在双引号中直接说明文字文本串。因此：
+        command     =  "command string"
+文字文本串解释为可打印的字符连续集。
+注意：扩展巴克斯范式字符串大小写不敏感，并且这些串的字符集使用us-ascii字符集。
+因此：
+        rulename = "abc"
+以及：
+        rulename = "aBc"
+将与“abc”，“Abc”，“aBc”，“abC”，“ABc”，“aBC”，“AbC”和“ABC”相匹配。
+为了说明某个规则是大小写敏感的，请单独说明该规则使用的字符。
+例如：
+        rulename    =  %d97 %d98 %d99
+或
+        rulename    =  %d97.98.99
+将仅与只由小写字符abc组成的串匹配。
+2.4  外部编码
+终结符值的外部表示根据存储或传输环境的限制而变化。因此，基于相同的扩展巴科斯
+范式的语法可能有多个外部编码，如其中之一是7位US-ASCII环境下的；另一个是二进制
+八位位组环境下的；当使用16位Unicode编码时，还会有另一个不同的外部编码。尽管附
+录A(核心)给出了7位US-ASCII编码环境的定义，该环境在大多数互联网应用中很普遍，但
+是，编码细节超出了扩展巴克斯范式的描述范围。
+将外部编码从语法中分离出来，目的是使得可替换的编码环境能用于同一语法。
+
+3.   操作符
+
+3.1  连接               规则1  规则2
+通过列出一系列规则名，一条规则可用于定义一个简单有序的值串--即，一连串邻接的
+字符。例如：
+        foo         =  %x61           ; a
+        bar         =  %x62           ; b
+        mumble      =  foo bar foo
+因此规则<mumble>与小写字符串"aba"匹配。
+线性空白字符：连接操作处于扩展巴克斯范式解析模型的核心。一串相邻的字符（值）
+根据扩展巴克斯范式定义的规则进行解析。就互联网规范而言，过去允许线性空白字符（空
+格符和水平制表符）在主结构，如分界特殊字符或原子字符串，两边自由发展以及隐含打印。
+注意：本扩展巴克斯范式规范没有提供线性空白字符的隐式规范。
+任何希望允许在分界符或字符串两边出现线性空白字符的语法必须显式说明之。对于那
+些被更高层规则多次使用的“核心”规则，在其中提供这些空白字符常常是有用的。“核心”
+规则可以编入一个词法分析器中或简单地作为主规则集的一部分。
+
+3.2  选择							规则1 / 规则2
+由斜杠（“/”）分隔的元素是可选的。
+因此，
+        foo / bar
+将接受<foo>或<bar>。
+注意：一个包含字母字符的引用串，是用于说明选择字符的特殊形式，它被解释为一个
+非终结符，该非终结符用所包含的字符，以指定的顺序但可以是任意大小写的混合方式，来
+描述组合串集。
+
+3.3  增式选择										规则1 =/ 规则2
+在段落中指定一列选择有时会很方便。即，通过稍后的规则定义增加选择集，一个初始
+规则可能匹配一个或多个选择。这对于那些源于同一父规则集而其他方面独立的规范尤其有
+用，如常出现于参数列表中。使用如下结构，扩展巴克斯范式允许这样的增式定义：
+        oldrule     =/ additional-alternatives
+因此规则集
+        ruleset     =  alt1 / alt2
+        ruleset     =/ alt3
+        ruleset     =/ alt4 / alt5
+与以下说明相同：
+        ruleset     =  alt1 / alt2 / alt3 / alt4 / alt5
+
+3.4  值域选择											%c##-##
+通过使用连字符（“-”）表明可选值域的方式，可以紧缩说明可选数值域。因此：
+        DIGIT       =  %x30-39
+等同于：
+        DIGIT       =  "0" / "1" / "2" / "3" / "4" / "5" / "6" /
+                           "7" / "8" / "9"
+连接的数值和数值域不能在同一串中说明。一个数值可以用点号连接或使用连字符说明
+一个值域。因此，为了在行序列结束之间说明一个可打印的字符，说明格式如下：
+        char-line = %x0D.0A %x20-7E %x0D.0A
+
+3.5  序列组											(Rule1 Rule2)
+括号里的元素看作一个单一的元素，其内容严格排序。因而，
+(elem foo)或(bar blat)符合要求。
+注意：当选择由多个规则名或文字组成时，强烈建议使用分组符，而不要依赖“空”间
+隔的正确阅读。
+因此推荐用如下形式代替上述形式：
+        (elem foo) / (bar blat)
+该形式可以避免粗心读者的误解。
+序列分组符也用于在自由行文中将一个元素序列从行文中分隔出来。
+
+3.6  不定循环											*Rule
+在元素前的操作符“*”表示重复。完整形式为：
+        <a>*<b>element
+此处<a>和<b>是可选的十进制值，表示元素出现至少<a>次，至多<b>次。
+默认值是0和无穷，因此*<element>允许任何数字，包括0；1*<element>需要至少1；
+3*3<element>只允许3而1*2<element>允许1或2。
+
+3.7  指定循环												nRule
+如下形式的规则：
+        <n>element
+等同于
+        <n>*<n>element
+即，<element>正好出现<N>次。因而2DIGIT是一个2位数，而3ALPHA是一个3字
+母字符串。
+
+3.8  可选序列												[RULE]
+方括弧包括了一个可选元素序列：
+        [foo bar]
+等同于
+        *1(foo bar).
+
+3.9  ；注释
+分号起始一行注释直到行末。这是一个简单的方法，用于在说明中平行地包括有用的注
+解。
+
+3.10操作符优先级
+上述各种机制具有以下优先级关系，从上到下，优先级依次从高（结合最紧密）到低（结
+合最松散）：
+		字符串，名字格式
+		注释
+		值域
+		循环
+		分组，可选项
+		连接
+		选择
+随意混用选择操作符与连接操作符，会引起混淆。
+再次提醒，推荐使用分组操作符显式表明连接分组。
+
+4.   扩展巴克斯范式形式的扩展巴克斯范式定义
+本语法使用附录A（核心）中提供的规则
+        rulelist       =  1*( rule / (*c-wsp c-nl) )
+        rule           =  rulename defined-as elements c-nl
+；若下一行以空白字符开头则继续
+        rulename       =  ALPHA *(ALPHA / DIGIT / "-")
+        defined-as     =  *c-wsp ("=" / "=/") *c-wsp
+；基本规则定义以及增式选择
+        elements       =  alternation *c-wsp
+        c-wsp          =  WSP / (c-nl WSP)
+        c-nl           =  comment / CRLF
+；注释或新的一行
+        comment        =  ";" *(WSP / VCHAR) CRLF
+        alternation    =  concatenation
+                          *(*c-wsp "/" *c-wsp concatenation)
+        concatenation  =  repetition *(1*c-wsp repetition)
+        repetition     =  [repeat] element
+        repeat         =  1*DIGIT / (*DIGIT "*" *DIGIT)
+        element        =  rulename / group / option /
+                          char-val / num-val / prose-val
+        group          =  "(" *c-wsp alternation *c-wsp ")"
+        option         =  "[" *c-wsp alternation *c-wsp "]"
+        char-val       =  DQUOTE *(%x20-21 / %x23-7E) DQUOTE
+；SP和VCHAR的引用串，不使用DQUOTE
+        num-val        =  "%" (bin-val / dec-val / hex-val)
+        bin-val        =  "b" 1*BIT
+                          [ 1*("." 1*BIT) / ("-" 1*BIT) ]
+；一系列的连续位值或单个ONEOF域
+        dec-val        =  "d" 1*DIGIT
+                          [ 1*("." 1*DIGIT) / ("-" 1*DIGIT) ]
+        hex-val        =  "x" 1*HEXDIG
+                          [ 1*("." 1*HEXDIG) / ("-" 1*HEXDIG) ]
+        prose-val      =  "<" *(%x20-3D / %x3F-7E) ">"
+；括起来的SP和VCHAR字符串，不含尖括号
+；行文描述，作为最后的方法来使用
+
+5.   安全考虑
+本文档确信与安全无关。
+
+6.   附录A-核心
+本附录给出一个特定语法的便捷核心。附录中的定义可作为规则的核心集使用。
+
+6.1  核心规则
+某些基本规则使用大写，如SP, HTAB, CRLF, DIGIT, ALPHA,等等。
+        ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
+        BIT            =  "0" / "1"
+        CHAR           =  %x01-7F
+；除NUL以外的任何7位US-ASCII字符
+        CR             =  %x0D
+；回车
+        CRLF           =  CR LF
+；互联网标准格式的换行
+        CTL            =  %x00-1F / %x7F
+；控制字符
+        DIGIT          =  %x30-39
+；0-9
+        DQUOTE         =  %x22
+；"（双引号）
+        HEXDIG         =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+        HTAB           =  %x09
+；水平制表符
+        LF             =  %x0A
+；换行
+        LWSP           =  *(WSP / CRLF WSP)
+；线性空白字符（过去的换行）
+        OCTET          =  %x00-FF
+；8位数据
+        SP             =  %x20
+；空格符
+        VCHAR          =  %x21-7E
+；可见（可打印）字符
+        WSP            =  SP / HTAB
+；空白字符
+
+6.2  公共编码
+形式上，数据被描述成“网络虚ASCII”，即有8位域的7位US-ASCII编码，其中最高
+位（第8位）置0。值串按“网络字节顺序”排列，高位字节在左边并且在网络中首先发送。
+
+7.   致谢
+扩展巴克斯范式的语法最初在RFC 733中说明。SRT International的Ken L. Harrenstien
+负责将巴克斯范式重新编码成扩展巴克斯范式，这样使得描述更简短且更容易理解。
+该新近项目始于一项简单的工作，希望从RFC 822中精选出反复被非电子邮件规范作
+者引用的部分，即，扩展巴科斯范式的描述。工作组并非简单盲目地将已存在的文本转变成
+单独的文档，而是经过15年对已有规范及相关规范优缺点的仔细考虑，以求进一步提高。
+这使项目变得比最初的想法艰巨得多。有趣的是，尽管作出诸如删除列表符这样的让人意外
+的决定，结果并非与原作非常的不同。
+最近一轮的规范由DRUMS工作组完成，感谢Jerome Abela , Harald Alvestrand, Robert 
+Elz, Roger Fajman, Aviva Garrett, Tom Harsch, Dan Kohn, Bill McQuillan, Keith Moore, 
+Chris Newman , Pete Resnick和Henning Schulzrinne的杰出贡献。
+
+8.   参考
+
+   [US-ASCII]     Coded Character Set--7-Bit American Standard Code for
+   Information Interchange, ANSI X3.4-1986.
+
+   [RFC733]  Crocker, D., Vittal, J., Pogran, K., and D. Henderson,
+   "Standard for the Format of ARPA Network Text Message," RFC 733,
+   November 1977.
+
+   [RFC822]  Crocker, D., "Standard for the Format of ARPA Internet Text
+   Messages", STD 11, RFC 822, August 1982.
+
+9.   作者地址
+   David H. Crocker                 Paul Overell
+
+   Internet Mail Consortium         Demon Internet Ltd
+   675 Spruce Dr.                   Dorking Business Park
+   Sunnyvale, CA 94086 USA          Dorking
+                                    Surrey, RH4 1HN
+                                    UK
+
+   Phone:    +1 408 246 8253
+   Fax:      +1 408 249 6205
+   EMail:    dcrocker@imc.org       paulo@turnpike.com
+
+10.  完整版权声明
+   Copyright (C) The Internet Society (1997).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET 
+ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, 
+INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE 
+INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES 
+OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+RFC2234――Augmented BNF for Syntax Specifications: ABNF          语法规范的扩展巴科斯范式：ABNF
+
+
+1
+RFC文档中文翻译计划

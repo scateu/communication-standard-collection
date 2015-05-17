@@ -1,0 +1,224 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：牛韬（NT   niutao@sohu.com）
+译文发布时间：2001-8-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                         P. Hoffman
+Request for Comments: 2987                      Internet Mail Consortium
+Category: Standards Track                                  November 2000
+
+字符集注册和语言媒体特征标签
+         （RFC2987――Registration of Charset and Languages Media Features Tags）
+
+本备忘录的状态
+
+   本文档描述了对于Internet社团的Internet标准跟踪协议，希望得到相关的讨论与建
+议以促进其发展。标准化状态与本协议的状态请参阅“Internet正式协议标准（STD 1）”
+的当前版本。此备忘录的发放无任何限制。
+
+版权公告
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+   此文档包含了两种媒体特征标签的注册：
+   "字符集（charset）" and "语言（language）".  这两种媒体特性允许描述能够被设备
+和设备的用户理解的字符集和人类语言。本文档的模板源自RFC 2506。
+
+目录
+1. 字符集的注册	2
+2. 语言的注册	3
+4. IANA 考虑	4
+5. 参考文献	5
+6. 作者地址	5
+7.  全部版权声明	5
+鸣谢	6
+
+1. 字符集的注册
+
+   To: media-feature-tags@apps.ietf.org (媒体特性标签邮件列表)
+   主题（Subject）: 媒体特性标签字符集的注册
+
+     媒体特性标签（Media feature tag name）:
+     字符集（charset）
+
+   与特性标签相关联的ASN.1 标识符:
+      1.3.6.1.8.1.31
+
+ 通过本特性标签对媒体特性进行说明的摘要：
+      能够对特定字符集进行定义的能力在 [CHARSET]中进行了定义。对于大多数设备，这
+种媒体特性通常是一种性能；也就是说，绝大多数设备不能聪明地对设备不能识别的字符集
+文本进行处理。
+   使用这个特性标签适当的值：
+      这个值作为一个记号在[CHARSET]中进行了定义。它只能用于比较是否相等。进行的
+比较不区分大小写。
+
+   特性标签首先是打算在下面的应用、协议、服务、或协商机制中进行使用：
+    包括任何使用媒体标签的协议
+   典型应用的例子：
+      (| (charset=utf-8);q=1.0 (charset=iso-8859-1);q=0.9
+         (charset=utf-16);q=0.5 )
+
+  相关标准或文档：
+      "IANA 字符集注册手续", RFC 2978
+
+   对个别程序、协议、服务或协商机制的应用的考虑：无
+
+   互用性考虑：字符集的别名不应在媒体特性表达式中使用，因为特性表达式操作工具可
+以将别名转换为字符集的主名称。甚至即使字符集名称不区分大小写，它的值也应全部用小
+写字母表示，以提高互用性的可能。"字符集" 的能力应当始终由与任何处理原文的数据的
+能力的关联来进行说明。
+
+   安全考虑:
+      如果已知在特定环境下显示特定字符集时存在安全方面的缺陷，能够接受这一字符集
+的设备对于攻击者有一定的帮助。
+
+   附加信息:
+            无
+
+   关于与特性信息进行联系的人的姓名和邮件地址：
+      Paul Hoffman <phoffman@imc.org>
+
+   预期用法:
+      COMMON
+
+   作者/更改 管理员:
+      IETF
+
+   被请求的IANA 出版延迟:
+                           无
+
+   其它信息:
+             无
+
+2. 语言的注册
+
+   To: media-feature-tags@apps.ietf.org (媒体特性标签邮件列表)
+   主题（Subject）: 媒体特性标签语言的注册（ Registration of media feature tag 
+language）
+
+  媒体特性标签名:
+      language
+
+   与特定标签相关联的ASN.1 标识符:
+      1.3.6.1.8.1.32
+
+   通过本特性标签对媒体特性进行说明的摘要：  显示特定人类语言的能力在 [LANG]中进
+行了定义.  注意： "display" 在这儿绝大多数情况下是表示通过计算机进行的对话。对于
+绝大多数设备，本媒体特性是作为一种偏爱，而不是一种必需的条件。
+
+使用这个特性标签适当的值：
+      这个值是一个符号，注册允许的值在[LANG]中进行了定义。这个值只用于比较是否相
+等。在[LANG]中进行描述, 语言标签始终作为一个单一的符号进行处理， 不过“子标签
+（subtags ）”并不用于比较。比较不区分大小写。
+
+   特性标签首先是打算在下面的应用、协议、服务、或协商机制中进行使用：
+    包括任何使用媒体标签的协议
+
+  典型应用的例子:
+      (| (language=no-nynorsk);q=1.0 (language=no-bokmaal);q=0.9
+         (language=i-sami-no);q=0.5 )
+
+相关标准或文档:
+      "用于语言鉴定的标签", RFC 1766
+
+   对个别程序、协议、服务或协商机制的应用的考虑：无
+
+互用性考虑：甚至即使语言标签不区分大小写，它的值也应全部用小写字母表示，以提高互
+用性的可能。
+
+   安全考虑:
+     如果已知在特定环境下显示特定语言时存在安全方面的缺陷，要认识到能够接受这一
+字符集的设备对于攻击者有一定的帮助。
+
+
+附加信息:
+        无
+
+  索取更多的信息的联系人及其电子邮件：
+       Paul Hoffman <phoffman@imc.org>
+
+   已有的用法:
+      COMMON
+
+   作者/更改 管理员:
+       IETF
+
+   请求的 IANA 出版延时:
+       None
+
+   其它信息:
+             无 
+
+3. 安全考虑
+
+   安全考虑已经在上面的两个注册中列出。
+
+4. IANA 考虑
+
+   The bulk of this document is IANA registrations.
+
+5. 参考文献
+
+   [CHARSET] Freed, N. and J. Postel, "IANA Charset Registration
+             Procedures", BCP 19, RFC 2978, October 2000.
+
+   [LANG]    Alvestrand, H., "Tags for the Identification of Languages",
+             RFC 1766, March 1995.
+
+   [TAG-REG] Holtman, K., Mutz, A. and T. Hardie, "Media Feature Tag
+             Registration Procedure", BCP 31, RFC 2506, March 1999.
+
+6. 作者地址
+
+   Paul Hoffman
+   Internet Mail Consortium
+   127 Segre Place
+   Santa Cruz, CA  95060 USA
+
+   EMail: phoffman@imc.org
+
+7.  全部版权声明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+鸣谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+RFC2987――Registration of Charset and Languages Media Features Tags
+                                                  字符集注册和语言媒体特征标签
+
+
+1
+RFC文档中文翻译计划

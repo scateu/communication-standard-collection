@@ -1,0 +1,246 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郝国生（booking  gs_hao@263.net） 
+译文发布时间：2002-1-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                          S. Teiwes
+Request for Comments: 3058                                   P. Hartmann
+Category:Informational                             iT_Security AG (Ltd.)
+                                                               D. Kuenzi
+                                                       724 Solutions Inc.
+                                                           February 2001
+IDEA加密算法在CMS上的使用
+（RFC3058――Use of the IDEA Encryption Algorithm in CMS）
+本备忘录状态
+本备忘录为Internet委员会提供信息。本文献不指定任何类型的Internet标准。本备忘
+录的描述不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001). All Rights Reserved.
+摘要
+本备忘录详细说明了如何把国际数据加密算法(IDEA)应用到CMS 或 S/MIME，作为一
+种均衡性加密技术的额外有效算法。对于那些把IDEA用于数据安全目的的组织来说，对
+IDEA也可以用于S/MIME有着极高的兴趣。本备忘录的目的是要提供OIDs和所需要的算
+法，以便IDEA能够被包括在用于相称性内容和关键加密术的S/MIME。
+目录
+1 介绍	2
+2 内容和关键字加密术的标识符	2
+3 关键字覆盖和打开	3
+3.1 IDEA关键字覆盖	3
+3.2 IDEA 关键字打开	3
+4 S/MIME性能属性	4
+5 在S/MIME客户中IDEA的激活	4
+A 参考文献	4
+B 关于IDEA 安全和标准的评论	5
+C 知识产权声明	6
+D 致谢	6
+E 作者地址	6
+F 全部版权声明	7
+认证	7
+
+1 介绍
+本备忘录详细说明了如何把国际数据加密算法(IDEA) [IDEA]应用到CMS 或 
+S/MIME[SMIME2, SMIME3]，作为一种均衡性加密技术的额外有效算法。对于那些把IDEA
+用于数据安全目的的组织来说，对IDEA也可以用于S/MIME有着极高的兴趣。本备忘录的
+目的是要提供OIDs和所需要的算法，以便IDEA能够被包括在用于相称性内容和关键加密
+术的S/MIME。
+通常S/MIME的功能性能和参数选择由S/MIME对象标识符(OIDs)的注册列表给出详细
+的说明。OIDs的列表可以通过在网址http://www.imc.org/ietf-smime/oids.html的Internet
+邮件联盟（Internet Mail Consortium）得到。客户机程序提供的S/MIME功能设置由S/MIME
+性能属性来表示。该属性包括支持密码书写功能的OIDs列表。
+在本文献中，使用的术语MUST, MUST NOT, SHOULD以及SHOULD NOT均用大写
+字母书写。这符合在[MUSTSHOULD]中的定义。
+2 内容和关键字加密术的标识符
+来自PKCS#7 [PKCS7]的密码书写信息语法，是在S/MIME中密码书写功能实现的框架
+结构。该语法详细说明了数据格式和加密程序，而没有命名密码书写算法。每一种用于加密
+目的的算法，必须由唯一的算法标识符给予详细的说明。例如，在内容加密的特殊情况下，
+内容加密算法标识符（Content Encryption Algorithm Identifier）来说明所使用的具体算法。
+然而，根据[CMS]规定，任何CMS执行包括内容加密算法的相称性加密算法也必须包括关
+键字加密算法。
+通过提供两种不同的对象标识符(OIDs)，IDEA被加入到在S/MIME中的可选均衡加密
+算法中。其中之一定义内容加密另一种OID则定义关键字加密。因此，通过选择相应的对
+象标识符，提供所需要的参数和激活程序代码，一个S/MIME代理可以把IDEA或者应用到
+内容加密或者应用到关键字加密。
+在CBC模式中的IDEA内容加密算法有对象标识符：
+IDEA-CBC OBJECT IDENTIFIER
+        ::= { iso(1) identified-organization(3)
+            usdod(6) oid(1) private(4) enterprises(1)
+            ascom(188) systec(7) security(1) algorithms(1) 2 }
+标识符参数域包括作为可选参数的初始化向量(IV)：
+IDEA-CBCPar ::= SEQUENCE {
+        iv  OCTET STRING OPTIONAL } -- exactly 8 octets
+如果IV如上述所说明的那样，它必须被用作初始向量。在这种情况下，密码文则决不能
+包括初始向量。如果IV没有被说明，则密码文的前64位必须被看作是初始向量。然而，可
+供选择的未包括IV在内的IDEA-CBCPar的“iv OCTET STRING”不应该被应用于CMS 或
+者 S/MIME。
+用于加密/解密的关键字覆盖/打开算法，IDEA内容加密关键字，IDEA关键字加密关键
+字将在接下来的部分中给出说明。IDEA关键字加密关键字的产生和分类超出了本文献描述
+的内容。
+IDEA关键字加密算法有对象标识符：
+id-alg-CMSIDEAwrap OBJECT IDENTIFIER
+        ::= { iso(1) identified-organization(3)
+            usdod(6) oid(1) private(4) enterprises(1)
+            ascom(188) systec(7) security(1) algorithms(1) 6 }
+标识符的参数域必须为空。
+3 关键字覆盖和打开
+在接下来的子部分中，IDEA关键字覆盖和关键字打开算法的说明与在[CMS] section 
+12.3中所说明的一致。
+3.1 IDEA关键字覆盖
+IDEA关键字覆盖算法是把IDEA内容加密关键字加密成IDEA关键字加密关键字。IDEA
+关键字覆盖被定义为：
+1.	使内容加密关键字(16位octets)被称为CEK。
+2.	按照在[CMS] section 12.6.1中所描述的那样，计算关于CEK 8位octet关键字求和
+有效值，将结果称为ICV。
+3.	令CEKICV := CEK || ICV。
+4.	随机产生8位octet，将结果称为IV。
+5.	应用CBC模式中的IDEA和关键字加密关键字加密CEKICV。
+6.	令TEMP2 = IV || TEMP1。
+7.	在TEMP2中颠倒octets的顺序。也就是说，最重要的最前8位字节和最不重要的
+最后8位字节交换，以此类推。将结果称为TEMP3。
+8.	应用CBC模式中的IDEA和关键字加密关键字加密TEMP3。使用初始化向量
+0x4adda22c79e82105。密码文本字长32位octets。
+3.2 IDEA 关键字打开
+IDEA 关键字打开算法采用IDEA 关键字加密关键字解密IDEA 内容加密关键字。IDEA 
+关键字打开被定义为：
+1.	如果打开的内容加密关键字字长不是32位octets，则输出错误。
+2.	采用在CBC模式中的IDEA和关键字加密关键字解密已经打开的内容加密关键字。
+3.	在TEMP3中颠倒octets的顺序。也就是说，最重要的最前8位字节和最不重要的
+最后8位字节交换，以此类推。将结果称为TEMP2。
+4.	把TEMP2分解成IV 和 TEMP1。IV是最重要的最前8位octets，TEMP1是余下
+的24位octets。
+5.	应用在CBC模式中的IDEA和关键字加密关键字解密TEMP1。把来自上一步的IV
+有效值用作初始向量。把明码文本称为CEKICV。
+6.	把CEKICV 分解成 CEK 和 ICV。CEK是最重要的最前16位octets，ICV是最不
+重要的最后8位octets。
+7.	按照在[CMS] section 12.6.1中所描述的那样，计算关于CEK 8位octet关键字求和
+有效值。如果计算的关键字求和有效值与解密的关键字求和有效值ICV不匹配，则
+输出错误。
+8.	使用CEK作为内容加密关键字。
+4 S/MIME性能属性
+一个S/MIME客户可以宣布密码书写功能的设置，正如在[S/MIME3]中所说明的那样，
+通过使用S/MIME性能属性予以支持。该属性提供密码书写功能OIDs的列表，并且必须被
+客户标记。这些OIDs应当在功能类别上进行逻辑划分，并且必须根据它们的参数进行排序。
+如果一个S/MIME客户被要求支持相称性加密和基于IDEA的关键字覆盖，则性能属性必须
+包括上述已经说明的，并包含在均衡算法和关键字编码算法类别中的OIDs。IDEA不需要
+额外的OID参数，因为它有固定的128字节的关键字长。
+SMIME性能序列表明IDEA均衡加密算法必须包括性能ID域的IDEA-CBC OID，并且
+必须将参数域除外。IDEA加密技术的SMIME性能序列应当被包括在SMIME性能列表的
+均衡加密算法部分中。SMIME性能序列表明IDEA必须按如下进行DER编码：300D 060B 
+2B06 0104 0181 3C07 0101 02。
+SMIME性能序列表明IDEA关键字覆盖算法必须包括id-alg-CMSIDEA覆盖在性能ID域的
+OID，并且关键字覆盖算法的参数域必须除外。IDEA关键字覆盖的SMIME性能序列应该
+被包括在SMIME性能列表的关键字编码算法部分中。SMIME性能序列表明IDEA关键字
+覆盖必须按如下进行DER编码：300D 060B 2B06 0104 0181 3C07 010106。
+SMIME性能序列的ASN.1符号表明IDEA是：
+SMIME Capability ::= SEQUENCE {
+          Capability ID OBJECT IDENTIFIER,
+          parameters ANY DEFINED BY capability ID OPTIONAL }
+其中，Capability ID是以CBC 模式进行IDEA 内容加密的IDEA-CBC（不带参数）或
+者Capability ID是IDEA关键字覆盖的id-alg-CMSIDEA覆盖（不带参数）。
+5 在S/MIME客户中IDEA的激活
+当一个发送代理创建加密的信息的时候，必须确定使用哪一种加密算法类型。通常确定
+过程涉及到来自性能列表的信息，包括来自接收者消息中的信息，以及其它的信息，诸如私
+人协议，用户参数，法律限制等信息。如果用户需要相称性加密技术的IDEA，则必须被
+S/MIME发送和接受双方的客户所支持，并且必须设置用户参数。
+A 参考文献
+[IDEA]       X. Lai, "On the design and security of block ciphers",
+                 ETH Series in Information Processing, J.L. Massey
+                 (editor), vol. 1, Hartung-Gorre Verlag Konstanz,
+                 Technische Hochschule (Zurich), 1992.  A. J. Menezes,
+                 P.C. v. Oorschot, S.A. Vanstone, "Handbook of Applied
+                 Cryptography," CRC Press New York, 1997, p. 265.  B.
+                 Schneier, "Applied Cryptography," 2nd ed., John Wiley &
+                 Sons Inc.  New York, 1996, pp. 319-325. IPR: see the
+                 "IETF Page of Intellectual Property Rights Notices",
+                 http://www.ietf.org/ipr.html 
+ 
+    [SMIME2]     Dusse, S., Hoffman, P., Ramsdell, B., Lundblade, l. and
+                 L. Repka, "S/MIME Version 2 Message Specification", RFC
+                 2311, March 1998.
+ 
+    [SMIME2]     Dusse, S., Hoffman, P., Ramsdell, B. and J. Weinstein,
+                 "S/MIME Version 2 Certificate Handling", RFC 2312, March
+                 1998.
+ 
+    [SMIME3]     Dusse, S., Hoffman, P., Ramsdell, B. and J. Weinstein,
+                 "S/MIME Version 3 Certificate Handling", RFC 2632, March
+                 1998.
+ 
+    [SMIME3]     Ramsdell, B., "S/MIME Version 3 Message Specification",
+                 RFC 2633, June 1999.
+ 
+    [MUSTSHOULD] Bradner, S.,"Key words for use in RFCs to Indicate
+                 Requirement Levels", BCP 14, RFC 2119, March 1997.
+ 
+    [CMS]        Housley, R., "Cryptographic Message Syntax", RFC 2630,
+                 June 1999.
+ 
+    [PKCS7]      Kaliski, B., "PKCS #7: Cryptographic Message Syntax
+                 Version 1.5", RFC 2315, March 1998.
+
+B 关于IDEA 安全和标准的评论
+IDEA算法在一个联合项目中被开发，该联合项目包括位于苏黎世的瑞士联邦技术委员会
+（Swiss Federal Institute of Technology）（Dr. X. Lai and Prof.J.L. Massey）和Ascom有
+限责任公司。该项目的目标是要开发一个有效的加密算法，用以取代DES算法。IDEA使
+用128位保密关键字并且一次加密64位字块[IDEA]。特别要加强防止微分密码分析的攻击。
+对于全部8个完整的IDEA，没有比在128位字节关键字空间中详细寻找更好的已知攻击。
+IDEA允许标准电子数据交换应用的执行。并且已经被加入到ISO/IEC加密算法的注册
+表中，并且通过UNI/EDIFACT“安全联合工作组（SECURITY JOINT WORKING GROUP）”
+与“安全向导（ECURITY GUIDE LINES）”编码列表联合成为一体。
+C 知识产权声明
+ Ascom有限责任公司持有对IDEA的专利权。与IETF标准的知识产权程序一致，在合
+理的情况下，Ascom公司提供一种非专有认证以及无差别术语和条件。
+IDEA(TM)由国际版权法保护，并且另外在几个国家同样受到法律的保护。因为Ascom
+公司希望这种高级安全算法可以广泛地得到，所以该算法的非商业使用是免费的。
+任何希望了解更多关于IDEA知识或者希望获得认证的团体可以访问网站：
+http://www.media-crypt.com/ 以及http://www.it-sec.com/ 或者发送电子邮件到：
+info@media-crypt.com或者Idea@it-sec.com. 
+D 致谢
+我们非常感谢Russ Housley,，Jim Schaad 以及 Francois Zeller对本文献付出他们的
+贡献。
+E 作者地址
+    Stephan Teiwes
+    iT_Security AG (Ltd.)
+    Badenerstrasse 530
+    CH-8048 Zurich, Switzerland
+    Phone: +41 1 404 8200
+    Fax  : +41 1 404 8201
+    EMail: stephan.teiwes@it-sec.com 
+ 
+    Peter Hartmann
+    iT_Security AG (Ltd.)
+    Badenerstrasse 530
+    CH-8048 Zurich, Switzerland
+    Phone: +41 1 404 8200
+    Fax  : +41 1 404 8201
+    EMail: peter.hartmann@it-sec.com 
+ 
+    Diego Kuenzi
+    724 Solutions Inc.
+    Bahnhofstrasse 16
+    CH-5600 Lenzburg, Switzerland
+    Phone: +41 62 888 3070
+    Fax:   +41 62 888 3071
+    EMail: dkuenzi@724.com 
+F 全部版权声明
+Copyright (C) The Internet Society (2001). All Rights Reserved.
+该文献及其译文可能被其他人员拷贝或转载，由此而产生的对本文献的评论或者其它不
+同的解释或者对其执行的帮助等作品，可能会被筹备、复制、出版以及发布，假如上述版权
+声明以及本段内容被包括在此类拷贝和派生作品中，则从整体或者局部来说，都没有任何类
+型的限制。然而，除为发展Internet标准目的所需之外，本文献自身不可以采取任何形式进
+行修改，诸如删除版权声明或者Internet协会或其它Internet组织，这种情况下，版权定义
+程序必须遵循Internet标准进行，或者必须将其翻译成英语之外的其它语言。
+上述有限许可的授予是永久的，不会被Internet协会、其继承者或者其委派者所废除。
+本文献及包括于此的信息是基于“参见”和INTERNET协会以及INTERNET工程任务
+组放弃的所有依据、表示或者暗示等，包括但不局限于任何依据，在此信息的使用将不违反
+任何规则或任何商业性暗示依据或适用于特别的目的。
+认证
+RFC编辑功能基金当前由Internet协会提供。
+RFC3058――Use of the IDEA Encryption Algorithm in CMS        IDEA加密算法在CMS上的使用
+
+
+1
+RFC文档中文翻译计划

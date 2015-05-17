@@ -1,0 +1,35 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：顾国飞（ggfei    ggfei@263.net ）
+译文发布时间：2001-4-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                 J. Postel
+Request for Comments: 867                                  ISI
+May 1983
+
+RFC867  Daytime协议
+(RFC867  Daytime Protocol)
+本RFC规范了一个ARPA Internet community上的标准。在ARPA Internet上的所有主机应当采用和实现这个标准。
+一个有用的测量和调试工具就是daytime服务。它的作用就是返回当前时间和日期，格式是字符串格式。 
+* 基于TCP的daytime服务 
+daytime服务是基于TCP的应用，服务器在TCP端口13侦听，一旦有连接建立就返回ASCII形式的日期和时间(接收到的任何数据被忽略)，在传送完后关闭连接。 
+* 基于UDP的daytime服务 
+daytime服务也可以使用UDP协议，它的端口也是13，不过UDP是用数据报传送当前时间的。接收到的数据被忽略。 
+* Daytime格式 
+对于daytime没有特定的格式，建议使用ASCII可打印字符，空格和回车换行符。daytime应该在一行上。
+下面是两种流行的格式：
+一种流行的格式是：Weekday, Month Day, Year Time-Zone
+例子：Tuesday, February 22, 1982 17:37:43-PST
+另一种流行的格式用于SMTP中：dd mmm yy hh:mm:ss zzz
+例子：02 FEB 82 07:59:01 PST
+注意：对于机器来说，有用的时间采用了时间协议（Time Protocol  RFC-868)
+RFC867  Daytime Protocol                                                RFC867  Daytime协议                  
+
+1
+
+
+1
+中文文档翻译计划
+
+

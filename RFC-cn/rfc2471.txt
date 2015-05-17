@@ -1,0 +1,158 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划(http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：安智平（fivestar   anzp@xanet.edu.cn）
+译文发布时间：2001－4－13
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                         R. Hinden
+Request for Comments: 2471				          Nokia
+Obsoletes: 1897                                                 R. Fink
+Category: Experimental                                             LBNL
+                                                              J. Postel
+                                                                    ISI
+                                                          December 1998
+
+
+
+
+Ipv6测试地址分配
+( IPv6 Testing Address Allocation)
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+
+目录
+1．	简介	1
+2．	地址格式	2
+3．	参考资料	2
+4．	安全问题	3
+5．	作者联系方法	3
+6．	版权声明	4
+
+1． 简介
+本文档描述了一种在测试IPv6的原型软件中IPv6地址的分配计划。这些地址都是临时的，在将来会被收回。任何使用这些地址的IPv6系统都得在未来的某个时候重新编号。这些地址在Internet中不能被正常路由，除了用来测试IPv6。
+IPv6测试地址的地址格式跟"Aggregatable Global Unicast Address Allocation" [AGGR] 和 "TLA and  NLA Assignment Rules" [TLAASN]一致。
+本文档时用来替换RFC 1897 "IPv6 Testing Address  Allocation"， January 1996.  RFC1897已经过时。
+本文档中描述的地址跟IPv6  Addressing Architecture [ARCH]一致。它们可以手动地分配给节点，也可以通过IPv6 Auto Address Allocation [AUTO]或者 DHCP for IPv6 [DHCPv6]来分配。
+关键字 "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", 和 "OPTIONAL" 在本文档中地解释参照[RFC2119]。
+
+
+2． 地址格式
+Aggregatable Global Unicast Address格式在[AGGR]中定义如下：
+| 3 |  13 |    32     |   16   |          64 bits               |
++---+-----+-----------+--------+--------------------------------+
+|FP | TLA | NLA ID    | SLA ID |         Interface ID           |
+|   | ID  |           |        |                                |
++---+-----+-----------+--------+--------------------------------+
+其中：
+FP=001=格式前缀
+这是格式的前缀，用来识别Aggregatable Global Unicast Address。
+TLA = 0x1FFE = Top-Level Aggregation Identifier
+这是在IETF IPng Transition Working Group IPv6骨干网测试活动组的资助下，由IANA分配给IPv6骨干测试网的。这由IPv6骨干网活动组主席管理，目前是Bob Fink（rlfink@lbl.gov）。这个TLA的使用是临时的，所有使用这个TLA地址的用户都需要在将来某个时候重新编号。
+NLA ID = Next-Level Aggregation Identifier
+NLA ID空间是由TLA ID管理员分配的充分的地址层次空间，用来识别跟IPv6骨干网体系结构和拓扑结构的传输网络和终端用户位置。这可以提供一个多层次的传输服务，跟在IPv6骨干网上全面测试IPv6在真实使用环境下技术的目的一致。
+SLA ID = Site-Level Aggregation Identifier
+独立的结构用SLA ID这个字段产生本地网络的地址层次，并且用来识别子网。独立的机构要负责给这个字段分配值。
+Interface ID
+这是用来识别某些有关IPv6链路文档中（例如：[ETHER], [FDDI]等等）所定义的接口的接口标识符。
+3． 参考资料
+
+   [ARCH]    Hinden, R., "IP Version 6 Addressing Architecture",
+             RFC 2373, July 1998.
+
+   [AGGR]    Hinden, R., Deering, S., O'Dell, M., "An Aggregatable
+             Global Unicast Address Format", RFC 2374, July 1998.
+
+   [AUTO]    Thompson, S. and T. Narten, "IPv6 Stateless Address
+             Autoconfiguration", RFC 1971, August 1996.
+
+   [DHCP6]   Bound, J., "Host Configuration Protocol for IPv6", Work in
+             Progress.
+
+   [ETHER]   Crawford, M., "Transmission of IPv6 Packets over Ethernet
+             Networks", RFC 2464, December 1998.
+
+   [FDDI]    Crawford, M., "Transmission of IPv6 Packets over FDDI
+             Networks", RFC 2467, December 1998.
+
+   [RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+             Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [TLAASN]  Hinden, R., "TLA and NLA Assignment Rules", Work in
+             Progress.
+4． 安全问题
+本文档定义了一种跟[AGGR]相一致产生集合地址的方法。它对Internet网络设施的安全并无直接影响。IPv6分组的认证在中[AUTH]有定义。
+5． 作者联系方法
+
+   Robert M. Hinden
+   Nokia
+   232 Java Drive
+   Sunnyvale, CA 94089
+   USA
+
+   Phone: +1 408 990-2004
+   EMail: hinden@iprg.nokia.com
+
+
+   Robert Fink
+   Lawrence Berkeley National Laboratory
+   MS 50A-3111
+   Berkeley, CA 94720
+   USA
+
+   Phone: +1 510 486-5692
+   EMail: rlfink@lbl.gov
+
+
+   Jon Postel (Deceased)
+   Information Sciences Institute
+   4676 Admiralty Way
+   Marina del Rey, CA 90292-6695
+   USA
+6． 版权声明
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+RFC2471 IPv6 Testing Address Allocation                RFC2471IPv6测试地址分配
+
+
+
+
+1
+RFC中文文档翻译计划
+
+

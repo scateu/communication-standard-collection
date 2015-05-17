@@ -1,0 +1,176 @@
+
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：董睿（dongrui   dongrui511@21cn.com  ）
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                        Ira Winston
+Request for Comments: 948                     University of Pennsylvania
+                                                               June 1985
+
+
+
+IP数据报通过IEEE802.3网络传输的两种方法
+（RFC948 ――Two methods for the transmission of IP datagrams 
+over IEEE 802.3 networks） 
+
+
+本备忘录的状态
+本文档讲述了两种在IEEE 802.3 网络上封装互联网络通讯协议(IP)[1]的方法[2]。这个
+RFC 为了给ARPA-Internet 团体提出了一个推荐的协议。并且还需要讨论和完善。本
+备忘录的发布不受任何限制。
+目录
+介绍	2
+以太网兼容模式	2
+IEEE802.2/802.3兼容模式	2
+结构形式	2
+地址映像	3
+静态表	3
+动态发现	3
+广播地址	3
+追踪格式	3
+字节顺序	4
+结尾	4
+参考	4
+
+介绍
+IEEE 802方案定义了ISO开放式系统互联参考模型（ISO/OSI）定义的局域网中处理
+物理层和数据链路层的一系列标准。几个物理层标准（802.3，802.4和802.5）[2，3，
+4]和一个数据链路层标准（802.2）[5]已经被制定了。IEEE物理层标准详细说明了
+ISO/OSI物理层和ISO/OSI数据链路层的媒体访问控制子层。802.2数据链路层标准详
+细说明了ISO/OSI数据链路层中逻辑链路控制子层。
+
+802.3 标准是以第二版以太网标准[6]为基础的。以太网物理层和802.3的物理层在所有
+的实际应用上是兼容的，然而，以太网数据链路层和802.2/802.3数据链路层是不兼容
+的。
+
+现存的许多以太网络装置使用在[7]里描述的以太网兼容标准传输ip数据报。IEEE 802.3 
+物理层兼容连接能够被增加到这些网络，在不违反802.3标准的情况下使用一个以太网
+数据链路层兼容模式传输IP数据报。二选一，使用一个802.2/803.3数据链路层兼容模
+式传送ip数据报。
+以太网兼容模式
+IEEE802.3网络为了达到和以太网兼容必须使用48bit的物理地址和10M/s的带宽。
+
+IEEE802.3数据包的头和以太网数据包的头完全相同，除了头中一段的分配含义。在一
+个以太网数据包的头里这段被用来作为协议类型段，在一个802.3数据包的头里这段被
+用来作为长度段。在10M/s的802.3网络里允许的最大的长度段的值是1500。802.3标
+准里说明数据包的长度段超过最大允许的长度段可能会被忽略，丢弃或者自定义使用。
+因此，当协议类型被使用超过1500，长度段能够被自定义模式使用作为协议类型段。
+IP，ARP和追踪概括的协议类型都超过1500。使用这个技术，在以太网络描述上传输
+IP数据报的方法能够被用来在IEEE802.3网络上在以太网兼容模式下传输IP数据报。
+IEEE802.2/802.3兼容模式
+结构形式
+IP数据报在标准802.2/802.3逻辑链路控制层类型1下被传送。无数802.2目的服务访
+问点和源服务访问点格式的信息头设置成96，IEEE为IP指定了全球访问服务点的值。
+数据段包括紧随在IP头后的IP数据。
+
+IEEE 802.3数据包的最小尺寸限制是以网络带宽为基础的。当需要时，数据段会被填充
+（用八进制的零）以适合802.3最小结构尺寸的要求。这些填充的零不属于IP数据包，
+不包括在IP头的总长度范围里。
+
+IEEE 802.3数据包的最大尺寸限制是以网络带宽为基础的。鼓励支持全长度数据包的执
+行。
+网关的执行必须准备接受全长度数据包并且在必需的时候粉碎它们。
+主机的执行应该准备接受全长度数据包，然而主机不一定需要发送长度超过576
+个八进制字节的数据报除非它们非常明确目的地准备接受它们。主机可以在TCP
+应用基础上通过TCP最大分段大小选项[9]传达她的尺寸优先选择。
+
+注意：数据报在802.3网络上可能超过普通因特网默认的最大数据报尺寸576个八进制
+字节。主机连接到一个802.3网络，当发送数据报到不在同一802.3网络上的主机上时
+应该紧记这点。也许合适发送小一点的数据报以避免不必要的中间网关分割。请看这点
+进一步的信息。
+地址映像
+32bit的internet地址映像到16bit或48bit的802.3地址能够有几种实现的方法。可以使
+用静态表，也可以使用动态发现程序。
+静态表
+每一个主机能够提供一个所有其他在局域网上的主机的802.3地址和internet地址的表。
+动态发现
+通过一个类似以太网地址转换协议(ARP)[10]的协议能够实现32bit internet地址和802.3
+地址之间的映像。在一些internet网络里，internet地址被随意分配。每个主机的完成必
+需知道他自己的internet 地址，回复适合的802.3地址转换数据包。它也能够在需要时
+使用ARP来转换internet地址到802.3地址。
+广播地址
+internet广播地址（网络地址的所有主机部分都为二进制的“１“）应该被映像到802.3
+广播地址（所有都是二进制“１”）。
+强力推荐使用ARP动态发现程序。
+追踪格式
+Unix 4.2bsd的一些版本使用不同的封装模式以便在VAX虚拟内存结构下得到更好的网
+络成绩。在同一802.3网络里这些系统内部采取这样格式。追踪封装模式可以在[11]里
+找到。
+字节顺序
+附录B里描述的和互联网络通讯协议详细描述[1]的一样，IP数据报是作为一系列的8bit
+字节通过802.2/802.3网络传输的。
+结尾
+两种封装模式能够混合在同一局域网里；然而，这会把网络分割成两个不兼容的子网。
+一个网络上的主机能够支持两种模式并且就像网关一样工作在两个子网之间；然而，这
+会引入一个重要的惩罚性的操作，它本应该被避免的。
+
+IEEE 802.2/802.3兼容封装模式较以太网兼容模式好，因为IEEE802.2和IEEE802.3
+标准已经被全美国和全世界所接受，而且同样的封装模式能够被用在其他的IEEE802
+物理层操作上。然而，有许多现存的设备必须使用以太网上的IP协议和从以太网到
+IEEE802.2/802.3的控制转换。
+
+最后，所有新的操作应该允许封装模式静态选择而且所有现存的操作为了保证这个静态
+选择的正确应该做出修改。在传输期间，所有在同一网络上的主机应该使用以太网兼容
+模式。当做有的现存操作中都加入了802.2/802.3支持以后，IEEE 802.2/802.3模式将
+会被使用并且转换将会完成。
+参考
+	[1]  Postel, J.  "Internet Protocol".  RFC-791, USC/Information
+        Sciences Institute, September 1981.
+
+	[2]  The Institute of Electronics and Electronics Engineers, Inc.
+        "IEEE Standards for Local Area Networks: Carrier Sense Multiple
+        Access with Collision Detection (CSMA/CD) Access Method and
+        Physical Layer Specifications".  The Institute of Electronics
+        and Electronics Engineers, Inc., New York, New York, 1985.
+
+	[3]  The Institute of Electronics and Electronics Engineers, Inc.
+        "IEEE Standards for Local Area Networks: Token-Passing Bus
+        Access Method and Physical Layer Specifications".  The Institute
+        of Electronics and Electronics Engineers, Inc., New York, New
+        York, 1985.
+
+	[4]  The Institute of Electronics and Electronics Engineers, Inc.
+        "IEEE Standards for Local Area Networks: Token Ring Access
+        Method and Physical Layer Specifications".  The Institute of
+        Electronics and Electronics Engineers, Inc., New York, New York,
+        1985.
+
+	[5]  The Institute of Electronics and Electronics Engineers, Inc.
+        "IEEE Standards for Local Area Networks: Logical Link Control".
+        The Institute of Electronics and Electronics Engineers, Inc.,
+        New York, New York, 1985.
+
+	[6]  "The Ethernet, Physical and Data Link Layer Specifications,
+        Version 2.0".  Digital Equipment Corporation, Intel Corporation,
+        and Xerox Corporation, 1982.
+
+	[7]  Hornig, C.  "A Standard for the Transmission of IP Datagrams
+        over Ethernet Networks".  RFC-894, Symbolics Cambridge Research
+        Center, April 1984.
+
+	[8]  Reynolds, J., and Postel, J.  "Assigned Numbers".  RFC-943,
+        USC/Information Sciences Institute, April 1985.
+
+	[9]  Postel, J.  "The TCP Maximum Segment Size Option and Related
+        Topics".  RFC-879, USC/Information Sciences Institute,
+        November 1983.
+
+	[10] Plummer, D.  "An Ethernet Address Resolution Protocol".
+        RFC-826, Symbolics Cambridge Research Center, November 1982.
+
+	[11] Leffler, S., and Karels, M.  "Trailer Encapsulations".  RFC-893,
+        University of California at Berkeley, April 1984.
+
+RFC948―Two methods for the transmission of IP datagrams over IEEE 802.3 networks over IEEE 802.3 
+networks                   IP数据报通过IEEE802.3网络传输的两种方法
+
+
+1
+RFC文档中文翻译计划

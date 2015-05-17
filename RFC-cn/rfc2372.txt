@@ -1,0 +1,856 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：cata_xu  （cata_xu amethyst@theory.issp.ac.cn）              
+译文发布时间：2001-7-4
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         K. Evans
+Request for Comments: 2372                                    J. Klein
+Category: Informational                               Tandem Computers
+                                                               J. Lyon
+                                                             Microsoft
+                                                             July 1998
+
+处理internet协议（TIP）-要求和补充信息
+(Transaction Internet Protocol - Requirements and
+Supplemental Information)
+
+本备忘录的状态
+ 
+本备忘录提供了internet社区的一些信息，但并没有详细讲述任何一种internet
+标准。本备忘录的发布不受任何限制。
+
+版权声明
+
+Copyright (C) The Internet Society (1998). All Rights Reserved.
+
+摘要
+
+本文档描述了处理Internet协议（TIP）[1]的目的（特定使用场景）和要求。
+其被有意用来帮助限定此协议的一些必要特征和功能。本文档也提供了一些辅助
+理解和帮助TIP协议实现的补充信息。
+
+目录
+1. 介绍	2
+2. 处理Internet协议(TIP)	3
+3. 范围	4
+4. TIP的预期使用	4
+5.  TIP的适应系统	4
+6.  X/Open DTP模型的关联	5
+7.  TIP特定使用场景的实例	5
+8.  TIP处理的恢复	8
+9.  TIP处理和应用信息连续	8
+10. TIP协议和本地操作	9
+11. 安全考虑	10
+12. TIP要求	10
+参考	12
+作者的地址	12
+评论	13
+附录A.  一个TIP处理管理器API的实例	13
+版权声明	21
+
+1. 介绍
+
+处理是一个非常有用的编程范例，很大程度上简化了分布式应用的书写。当处理被使用
+时，不管参与一个特定的工作单元有多少分布式应用组分，可能的结果被减少至两个，
+即：要么所有工作完全成功，要么什么都完不成（这个特征常被称做原子数）。由于程
+序员不必应付大量可能失败的场景，所以应用编程变得简单了。典型地，处理语义是由
+一些基本的系统底层结构（通常是一种产品，诸如事务处理监控器，和/或者数据库的形
+式）提供的。这底部结构应付失败以及执行必要的恢复操作以保证原子数的特性。处理
+的使用能使可靠的分布式应用得以发展，否则，尽管不是不可能使分布式应用取得进展，
+但是会使其变得困难。
+
+支持分布处理的一个关键技术是二段提交协议（two-phase commit protocol）（2-pc）。2-pc
+协议已经在商业事务处理（TP）系统中使用了很多年了，并且它也是很好理解的（例
+如12年前就开始应用的LU6.2 2-pc（同步点）协议）。今天，大量不同的2-pc协议在许
+多TP监控器和数据库产品中被支持。在参与一个分布工作单元（处理）的各个组分之间，
+2-pc被用来确保与工作结果相关的所有部分（忽略任何失败的成分）一致。今天，标准的
+和个性化的2-pc协议都存在。这些协议典型的使用了一个“单管道”模型。就是说处理和
+应用协议是紧密结合的，是在同一个通信频道上执行的。一个应用可能只使用和处理协议
+联结在一起的特定通信机制。具有比较庞杂的内容和宽泛的结构和管理要求的标准协议
+
+（OSI TP，LU6.2)是复杂的。因此它们没有被广泛配置。如果处理能被使用的话，那么所
+有这些组成的网络将具有有限的应用灵活性和互用性。应用就能有希望使用大量没有处理
+变量的通信协议（例如HTTP），并被配置在不同种类的应用环境中。
+
+概括来说，处理很大程度上简化了分布式应用的编程。2-pc协议是一种关键的处理技术。
+目前运行在一具有特殊目的（复杂的，同类的）的底部结构中的2-pc协议只给一套有限
+制的应用提供了处理语义。这个应用使用一套特定的双向通信协议。所以，被当前的2-pc
+协议强加的约束限制了处理范例的广泛使用，因此也抑制了新的分布式商业应用的发展。
+
+（见[2]以得到更多有关处理，原子数，以及二段提交协议的大概知识。）
+
+2. 处理Internet协议(TIP)
+
+TIP是在一异类（网络化的）环境中，用来提供普遍分布式处理支持的一种2-pc协议，
+TIP消除了目前2-pc协议中的约束，使新的分布式商业应用成为可能。
+
+为了达到这个目的，首先要满足两个关键要求：
+   1) Keep the protocol simple (yet functionally sufficient). If the
+      protocol is complex it will not be widely deployed or quickly
+      adopted. Simplicity also means suitability to a wide range of
+      application environments.
+
+   2) Enable the protocol to be used with any applications
+      communications protocol (e.g. HTTP). This ensures heterogeneous
+      environments can participate in distributed work.
+1) 保持协议的简单性（功能仍然充分）。如果这个协议是复杂的话，将不能被广泛
+配置或者很快采用。简单性也意味着在一个很大范围应用环境里的适用性。
+
+2) 能使协议和任何应用通信协议（如HTTP）一起使用。这一点确保异类环境能参与
+分布式工作。
+
+TIP不会将已知要假定废弃的2-pc协议作为基础来重新改造2-pc协议本身。TIP的更新颖、
+更有效之处在于其脱离了应用通信协议（双管道模型）。
+      +-------------+         应用通信          +-------------+
+      |  应用程序   |---------------------------|   应用程序   |
+      |             |         " 管道 1"         |             |
+      +-------------+                           +-------------+
+             |                                         |
+             | TIP TM API                   TIP TM API |
+             |                                         |
+    +-----------------+     TIP 2-pc 协议     +-----------------+
+    |  TIP 处理管理器  |----------------------|  TIP 处理管理器  |
+    |                 |       "管道 2"        |                 |
+    +-----------------+                       +-----------------+
+
+                 图 1:  TIP的双管道本性
+
+3. 范围
+
+TIP不会去描述商业事务处理或者电子商务在internet上将怎样被管理。它只讲述2-pc
+处理协议（一种对于这些应用发展的辅助）。例如，TIP不会提供一种非评判性的机制。
+一旦对普通电子商务的要求变得更好理解，这样的协议可以是随后IETF的行为的一个主
+题。TIP不会排除这些协议后来的定义。
+
+TIP不会讲述应用编程接口（API）（请留意本文档（附录A中）包含的一个例子TIP TM 
+API，以帮助理解）。
+
+4. TIP的预期使用
+
+正如以上所形容的，处理在简化分布式应用编程中是一个非常有用的工具。所以，TIP可
+以定位于任何包括分布式工作的应用中。这样的应用可以包含执行在一个简单系统中的
+成分。这个简单系统可以穿过一个企业内部网，穿过internet网或者任何别的分布式系
+
+统结构。这个应用可以是“企业”级的（要求有很高的性能以及实用性），或者级别要求
+不那么高的。人们有意使TIP变得能普遍适用的，以符合任何能从这处理语义规定中获益
+的应用之需要。
+
+5.  TIP的适应系统
+
+有两种级别的TIP适应处理管理系统
+
+1)  单一客户端系统。这指那些只提供一个应用接口以划分TIP处理的界线，但是没有提供
+给本地恢复资源入口的系统。这样一个轻量级实现只对那些只有客户端应用的系统才有用
+（如桌面机器）。这样的客户端系统可能是不可靠的，而且作为处理的协调器也是不合适
+的（它们的不适用性可能导致在别的参与处理的系统上的资源被锁定或者或者不可用）。
+所以这些所谓的“不稳定的客户端”系统将协调处理（以及从失败中恢复）责任委托给别
+的“完全”（服务器端）TIP系统去执行。对于这些轻量级系统，只有TIP IDENTIFY, 
+BEGIN,COMMIT, and ABORT指令是需要的，不需要处理日志。
+
+2) 服务器端系统。即指那些提供上述支持，并且加入TIP处理协调和恢复服务的系统。
+这些系统也可以提供入口给恢复资源（如相关数据库）。服务器端系统支持所有TIP指
+
+令，以及提供一个可恢复处理日志。
+
+一个TIP适应处理管理器（TM）也将提供应用编程接口（如X/Open TX接口[3]）以划分
+TIP处理的界线，并且加入指令以产生TIP URL，推/拉（PUSH/PULL）TIP处理以及安置
+当前TIP处理的上下文。利用现有的API和2-pc协议，能把TIP支持加入TM中，而且处理
+可以既包含私有化的处理又包含TIP处理分支（这是假定现有的TM实现将提供用来在TIP
+和其他处理协议间起协调作用的“TIP网关”设备）。
+
+6.  X/Open DTP模型的关联
+
+X/Open分布式事务处理（DTP）模型[4]定义了四种成分：1）应用编程（AP），2）处理
+管理器（TM），3）资源管理器（RM），以及4）通信资源管理器（CRM）。在这个模型中，TIP
+定义了一个TM到TM的互用性协议，这个协议是独立于应用通信之外的（X/Open中没有
+这样相当的协议被阐明，X/Open中所有的处理和应用通信都发生在CRM（单管道模型）间）。
+AP和TM/RM间的编程接口不会被TIP影响，但可以被其使用。从TM到RM的相互作用是通
+过X/Open XA接口规范[5]来定义的。TIP是和XA相适应的。一个TIP处理可以包含一些访
+问
+多重RM的应用，这里XA接口被用来协调RM处理分支。
+
+7.  TIP特定使用场景的实例
+
+可以预期一个典型的internet上的TIP使用将包括一些使用代理模型的应用。在这个模型
+中，客户端节点本身不完全直接包含在TIP协议中，也不需要一个本地TIP TM的服务。相
+应代替的是一个代理应用控制了与客户端的对话，并对TIP处理的协调负责。这个代理操
+作和别的服务提供者一起把服务传递给客户端。例如，作为一个旅行代理，其会在航空公
+司/旅馆/等服务公司和顾客之间充当媒介。这个模型的一个很大的优点就是代理得到服务
+提供者的信任，并且这样的代理数目上更少（和使用客户相比），所以安全和性能上的问
+题被减少了。
+
+考虑一个旅行代理处的例子。一个客户在一台连网个人电脑上运行一个网页浏览器以进入
+这家旅行代理处的主页。通过代理处提供的主页（可以依次由航空公司和旅馆服务商提供
+的主页创立），这个客户选定了一条包括所选航空公司和旅馆的路线。最后该客户点击“
+进行预定”的按钮。这时，下列事件将按序发生（通过有用的标准或个性化技术（例如
+CGI），用户写入的申请代码被不同的网络服务商调用）。
+
+  1）首先，旅行代理处开始一个本地处理，并且为这个处理得到一个TIP URL（使用本地
+     TM的API去执行所有这些函数。例如，“tip_xid_to_url()”将返回TIP URL给本地
+     处理）。这个 TIP URL包含了本地TM的IP地址的监听端点和本地处理的处理校验符。
+
+  2）然后，此旅行代理处的应用发一个请求给航空公司服务器（通过某种协议（如HTTP））
+     通过请求“book_flight”服务来传递那个客户选定的航班和TIP URL（从上面1.中
+     获得的）。
+
+  3）这个请求被调用book_flight应用的航空公司服务器收到。此应用在输入数据中找回
+     TIP URL，并把其传递给一个“tip_pull()”API以请求它的本地TM。这个tip_pull()                    
+函数引起以下事件发生：
+     a. 本地TM创建一个本地处理（将要被执行的工作在此之后），
+
+     b. 如果一个TIP连接并不总是生存到上一级（旅行代理处）TM为止（正如通过在TIP 
+        URL里传递的IP地址来定义的一样），一个连接被创建且一个IDENTIFY（识别）
+        交换发生（如果多路技术被使用在这个连接上，接下来将是一个多路交换），
+
+     c. 一个PULL指令被送到上一级TM，
+
+     d. 作为PULL的响应，上一级TM和下一级（航空公司）TM通过处理建立联结（通过
+结这个处理的连接），以及发送一个PULLED响应给下一级TM，
+
+   e. 下一级TM返回控制给book_flight应用，book_flight现在正执行在新的已创建的
+本地处理的上下文中。
+
+   4) book_flight应用开始起作用（它可能包括至一个可恢复资源管理器（如一个RDBMS）
+的入口，在这种情况下本地TM将和具有本地处理的RM建立联结（通过XA接口或者别的什
+么））。
+   
+   5) book_flight应用返回给旅行代理应用指示成功。
+ 
+   6) 接着，步骤2-5在旅馆服务器“book_room”应用上重复。在这些步骤结束后，上一      
+级的TM已经登记了两个下一级的TM参与处理。一个是代理TM和航空公司和旅馆服务器                        
+TM之间的TIP联系，另一个是航空公司和旅馆服务器上正在进行中的处理。[注意步骤2-5
+和6能被同时执行。
+
+   7) 旅行代理处应用发布一个“提交处理”请求（使用本地TM的API）。本地TM在TIP
+连接上发送一个PREPARE指令给航空公司和旅馆的TM（此时这些TM被定义为次一级的      
+理参与者）。
+
+   8) 在航空公司和旅馆服务器上的TM执行必要的步骤以准备他们的本地可恢复资源（例      
+如通过发布xa_prepare()请求）。如果成功的话，下一级的TM改变他们的TIP处理状                              
+态为已准备，并将恢复信息（例如本地的和上一级的处理分支校验符，以及上一级TM                              
+的IP地址）记入日志。然后这些下一级的TM发送PREPARED指令给上一级TM。
+
+   9) 如果两个下一级TM都响应PREPARED，则上一级TM记录下处理已提交，以及恢复信
+息(例如本地和下一级处理校验符，以及下一级TM的IP地址）。然后上一级TM在两个下      
+一级TIP连接上发送COMMIT指令。
+
+   10) 在航空公司和旅馆服务器上的TM执行必要的步骤来提交他们的本地可恢复资源（如       
+通过发布xa_commit()请求）。下一级的TM废弃此处理。接着下一级的TM发送                            
+COMITTED指令给上一级的TM。
+
+   11) 上一级的TM废弃此处理。上下两级TM之间的TIP连接返回到闲置状态（断开和任
+何处理的联结）。上一级的TM返回成功信息给旅行代理处的应用“提交处理”请求。
+
+   12) 旅行代理处的应用返回“预定完成”给客户。
+
+这个例子例证了PULL的使用。如果 PUSH被替代使用的话，上面的事件2）和3）将做如下
+改变：
+
+   2) 旅行代理处的应用：
+ 
+      a. 将以上1）中获得的TIP URL和在航空公司服务器上TM的监听端点地址一起，通
+         过一个“tip_push()”API请求，传递给它的本地TM。这个tip_pull()函数引
+         起以下事件发生：
+
+         i.如果一个TIP连接并不总是生存到下一级（航空公司服务器）TM为止（正如通           
+过在tip_push()上传递的IP地址来定义的一样），一个连接被创建且一个                                                       
+IDENTIFY（识别）交换发生（如果多路技术被使用在这个连接上，接下来将是                                 
+一个多路交换），
+
+
+         ii.一个 PUSH 指令被发送到下一级TM，
+ 
+         iii.作为对PUSH的响应，下一级的TM创建了一个本地处理，将TIP连接和处理
+             联结起来然后发送一个PUSHED响应给上一级的TM，
+ 
+         iv.作为对PUSH的响应，上一级的TM通过处理和下一级TM联结，
+
+         v.上一级的TM返回控制给旅行代理应用。
+
+      b. 旅行代理应用发一个请求给航空公司服务器（通过某种协议（如HTTP）），通过
+         请求“book_flight”服务来传递那个客户选定的航班和TIP URL（从上面1.中
+         获得的）。
+
+ 
+   3）这个请求被调用book_flight应用的航空公司服务器收到。此应用在输入数据中找      
+回TIP URL，并把其传递给一个“tip_pull()”API以请求它的本地TM。因为这个本地TM
+已经“看到”这个URL（其已经被传递），本地TM简单地返回book_flight应用，                  
+book_flight现在正执行在先前创建的本地处理的上下文中。
+
+[注意尽管这个例子中，处理协调者角色是由一个节点来扮演的，这个节点也参与了处理（旅
+行代理处），但是别的结构也是可能的（如由一个非参与处理的第三方节点来扮演处理协调
+者角色。]
+
+8.  TIP处理的恢复
+
+直到处理达到已准备状态，处理中的任何失败的结果将被废弃。一旦处理已经达到已准备状
+态，假设此时一个错误发生，那么处理恢复必须被执行。对于上下两级TM来说，恢复行为
+是不同的，其细节取决于处理（已提交或已废弃）的结果以及失败发生的确切位置。例如在
+旅行代理处的应用，如果其到旅馆服务器的连接在旅馆服务器收到COMMIT指令之前
+失败，那么（一旦连接被恢复）：
+
+   1) 上一级（旅行代理处）TM发送一个RECONNECT指令（传递下一级处理校验符（如果      
+必须的话可以从处理中重新获得））。
+
+   2) 下一级（旅馆）TM响应RECONNECTED（因为它从未收到COMMIT指令，仍然使处理为      
+已准备态（假如在下一级TM响应COMMITTED之后失败发生，那么下一级的TM将已经忽略此
+处理，并且对RECONNECT指令响应为NOTRECONNECTED））。
+
+   3) 上一级TM发送一个COMMIT指令，下一级TM提交此处理并响应为COMMITTED。处理
+现在已经被解析。
+
+   4) 如果下一级TM在收到一个RECONNECT指令之前恢复和上一级TM的连接，那么它可能      
+发送一个QUERY指令。这样的话，上一级TM将响应QUERIEDEXISTS，且下一级TM将等待上
+一级发送RECONNECT指令。如果此处理已被废弃的话，那么上一级TM可能响应
+QUERIEDNOTFOUND，这样，下一级TM将废弃此处理（注意上一级TM没有被迫为一个已废弃
+的处理发送一个RECONNECT指令（也就是说，上一级TM能在发出ABORT指令后和在收到一
+个ABORTED响应之前就废弃这个处理））。
+
+如果客户应用（调用“提交”的应用）处在失败的环境中，将可能不会收到显示处理最
+终结果的响应（即使这个处理本身已经被成功完成了）。这是一个普遍问题，并不是TIP
+所特有的。在这样的环境中，直到查明处理的最终结果，应用才会终止（一个TIP TM可
+以通过提供一些特殊机制的实现来使其更便利，如把结果写入一个用户日志）。
+  
+9.  TIP处理和应用信息连续
+
+一个联系存在于TIP指令和应用信息之间：直到确定所有的参与者已经适当注册并且已
+经完成此处理之前的工作之后，一个TIP处理才能被提交。因为TIP的双管道本性，这个
+操作不是必要地要被TIP系统本身所强化（尽管在某些实现中是可能的）。所以使操作
+正常是这个应用所担负的责任。通常来说，一个应用不能：
+
+   1) 当它还有任何和处理联结在一起的请求仍然待处理时，调用它本地TM的“commit”
+      函数。
+
+   2) 对从一参与应用来的一个事务处理请求产生确定响应。这个应用和处理一起预先登
+      记了它的本地TM。
+
+10. TIP协议和本地操作
+
+为了确保处理原子数能被恰当地保证，一个系统实现TIP就必须在协议交换里的某一点执
+行一些别的本地操作。这些操作适合于创建和删除“日志记录”处理（失败中幸存的必要
+信息，可以确保处理恢复的正确运行）。下列关于TIP协议和日志记载事件之间联系的信
+息只是起参考作用，并非是定论（见[2]以获得更多主题相关讨论）。
+
+   1) 在发送一个PREPARED响应之前，系统应该为处理创建一个准备好的恢复记录。
+
+   2) 如果已经创建了一个准备好的恢复记录，则这个记录不应该被删除，除非：
+      a.收到一个ABORT信息；或者
+      b.收到一个COMMIT信息；或者
+      c.收到一个QUERIEDNOTFOUND响应。
+
+   3) 如果一个准备好的恢复记录存在的话，系统不应该发送一个COMMITTED或               
+NOTRECONNECTED信息。
+
+   4) 在为处理创建一个提交恢复记录之前，系统应该已经收到一个PREPARED响应。
+
+   5) 处在已准备状态的系统在发送一个COMMIT之前，应该已经为处理创建了一个提交恢
+      复记录。
+
+   6) 如果已经创建了一个提交恢复记录，则这个记录不应该被删除，除非：
+      a.收到一个COMMITTED信息；或者
+      b.收到一个NOTRECONNECTED信息。
+
+11. 安全考虑
+
+这种被应用用来通信和执行分布式工作的方法超出了TIP协议的范围。这种在一个特定系
+统上用做客户的鉴定和授权以获取节目和信息的机制，是应用通信协议和应用运行基层构
+造的一部分。使用TIP协议不会影响这些考虑。
+
+因为系统要求保护自己免遭未经授权的TIP指令或者一个可信任的参与TIP TM的模仿者的
+干扰，所以安全是和TIP协议自身相关的。或许最糟糕的后果就是可能的无法探测的矛盾数
+据导致妨碍了TIP协议的义务（例如，在一个TIP连接的ABORT指令位置注入了一个COMMIT
+指令）。TIP采用传输层安全协议（TLS）[6]来限制仅仅被信任的参与者能够进入（即控制
+从这些远处端点来的TIP处理将被接受，并且验证这些端点是否真实可信），并把TIP指令
+译成密码。TLS的使用（或者不使用）是这些TIP TM参与者之间协定的。见[1]以得到更多
+TIP使用TLS的细节。
+
+TIP TM实现也可以提供本地化方法以得到间隔时间以及废弃那些没有在某些特定时间内完
+成的处理（因此可以阻止由于有害内容引起的资源不可利用）。处理间隔时间也能作为一
+种解决僵局的方法。
+
+12. TIP要求
+
+大多数的这些要求起源于最初把处理发展成一个无所不在的系统服务目的，能使所有的级
+别的应用能使用它（正如TCP被假定为能到处使用）。通常这需要加入尽可能少的一些关于
+TIP使用的限制（为了能使用处理，应用不应该被要求运行在某个“特殊”环境中），并且
+保持协议简单高效。这样能让TIP在很多系统（运行起来很廉价）上得到广泛的实现（运作
+起来很廉价）。
+
+1) 应用通信协议独立
+
+为了允许TIP能使用在和任何应用协议的联结中，TIP协议必须独立定义于用作转录应用数
+据的通信协议之外。TIP协议必须可以使应用能使用任意的通信协议开始，结束，以及传播
+TIP处理。
+
+这意味着TIP协议施用了一个2-管道操作模型。这个模型要求分隔应用通信和处理协调为
+两个离散的通信频道（管道）。这个分隔使处理协调协议（TIP）可以和任何应用通信协议
+（如HTTP, ODBC, 无格式的TCP/UDP,等等）一起使用。
+
+2) 支持处理语义
+
+TIP协议必须提供事实上标准的、假定废弃的2-pc协议功能来保证甚至在失败事件中的处
+理原子数。TIP应该就象提供提交和恢复函数一样来提供一种建造处理树的方法。
+
+3) 应用处理传播和互用
+
+为了能够推动协议的独立性，应用的互用性，以及提供一种传播TIP处理上下文的方法，
+一种TIP处理上下文信息的标准表达方式是需要的（以一个URL的形式）。这个信息必须
+包括TIP TM参与者的监听端点地址以及处理校验符信息。
+
+4) 易于实现
+
+TIP协议必须能够简单地实现。它应该只支持那些具有能提供必需的一个有用的，可执行
+的2-pc协议特征的服务。此协议不应该以额外的优化来增加复杂性。
+
+5) 适用于所有级别的应用
+
+TIP协议应该是足够完整和强壮的，这不仅仅是因为internet网上的电子商务的需要，还
+由于企业内部网和传统的跨越异种处理管理器环境的TP应用的需要。这个协议应该是可执
+行的和有足够等级范围的以符合能力从低到高的应用需求。
+
+   a. TIP协议应该支持单客户端处理参与者的概念（用做在低端平台上超轻量级的实现）。
+
+   b. 既然一些客户端是不可靠的，那么TIP必须提供对授权处理协调的支持（一个更可靠
+     （可信任的）的节点）。
+
+   c. TIP协议必须在每个TCP连接上将1到n（>1）个并发处理分级。
+
+   d. TIP指令应该能被连接（可管道连接的）。
+
+   e. TIP应该和X/Open XA接口相适应。
+
+6) 安全
+
+TIP协议必须和现有的安全机制相适应，隐含加密，防火墙以及鉴别机制（如TLS可以用来
+鉴别一个TIP指令的发送人，还可以用来给TIP指令加密）。协议定义没有任何东西可以阻
+止TIP工作在任何安全环境中。
+
+
+7) TIP协议传输独立
+
+对于某些应用来说，允许TIP协议穿越不同的传输协议是有益的。益处在于当在为应用数
+据使用不同的传输协议时，TIP 2-pc协议能采用同样的传输。所以TIP不必排除别的传输
+协议的使用。
+
+8) 恢复
+
+恢复语义需要充分定义以避免任何类型通信传输失败事件中的模糊结果。
+
+9) 可扩展性
+
+TIP协议应该能够被扩展，同时保持和先前版本的兼容。
+
+参考
+
+   [1]  Lyon, J., Evans, K., and J. Klein, "The Transaction Internet
+        Protocol Version 3.0", RFC 2371, July 1998.
+
+   [2]  Transaction Processing: Concepts and Techniques.  Morgan
+        Kaufmann Publishers. (ISBN 1-55860-190-2).  J. Gray, A. Reuter.
+
+   [3]  X/Open CAE Specification, April 1995, Distributed Transaction
+        Processing: The TX Specification. (ISBN 1-85912-094-6).
+
+   [4]  X/Open Guide, November 1993, Distributed Transaction Processing:
+        Reference Model Version 2. (ISBN 1-85912-019-9).
+
+   [5]  X/Open CAE Specification, December 1991, Distributed Transaction
+        Processing: The XA Specification.  (ISBN 1-872630-24-3).
+
+   [6]  Dierks, T., et. al., "The TLS Protocol Version 1.0", Work in
+        Progress.
+
+作者的地址
+
+   Keith Evans
+   Tandem Computers Inc, LOC 252-30
+   5425 Stevens Creek Blvd
+   Santa Clara, CA 95051-7200, USA
+
+   Phone: +1 (408) 285 5314
+   Fax:   +1 (408) 285 5245
+   EMail: Keith.Evans@Tandem.Com
+
+
+   Johannes Klein
+   Tandem Computers Inc.
+   10555 Ridgeview Court
+   Cupertino, CA 95014-0789, USA
+
+   Phone: +1 (408) 285 0453
+   Fax:   +1 (408) 285 9818
+   EMail: Johannes.Klein@Tandem.Com
+
+
+   Jim Lyon
+   Microsoft Corporation
+   One Microsoft Way
+   Redmond, WA  98052-6399, USA
+
+   Phone: +1 (206) 936 0867
+   Fax:   +1 (206) 936 7329
+   EMail: JimLyon@Microsoft.Com
+
+评论
+
+请将有关本文档的评论发到作者的信箱<JimLyon@Microsoft.Com>, 
+<Keith.Evans@Tandem.Com>,<Johannes.Klein@Tandem.Com>,或者发到TIP邮件组
+<Tip@Tandem.Com>。你可以通过发mail给<Listserv@Lists.Tandem.Com>来订阅TIP
+邮件组，此mail内容中的某一行要注明 "subscribe tip <full name>"。
+
+附录A.  一个TIP处理管理器API的实例
+
+注意这个API是为了报告情况而被单独加入本文档，不是正式TIP的规范的一部分（用TIP
+一致实现来定义可选择的API是不受限制的）。
+
+1) tip_open() - 建立一个到一个TIP TM的连接
+
+   概要
+   int tip_open ([out] tip_handle_t *ptiptm)
+
+   参数
+   ptiptm [out]
+   到这个TIP TM句柄的指针
+
+   形容
+   tip_open()建立了一个到一个TIP TM的连接。这个调用返回了一个鉴别此TIP TM的句
+   柄。这个函数必须在任何工作被执行于一个TIP处理上之前被调用。
+
+   返回值
+   [TIPOK]
+   连接已被成功建立。
+   [TIPNOTCONNECTED]
+   使用者已经被TIP TM断开。
+   [TIPNOTCONFIGURED]
+   TIP TM还没有被配置。
+   [TIPTRANSIENT]
+   太多的开始者，重试开始。
+   [TIPERROR]
+   一个不期望的错误发生。
+
+2) tip_close() - 断开一个到一个TIP TM的连接
+
+   概要
+   int tip_close([in] tip_handle_t handle)
+
+   参数
+   handle [in]
+   此TIP TM的句柄
+
+   形容
+   tip_close()断开一个到一个TIP TM的连接。所有和那个连接联结的待处理要求都被
+   取消。
+
+   返回值
+   [TIPOK]
+
+   连接已被成功断开。
+   [TIPINVALIDPARM]
+   无效的连接句柄指定。
+   [TIPERROR]
+   一个不期望的错误发生。
+
+3) tip_push() - 输出一个本地处理到一个远端节点并返回一个TIP处理校验符给已联合
+                的远处处理。
+
+   概要
+   int tip_push ([in] tip_handle_t TM,
+                 [in] char *tm_url,
+                 [in] void *plocal_xid,
+                 [out] char *pxid_url,
+                 [in] unsigned int url_length)
+
+   参数
+   TM [in]
+   此TIP TM的句柄
+   tm_url [in]
+   到远处处理管理器TIP URL的指针。一个处理管理器的TIP URL采用格式：
+   TIP://<主机>[:<端口>]
+   plocal_xid [in]
+   到本地处理校验符的指针。处理校验符的结构是由本地处理管理器来定义的。
+   pxid_url [out]
+   到联结远处处理TIP URL的指针。一个处理的TIP URL采用格式：
+   TIP://<主机>[:<端口>]/<处理标识符>
+   url_length [in]
+   远处处理URL缓存的字节大小
+ 
+   形容
+   tip_push() 输出（推）一个本地处理到远端节点。如果一个远处处理校验符没有
+   被提供，则调用者的当前处理上下文被使用。这个调用返回一个TIP URL给已联结
+   的远处处理。这个TIP处理校验符可能在应用请求上被传递到远处节点（作为一个
+   TIP URL的一部分）。为了代表此处理的利益起作用，接收的进程使用这个信息。
+
+   返回值
+   [TIPOK]
+   处理已被成功地推到远处节点。 
+   [TIPINVALIDXID]
+   一个无效的处理校验符已经被提供。
+   [TIPNOCURRENTTX]
+   当前进程没有和一个处理相联结。
+   [TIPINVALIDHANDLE]
+   无效的连接句柄指定。
+   [TIPNOTPUSHED]
+   处理不能被推到远处节点。
+   [TIPNOTCONNECTED]
+   调用者已经失去与TIP TM的连接。
+   [TIPINVALIDURL]
+   无效的端点URL被提供。
+   [TIPTRANSIENT]
+   短暂的错误发生，重试操作。
+   [TIPTRUNCATED]
+   TIP处理校验符的不足缓冲尺寸被指定。	
+   [TIPERROR]
+   一个不期望的错误发生。
+ 
+4) tip_pull() - 创建一个本地处理并将它与TIP处理连接起来。
+
+   概要
+   int tip_pull([in] tip_handle_t TM,
+                [in] char *pxid_url,
+                [out] void *plocal_xid,
+                [in] unsigned int xid_length)
+   
+   参数
+   TM [in]
+   此TIP TM的句柄。
+   pxid_url [in]
+   到联结远处处理TIP URL的指针。一个处理的TIP URL采用格式：
+   TIP://<主机>[:<端口>]/<处理校验符>
+   plocal_xid [out]
+   到本地处理校验符的指针。处理校验符的结构是由本地处理管理器来定义的。
+   xid_length [in]
+   本地处理标识符缓存的字节大小。
+
+   形容
+   tip_pull()创建了一个本地处理并将本地处理和TIP处理连接起来（在此TIP处理中
+   调用者成为次一级的参与者）。远处的TIP TM通过URL(*pxid_url)来识别。这个本
+   地处理的校验符被返回。如果一个本地处理已经为了已提供的TIP处理校验符而创建，
+   那么[TIPOK]被返回（和本地处理校验符一起），并且没有别的操作被执行。
+
+   返回值
+   [TIPOK]
+   本地处理已经被成功创建，且已和TIP处理连接。
+   [TIPINVALIDHANDLE]
+   无效的连接句柄指定。
+   [TIPTRUNCATED]
+   本地处理校验符的不足缓冲尺寸被指定。	
+   [TIPNOTPULLED]
+   本地处理和TIP处理之间的连接已失败。
+   [TIPNOTCONNECTED]
+   调用者已经失去与TIP TM的连接。
+   [TIPINVALIDURL]
+   无效的端点URL被提供。
+   [TIPTRANSIENT]
+   短暂的错误发生，重试操作。
+   [TIPERROR]
+   一个不期望的错误发生。
+
+5) tip_pull_async() - 创建了一个本地处理并将本地处理和TIP处理连接起来.一个本
+                      地处理一被创建，控制就被返回到调用者。
+
+   概要
+   int tip_pull_async ([in] tip_handle_t TM
+                       [in] char *pxid_url,
+                       [out] void *plocal_xid,
+                       [in] unsigned int xid_length)
+
+   参数
+   TM [in]
+   TIP网关句柄
+   pxid_url [in]
+   到联结远处处理TIP URL的指针。一个处理的TIP URL采用格式：
+   TIP://<主机>[:<端口>]/<处理校验符>
+   plocal_xid [out]
+   到本地处理校验符的指针。处理校验符的结构是由本地处理管理器来定义的。
+   xid_length [in]
+   本地处理标识符缓存的字节大小。
+
+   形容
+   tip_pull()创建了一个本地处理并将本地处理和TIP处理连接起来（在此TIP处理中
+   调用者成为下一级的参与者）。远处的TIP TM通过URL(*pxid_url)来校验。这个本
+   地处理的校验符被返回。在此本地处理已经被创建（在TIP PULL协议指令发送之前）
+   之后，一个对tip_pull_async()的调用立即返回。一个后来的对tip_pull_complete()
+   的调用必须得到发布，用来检查PULL请求的完成成功与否。
+
+   返回值
+   [TIPOK]
+   本地处理已被成功创建。 
+   [TIPINVALIDHANDLE]
+   无效的连接句柄指定。
+   [TIPNOTCONNECTED]
+   使用者已经失去与TIP TM的连接。
+   [TIPINVALIDURL]
+   无效的端点URL被提供。
+   [TIPTRANSIENT]
+   短暂的错误发生，重试操作。
+   [TIPTRUNCATED]
+   本地处理校验符的不足缓冲尺寸被指定。	
+   [TIPERROR]
+   一个不期望的错误发生。
+
+6) tip_pull_complete() - 检查一个先前的tip_pull_async()请求是否已被成功完成。
+
+   概要
+   int tip_pull_complete ([in] tip_handle_t TM,
+                          [in] void *plocal_xid)
+   参数
+   TM [in]
+   此TIP TM的句柄。
+   plocal_xid [in]
+   到本地处理校验符的指针。处理校验符的结构是由本地处理管理器来定义的。
+
+   形容
+   tip_pull_complete()检查一个先前的对tip_pull_async()调用是否已被成功完成。
+   即是否本地处理已经成功地和TIP处理连接在一起。调用者提供由先前对       
+tip_pull_async()的调用返回的本地处理校验符。对同一个本地处理校验符的
+   tip_pull_complete()的重复调用是等幂的。
+
+   返回值
+   [TIPOK]
+   本地处理已成功地和TIP处理连接。 
+   [TIPINVALIDHANDLE]
+   无效的连接句柄指定。
+   [TIPINVALIDXID]
+   一个无效的处理校验符已经被提供。
+   [TIPNOTPULLED]
+   和TIP处理相连接的本地处理已经失败。本地处理已经被废弃。
+   [TIPNOTCONNECTED]
+   调用者已经失去与TIP TM的连接。
+   [TIPERROR]
+   一个不期望的错误发生。
+       
+7) tip_xid_to_url() - 返回一个TIP处理校验符作为一个本地校验标识符。
+
+   概要
+   int tip_xid_to_url ([in] tip_handle_t TM,
+                       [in] void *plocal_xid,
+                       [out] char *pxid_url,
+                       [in] unsigned int url_length)
+
+   参数
+   TM [in]
+   此TIP TM的句柄。
+   plocal_xid [in]
+   到本地处理校验符的指针。处理校验符的结构是由本地处理管理器来定义的。
+   pxid_url [out]
+   到本地处理TIP URL的指针。一个处理的TIP URL采用格式：
+   TIP://<主机>[:<端口>]/<处理标识符>
+   url_length [in]
+   TIP URL缓存的字节大小。
+
+   形容
+   tip_xid_to_url()返回一个TIP处理校验符作为一个本地处理校验符。这个TIP处理
+   校验符能被传递到远处应用来使它们在处理上起作用。例如，拉本地处理到此远处节
+   点。如果一个本地处理校验符没有被提供，那么调用者当前的处理上下文被使用。常
+   数TIPURLSIZE定义了一个TIP处理校验符的字节大小。这个值是实现的细节。
+
+   返回值 
+   [TIPOK]
+   TIP处理标识符已被返回。
+   [TIPNOTCONNECTED]
+   调用者已经失去与TIP TM的连接。
+   [TIPNOCURRENTTX]
+   当前的进程没有和一个处理（且一个都没有被提供）相联结。
+   [TIPINVALIDXID]
+   一个无效本地处理校验符已被提供。
+   [TIPTRUNCATED]
+   TIP处理校验符的不足缓冲尺寸被指定。	
+   [TIPERROR]
+   一个不期望的错误发生。
+
+8) tip_url_to_xid() -  返回一个本地处理校验符作为一个TIP处理校验符。
+
+   概要
+   int tip_url_to_xid ([in] tip_handle_t TM,
+                       [in] char *pxid_url,
+                       [out] void *plocal_xid,
+                       [in] unsigned int xid_length)
+   参数
+   TM [in]
+   此TIP TM的句柄。
+   pxid_url [in]
+   到本地处理TIP URL的指针。一个处理的TIP URL采用格式：
+   TIP://<主机>[:<端口>]/<处理标识符>
+   plocal_url [out]
+   到本地处理校验符的指针。处理校验符的结构是由本地处理管理器来定义的。
+   xid_length [in]
+   本地处理校验符缓存的字节大小。
+
+   形容
+   tip_url_to_xid()返回一个本地处理校验符作为一个TIP处理校验符（注意本地处理
+   必须先前已通过一个tip_push()，或者tip_pull()(或者 tip_pull_async())创建。
+   常数TIPXIDSIZE定义了一个TIP处理校验符的字节大小。这个值是实现的细节。
+
+   返回值
+   [TIPOK]
+   TIP处理校验符已被返回。
+   [TIPINVALIDURL]
+   一个无效TIP处理校验符已被提供。
+   [TIPTRUNCATED]
+   本地处理校验符的不足缓冲尺寸被指定。	
+   [TIPERROR]
+   一个不期望的错误发生。
+9) tip_get_tm_url() - 以TIP URL的格式得到本地TIP处理管理器的名字。
+   概要
+   int tip_get_tm_url ([in] tip_handle_t TM,
+                        [out] char *tm_url,
+                        [in] int tm_len);
+   参数
+   TM[in]
+   此TIP TM句柄。
+   tm_url [in]
+   到本地处理管理器TIP URL的指针。一个处理管理器的TIP URL采用格式：
+   TIP://<主机>[:<端口>]
+   tm_len [out]
+   本地处理管理器TIP URL缓存的字节大小。
+
+   形容
+   tip_get_tm_url()以TIP URL的格式得到本地TIP处理管理器的名字（即
+   TIP://<主机>[:<端口>]）。
+
+   返回值
+   [TIPOK]
+   本地处理管理器的名字已被成功返回。
+   [TIPTRUNCATED]
+   由于缓冲尺寸不足，本地处理管理器的名字已被截短。用更大的缓冲尺寸去重
+   试操作。
+
+版权声明
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+RFC2372―Transaction Internet Protocol - Requirements and Supplemental Information
+处理internet协议（TIP）-要求和补充信息
+
+
+1
+RFC文档中文翻译计划

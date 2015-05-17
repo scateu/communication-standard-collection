@@ -1,0 +1,136 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：hlhuang（hlhuang   hlhuang-99@21cn.com）
+译文发布时间：2002-1-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                             L.麦克劳林III
+Request for Comments:1088                                                 TWG
+Category: Standards Track                                            1989年2月
+
+
+在NetBIOS网络上传输IP数据报的标准
+（RFC1088――A Standard for the Transmission of IP Datagrams over NetBIOS Networks）
+
+本备忘录状态
+本文描述了一种在NetBIOS网络上封装IP数据报的标准方法。对本备忘录的发布没有
+任何限制。
+
+版权声明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+目录
+序言	1
+说明	2
+地址映射	2
+广播和多点传送取址	2
+最大传输单元	2
+实现	3
+致谢	3
+参考资料	3
+作者地址:	4
+
+序言
+
+    本文档旨在给出在NetBIOS网络上传输IP数据报的具有兼容性和互操作性的实现方法。
+
+    NetBIOS标准描述了创建虚拟电路并发送和接收点对点、多点传送和广播数据报的一种
+方法。本规范仅用了数据报服务。
+
+    本备忘录的前期版本使用NetBIOS 广播数据报服务代替NetBIOS组名服务实现IP广
+播。 现在这些版本已经作废。
+
+说明
+
+    NetBIOS网络可以用以支持任何类型的IP网络及子网络[3]。通过将IP数据报封装在
+NetBIOS内并将IP地址映射到NetBIOS网络中的主机上，基于IP的应用就可在这些主机上
+运行。加上能将IP数据报同样封装在数据链协议(例如802.3 [4])中的路由器，这些主机
+就可以在互联网上进行一般性通信。
+
+地址映射
+
+    一般说来，NetBIOS名可以是一个任何16比特（二进制数），然而，少量数值被用做保
+留值或被公用网络包使用。每个主机上IP应用的NetBIOS名由该主机的因特网地址决定。
+由于NetBIOS名是IP地址的映射，因此不需要物理地址查询机制（例如ARP[5]）。
+
+    对于这些IP应用，IP.XX.XX.XX.XX就是任一承载IP的NetBIOS主机的名称，其中，
+XX代表IP地址十六进制ascii表示法的相应字节。
+
+    这种定址方案考虑到了NetBIOS 上的标准数据报协议的多路复用问题和给定包地址正
+确性的快捷判定。
+
+广播和多点传送取址
+
+    Internet广播地址用NetBIOS组名IP.FF.FF.FF.FF表示。目前为止，还没有尝试利用
+NetBIOS组名提供对IP多点传送的支持。
+最大传输单元
+
+    NetBIOS数据报的最大长度为512字节，因而NetBIOS网络上承载的IP最大传输单元
+也为512字节。所以，任何与NetBIOS网络上的主机通信的主机都应能够重组分段数据报。 
+
+实现
+
+    要在NetBIOS主机上支持任意地址IP，初始化代码必须：
+
+       1)将IP.XX.XX.XX.XX加入主机的NetBIOS名称表。
+
+       2)将IP.FF.FF.FF.FF加入主机的NetBIOS组名表。
+
+       3)为接收目标为IP.XX.XX.XX.XX的NetBIOS数据报发出收数据报请求。
+
+       4)为接收目标为IP.FF.FF.FF.FF的NetBIOS数据报发出收数据报请求。
+
+如果收到发往任一地址的NetBIOS数据报，交由协议栈处理，并发出另一个收数据报请
+求。
+
+    如果一个IP数据报被发出，它将被作为NetBIOS数据报的数据并经由一个发数据报请
+求发往IP.XX.XX.XX.XX或IP.FF.FF.FF.FF中的任一地址。
+
+另外，IP软件可能会发出对NetBIOS网络适配器状态的查询。随着对SNMP的支持成为
+对IP主机的要求，这些适配器状态查询可能是必不可少的。
+
+    最后，当一个给定的NetBIOS主机的IP支持终止时，对每个未到的接收数据报发出一
+个撤消命令请求，并对所有在初始化时加入的诸如IP.XX.XX.XX.XX 和IP.FF.FF.FF.FF的
+地址发出一个名称删除请求。
+
+致谢
+
+    感谢John Bartas，James Davidson，和Dan Ladermann。没有他们此前在设计和实现
+NetBIOS承载IP的努力，就没有本文。
+
+参考资料
+
+     [1]  Postel, J., "Internet Protocol", RFC-791, September 1981.
+
+     [2]  IBM PC Network Technical Reference, Document Number 6322916,
+          September 1984.
+
+     [3]  Mogul, J., and J. Postel, "Internet Standard Subnetting
+          Procedure", RFC-950, August 1985.
+
+     [4]  Postel, J., and J. Reynolds, "A Standard for the Transmission
+          of IP datagrams over IEEE 802 Networks", RFC-1042,
+          February 1988.
+
+     [5]  Plummer, D., "An Ethernet Address Resolution Protocol",
+          RFC-826, November 1982.
+
+作者地址:
+
+   Leo J. McLaughlin III
+   The Wollongong Group
+   1129 San antonio Road
+   Palo Alto, CA 94303
+
+   Phone: (415) 962-7100
+
+   EMail: ljm@TWG.COM
+
+ RFC1088――A Standard for the Transmission of IP Datagrams over NetBIOS Networks在NetBIOS
+网络上传输IP数据报的标准
+
+
+4
+RFC文档中文翻译计划

@@ -1,0 +1,938 @@
+
+
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：张海斌（netdebug    internetdebug@elong.com ）
+译文发布时间：2001-8-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                          M. Suzuki
+Request for Comments: 3033                                           NTT
+Category: Standards Track                                       January 2001
+
+
+
+用于Internet协议的信息域和协议标识符在Q.2941类属标识符
+和Q.2957 User-to-user信令中的分配
+（RFC3033――The Assignment of the Information Field and Protocol Identifier
+in the Q.2941 Generic Identifier and Q.2957 User-to-user Signaling
+for the Internet Protocol）
+
+备忘录现况
+这份文档为Internet社区指定为Internet标准（轨迹）协议，并且为进一步改进需要讨
+论和建议。这份协议的标准化状态和状况请参阅"Internet官方协议标准（Internet Official 
+Protocol Standards ）"(STD 1)的当前版。这份备忘录的分发不受限制。
+
+版权声明
+   Copyright (C) The Internet Society (2001)。版权所有。
+
+摘要
+这份文档的目的是要指定用于Internet 协议的信息域和协议标识符在Q.2941普通标识
+符和Q.2957用户对用户（User-to-user）信令中的分配。
+
+分配（在本文第四部分指定描述）为先进的B-ISDN信令（表示）Internet协议的支持
+而设计，特别是B-ISDN信令（表示）支持连接（connection），其符合在本文部分2中被澄
+清的Internet协议中的会话。这份规格说明书提供在ATM之上的长久（long-lived）会话和
+QoS- sensitive（服务质量敏感）会话转移的工具提供必不可少的框架。
+
+目录
+0.译者的话	2
+1.本文的目的	3
+2.会话相关（Session-related）ATM Connection（连接）	3
+2.1长久会话信令（表示）	3
+2.2 QoS-sensitive（服务质量敏感）会话信令	5
+3.类属标识符和User-to-user信令概述	6
+3.1类属标识符概述	6
+3.2 User-to-user信令概述	8
+4.信息域和协议标识符分配	9
+4.1在类属标识符信息元中的分配	9
+4.1.1类属标识符的使用	9
+4.1.2 IPv4会话标识符	11
+4.1.3 IPv6会话标识符	12
+4.1.4 MPLS VCID	13
+4.1.5试验/组织特定目标（Experiment/Organization specific）	14
+4.2在User-user信息元中分配	14
+4.2.1 User-to-user信令的使用	14
+4.2.2 RSVP报文	16
+4.2.3试验/组织特定目标（Experiment/Organization specific）	16
+5.开放问题	17
+6.IANA考虑	18
+7.安全考虑	18
+附录.为ST2+信息域和协议标识符分配	18
+A.1 ST2+会话标识符	18
+A.2 ST2+ SCMP	19
+参考资料	20
+确认	22
+作者的地址	22
+完整版权声明	23
+确认	23
+
+
+0.译者的话
+	译者在翻译这份文档的时候，采取直译的方式，尽量保证原文的原意。同时也尽量考虑
+了中文的语义顺畅，便于中文读者阅读，译者在译文中加入了一些修饰语和译注，修饰语一
+般在括号中写明，而译注均有“译者注”字样。由于译者翻译本篇文挡时间有限，同时译者
+对本领域了解不多，虽然在翻译过程中查证了一些资料，但是译文中一定会存在许多理解有
+误、用词不当之处，欢迎读者来信指正，共同学习。
+1.本文的目的
+这份文档的目的是要指定用于Internet 协议的信息域和协议标识符在Q.2941普通标识
+符和Q.2957用户对用户（User-to-user）信令中的分配。
+
+分配（在本文第四部分指定描述）为先进的B-ISDN信令（表示）Internet协议的支持
+而设计，特别是B-ISDN信令（表示）支持连接（connection），其符合在本文部分2中被澄
+清的Internet协议中的会话。不用说，这份规格说明的目的不限制这种支持，而且它应该也
+是适用于其它目的。
+
+这份规格说明书提供在ATM之上的长久（long-lived）会话和QoS-sensitive（服务质量
+敏感）会话转移的工具提供必不可少的框架。注意这份文档仅仅指定信息域的分派和规约标
+识符（protocol identifier），以及它可以不指定有助于可由双方共同操作的工具的完整协议。
+这是因为它超出了这份文档的（描述）范围，但是（可能）将在（其它）独立文档中被指定
+（描述）。
+
+2.会话相关（Session-related）ATM Connection（连接）
+   	随着在当前Internet上新的多种媒体的应用的发展，使用多种媒体支持的需求在现时支
+持最大努力（best effort）通讯的IP网络中增加。特别是，支持QoS（服务质量）保证通讯
+（QoS guaranteed communications）的在语音（voice），音频（audio）和视频（video）通讯
+应用的发展增加需求。并且它也可以引入为对这些应用（需求）期待的能够高效传输巨大容
+量通讯的机构装置是必要的。
+
+B-ISDN的主要特征是高速度，合乎逻辑VP/VC多路复用，和每VC有弹性的QoS管
+理，所以使用这些B-ISDN的特别功能执行在IP网络中应用多种媒体的支持机构装置是很
+自然的。在B-ISDN中有弹性的QoS管理和合乎逻辑多路复用功能是执行在Internet中QoS
+保证通讯（QoS guaranteed communications）的预期方法。以及当长久会话（long-lived session）
+是经过特定VC支持的时候，有效率的包的各项装订工序（forwarding）可以是可能使用
+B-ISDN的高速度和合乎逻辑多路复用。
+
+   这部分净化（clarifies）B-ISDN信令（表示）功能，其被需求当为先进的B-ISDN信令
+（表示）支持的Internet协议中会话经过VC支持的时候。
+
+2.1长久会话信令（表示）
+为一长久会话建立一VC例子的方案（scenario）在Fig. 2.1中被展示。
+
+         IP Router      ATM SW         ATM SW       IP Router
++----+                        Default VC                        +----+
+| WS |   +------+  UNI  +-----+        +-----+  UNI  +------+   | WS |
++--+-+   |   /->|<------+-\-/-+--------+-\-/-+------>|<-\   |   +-+--+
+   |.....|__/   |===||==|  X  |========|  X  |==||===|   \__|.....|
+         |      |       | / \ |        | / \ |       |      |
+         +------+       +-----+        +-----+       +------+
+A. New session initially forwarded over a default VC.
+
+         IP Router      ATM SW         ATM SW       IP Router
++----+                        Default VC                        +----+
+| WS |   +------+  UNI  +-----+        +-----+  UNI  +------+   | WS |
++--+-+   |   /->|<------+-\-/-+--------+-\-/-+------>|<-\   |   +-+--+
+   |.....|__/   |===||==|  X  |========|  X  |==||===|   \__|.....|
+         |      |<------+-/-\-+--------+-/-\-+------>|      |
+         +------+       +-----+        +-----+       +------+
+                            New VC is set up
+
+B. New VC is set up for the long-lived session.
+
+         IP Router      ATM SW         ATM SW       IP Router
++----+                        Default VC                        +----+
+| WS |   +------+  UNI  +-----+        +-----+  UNI  +------+   | WS |
++--+-+   |      |<------+-\-/-+--------+-\-/-+------>|      |   +-+--+
+   |.....|__    |===||==|  X  |========|  X  |==||===|    __|.....|
+         |  \-->|<------+-/-\-+--------+-/-\-+------>|<--/  |
+         +------+       +-----+        +-----+       +------+
+                                New VC
+
+Fig. 2.1：为一长久会话建立一VC例子的方案
+
+首先，一会话被多路复用为缺省的VC连接路由。然后，如果一个路由检测到它是一长
+久会话，它为会话建立一新VC。如果新VC成功地建立，长久会话被移向新的VC。
+
+在这个过程中涉及一ATM VC的建立，在称为边缘路由器（side router）身上B-ISDN
+信令实体必须检测到进来的符合一Internet协议的会话呼叫并且把那个事实通知IP层实体。
+在这个信息的基础上IP层实体移动会话到新的VC。
+
+因此，执行这个信令过程，B-ISDN信令必须包含一个会话标识符作为一信息元。B-LLI, 
+B-HLI, User-user和类属标识符信息元是完全有能力转移这个信息的。考虑这些信息元的原
+来目的，使用最适合的是类属标识符信息元。
+
+2.2 QoS-sensitive（服务质量敏感）会话信令
+QoS-sensitive信令会话和长久（long-lived）会话信令之间的主要区别是呼叫建立不被一
+长久会话的探查开始，但是显示地（explicitly）被例如RSVP（Resorce reSerVation Protocol 资
+源预留协议）的建立协议开始。执行QoS-sensitive信令使用ATM，在路由器之间ATM网
+络必须不仅转发会话标识符同时也转发建立协议（setup protocol）。
+
+译注：RSVP：Resorce reSerVation Protocol 资源预留协议。这是解决IP通信中QoS（服务
+质量）问题的一种技术，用来保证端到端的传输带宽。
+
+有两种转发建立协议的方案。一种方案是（将）多路复用协议转变为连接路由的缺省
+VC，或者通过一特定的VC转发协议。在这种情况中，QoS-sensitive会话和ATM VC连续
+地被建立。第二种方案是转发在B-ISDN信令中作为一信息元的建立协议（setup protocol）。
+在这个情况中，QoS-sensitive会话和ATM VC同时被建立。后一种方案和前一种方案比较
+存在下列的优势。
+
+  o 更容易执行。
+
+    - 因为对IP和ATM层接纳控制手段能同时被确立，接纳控制手段被简化。
+
+    - 因为事实上没有需要连续地查看（watch）IP层建立和ATM层建立（过程），监视计
+时器处理（过程）被简化。
+
+  o 如果建立协议支持协商（negotiation），那么一ATM VC把其QoS建立在协商（negotiation）
+的结果的基础上能被建立。
+
+   但是，后一种方案至少不能支持一种情况，其使用一PVC支持一QoS-sensitive会话。
+因此，两个过程都应该被考虑。
+
+   一信息序列的例子在Fig. 2.2中被展示，其同时建立一QoS-sensitive会话和一ATM VC。
+
+         IP Router      ATM SW         ATM SW       IP Router
++----+                     B-ISDN Signaling                     +----+
+| WS |   +------+  UNI  +-----+ Setup  +-----+  UNI  +------+   | WS |
++--+-+   |   /->|<------+-\-/--Protocol--\-/-+------>|<-\   |   +-+--+
+   |.....|__/   |===||==|  X  |========|  X  |==||===|   \__|.....|
+         |  \-->|<------+-/-\-+--------+-/-\-+------>|<--/  |
+         +------+       +-----+  Data  +-----+       +------+
+                                QoS VC
+ N-CONNECT |                                              |
+---------->|  |             |            |             |  |
+           |->|    SETUP    |            |             |  |
+           |  |------------>|            |             |  |
+           |  |<------------|            |             |  |
+           |  |  CALL PROC  |----------->|    SETUP    |  |
+           |  |             |            |------------>|  |
+           |  |             |            |             |->| N-CONNECT
+           |  |             |            |             |  |---------->
+           |  |             |            |             |  |<----------
+           |  |             |            |    CONN     |<-| N-CONNECT-ACK
+           |  |             |            |<------------|  |
+           |  |             |            |------------>|  |
+           |  |    CONN     |<-----------|  CONN ACK   |->|
+           |  |<------------|            |             |  |
+           |  |------------>|            |             |  |
+           |<-|  CONN ACK   |            |             |  |
+<----------|  |             |            |             |  |
+ N-CONNECT |                                              |
+      -ACK
+
+      Fig. 2.2：同时QoS-sensitive会话和ATM VC建立的过程的例子
+
+   RSVP是为建立协议（setup protocol）的现时提出的建议以及新建立协议（setup protocols）
+是可能在未来形成。因此，推广讨论，在这个例子中建立协议（setup protocol）的过程是使
+用确认服务（confirmed service）的通用连接建立过程。
+
+   执行这个信令过程，B-ISDN信令必须包含User-user信息元其是有能力的足够转发建立
+协议。
+
+3.类属标识符和User-to-user信令概述
+3.1类属标识符概述
+   	类属标识符有助于在ATM网络中end-to-end（端到端）用户之间标识符的转移，它被
+定义在Q.2941部分1(Q.2941.1)[3]和部分2(Q.2941.2)[4]中作为一可选信息元为
+Q.2931[1]和Q.2971[2]UNI信令（表示）协议。The SETUP, ALERTING, CONNECT, RELEASE, 
+RELEASE COMPLETE, ADD PARTY, PARTY ALERTING, ADD PARTY ACK, ADD PARTY REJECT, DROP 
+PARTY, 和 DROP PARTY ACK报文（message）可以包含多达三个类属标识符信息元在ATM网
+络中end-to-end用户之间转移。如果它包含无代码规则错误（no coding rule errors），
+ATM网络透明地转移类属标识符信息元。
+
+   	在Q.2941中指定类属标识符信息元的格式在Fig. 3.1中被展示。
+
+                              Bits
+           8     7     6     5     4     3     2     1    Octets
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |        Information element identifier         |
+        |    = Generic identifier transport IE (0x7F)   |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |  1  |   Coding  |    IE instruction field     |
+        | Ext |  standard |Flag |Res. |  IE action ind. |  2
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |   Length of contents of information element   |  3-4
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |    Identifier related standard/application    |  5
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier type                |  6
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               Identifier length               |  7
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier value               |  8-
+        =                                               =
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        =                                               =
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier type                |
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               Identifier length               |
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier value               |
+        =                                               =
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      	Fig. 3.1：类属标识符信息元的格式
+
+   	域的前4八位组（字节）的使用在Q.2931段4中被指定。
+
+   	标识符相关的标准/应用（standard/application）域识别出使用标识符的标准或者应用。
+为Internet协议分配标识符相关的标准/应用（standard/application）域如下。前缀0x表示十
+六进制。
+
+     0x03: IPv4.
+     0x04: ST2+.
+     0x05: IPv6.
+     0x06: MPLS.
+
+   	注意：DSM CC，H.310/H.321，MPOA，ATM VCC Trunking，AAL2和H.323/H.245也
+被支持。
+
+   	一个转移标识符由标识符类型，长度和值域（Identifier type, length and value fields）的
+结合得到，并且一类属标识符信息元可以含有多重标识符。
+
+   为Internet协议分配的标识符类型域如下。前缀0x表示十六进制。
+
+     0x01: Session.
+     0x02: Resource.
+     0x10-0xFD: Reserved for IANA assignment.（为IANA分配保留）
+     0xFE: Experiment/Organization specific.（试验/组织具体指定）
+
+   类属标识符信息元的最大长度是63八位组（字节）。
+
+   请参看Q.2941.1和草案Q.2941.2（详细了解）类属标识符的详细协议规范。
+
+3.2 User-to-user信令概述
+   	User-to-user信令有助于在ATM网络中end-to-end用户之间信息的转移，它定义在
+Q.2957[5，6]和Q.2971附录D[2]中作为一可选Q.2931[1]和Q.2971[2]UNI信息元信令（表
+示）协议。The SETUP, ALERTING, CONNECT, RELEASE, RELEASE COMPLETE, PROGRESS, ADD 
+PARTY, PARTY ALERTING, ADD PARTY ACK, ADD PARTY REJECT, DROP PARTY, 和 DROP PARTY 
+ACK报文（message）可以包含一User-user信息元在ATM网络中end-to-end用户之间转移。
+如果它包含无代码规则错误（no coding rule errors），ATM网络透明地转移User-user信
+息元。
+
+   	从B-ISDN信令（表示）应用的观点，似乎类属标识符和User-to-user是相似功能。但
+是因为他们的目的不同，他们的关于过程异常的规则不完全一样。在User-to-user信令是为
+经由c-planes用户数据的转移设计的同时，类属标识符是为在c-planes之间标识符的转移而
+设计。另一差异是后者随着在Q.931 N-ISDN信令中user-user信息元支持互工作
+（interworking），但是类属标识符不这样。注意ATM网络可以检查类属标识符信息元的内
+容，但是不检查User-to-user信息元的内容。
+
+   	User-user信息元的格式在Fig. 3.2中被展示。
+                              Bits
+           8     7     6     5     4     3     2     1    Octets
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |        Information element identifier         |
+        |    = User-user information element (0x7E)     |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |  1  |   Coding  |    IE instruction field     |
+        | Ext |  standard |Flag |Res. |  IE action ind. |  2
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |   Length of contents of information element   |  3-4
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |             Protocol discriminator            |  5
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               User information                |  6-
+        =                                               =
+        |                                               |
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      	Fig. 3.2：User-user信息元的格式。
+
+   	域的前4八位组（字节）的使用在Q.2931段4中被指定。
+
+   	协议鉴别器域（The Protocol discriminator field）识别出应用User-user信息的上层协议
+（the upper layer protocol）。
+
+   	用户信息域（The User information field）含有User-user信息被转移。
+
+   	User-user信息元的最大长度是133八位组（字节）。
+
+   	User-to-user信令的详细协议规范请参见Q.2957，草稿Q.2957修正1和Q.2971附录D。
+
+4.信息域和协议标识符分配
+4.1在类属标识符信息元中的分配
+4.1.1类属标识符的使用
+   	在类属标识符信息元中Internet协议的信息域和协议标识符分配原理在Fig. 4.1中被展
+示。
+
+                              Bits
+           8     7     6     5     4     3     2     1    Octets
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |        Information element identifier         |
+        |    = Generic identifier transport IE (0x7F)   |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |  1  |   Coding  |    IE instruction field     |
+        | Ext |  standard |Flag |Res. |  IE action ind. |  2
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |   Length of contents of information element   |  3-4
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |    Identifier related standard/application    |
+        |          = IPv4, ST2+, IPv6, or MPLS          |  5
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier type                |
+        |       = Session, Resource, or Experiment   |  6
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               Identifier length               |  7
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier value               |  8-
+        =                                               =
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        =                                               =
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier type                |
+        |       = Session, Resource, or Experiment   |
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               Identifier length               |
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier value               |
+        =                                               =
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      	Fig. 4.1：在类属标识符信息元中分配的原理。
+
+   	标识符相关的标准/应用（standard/application）域是IPv4，ST2+，IPv6或者MPLS。
+
+   	标识符类型域是会话（Session），资源（Resource）或者试验/组织为特定目标的东西
+（Experiment/Organization specific）。
+
+   	标识符值域向Internet协议指派相关信息，其被指定标识符相关标准/应用
+（standard/application）域和标识符域识别出。下列的标识符被指定。
+
+                                     Std./app.               Id type
+
+     IPv4 session identifier         IPv4                    Session
+     IPv6 session identifier         IPv6                    Session
+     MPLS VCID                       MPLS                    Resource
+     Exp./Org. specific              IPv4/ST2+/IPv6/MPLS     Experiment
+
+   	如同在部分3.1中描绘那样，B-ISDN信令报文可以包含多达三类在end-to-end用户之
+间转移属标识符信息元。这些元（素）可以含有多重标识符。当多重标识符出现在信令报文
+的时候，本文不指定标识符的次序。
+
+   	当多重标识符含有同样的标识符类型出现在一信令报文中的时候，或者当一信令报文包
+含一不含有标识符的类属标识符信息元的时候，本文也不指定语义学。
+
+   	当一B-ISDN信令报文进入（输入）一不支持类属标识符的ATM网络，包含一类属标
+识符信息元的时候，网络清除呼叫，丢弃信息元，或者丢弃信令报文。(细节请参看Q.2931
+段4.5.1和5.6.8.1和Q.2941.1段9.3)。
+
+   	有助于（To enable）可靠类属标识符信息元转移，当主叫方（the calling party）发送一 
+SETUP 或者 ADD PARTY报文（随着多达三类属标识符信息元）的时候，被叫方（the called 
+party）返回的CONNECT或者ADD PARTY ACK报文必须包含至少一类属标识符信息元。
+被叫方（the called party）可以不以从主叫方（the calling party）接收的同样的标识符回答。
+主叫方（the calling party）应该确认回答的报文含有至少一类属标识符信息元。这规定有助
+于（enables）标识符判断；本文不指定这个判断的详细过程。
+
+4.1.2 IPv4会话标识符
+   	如果标识符与标准/应用（standard/application）相关的在类属标识符信息元中的域是
+IPv4，和在标识符本身标识符类型域是会话（Session），（那么）标识符是IPv4会话标识符。
+IPv4会话标识符的格式在Fig. 4.2中被展示。
+
+                              Bits                         Octet
+           8     7     6     5     4     3     2     1     length
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier type                |
+        |                = Session (0x01)               |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               Identifier length               |
+        |               = 13 octets (0x0D)              |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |              Source IPv4 address              |  4
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |           Destination IPv4 address            |  4
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                   Protocol                    |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                  Source Port                  |  2
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Destination Port               |  2
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+        Fig. 4.2：IPv4会话标识符。
+
+   	标识符类型域是会话(0x01)。
+
+   	标识符长度是13八位组（字节）。
+
+  	IPv4源地址，IPv4目的地址，协议，源端口和目的端口[7，9，10]被有秩序地分配在标
+识符值域中。
+
+   	注意：这个特定会话标识符目的是仅给明确保留地（the explicit reservation）使用。如
+果外卡协会（wild card associations）在以后某个时候被需要，另一标识符类型将被使用。
+
+译者注：wild card associations：字面译为外卡协会，表示未知组织或其他（因素）。
+
+4.1.3 IPv6会话标识符
+   	如果标识符与标准/应用（standard/application）相关的在类属标识符信息元中的域是
+IPv6，和在标识符本身标识符类型域是会话（Session），（那么）标识符是IPv6会话标识符。
+IPv6会话标识符的格式在Fig. 4.3中被展示。
+
+                              Bits                         Octet
+           8     7     6     5     4     3     2     1     length
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier type                |
+        |                = Session (0x01)               |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               Identifier length               |
+        |               = 37 octets (0x25)              |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |              Source IPv6 address              |  16
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |           Destination IPv6 address            |  16
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                   Protocol                    |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                  Source Port                  |  2
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Destination Port               |  2
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+       	Fig. 4.3：IPv6会话标识符。
+
+   	标识符类型域是会话(0x01)。
+
+   	标识符长度是37八位组（字节）。
+
+  	Ipv6源地址，Ipv6目的地址，协议，源端口和目的端口[7，9，10]被有秩序地分配在标
+识符值域中。
+
+   	注意：这个特定会话标识符目的是仅给明确保留地（the explicit reservation）使用。如
+果外卡协会（wild card associations）在以后某个时候被需要，另一标识符类型将被使用。
+
+4.1.4 MPLS VCID
+  	如果标识符与标准/应用（standard/application）相关的在类属标识符信息元中的域是
+MPLS，和在标识符本身标识符类型域是资源（Resource），（那么）标识符是MPLS VCID。
+MPLS VCID的格式在Fig. 4.4中被展示。
+
+                                 Bits                         Octet
+              8     7     6     5     4     3     2     1     length
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |                Identifier type                |
+           |               = Resource (0x02)               |  1
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |               Identifier length               |
+           |               = 4 octets (0x04)               |  1
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |                   MPLS VCID                   |  4
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      		Fig. 4.4：MPLS VCID。
+
+   	标识符类型域是资源(0x02)。
+
+   	标识符长度是4八位组（字节）。
+
+   	MPLS VCID[13]被分配在标识符值域中。
+
+译者注：MPLS：（Multiprotocol Label Switching-多协议标签交换技术）是一种在开放的通信
+网上利用标签引导数据高速、高效传输的新技术。
+
+4.1.5试验/组织特定目标（Experiment/Organization specific）
+  	如果标识符与标准/应用（standard/application）相关的在类属标识符信息元中的域是
+IPv4，ST2+，IPv6或者MPLS，和在标识符本身标识符类型域是试验/组织特定目标
+（Experiment/Organization specific），（那么）标识符是试验/组织特定目标
+（Experiment/Organization specific）。试验/组织特定目标（Experiment/Organization specific）
+的格式在Fig. 4.5中被展示。
+
+                              Bits                         Octet
+           8     7     6     5     4     3     2     1     length
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Identifier type                |
+        |   =  Experiment/Organization specific (0xFE)  |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               Identifier length               |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |    Organizationally unique identifier (OUI)   |  3
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |     Experiment/Organization specific info.    |
+        =                                               =
+        |                                               |
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      	Fig. 4.5：试验/组织特定目标（Experiment/Organization specific）。
+
+   	标识符类型域是试验/组织特定目标（Experiment/Organization specific）(0xFE)。
+
+   	在标识符值域中前3八位组（字节）必须含有组织唯一标识符（Organizationally unique 
+identifier）(OUI)。（如同在IEEE 802-1990中部分5.1指定的那样）。
+
+4.2在User-user信息元中分配
+4.2.1 User-to-user信令的使用
+   	为（符合）Internet协议在User-user信息元中信息域和协议标识符分配原理在Fig. 4.6
+中被展示。
+
+                              Bits
+           8     7     6     5     4     3     2     1    Octets
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |        Information element identifier         |
+        |    = User-user information element (0x7E)     |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |  1  |   Coding  |    IE instruction field     |
+        | Ext |  standard |Flag |Res. |  IE action ind. |  2
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |   Length of contents of information element   |  3-4
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |             Protocol discriminator            |
+        |     = Internet protocol/application (0x06)    |  5
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |    Internet protocol/application identifier   |  6
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |   Internet protocol/application related info. |  7-
+        =                                               =
+        |                                               |
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      	Fig. 4.6：在User-user信息元中分配的原理。
+
+   	协议鉴别器域是Internet协议/应用（protocol/application）(0x06)。在这种情况中，在用
+户信息域中前1八位组（字节）是Internet协议/应用（protocol/application）标识符域。
+
+   分配Internet协议/应用（protocol/application）标识符域如下。前缀0x表示十六进制。
+
+     0x00：保留。
+     0x01：为ST2+保留。
+     0x02：RSVP报文。
+     0x03-0xFD：为IANA分配保留。
+     0xFE：试验/组织特定目标（Experiment/Organization specific）。
+     0xFF：保留。
+
+   	跟随Internet协议/应用（protocol/application）域的域被分配给（能）被协议/应用
+（protocol/application）域识别的协议/应用（protocol/application）相关信息。
+
+   	当一包含一User-user信息元的B-ISDN信令报文进入一不支持的ATM网络的时候，网
+络清除呼叫，丢弃信息元，或者丢弃信令报文。(细节请参看Q.2931段4.5.1和5.6.8.1，Q.2957
+段1.9和Q.2971附录D)。
+
+   	有助于（To enable）可靠User-user信息元转移，当主叫方（the calling party）发送一 
+SETUP 或者 ADD PARTY报文（随着User-user信息元）的时候，被叫方（the called party）
+返回的CONNECT或者ADD PARTY ACK报文必须包含至少一User-user信息元。被叫方（the 
+called party）可以不以从主叫方（the calling party）接收的同样的标识符回答。主叫方（the 
+calling party）应该确认回答的报文含有User-user信息元。这规定有助于（enables）标识符
+判断；本文不指定这个判断的详细过程。
+
+4.2.2 RSVP报文
+   	对RSVP报文的格式在Fig. 4.7中被展示。
+
+                                 Bits
+              8     7     6     5     4     3     2     1    Octets
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |        Information element identifier         |
+           |    = User-user information element (0x7E)     |  1
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |  1  |   Coding  |    IE instruction field     |
+           | Ext |  standard |Flag |Res. |  IE action ind. |  2
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |   Length of contents of information element   |  3-4
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |             Protocol discriminator            |
+           |     = Internet protocol/application (0x06)    |  5
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |    Internet protocol/application identifier   |
+           |              = RSVP message (0x02)            |  6
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |                  RSVP message                 |  7-
+           =                                               =
+           |                                               |
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      		Fig. 4.7：RSVP报文。
+
+   	Internet协议/应用（protocol/application）标识符域是RSVP报文(0x02)
+
+   	RSVP报文[12] 被分配给Internet协议/应用（protocol/application）相关信息域。SETUP
+报文可以含有RSVP Resv报文。CONNECT报文可以含有RSVP ResvConf报文。RELEASE
+报文可以含有RSVP ResvErr或者ResvTear报文。
+
+4.2.3试验/组织特定目标（Experiment/Organization specific）
+   	试验/组织特定目标（Experiment/Organization specific）的格式在Fig. 4.8中被展示。
+
+                                 Bits
+              8     7     6     5     4     3     2     1    Octets
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |        Information element identifier         |
+           |    = User-user information element (0x7E)     |  1
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |  1  |   Coding  |    IE instruction field     |
+           | Ext |  standard |Flag |Res. |  IE action ind. |  2
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |   Length of contents of information element   |  3-4
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |             Protocol discriminator            |
+           |     = Internet protocol/application (0x06)    |  5
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |    Internet protocol/application identifier   |
+           |  =  Experiment/Organization specific (0xFE)   |  6
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |    Organizationally unique identifier (OUI)   |  7-9
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |     Experiment/Organization specific info.    |  10-
+           =                                               =
+           |                                               |
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      	Fig. 4.8：试验/组织特定目标（Experiment/Organization specific）。
+
+   	Internet协议/应用（protocol/application）标识符域是试验/组织特定目标
+（Experiment/Organization specific）(0xFE)。
+
+   	在Internet协议/应用（protocol/application）相关信息域中前3八位组（字节）必须含有
+组织唯一标识符（Organizationally unique identifier）(OUI)（如同在IEEE 802-1990部分5.1
+中指定那样）。
+
+5.开放问题
+   	下列的问题在本文件中仍然停留。
+
+   	o类属标识符支持会话聚集。
+
+    会话聚集支持可以在主干线环境中被需要。外卡（Wild card）方式聚集成群会话标识符
+是可行的。但是，在指定类属标识符支持它之前，在ATM VCs中会话聚集模式应该被净化
+（clarified）。
+
+   	o类属标识符支持IPv6流标签（the IPv6 flow label）和通讯类别（traffic classes）。
+
+    IPv6流标签（the IPv6 flow label）和通讯类别（traffic classes）支持可以在将来被需要。
+但是，当前他们的语义学不清楚。
+
+6.IANA考虑
+
+译者注：IANA：（Internet Assigned Number Authority）因特网编号管理局。
+
+   	当标识符相关的在Q.2941.2类属标识符信息元标准/应用（standard/application）中
+域是IPv4，ST2+，IPv6或者MPLS的时候，在标识符类型域中0x10-0xFD之间的数保留为
+IANA分配。(请参看部分3.1)。通过IETF一致意见行动遵行政策大纲[14] 这些数被分配。
+
+   	当在Q.2957 User-user信息元中协议鉴别器域是Internet协议/应用
+（protocol/application）的时候，在Internet协议/应用（protocol/application）标识符
+域中0x03-0xFD之间的数保留为IANA分配。(请参看部分4.2.1)。通过IETF一致意见行动
+遵行政策大纲[14] 这些数被分配。
+
+7.安全考虑
+   	本文档（描述）为Internet协议在Q.2941类属标识符和Q.2957 User-to-user信令中
+指定信息域和协议标识符分配，所以这些不减弱B-ISDN信令的安全。
+
+   	在被叫方（called party）B-ISDN信令中，如果进来的SETUP报文含有主叫方数字
+（number）和如果它是被验证的以及通过ATM网络或者它被网络提供，那么使用主叫方数
+字作为主叫方证明的一部分从而加强安全是可行的。
+
+附录.为ST2+信息域和协议标识符分配
+   	这附录在类属标识符和User-to-user信令（身上）为ST2+指定信息域和协议标识符分配。
+注意这附录不是标准的一部分。
+
+A.1 ST2+会话标识符
+   	如果标识符相关的标准/应用（standard/application）在类属标识符信息元中的域是ST2+，
+和在标识符（身上）标识符类型域是会话（Session），（那么）标识符是ST2+会话标识符。
+ST2+会话标识符的格式在Fig. A.1中被展示。
+
+                              Bits                         Octet
+           8     7     6     5     4     3     2     1     length
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+        |                Identifier type                |
+        |                = Session (0x01)               |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |               Identifier length               |
+        |               = 6 octets (0x06)               |  1
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+        |                Stream ID (SID)                |  6
+        +-----+-----+-----+-----+-----+-----+-----+-----+
+
+      	Fig. A.1：ST2+会话标识符。
+
+   	标识符类型域是会话（Session）(0x01)。
+
+   	标识符长度是6八位组（字节）。
+
+   	流ID(SID)[11]被分配给标识符值域。
+
+A.2 ST2+ SCMP
+   	为ST2+ SCMP 的User-user信息元的格式在Fig. A.2中被展示。
+
+                                 Bits
+              8     7     6     5     4     3     2     1    Octets
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |        Information element identifier         |
+           |    = User-user information element (0x7E)     |  1
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |  1  |   Coding  |    IE instruction field     |
+           | Ext |  standard |Flag |Res. |  IE action ind. |  2
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |   Length of contents of information element   |  3-4
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |             Protocol discriminator            |
+           |     = Internet protocol/application (0x06)    |  5
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |    Internet protocol/application identifier   |
+           |               = ST2+ SCMP (0x01)              |  6
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+           |                   ST2+ SCMP                   |  7-
+           =                                               =
+           |                                               |
+           +-----+-----+-----+-----+-----+-----+-----+-----+
+
+   		Fig. A.2：ST2+ SCMP。
+
+   	Internet协议/应用（protocol/application）标识符域是ST2+ SCMP(0x01)。
+
+   	ST2+ SCMP[11] 被分配给Internet协议/应用（protocol/application）相关的信息域。SETUP
+和ADD PARTY报文可以含有ST2+ SCMP CONNECT报文。CONNECT和ADD PARTY ACK
+报文可以含有ST2+ SCMP ACCEPT报文。RELEASE和DROP PARTY报文可以含有ST2+ 
+SCMP DISCONNECT报文。RELEASE，RELEASE COMPLETE， ADD PARTY REJECT， 
+和 DROP PARTY报文可以含有ST2+ SCMP REFUSE报文。
+
+参考资料
+   [1]  ITU-T, "Broadband Integrated Services Digital Network (B-
+        ISDN)-Digital Subscriber Signaling System No. 2 (DSS 2)-User-
+        Network Interface (UNI) Layer 3 Specification for Basic
+        Call/Connection Control," ITU-T Recommendation Q.2931, September
+        1995.
+
+   [2]  ITU-T, "Broadband Integrated Services Digital Network (B-ISDN)-
+        Digital Subscriber Signaling System No. 2 (DSS 2)-User-Network
+        Interface Layer 3 Specification for Point-to-Multipoint
+        Call/Connection Control," ITU-T Recommendation Q.2971, October
+        1995.
+
+   [3]  ITU-T, "Broadband Integrated Services Digital Network (B-ISDN)
+        Digital Subscriber Signaling System No. 2 (DSS 2): Generic
+        Identifier Transport," ITU-T New Recommendation Q.2941.1,
+        September 1997.
+
+   [4]  ITU-T, "Broadband Integrated Services Digital Network (B-ISDN)
+        Digital Subscriber Signaling System No. 2 (DSS 2): Generic
+        Identifier Transport Extensions," ITU-T New Recommendation
+        Q.2941.2, December 1999.
+
+   [5]  ITU-T, "Stage 3 Description for Additional Information Transfer
+        Supplementary Service Using B-ISDN Digital Subscriber Signaling
+        System No. 2 (DSS 2)-Basic Call Clause 1-User-to-User Signalling
+        (UUS)," ITU-T Recommendation Q.2957, February 1995.
+
+   [6]  ITU-T, "Stage 3 Description for Additional Information Transfer
+        Supplementary Service Using B-ISDN Digital Subscriber Signaling
+        System No. 2 (DSS 2)-Basic Call Clause 1-User-to-User Signalling
+        (UUS)," ITU-T Recommendation Q.2957 Amendment 1, December 1999.
+
+   [7]  Postel, J., Ed., "Internet Protocol", STD 5, RFC 791, September
+        1981.
+
+   [8]  Deering, S. and R. Hinden, "Internet Protocol, Version 6 (IPv6)
+        Specification", RFC 2460, December 1998.
+
+   [9]  Postel, J., "User Datagram Protocol", STD 6, RFC 768, August
+        1980.
+
+   [10] Postel, J., Ed., "Transmission Control Protocol", STD 7, RFC
+        793, September 1981.
+
+   [11] Delgrossi, L. and L. Berger, Ed., "Internet Stream Protocol
+        Version 2 (ST2) Protocol Specification - Version ST2+", RFC
+        1819, August 1995.
+
+   [12] Braden, R., Ed., "Resource ReSerVation Protocol (RSVP) - Version
+        1 Functional Specification", RFC 2205, September 1997.
+
+   [13] Nagami, K., Demizu, N., Esaki, H., Katsube, Y. and P. Doolan,
+        "VCID Notification over ATM link for LDP", RFC 3038, January
+        2001.
+
+   [14] Narten, T., and H. Alvestrand, "Guidelines for Writing an IANA
+        Considerations Section in RFCs", BCP 26, RFC 2434, October 1998.
+
+   [15] P. Newman, T. Lyon, and G. Minshall, "Flow Labelled IP: A
+        Connectionless Approach to ATM," Proc. IEEE Infocom, March 1996.
+
+   [16] S. Damaskos and A. Gavras, "Connection Oriented Protocols over
+        ATM: A case study," Proc. SPIE, Vol. 2188, pp.226-278, February
+        1994.
+
+   [17] ITU-T, "Integrated Services Digital Network (ISDN) Overall
+        Network Aspects and Functions ISDN Protocol Reference Model,"
+        ITU-T Recommendation I.320, November 1993.
+
+   [18] ITU-T, "Digital Subscriber Signaling System No. 1 (DSS 1)
+        Specification of a Synchronization and Coordination Function for
+        the Provision of the OSI Connection-mode Network Service in an
+        ISDN Environment," ITU-T Recommendation Q.923, February 1995.
+
+
+确认
+   	我非常感谢NTT信息共享实验室工作组（the NTT Information Sharing Lab. Group）
+的Kenichi Kitami，他也是ITU- TSG11 WP1的主席。NTT信息共享实验室的Shinichi 
+Kuribayashi，以及NTT网络服务系统实验室（the NTT Network Service Systems Labs.）
+的Hiroshi Yao和Takumi Ohba，NTT信息共享平台实验室（the NTT Information Sharing 
+Platform Labs.），对他们宝贵的评论和讨论（感谢）。
+
+   	同时我也非常感谢IETF， ITU-T和ATM论坛的活跃成员，特别是Newbridge Networks
+的Joel Halpern、Ascend Communications的Andrew Malis、Cisco Systems的George Swallow
+和Bruce Davie、IBM的Rao Cherukuri、AT&T 的Rajiv Kapoor、Lucent的Greg Ratta、NEC
+的Kaoru Kenyoshi、 Hitachi 的HirotoUno、Toshiba的Hiroshi Esaki和Kenichi Nagami以及
+NAIST的Noritoshi Demizu，对他们宝贵的评论和讨论（感谢）。
+
+   	还有，在NTT多种媒体联合计划NACSIS（the NTT Multimedia Joint Project with  
+NACSIS）方面关于ATM计划之上的ST2+期间，这份规格说明书（就是在这期间）建立在
+各种各样讨论的基础上。我非常感谢科学信息系统国家中心的教授Shoichiro Asano，为他的
+在这个区域中非常宝贵的忠告。
+
+作者的地址
+   Muneyoshi Suzuki
+   NTT Information Sharing Platform Laboratories
+   3-9-11, Midori-cho
+   Musashino-shi, Tokyo 180-8585, Japan
+
+   Phone: +81-422-59-2119
+   Fax:   +81-422-37-7691
+   EMail: suzuki.muneyoshi@lab.ntt.co.jp
+
+完整版权声明
+
+   版权（C）因特网协会（2001）。版权所有。
+
+   	这个文档和它的翻译可以拷贝和分配给其他人，以及有关评论或者别样的解释或者其应
+用的帮助等派生工作可以被准备、拷贝、发表和发布，其整体或者部分没有受到任何限制，
+提供上述版权通知以及本段落应被包含在所有这样的拷贝和派生工作中。然而，这个文档本
+身不可以以任何方式修改，例如移走版权通知或者Internet协会或其他Internet组织的参考，
+除非为了发展Internet标准（其版权程序定义在Internet Standards进程如下），或者需要翻译
+成除英语以外的其他语言。
+
+   上述限制允许授权是持久的并且将不被Internet协会或者它的继承人隐藏或者转让。
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+确认
+
+   为RFC编辑功能资助现在由因特网协会（Internet Society）提供。
+
+译者注：对于本文档的完整版权声明原文如下：
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+RFC3033――The Assignment of the Information Field and Protocol Identifier in the Q.2941 
+Generic Identifier and Q.2957 User-to-user Signaling for the Internet Protocol）
+用于Internet协议的信息域和协议标识符在Q.2941类属标识符和Q.2957 User-to-user信令中的分配
+
+
+2
+RFC文档中文翻译计划

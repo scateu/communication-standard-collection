@@ -1,0 +1,344 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-11-4
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+
+
+Network Working Group                                         D. Eastlake
+Request for Comments: 2935                                       Motorola
+Category: Standards Track                                        C. Smith
+                                               Royal Bank of Canada
+                                                    September 2000
+
+Internet开放贸易协议(IOTP)HTTP 补充
+（RFC2935――Internet Open Trading Protocol (IOTP) HTTP Supplement ）
+
+本备忘录的状态
+本文档定义了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标
+准化程度和状态。本备忘录的发布不受任何限制。
+
+版权声明：
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+
+Internet开放贸易协议(IOTP)消息将以可扩展标记语言(XML)文档作为传输载体。
+就其本身而论，映象至传输层的目的是为了保证底层的XML文档在不同的层间正确地传
+输。
+此文档描述了超文本传输协议(HTTP), Versions 1.0 and 1.1.的映象。
+
+
+
+
+
+目录
+
+1．介绍	2
+2．HTTP服务器和客户端	2
+3．HTTP网络位置	3
+4．客户	3
+    4.1  开启IOTP客户端和商业IOTP服务器                                  3
+    4.2  传送中的IOTP消息                                                  3
+     4.3  中断一个IOTP交易                                                              4
+5．开始交付处理器和递交器IOTP服务器	5
+6．安全考虑	6
+7．IANA的考虑	6
+8．参考	7
+9．作者地址	8
+10．完整的版权声明	8
+鸣谢	9
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1．介绍
+Internet开放贸易协议(IOTP)消息将以可扩展标记语言[XML]文档作为传输载
+体。就其本身而论，，映象至传输层的目的是为了保证底层的XML文档在不同的层
+间正确地传输。
+此文档描述了超文本传输协议(HTTP), Versions 1.0 and 1.1的映象[RFCs 
+1945, 2616]。
+将来可能会有描述关于email（SMTP）、TCP、cable TV或者其它传输方面的
+IOTP文档 。
+在本文档中的关键字“必须”, “决不要”, “必须的”,“将要”, “不会”, 
+“应当”, “不应当”, “建议”, “可以”, 和 “可选的” 将会在[RFC2119]
+文档中给予说明。
+
+2．HTTP服务器和客户端
+IOTP的结构以如下方式映象到HTTP的结构：
+
+商家、付款处理器、交货处理器，以及客户相关的交易方都由HTTP服务器代
+表。每一方都可以是由一台独立的服务器代表，也可以是以某种联接方式结合。
+客户角色由HTTP客户端代表。
+
+注意: 一个商人也会充当消费者的职能,比如说他要储存电子货币。在这种情况下，商
+人作为一个组织而非单一的职能，需要一个HTTP客户端支持。
+
+3．HTTP网络位置
+
+包含在IOTP规格书中的网络位置皆为URIs （Uniform Resource Identifiers）[RFC 
+2396]。如果必须要或者是要求使用安全连接的话，就必须用一个对HTTP服务器以及客户端
+都支持的安全通道。 像SSL version 3 或者 TLS [RFC 2246]都可以用作这种通道。
+
+4．客户
+
+在大多数环境中，客户的最初的媒介总是一个HTML浏览器。可是呢，现有的浏览器都
+没有提供足够的功能，来为客户充当媒介完成一次IOTP交易。这就带来了俩个必须满足的
+条件：
+一个开启IOTP客户端并控制权转交给IOTP客户端的方法，以及一个在IOTP交易结束
+后安全停止IOTP客户端并将控制权转交给HTML浏览器的方法。
+
+4.1	 开始IOTP客户端以及商业IOTP服务器
+
+  在某些情况下，用户方的HTTP客户端会发送一个HTTP请求，这个请求被商业HTTP服
+务器解释为一个“IOTP启动请求”。比如说当你单击“付款”按钮时，就会达到这样的效
+果。这个消息就是某种形式的请求消息的“替身”，并且，商业服务器会以XML文档的形式
+对这个第一个IOTP消息作出响应。
+对所有IOTP消息的MIME协议格式为：“APPLICATION/IOTP”；然而，“APPLICATION/X-IOT”
+已经被应用于实验室和开发中了，这一点应该得到认可。要得到APPLICATION/IOTP的MIME
+协议格式的注册模板，请参见下面第7部分的内容。因为HTTP完全是二进制编码，所以不
+需要对要传输的内容进行传输编码。（参见[RFC 2376]修订版，application/xml格式，它
+也有一些类似的考虑。）
+    HTML浏览器会将这个HTTP响应解释为开启与MIME协议类型“APPLICATION/IOTP” 相
+关的应用程序的一个响应，并把这个消息的内容发送给应用程序。
+    就在这一时刻，IOTP客户端就会被启动，并获得第一个消息。
+    IOTP消息的生存期是短暂的，因此，HTTP服务器应当避免将其响应放到缓存区中。在
+HTTP V1.0当中，我们可以使用“nocache”注记符来使响应不被放到缓存区中。而当我们
+使用的是SSL/TLS安全连接时，就可以不考虑这个问题，因为它不带有缓冲区；还有，在
+HTTP v1.1 中HTTP发送请求也一样不用考虑缓冲区问题，因为在HTTP v1.1中发送请求是
+不会被放到缓冲区中的。
+
+4.2	传送中的IOTP消息
+
+在一次交易中，先发送出去的IOTP消息中的数据必须要由IOTP客户端保留下来，这样
+做的目的是：
+（1）拷贝下来的数据作为后续IOTP消息的组成部分；
+（2）用于在后续IOTP消息中验证签名的计算；
+（3）在某些情况下，当请求没有得到响应而超时时需要重新发送；
+（4）在最新的IOTP版本中用作客户相关交易方的输入，等等……
+拷贝的具体方式由特定的IOTP交易决定。不管交易最终是失败、成功还是被取消，这
+些数据都必须保留到IOTP交易的最后，并且在交易之后，还要保留，直到交易的任何一方
+都不想再去查询它为止。
+IOTP 消息包含了网络位置信息（比如说PayReqNetLocn），HTTP的网络位置包含有IOTP
+客户端要发送IOTP消息的目的地址的URIs。
+后面的IOTP消息（皆是XML文档）是通过使用HTTP的POST函数发送的。HTTP客户端
+必须要执行所有的HTTP的POST请求。
+XML文档必须通过一种与外部编码所兼容的方式来发送，当然，这种外部编码是符合XML 
+[XML]规格的。
+
+4.3	 中止一个IOTP交易
+
+下面所讲述的内容，读者可以结合[RFC 2801]文档来阅读。
+当出现以下情形时，一笔IOTP交易就算完成了：
+
+   -- 当IOTP客户端由于某些原因决定放弃这笔IOTP交易，也可能是由于客户要撤销这笔
+交易，或者是在接收IOTP消息过程中出现错误的结果。或者当：
+   --出现“超时”错误或者是连接失败，比如说，在用户定义的响应时间范围内，接收方
+没有收到对一个特定IOTP消息的响应（包括重发信息）。
+
+一个执行IOTP交易的IOTP客户端，此交易：
+
+   -- 若成功完成（也就是说，没有接收到有HardError的错误块或者是取消块），它必须
+指示浏览器连向在协议选项组件中定义在SuccessNetLocn里面的网络位置，也就是说，让
+浏览器去对这个URL做一个HTTP GET请求。
+   --若是因为收到一些错误交易块而使交易没有成功的话，它必须要将这些信息显示在错
+误消息中，中止这笔交易，并将控制权交给浏览器，这样它就会对Error网络地址发送一个
+GET请求，此地址详细指明了错误是由哪一方引起的。
+   -- 若是因为收到了取消块而使交易被迫取消了，必须要中止此IOTP交易并将控制权交
+给浏览器，以让浏览器对Cancel网络地址发送一个GET请求，此地址详细指明了取消块是
+从哪一方发出来的。
+   -- 若是由于一个IOTP消息不符合所要求的规格而发生错误，必须发送一个包含错误交
+易块的IOTP消息到导致此错误消息的交易方（此交易方由ErrorLogNetLoc定义），并中止
+此IOTP交易，再将控制权移交给浏览器，这样这样它就会对Error网络地址发送一个GET
+请求，此地址详细指明了错误是由哪一方引起的。
+   -- 如果是“超时”的话，就必须显示一个消息来说明是超时。可以给用户提供几个可选
+项：取消、重试或者是自动重试。如果由于超时导致交易失败，按照上面所讲的交易“错误”
+做处理。
+
+    每一个IOTP客户端实现都要考虑是否当完成一个IOTP交易后要立刻终止掉IOTP客户
+端应用程序，或者是要一直等到由于某种情况而被关掉，比如说是用户关闭或者是浏览器关
+闭。
+
+5．开始交付处理器和递交器IOTP服务器
+
+    当付款处理器和交货器IOTP服务器收到包含下列信息的消息时，它就开始工作：
+
+   -- 对于一个付款处理器，有一个付款请求块, 以及
+
+   -- 对于一个交货处理器，有一个交货请求块
+6．安全考虑
+
+    Internet开放贸易协议(IOTP)消息的安全防护主要是靠IOTP内部的签名，这在[RFC 
+2801] 和 [RFC 2802]文档中有详细描述。  可以通过使用一个安全的通道来传输IOTP消息，
+比如说SSL/TLS [RFC  2246]，以达到IOTP交互中的保密性保护的目的。
+
+   要注意的是，由IOTP传输的付款协议的安全是付款协议的职责，而非IOTP的职责。
+
+7．IANA的考虑
+
+   This specification defines the APPLICATION/IOTP MIME type.  The
+   registration template is as follows [RFC 2048]:
+
+      To: ietf-types@iana.org
+
+      Subject: Registration of MIME media type APPLICATION/IOTP
+
+      MIME media type name: APPLICATION
+
+      MIME subtype name: IOTP
+
+      Required parameters: (none)
+
+      Optional parameters: charset - see RFC 2376
+
+      Encoding considerations: Content is XML and may in some cases
+      require quoted printable or base64 encoding.  However, no encoding
+      is required for HTTP transport which is expected to be common.
+
+      Security considerations: IOTP includes provisions for digital
+      authentication but for confidentiality, other mechanisms such as
+      TLS should be used.  See RFC 2801 and RFC 2802.
+
+      Interoperability considerations: See RFC 2801.
+
+      Published specification: See RFC 2801 and RFC 2802.
+
+      Applications which use this media type:  Internet Open Trading
+      Protocol applications.
+
+      Additional information: (none)
+
+      Person & email address to contact for further information:
+         Name: Donald E. Eastlake 3rd
+         Email: Donald.Eastlake@motorola.com
+
+      Intended usage: COMMON
+
+      Author/Change controller: IETF
+
+8．参考
+
+[RFC 1945] Berners-Lee, T., Fielding, R. and H. Frystyk, "Hypertext
+Transfer Protocol -- HTTP/1.0", RFC 1945, May 1996.
+
+[RFC 2048] Freed, N., Klensin, J. and J. Postel, "Multipurpose
+Internet Mail Extensions (MIME) Part Four: Registration
+Procedure", RFC 2048, November 1996.
+
+[RFC 2119] Bradner, S., "Key words for use in RFCs to Indicate
+Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+[RFC 2246] Dierks, T. and C. Allen, "The TLS Protocol Version 1.0",
+RFC 2246, January 1999.
+
+[RFC 2376] Whitehead, E. and M. Murata, "XML Media Types", RFC 2376,
+July 1998.
+
+[RFC 2396] Berners-Lee, T., Rielding, R. and L. Masinter, "Uniform
+Resource Identifiers (URI): Generic Syntax", RFC 2396,
+August 1998.
+
+[RFC 2616] Fielding, R., Gettys, J., Mogul, J., Frystyk, H.,
+Masinter, L., Leach, P. and T. Berners-Lee, "Hypertext
+Transfer Protocol -- HTTP/1.1", RFC 2616, June 1999.
+
+[RFC 2801] Burdett, D., "Internet Open Trading Protocol - IOTP
+Version 1.0", RFC 2801, April 2000.
+
+[RFC 2802] Davidson, K. and Y. Kawatsura, "Digital Signatures for the
+v1.0 Internet Open Trading Protocol (IOTP)", RFC 2802,
+April 2000
+
+[XML]      Bray, T., Paoli, J. and C. Sperberg-McQueen, "Extensible
+Markup Language (XML) 1.0" <http://www.w3.org/TR/REC-xml>,
+February 1998.
+
+9．作者地址
+
+   Donald E. Eastlake 3rd
+   Motorola
+   140 Forest Avenue
+   Hudson, MA 01749 USA
+
+   Phone: +1 978-562-2827(h)
+          +1 508-261-5434(w)
+   Fax:   +1 508-261-4447(w)
+   EMail: Donald.Eastlake@motorola.com
+
+
+   Chris J. Smith
+   Royal Bank of Canada
+   277 Front Street West
+   Toronto, Ontario M5V 3A4 CANADA
+
+   Phone: +1 416-348-6090
+   Fax:   +1 416-348-2210
+   EMail: chris.smith@royalbank.com
+
+10．完整的版权声明
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+鸣谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+RFC2935――Internet Open Trading Protocol (IOTP) HTTP Supplement                   
+Internet开放贸易协议(IOTP)HTTP 补充 
+
+
+
+1
+RFC文档中文翻译计划

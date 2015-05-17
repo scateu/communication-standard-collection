@@ -1,0 +1,253 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：yeeman（yeeman  yi.man@263.net）
+译文发布时间：2001-6-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                          M. Allman
+Request for Comments: 2577                  NASA Glenn/Sterling Software
+Category: Informational                                     S. Ostermann
+                                                         Ohio University
+                                                                May 1999
+
+FTP安全考虑
+（RFC2577  FTP Security Considerations）
+
+本备忘录的状态
+  本备忘录给Internet社会提供了一些信息，但不指定任何一种Internet标准。发布本备忘
+录不受限制。
+
+版权声明
+Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+   本文是对文件传输协议（FTP）的说明，它包含了一些用来缓解网络安全问题的机制。
+本FTP规范允许客户端命令一台服务器传输文件到第三方机器。这种“三方”机制，我们
+称它为“代理FTP”，带来了一个著名的安全问题。本FTP规范还允许无数次的尝试输入用
+户密码，这带来了强力“密码猜测”攻击。本文档给系统管理员和那些实现FTP服务器的
+人提供了一些建议来减少跟FTP有关的安全问题。
+
+1．简介	1
+2．跳转攻击（Bounce Attack）	2
+3．避免跳转攻击	2
+4．受限制的访问	3
+5．保护密码	3
+6．私密性	3
+7．保护用户名	3
+8．端口盗用	4
+9．基于软件的安全问题	4
+10．结论	4
+11．安全考虑	4
+
+1．简介
+文件传输协议规范（FTP）[PR85]提供了一种允许客户端建立FTP控制连接并在两台
+FTP服务器间传输文件的机制。这种“代理FTP”机制可以用来减少网络的流量，客户端命
+令一台服务器传输文件给另一台服务器，而不是从第一台服务器传输文件给客户端，然后从
+客户端再传输给第二台服务器。当客户端连接到网络的速度特别慢时，这是非常有用的。但
+同时，代理FTP还带来了一个安全问题――“跳转攻击（bounce attack）”[CERT97:27]。除
+了“跳转攻击”，FTP服务器还可以被攻击者通过强力来猜测密码。
+	本文档并不考虑当FTP和一些强壮的安全协议（比如IP安全）联合使用的情况。虽然
+这些安全关注并不在本文档的考虑范围内，但是它们也应该被写成文档。
+本文给FTP服务器的实现者和系统管理员提供了一些信息，如下所示。第二章描述了
+FTP“跳转攻击”。第三章提供了减少“跳转攻击”的建议。第四章给基于网络地址限制访
+问的服务器提供了建议。第五章提供了限制客户端强力“猜测密码”的建议。接着，第六章
+简单的讨论了改善保密性的机制。第七章给出了阻止猜测用户身份的机制。第八章讨论了端
+口盗用。最后，第九章讨论了其它跟软件漏洞有关而跟协议本身无关的FTP安全问题。
+2．跳转攻击（Bounce Attack）
+RFC959[PR85]中规定的FTP规范提供了一种攻击知名网络服务器的一种方法，并且使
+攻击者很难被跟踪。攻击者发送一个FTP"PORT"命令给目标FTP服务器，其中包含该主机
+的网络地址和被攻击的服务的端口号。这样，客户端就能命令FTP服务器发一个文件给被
+攻击的服务。这个文件可能包括根被攻击的服务有关的命令（如SMTP,NNTP等）。由于是
+命令第三方去连接到一种服务，而不是直接连接，就使得跟踪攻击者变得困难，并且还避开
+了基于网络地址的访问限制。
+例如，客户端上载包含SMTP命令的报文到FTP服务器。然后，使用正确的PORT命
+令，客户端命令服务器打开一个连接给第三方机器的SMTP端口。最后，客户端命令服务
+器传输刚才上载的包含SMTP命令的报文给第三方机器。这就使得客户端不建立任何直接
+的连接而在第三方机器上伪造邮件，并且很难跟踪到这个攻击者。
+3．避免跳转攻击
+原来的FTP规范[PR85]假定使用TCP进行数据链接，TCP端口号从0到1023时报留给
+一些众所周知的服务的，比如邮件，网络新闻和FTP控制链接。FTP规范对数据链接没有
+限制TCP端口号。因此，使用代理FTP，客户端就可以命令服务器去攻击任何机器上众所
+周知的服务。
+为了避免跳转攻击，服务器最好不要打开数据链接到小于1024的TCP端口号。如果服
+务器收到一个TCP端口号小于1024的PORT命令，那么可以返回消息504（对这种参数命
+令不能实现）。但要注意这样遗留下那些不知名服务（端口号大于1023）易受攻击。
+一些建议（例如[AOM98]和[Pis94]）提供了允许使用除了TCP以外的其他传输协议来
+建立数据连接的机制。当使用这些协议时，同样要注意采用类似的防范措施来保护众所周知
+的服务。
+另外，我们注意到跳转攻击一般需要攻击者首先上载一个报文到FTP服务器然后再下
+载到准备攻击的服务端口上。使用适当的文件保护措施就可以阻止这种情况发生。然而攻击
+者也可能通过从远程FTP服务器发送一些能破坏某些服务的数据来攻击它。
+禁止使用PORT命令也是避免跳转攻击的一种方法。大多数文件传输可以仅通过PASV
+命令来实现。但这样做的缺点就是丧失了使用代理FTP的能力，当然代理FTP并不是在所
+有场合都需要的。
+4．受限制的访问
+一些FTP服务器希望有基于网络地址的访问控制。例如，服务器可能希望限制来自某
+些地点的对某些文件的访问（例如为了某些文件不被传送到组织以外）。在这种情况下，服
+务器在发送受限制的文件之前应该首先确保远程主机的网络地址在本组织的范围内，不管是
+控制连接还是数据连接。通过检查这两个连接，服务器就被保护避免了这种情况：控制连接
+用一台可信任的主机连接而数据连接不是。同样的，客户也应该在接受监听模式下的开放端
+口连接后检察远程主机的IP地址，以确保连接是由所期望的服务器建立的。
+  	注意，基于网络地址的受限访问留下了FTP服务器易受“地址盗用(spoof)”攻击。在
+spoof攻击中，攻击机器可以冒用在组织内的机器的网络地址，从而将文件下载到在组织之
+外的未授权的机器上。只要可能，就应该使用安全鉴别机制，比如在[HL97]中列出的安全鉴
+别机制。
+5．保护密码
+为了减少通过FTP服务器进行强力密码猜测攻击的风险，建议服务器限制尝试发送正
+确的密码的次数。在几次尝试（3~5次）后，服务器应该结束和该客户的控制连接。在结束
+控制连接以前，服务器必须给客户端发送一个返回码421（“服务不可用，关闭控制连接”
+[PR85]）。另外，服务器在相应无效的“PASS”命令之前应暂停几秒来消减强力攻击的有效
+性。若可能的话，目标操作系统提供的机制可以用来完成上述建议。
+攻击者可能通过与服务器建立多个、并行的控制连接破坏上述的机制。为了搏击多个并
+行控制连接的使用，服务器可以限制控制连接的最大数目，或探查会话中的可疑行为并在以
+后拒绝该站点的连接请求。然而上述两种措施又引入了“服务否决”攻击，攻击者可以故意
+的禁止有效用户的访问。
+标准FTP[PR85]在明文文本中使用“PASS”命令发送密码。建议FTP客户端和服务器
+端使用备用的鉴别机制，这种鉴别机制不会遭受窃听。比如，IETF公共鉴别技术工作组开
+发的机制[HL97]。
+6．私密性
+在FTP标准中[PR85]中，所有在网络上被传送的数据和控制信息（包括密码）都未被
+加密。为了保障FTP传输数据的私密性，应尽可能使用强壮的加密系统。在[HL97]中定义
+了一个这样的机制。
+7．保护用户名
+当“USER”命令中的用户名被拒绝时，在FTP标准中[PR85]中定义了相应的返回码530。
+而当用户名是有效的但却需要密码，FTP将使用返回码331。为了避免恶意的客户利用USER
+操作返回的码确定一个用户名是否有效，建议服务器对USER命令始终返回331，然后拒绝
+对无效用户名合并用户名和密码。
+8．端口盗用
+许多操作系统以递增的顺序动态的分配端口号。通过合法的传输，攻击者能够观察当前
+由服务器端分配的端口号，并“猜”出下一个即将使用的端口号。攻击者可以与这个端口建
+立连接，然后就剥夺了下一个合法用户进行传输的能力。或者，攻击者可以盗取给合法用户
+的文件。另外，攻击者还可能在从授权用户发出的数据流中插入伪造的文件。通过使FTP
+客户和服务器随机的给数据连接分配端口号，或者要求操作系统随机分配端口号，或者使用
+与系统无关的机制都可以减少端口盗用的发生。
+9．基于软件的安全问题
+本文档的重点是和协议相关的安全问题。另外还有一些成文的FTP安全问题是由于不
+完善的FTP实现造成的。虽然这种类型的问题的细节超出本文档的范围，还是有必要指出
+以下那些过去曾被误用，今后的实现应该慎重考虑的FTP特性。
+?	匿名FTP
+匿名FTP服务使客户端用最少的证明连接到FTP服务器分享公共文件。如果这样的用
+户能够读系统上所有的文件或者能建立文件，那么问题就产生了。[CERT92:09] [CERT93:06]
+
+?	执行远程命令
+FTP扩展命令"SITE EXEC"允许客户端执行服务器上任意的命令。这种特性显然需要非
+常小心的实现。已经有几个成文的例子说明攻击者利用FTP“SITE EXEC”命令可以破坏服
+务器的安全性。[CERT94:08] [CERT95:16]
+
+?	调试代码
+前面的一些跟FTP有关危及安全的问题是由于置入了调试特性的软件造成的。
+[CERT88:01]
+
+本文建议有这些功能的FTP服务器的实现者在发布软件之前参阅所有的CERT有关这
+些问题的攻击以及类似机制的忠告。
+10．结论
+使用以上建议可以减少和FTP服务器有关的安全问题的发生，而不用删除其功能。
+11．安全考虑
+本备忘录通篇讨论了安全问题。
+
+致谢
+We would like to thank Alex Belits, Jim Bound, William Curtin, Robert Elz, Paul Hethmon, 
+Alun Jones and Stephen Tihor for their helpful comments on this paper.  Also, we thank the 
+FTPEXT WG members who gave many useful suggestions at the Memphis IETF meeting.
+
+参考书目
+
+   [AOM98]     Allman, M., Ostermann, S. and C. Metz, "FTP Extensions
+               for IPv6 and NATs", RFC 2428, September 1998.
+
+   [Bel94]     Bellovin. S., "Firewall-Friendly FTP", RFC 1579, February
+               1994.
+
+   [CERT88:01] CERT Advisory CA-88:01. ftpd Vulnerability. December,
+               1988 ftp://info.cert.org/pub/cert_advisories/
+
+   [CERT92:09] CERT Advisory CA-92:09. AIX Anonymous FTP Vulnerability.
+               April 27, 1992. ftp://info.cert.org/pub/cert_advisories/
+
+   [CERT93:06] CERT Advisory CA-93:06. Wuarchive ftpd Vulnerability.
+               September 19,1997
+               ftp://info.cert.org/pub/cert_advisories/
+
+   [CERT94:08] CERT Advisory CA-94:08. ftpd Vulnerabilities. September
+               23, 1997.  ftp://info.cert.org/pub/cert_advisories/
+
+   [CERT95:16] CERT Advisory CA-95:16. wu-ftpd Misconfiguration
+               Vulnerability.  September 23, 1997
+               ftp://info.cert.org/pub/cert_advisories/
+
+   [CERT97:27] CERT Advisory CA-97.27. FTP Bounce.  January 8, 1998.
+               ftp://info.cert.org/pub/cert_advisories/
+
+   [HL97]      Horowitz, M. and S. Lunt, "FTP Security Extensions", RFC
+               2228, October 1997.
+
+   [Pis94]     Piscitello, D., "FTP Operation Over Big Address Records
+               (FOOBAR), RFC 1639, June 1994.
+
+   [Pos81]     Postel, J., "Transmission Control Protocol", STD 7, RFC
+               793, September 1981.
+
+   [PR85]      Postel, J. and J. Reynolds, "File Transfer Protocol
+               (FTP)", STD 9, RFC 959, October 1985.
+
+   [RP94]      Reynolds, J. and J. Postel, "Assigned Numbers", STD 2,
+               RFC 1700, October 1994.  See also:
+               http://www.iana.org/numbers.html
+
+作者的地址
+   Mark Allman
+   NASA Glenn Research Center/Sterling Software
+   21000 Brookpark Rd.  MS 54-2
+   Cleveland, OH  44135
+
+   EMail: mallman@grc.nasa.gov
+
+
+   Shawn Ostermann
+   School of Electrical Engineering and Computer Science
+   Ohio University
+   416 Morton Hall
+   Athens, OH  45701
+
+   EMail: ostermann@cs.ohiou.edu
+
+
+完整的版权声明
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+感谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+RFC2577  FTP Security Considerations                             FTP安全考虑
+
+
+1
+

@@ -1,0 +1,25 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                   Alex A. McKenzie
+RFC # 637                                               BBN-NET
+NIC # 30519                                             April 23, 1974
+
+
+SU-DSL网络地址的更改
+（CHANGE OF NETWORK ADDRESS FOR SU-DSL）
+标准电子研究实验室（Stanford Electronics Research Lab）的主机立即生效。(SU-DSL)，一台连接到SRI IMP的真正的远程主机（Very Distant Host），已经把他的地址从IMP 2 Host 2更改成了IMP 2 Host 3。这样，就把他的“网络地址（Network Address）”从130更改到了194。
+最终，IMP 2上的主机（Host）2将是一台由斯坦福研究所（SRI）人工智能中心（Artificial Intelligence Center）操作的PDP-11。
+[这个RFC文档是由支持GTE 的Alex McKenzie（以前是BBN公司）以计算机可读的文件格式归档到在线RFC文档库的，10/99]
+RFC637――CHANGE OF NETWORK ADDRESS FOR SU-DSL                         SU-DSL网络地址的更改
+
+
+
+
+1
+RFC文档中文翻译计划
+

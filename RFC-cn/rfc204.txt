@@ -1,0 +1,47 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                   Jon Postel
+Request for Comments: 204                               ULA-NMC
+NIC 7196                                                Comp. Sci.
+Categories A.5, C.3, D                                  5 August 71
+Obsoletes: none
+Related 196
+
+利用报路
+（RFC204――Sockets in use）
+
+    我想使用套接字编号来为“标准”服务程序采集资料。比如说，登录者（远程登录服务
+器）监听套接字1。在您的主机上，监听什么套接字？用什么程序来监听？
+
+    最近，Dick Watson 建议将邮箱协议(RFC196)指定使用套接字25。 有人有不同意见吗？
+您对指定套接字到标准程序的方法有什么建议没有？是不是应该保留一个套接字号码子集，
+以便为将来的标准协议使用？
+
+    请将您的回答和评论打电话或者写信件到： 
+                        Jon Postel
+                        The SPADE Group
+                        3732 Boelter Hall
+                        Computer Science Dept.
+                        ULA, LA. CA 90024
+
+                        (213) 825 2368
+
+       [ This RFC was put into machine readable form for entry ]
+       [ into the online RFC archives by Gruss Gottfried 6/97 ]
+
+                            
+
+RFC204――Sockets in use                  利用报路
+
+
+1
+RFC文档中文翻译计划

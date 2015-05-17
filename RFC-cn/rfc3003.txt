@@ -1,0 +1,185 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：徐继伟（bille  bill_e@sina.com）
+译文发布时间：2001-5-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                     M. Nilsson
+Request for Comments: 3003                                  November 2000
+Category: Standards Track
+
+
+Audio/mpeg  媒体类型
+（RFC3003 The audio/mpeg Media Type）
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标
+准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+
+摘要
+ 
+MPEG-1(运动图像专家组-1层[MPEG-1]，下略)和MPEG-2音频标准已经广泛的被应用
+在因特网领域，但是却没有一个统一的标识这些文件的因特网邮件扩展（MIME[1]）类型。
+写这个文档的目的，就是要给这种形式的内容定义标准的媒体类型（auduo/mpeg）。
+
+本文档中的部分关键字"MUST","MUST NOT","REQUIRED","SHALL","SHALL 
+NOT","SHOULD","SHOULD NOT","RECOMMENDED"和"MAY" 已经在RFC2119中有了
+说明。
+
+1． MPEG音频
+
+在MPEG-1,MPEG-2标准下，定义为第1，2，3层的音频压缩是当今低失真音频压缩领
+域很流行的方法；压缩的音频被分成几部分较小的数据框架，每一部分又包括一个框架头部
+和压缩的数据。
+
+MIME 型的 audio/mpeg 定义了一个基本的字节流，字节流中相应（对应MPEG-1和
+MPEG-2）包含了MPEG 框架，并可能与非MPEG型的数据一同散布。非MPEG 数据是指，
+不与MPEG 同步的，或者是用其他方法压缩、没有办法正确解压的那些数据。
+
+典型的MPEG 音频元数据应与MPEG 流并置，例如，元数据格式ID3用一个128字
+节的数据封闭流的末端，然而，IDV32[IDV32]却可以用大小可变的数据来实现这一目的。
+
+注意：MPEG 音频不是作为文件格式，而是一种传输音频流的格式，因此，没有好的
+定义方法来同时包含元数据和音频信息。有些产品嵌入零振幅元数据框架，或是档传输错误
+时作忽略处理（伪装）。其他的产品则是以WAV格式嵌入MPEG数据。
+
+注意：audio/MPS MIME 类型是用来扩充 audio/mpeg 类型的，MPA[RFC 1890] 亚类
+型指的是当MPEG 音频在实时传输协议（RTP[2]）下被分段传送时的音频类型。
+
+2． 注册信息
+ 
+To:  ieth-types@isna.org  Subject: Registration of MIME media type audio/mpeg(MIME 
+媒体类型的audio/mpeg注册)
+
+MIME media type name:  audio            (媒体类型名：音频)
+
+MIME subtype name:  mpeg　　　　　　　（亚类型名：mpeg(运动图像专家组)）　　　
+
+Required parameters:  none　　　　　　　　（必要参数：无）　
+
+Optional parameters:  none　　　　　　　　（课选参数：无）
+　
+Encoding considerations:　　　　　　　　　（编码考虑）
+
+　　为了在因特网上使用，我们假设底层实现已考虑到了传输错误，所以，audio/mpeg　
+数据可能包含无可选CRC（循环冗余检验）的MPEG框架，以上所提到的CRC是用来
+提高音频质量的。
+　　
+　　MPEG音频数据是二进制的数据，并且编码必须要兼容非二进制传输；Base64式
+的编码适用于电子邮件。但应注意，MPEG音频的低失真压缩不是那么容易进行的。
+
+安全考虑：
+　 
+　　ＭPEG是一种已加标记的数据格式，并且一些标记是可作为私人使用的，因此，
+任意资料都可能潜在地在MPEG流中被转移，包括可执行的内容。包含可执行内容的
+已标记数据不应被发送，如果被接收到了，也一定不要执行。
+
+
+注意
+
+　　　　　以上要求的“如果被接收到也不要执行”尤其重要，因为它的内容可能独立
+生成，也因此会包含一些发送者都不知道的可执行的内容。Audio/mpeg 对
+象内部并没有提供签名或加密，故外部的安全机制必须要保证其内容的机密
+性。
+
+互用性考虑
+
+　　已经得到证实，MPEG音频可跨平台工作，有广泛的可互操作性。
+
+出版说明：参见［MPEG-1］和［ＭPEG-2］
+
+可用（此种音频格式）的应用程序
+
+　　MPEG 音频可支持多种设备、平台、和供应商的“中立的“音频，并且被各种编
+码解码器（播放器）广泛的支持。
+
+附加信息：
+
+　　Magic number(s):  none
+    File extension(s):.mp1,.mp2,.mp3                              // 扩展名
+    Macintosh File Type Code(s): MPEG
+    Object Identifier(s) or OID(s): none                            //对象标识符或
+OID
+
+个人详细联系方法：
+
+　　本文档作者
+
+Intended usage: COMMON
+
+   　　　Author/Change controller: Martin Nilsson (see section 5)
+
+３．	安全考虑
+
+已经在MIME 注册的第二部分讨论过，这里不再敖述。
+
+４．	参考文献
+
+　　　[ID3v2]
+      Martin Nilsson, "ID3 tag version 2.3.0".
+      <url:http://www.id3.org/id3v2.3.0.txt>
+
+      [MPEG-1]
+      ISO/IEC 11172-3:1993.
+      Coding of moving pictures and associated audio for digital storage
+      media at up to about 1,5 Mbit/s, Part 3: Audio.
+      Technical committee / subcommittee: JTC 1 / SC 29
+
+   　 [MPEG-2]
+      ISO/IEC 13818-3:1995
+      Generic coding of moving pictures and associated audio information,
+      Part 3: Audio.
+      Technical committee / subcommittee: JTC 1 / SC 29
+
+and
+
+      ISO/IEC DIS 13818-3
+      Generic coding of moving pictures and associated audio information,
+      Part 3: Audio (Revision of ISO/IEC 13818-3:1995)
+
+   　 [RFC2119]
+      Bradner, S., "Key words for use in RFCs to Indicate Requirement
+  Levels", BCP 14, RFC 2119, March 1997.
+
+５．	作者地址
+
+　　　Martin Nilsson
+      Rydsvagen 246 C. 30
+      S-584 34 Linkoping
+      Sweden
+
+      EMail: nilsson@id3.org
+
+６．	完整版权声明
+
+Copyright ? The internet Society(2001).All Rights Reserved.
+本文档及其译本可以被复制并分发，它的衍生版本，包括评述，解释和应用帮助均可以
+（完整或部分的）复制，出版，和分发，没有任何类型的限制，但以上的版权说明和这一段
+说明（本段）必须要包含于其中。然而，本文档部分不可以做任何修改，例如不标明版权说
+明和不说明引用了Internet Society和其他Internet组织资料的说明等（当有需要建立一
+个Internet标准，或需要翻译成其他语言时除外）。
+以上限制有永久效应，因特网协会（Internet Society）及其转让者，继承者均不得将
+其撤回。
+本文档及其包含的信息是基于"AS IS"原则提出的，Internet协会和互联网工程组织
+（internet engineering task force）拒绝一切授权，但对不侵害所有权和某些特殊目的
+的授权没有限制。
+
+感谢
+Internet 协会为此RFC编辑功能提供支持。
+
+
+[1]，MIME:Multipurpose Internet Mail Extension;
+[2],  RTP: Realtime Transport Protocol;
+
+RFC3003 The audio/mpeg Media Type                          Audio/mpeg  媒体类
+
+
+1
+RFC文档中文翻译计划

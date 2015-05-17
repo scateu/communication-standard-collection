@@ -1,0 +1,69 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：肖威（xiaoweiking    xiaoweiking@263.net）
+译文发布时间：2002-1-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                       J. Lowe
+Request for Comments: 1822                                      IBM
+Category: Informational                                 August 1995
+
+使用具备Photuris技术的指定IBM专利的权利的授予
+（RFC1822――A Grant of Rights to Use a Specific IBM patent with Photuris）
+
+本备忘录的状态
+
+   This memo provides information for the Internet community.  This memo
+   does not specify an Internet standard of any kind.  Distribution of
+   this memo is unlimited.
+
+注意
+这篇RFC不是一篇标准文档。而是一篇官方公开记录，在这个记录里，描述了一个特
+定IBM专利使用权的授权要求，此专利是与Photuris密码管理协议有关的。
+
+目的
+
+这篇申请书记录了IBM公司有条件免费使用其专利的授权。这个授权有助于推进IBM
+公司向IETF提供的互联网密码管理协议的使用。需要注意，所提到的许可确认并不是必需
+要有的。这是在RFC文档中进行授权的，当事人不必向IBM公司申请使用许可权即可使用
+此专利。
+
+IBM公司美国专利5,148,479使用权的授权
+
+IBM公司在此约定：它不会用侵权美国专利5,148,479以及其在国外的同种专利向任何
+符合以下条件的人或组织提起诉讼。实施Photuris技术或者任何包含IBM的互联网密码管
+理协议技术成就的派生技术，并按照Photuris或派生技术来操作，Photuris或派生技术必须
+与互联网协议相联系。
+
+当任何人或组织不管是直接的或是间接的宣布了一个其自己拥有的专利，不按照IBM
+有关其专利的实施及操作事项，与上面所说的相违背时，这个授权就结束了。结束时间就是
+与IBM相违背的专利宣布的时间。
+
+如果要获得本授权的书面确认，和/或有条件的和有特许使用金的IBM专利，可以通过
+向以下地址发送申请获得：
+           John W. Lowe
+           IBM Corporation
+           500 Columbus Avenue
+           Thornwood, New York  10594
+
+安全考虑
+
+引用的协议是一个与安全有关的协议。
+
+作者地址
+
+   John W. Lowe
+   IBM Corporation
+   500 Columbus Avenue
+   Thornwood, New York 10594
+   USA
+RFC1822――A Grant of Rights to Use a Specific IBM patent with Photuris
+使用具备Photuris技术的指定IBM专利的权利的授予
+
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,538 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-10-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group
+G. Malkin
+Request for Comments: 1724
+Xylogics，Inc.
+Obsoletes: 1389
+F. Baker
+Category: Standards Track
+Cisco Systems
+
+November 1994
+RIPv2的MIB扩展
+这个备忘录的状态
+这个文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的”Internet架构委员会正式协议标准”来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+摘要 
+本备忘录定义了在Internet社团中用作网络管理协议的管理信息数据库(Management Information Base，缩写为MIB)的一部分。尤其是，它定义了管理RIPv2的的管理对象。
+致谢
+作者对IETF ripv2工作组在改进RIP-2 MIB扩展的过程中提供的帮助表示谢意。
+1. 网络管理框架
+标准的Internet网络管理框架由3个部分组成。它们是：
+STD 16/RFC 1155定义了SMI，针对管理目的用于描述和命名对象的机制。
+STD 16/RFC 1212定义了一套更简洁的描述机制，在SMI中都包含了。
+RFC 1156定义了MIB-I，即一套INTERNET协议组的核心管理对象。STD 17/RFC 1213定义了MIB-II，基于运行经验和新的操作需求对MIB-I进行的改进。
+STD 15/RFC 1157定义了SNMP，用于访问被管理对象的协议。
+这个框架允许出于实验和评估的目的来定义新的对象。
+2. 对象
+通过一种成为MIB（Management Information Base的缩写）的虚拟信息数据库来访问管理对象。MIB中的对象采用定义在SMI中的ASN.1(Abstract Syntax Notation One)[7]的子集来定义。实际上，每个对象都有一个名称、一套语法和一组代码。名称是一种对象标识符、一种用于管理目而分配的名称，详细地说明了对象类型。这个对象类型以及对象的应用场合适合于唯一标识一种特定的对象的实例。为了便于理解，我们常常使用一种成为OBJECT DESCRIPTOR（对象标识符）的文本串来查阅对象类型。
+对象类型的语法定义了一种和对象类型相对应的抽象数据结构。ASN.1语言就是用于这种目的的。然而，SMI[3]对ASN.1中可能用到的概念作出了限定。这些限定是为了简化而作出的。
+对象类型编码完全是为了解决如何用对象类型的语法来表示对象类型这个问题。也就是，对象类型语法的概念和编码是如何在进行网络传输时表示对象类型的。
+SMI详细说明了基本的ASN.1[8]编码规则的用途，以利用SNMP的附加条件为依据。
+2.1 定义的格式
+第4节包含了在这个MIB模块中涉及的所有对象类型的规范。作为对在[9]中扩展定义的补偿，用于在SMI中定义的约定定义了这个对象。
+3. 综述
+3.1 本文的约定
+在这个MIB文档中，按照文本约定介绍了几个新的数据类型。这些文本约定改善了规范的易读性， 并且可以轻松地和其他相应的规范作对比。应该注意到：这些文本约定的介绍对语法和任何管理对象的语义都没有影响。这些用途仅仅是解释性方法用到的人为因素。根据这些方法中的一种定义的对象总是依靠定义原始类型的规则来编码的。因此，不必更改SMI或者SNMP来适应这些文本的约定，因为这些文本的约定仅仅是读者和作者为了追求in使MIB文档清晰、简练、明确的目的而采用的。
+新的数据类型是RouteTag。RouteTag类描述了数据报头和路由表项里Route Domain字段的内容。
+3.2 MIB的结构
+RIP-2 MIB包含一个全局计数器，用于探测RIP不兼容性的有害影响；两个“接口（interfaces）”列表，包含着特定接口的状态和配置信息；一个可选择的“对等体（peer）”列表，包含着有助于相邻关系调试的信息。就象协议本身，这个MIB对保持RIP-1系统的兼容性非常关注，而且还控制着监控和控制系统交互性。
+3.3 对RFC 1389所做的修改
+最初，RIP-2 MIB在RFC 1389里发布。它以Routing Domain的概念进行编码，对未编号接口没有编码。
+在现在的协议版本里，不建议使用Route Domains；因此，他们也反对在MIB中使用。这意味着不建议使用rip2IfConfDomain对象，并且对象rip2PeerDomain (作为一个建议对象，不建议使用)的值必须总是0。
+这个版本支持未编号接口。因为可能系统并不知道相邻节点的IP地址，所以就用一个假地址来标识这些接口。假地址是A类网络0.0.0.0，而主机编号(最不重要的24位地址)就是相应IP接口的ifIndex值。这是对象rip2IfStatAddress和rip2IfConfAddress的新的含义，向下兼容RFC 1389。增加对象rip2IfConfSrcAddress，来准许对未编号的接口配置源地址，放宽了对象rip2PeerAddress的含义，来保持未编号接口的相关性。
+根据在RIP-I和RIP-II规则，运用Demand RIP的两个数值对rip2IfConfSend进行了扩充。这就消除了Demand RIP MIB的必要性。
+支持MD5认证。
+4. 定义
+RIPv2-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+ MODULE-IDENTITY，OBJECT-TYPE，Counter32，
+ TimeTicks，IpAddressFROM SNMPv2-SMI
+ TEXTUAL-CONVENTION，RowStatusFROM SNMPv2-TC
+ MODULE-COMPLIANCE，OBJECT-GROUP FROM SNMPv2-CONF
+ mib-2FROM RFC1213-MIB;
+
+--本MIB模块采用了在[9]中描述的扩展的对象类型宏。
+
+rip2MODULE-IDENTITY
+LAST-UPDATED “9407272253Z”-- Wed Jul 27 22:53:04 PDT 1994
+ORGANIZATION “IETF RIP-II Working Group”
+CONTACT-INFO
+ “ Fred Baker
+ Postal: Cisco Systems
+519 Lado Drive
+Santa Barbara，California 93111
+ Tel: +1 805 681 0115
+ E-Mail: fbaker@cisco.com
+ Postal: Gary Malkin
+Xylogics，Inc.
+53 Third Avenue
+Burlington，MA01803
+ Phone:(617) 272-8140
+ EMail:gmalkin@Xylogics.COM”
+描述
+“这个MIB模块描述了第2版RIP2协议”
+::= { mib-2 23 }
+
+ --RIP-2管理信息数据库
+
+ -- RouteTag类描述了数据报头中和路由表项中的Route Domain字节的内容。不建议用于Route Domain。
+
+ RouteTag ::= TEXTUAL-CONVENTION
+状态：现行
+描述
+“the RouteTag type represents the contents of the Route Domain field in the packet header or route entry”
+语法：8位字符串(SIZE (2))
+4.1全球计数器
+--RIP-2全局类。
+-对于执行RIP-2的系统，强制执行这个类。
+
+-- 这些计数器用于促进快速调试改变路由或者失效的连接
+
+rip2Globals对象标识符 ::= { rip2 1 }
+
+ rip2GlobalRouteChanges对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“用RIP来构造路由改变次数的IP路由数据库。这个数值不包括路由生存周期的刷新。”
+ ::= { rip2Globals 1 }
+
+ rip2GlobalQueries对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“对从其他系统发送来的RIP查询的响应数量。”
+ ::= { rip2Globals 2 }
+4.2 RIP接口表单
+--RIP接口类
+--对于执行RIP-2的系统，这些组的应用是强制性的。
+
+-- RIP接口状态表单。
+
+rip2IfStatTable对象类型
+语法：Rip2IfStatEntry的序列
+最大权限：不可访问
+状态：现行
+描述
+“在被检测的RIP中需要分离状态的子网列表。”
+ ::= { rip2 2 }
+
+rip2IfStatEntry对象类型
+语法：Rip2IfStatEntry
+最大权限：不可访问
+状态：现行
+描述
+“单一子网中的单一路由域。”
+索引{ rip2IfStatAddress }
+::= { rip2IfStatTable 1 }
+
+Rip2IfStatEntry ::=
+序列{
+rip2IfStatAddress
+IpAddress，
+rip2IfStatRcvBadPackets
+32位计数器，
+rip2IfStatRcvBadRoutes
+32位计数器，
+rip2IfStatSentUpdates
+32位计数器，
+rip2IfStatStatus
+RowStatus
+ }
+
+rip2IfStatAddress对象类型
+语法：IpAddress
+最大权限：只读
+状态：现行
+描述
+“指定子网上本系统的IP地址。对于未编号接口，这个值是0.0.0.N，最重要的24位(N)是在网络字节次序里对于IP接口的ifIndex。”
+::= { rip2IfStatEntry 1 }
+
+rip2IfStatRcvBadPackets对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“由于任何原因(例如版本为0的数据包或者不可知的命令类型)随后丢弃的RIP进程收到的RIP响应数据包的数量。”
+::= { rip2IfStatEntry 2 }
+
+rip2IfStatRcvBadRoutes对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“在合法的RIP数据包中，由于任何原因(例如不可知的地址系列或者废止的度量标准)被忽略的路由数量。”
+ ::= { rip2IfStatEntry 3 }
+
+rip2IfStatSentUpdates对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“在本接口上实际发送的触发RIP更新的数量。包括全部更新发送包含新的信息不明确。”
+ ::= { rip2IfStatEntry 4 }
+
+rip2IfStatStatus对象类型
+语法：RowStatus
+最大权限：读确认
+状态：现行
+描述
+“删除这个接口导致的写失效。”
+ ::= { rip2IfStatEntry 5 }
+
+--RIP接口配置表单。
+
+rip2IfConfTable对象类型
+语法：Rip2IfConfEntry的序列
+最大权限：不可访问
+状态：现行
+描述
+“需要在RIP中分割配置的子网列表。”
+ ::= { rip2 3 }
+
+rip2IfConfEntry对象类型
+语法：Rip2IfConfEntry
+最大权限：不可访问
+状态：现行
+描述
+“在单一子网中的单一路由域。”
+索引{ rip2IfConfAddress }
+::= { rip2IfConfTable 1 }
+
+Rip2IfConfEntry ::=
+序列{
+rip2IfConfAddress
+IpAddress，
+rip2IfConfDomain
+RouteTag，
+rip2IfConfAuthType
+整数，
+rip2IfConfAuthKey
+8位字符串(SIZE(0..16))，
+rip2IfConfSend
+整数，
+rip2IfConfReceive
+整数，
+rip2IfConfDefaultMetric
+整数，
+rip2IfConfStatus
+RowStatus，
+rip2IfConfSrcAddress
+IpAddress
+ }
+
+rip2IfConfAddress对象类型
+语法：IpAddress
+最大权限：只读
+状态：现行
+描述
+“在指定子网上的这个系统的IP地址。对于未编号的接口，数值0.0.0.N，最重要的是在网络字节次序里对于IP接口的ifIndex。”
+ ::= { rip2IfConfEntry 1 }
+
+rip2IfConfDomain对象类型
+语法：RouteTag
+最大权限：读确认
+状态：废止
+描述
+“在这个接口上发送的所有RIP数据包的路由域字段中的数值。”
+ DEFVAL { '0000'h }
+ ::= { rip2IfConfEntry 2 }
+
+rip2IfConfAuthType对象类型
+语法：整数{
+noAuthentication (1)，
+simplePassword (2)，
+md5 (3)
+}
+最大权限：读确认
+状态：现行
+描述
+“本接口采用的认证类型。”
+ DEFVAL { noAuthentication }
+ ::= { rip2IfConfEntry 3 }
+
+rip2IfConfAuthKey对象类型
+语法：8位字符串(SIZE(0..16))
+最大权限：读确认
+状态：现行
+描述
+“这个数值被当作认证关键字来使用，只要相应的rip2IfConfAuthType的实例具有不同于noAuthentication的数值。相应rip2IfConfAuthType实例的更正没有修改rip2IfConfAuthKey的值。如果提供一个比16个字节短的字串，它就左对齐，并且在右面用nulls (0x00)填充为16位。读这个对象总会产生一个0长度的字符串；不可能通过读取MIB对象来跳过认证。”
+ DEFVAL { ''h }
+ ::= { rip2IfConfEntry 4 }
+
+rip2IfConfSend对象类型
+语法：整数{
+doNotSend (1)，
+ripVersion1 (2)，
+rip1Compatible (3)，
+ripVersion2 (4)，
+ripV1Demand (5)，
+ripV2Demand (6)
+}
+最大权限：读确认
+状态：现行
+描述
+“路由器在这个接口上发送的信息。RIPv1意思是依从RFC1058发送RIP更新。RIPv1 兼容意味着用RFC 1058路由包含规则来广播RIP-2更新。RIPv2意思是多点传送RIP-2更新。RIPv1查询表示根据RIPv1规则在WAN接口上查询RIP的应用。RIPv2查询表示根据第2版规则在WAN接口上查询RIP的应用。”
+DEFVAL { rip1Compatible }
+::= { rip2IfConfEntry 5 }
+
+rip2IfConfReceive对象类型
+语法：整数{
+rip1 (1)，
+rip2 (2)，
+rip1OrRip2 (3)，
+doNotRecieve (4)
+}
+最大权限：读确认
+状态：现行
+描述
+“它显示了已经接受的RIP版本升级。注意：rip2和rip1OrRip2意味着可以接收多播数据包。”
+DEFVAL { rip1OrRip2 }
+::= { rip2IfConfEntry 6 }
+
+rip2IfConfDefaultMetric对象类型
+语法：整数( 0..15 )
+最大权限：读确认
+状态：现行
+描述
+“这个变量表示这个接口上产生的在RIP升级中缺省路由表项用到的度量。0值表示可以用的没有缺省路由；在这里，可以传播通过其他路由器的缺省路由。”
+ ::= { rip2IfConfEntry 7 }
+
+rip2IfConfStatus对象类型
+语法：RowStatus
+最大权限：读确认
+状态：现行
+描述
+“写失效具有删除这个接口的作用。”
+ ::= { rip2IfConfEntry 8 }
+
+rip2IfConfSrcAddress对象类型
+语法：IpAddress
+最大权限：读确认
+状态：现行
+描述
+“这个系统用做这个接口的源地址的IP地址。如果是可编码的接口，必须和 rip2IfConfAddress具有相同的数值。对于不可编码的接口，就必须是系统中一些接口的rip2IfConfAddress的数值。”
+::= { rip2IfConfEntry 9 }
+4.3对等体表单
+--对等体表单
+--RIP对等体类
+--这个类的实施是可选的
+
+--这个组提供了有关处于运行状态的对等体的关系的信息，这就意味着在调试过程中能获得一些帮助。处于运行状态的对等体是一个路由器，在最近的180秒内已经从这个路由器上监听到有效的RIP升级。
+
+rip2PeerTable对象类型
+语法：Rip2PeerEntry的序列
+最大权限：不可访问
+状态：现行
+描述
+“RIP对等体列表。”
+ ::= { rip2 4 }
+
+rip2PeerEntry对象类型
+语法：Rip2PeerEntry
+最大权限：不可访问
+状态：现行
+ 描述
+“有关某一个特定路由对等体的信息。”
+索引{ rip2PeerAddress，rip2PeerDomain }
+::= { rip2PeerTable 1 }
+
+Rip2PeerEntry ::=
+序列{
+rip2PeerAddress
+IpAddress，
+rip2PeerDomain
+RouteTag，
+rip2PeerLastUpdate
+TimeTicks，
+rip2PeerVersion
+整数，
+rip2PeerRcvBadPackets
+32位计数器，
+rip2PeerRcvBadRoutes
+32位计数器
+}
+
+rip2PeerAddress对象类型
+语法：IpAddress
+最大权限：只读
+状态：现行
+描述
+“对等体用作源地址的IP地址。注意：在无编号的链路上，这将不是这个系统上任何子网的成员。”
+ ::= { rip2PeerEntry 1 }
+
+rip2PeerDomain对象类型
+语法：RouteTag
+最大权限：只读
+状态：现行
+描述
+“从对等体收到的在路由域fieldinRIP数据包中的数值。因为不允许域支持，所以本项必须为0。”
+ ::= { rip2PeerEntry 2 }
+
+rip2PeerLastUpdate对象类型
+语法：TimeTicks
+最大权限：只读
+状态：现行
+描述
+“当收到来自本系统的大多数最新的RIP更新时的sysUpTime的数值。”
+ ::= { rip2PeerEntry 3 }
+
+rip2PeerVersion对象类型
+语法：整数( 0..255 )
+最大权限：只读
+状态：现行
+描述
+“最近收到的一个RIP数据包包头中的RIP版本号。”
+ ::= { rip2PeerEntry 4 }
+
+rip2PeerRcvBadPackets对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“来自对等体当作废包丢弃的RIP响应数据包的数量。”
+ ::= { rip2PeerEntry 5 }
+
+rip2PeerRcvBadRoutes对象类型
+语法：32位计数器
+最大权限：只读
+状态：现行
+描述
+“由于表项格式有缺陷而被忽略的来自对等体的路由数量。”
+ ::= { rip2PeerEntry 6 }
+
+--一致信息
+
+rip2Conformance对象标识符 ::= { rip2 5 }
+rip2Groups对象标识符 ::= { rip2Conformance 1 }
+rip2Compliances对象标识符 ::= { rip2Conformance 2 }
+
+--依从状态
+
+rip2Compliance依从的模块
+状态：现行
+描述
+“依从状态”
+MODULE-- this module
+强制性类{
+rip2GlobalGroup，
+rip2IfStatGroup，
+rip2IfConfGroup，
+rip2PeerGroup
+}
+类rip2GlobalGroup
+描述
+“这个类定义了有关RIP-II系统的全局变量。”
+类rip2IfStatGroup
+描述
+“这个类定义了有关RIP-II系统的接口状态。”
+类rip2IfConfGroup
+描述
+“这个类定义了有关RIP-II系统的接口配置。”
+类rip2PeerGroup
+描述
+“这个类定义了有关RIP-II系统的对等体信息。”
+::= { rip2Compliances 1 }
+
+--一致的单元
+
+rip2GlobalGroup对象类
+对象{
+rip2GlobalRouteChanges，
+rip2GlobalQueries
+}
+状态：现行
+描述
+“这个类定义了有关RIP-II 系统的全局控制变量。”
+::= { rip2Groups 1 }
+
+rip2IfStatGroup对象类
+对象{
+rip2IfStatAddress，
+rip2IfStatRcvBadPackets，
+rip2IfStatRcvBadRoutes，
+rip2IfStatSentUpdates，
+rip2IfStatStatus
+ }
+状态：现行
+描述
+“这个类定义了有关RIP-II系统的接口统计表。”
+::= { rip2Groups 2 }
+
+rip2IfConfGroup对象类
+对象{
+rip2IfConfAddress，
+rip2IfConfAuthType，
+rip2IfConfAuthKey，
+rip2IfConfSend，
+rip2IfConfReceive，
+rip2IfConfDefaultMetric，
+rip2IfConfStatus，
+rip2IfConfSrcAddress
+ }
+状态：现行
+描述
+“这个类定义了有关RIP-II系统的接口配置。”
+::= { rip2Groups 3 }
+
+rip2PeerGroup对象类
+对象{
+rip2PeerAddress，
+rip2PeerDomain，
+rip2PeerLastUpdate，
+rip2PeerVersion，
+rip2PeerRcvBadPackets，
+rip2PeerRcvBadRoutes
+ }
+状态：现行
+描述
+“本类定义了RIP-II systems的对等体信息。”
+::= { rip2Groups 4 }
+
+END
+5.参考文献
+[1]Cerf，V.，“IAB Recommendations for the Development of Internet Network Management Standards”，RFC 1052，IAB，April 1988.
+[2] Cerf，V.，“Report of the Second Ad Hoc Network Management Review Group”，RFC 1109，IAB，August 1989.
+[3] Rose M.，and K. McCloghrie，“Structure and Identification of Management Information for TCP/IP-based internets”，STD 16，RFC 1155，Performance Systems International，Hughes LAN Systems，May 1990.
+[4] McCloghrie K.，and M. Rose，“Management Information Base for Network Management of TCP/IP-based internets”，RFC 1156，Hughes LAN Systems，Performance Systems International，May 1990.
+[5] Case，J.，Fedor，M.，Schoffstall，M.，and J. Davin，“Simple Network Management Protocol”，STD 15，RFC 1157，SNMP Research，Performance Systems International，Performance Systems International，MIT Laboratory for Computer Science，May 1990.
+[6]Rose，M.，Editor，“Management Information Base for Network Management of TCP/IP-based internets: MIB-II”，RFC 1158，Performance Systems International，May 1990.
+[7] Information processing systems - Open Systems Interconnection - Specification of Abstract Syntax Notation One (ASN.1)，International Organization for Standardization，International Standard 8824，December 1987.
+[8] Information processing systems - Open Systems Interconnection - Specification of Basic Encoding Rules for Abstract Notation One (ASN.1)，International Organization for Standardization，International Standard 8825，December 1987.
+[9] Rose，M.，and K. McCloghrie，Editors，“Concise MIB Definitions”，STD 16，RFC 1212，Performance Systems International，Hughes LAN Systems，March 1991.
+[10] Malkin，G.，“RIP Version 2 - Carrying Additional Information”，RFC 1723，Xylogics，Inc.，November 1994.
+[11] Malkin，G.，“RIP Version 2 Protocol Analysis”，RFC 1721，Xylogics，Inc.，November 1994.
+[12] Malkin，G.，“RIP Version 2 Protocol Applicability Statement”，RFC 1722，Xylogics，Inc.，November 1994.
+6. 需要考虑的安全问题
+在本备忘录中不讨论安全问题。
+7. 作者地址
+Gary Malkin
+Xylogics，Inc.
+53 Third Avenue
+Burlington，MA01803
+Phone: (617) 272-8140
+EMail: gmalkin@Xylogics.COM
+
+Fred Baker
+Cisco Systems
+519 Lado Drive
+Santa Barbara，California 93111
+Phone: 805-681-0115
+EMail: fred@cisco.com
+
+RFC1724――RIPv2的MIB扩展
+
+
+
+
+14
+RFC文档中文翻译计划
+

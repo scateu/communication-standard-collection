@@ -1,0 +1,137 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王强（bestwang  mailto:bestwang@21cn.com）
+译文发布时间：2001-5-1
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+Network Working Group                                        		M. Mealling
+Request for Comments: 3043					Network Solutions, Inc.
+Category: Informational                                     	January 2001
+
+RFC3043 Network Solutions的个人网络名(PIN): 一种个人和组织的统一资源名域
+（RFC3043  The Network Solutions Personal Internet Name (PIN): A URN Namespace for People and Organizations）
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+摘要
+本文描述了一种由Network Solutions有限公司开发的统一资源名域（URN），它可以用来在网络中对个人和组织命名。
+
+目录
+1. 介绍	2
+2. 规范	2
+3. 例子	4
+4. 安全注意事项	4
+参考文献	4
+作者地址	4
+联系方式：	4
+完整版权说明	5
+致谢	5
+
+1. 介绍
+	Network Solutions维护姓名地址录时经常需要一个特有而且持久的方式来论及某个个人或者组织。比如，白页服务需要明确分辨一条登录信息，即使另外的登录信息的某些部分与之相同。同样，电子商务认证机构需要在很长的时间内能唯一识别每个用户和公司。很多时候，客户关系可以持续几十年。这样的长期客户关系的“寿命”比任何一种电子邮件地址、Internet服务供应商、姓氏、甚至域名服务器本身都要长。
+这种类型的应用是与其它的应用集成并被引用的，非NSI（Network Solutions, Inc.）的应用大都采用同样的方式，即以域名为主的方式，这些域名都被保存在NSI的数据库中。ISBN也采用了大致相同的方式，不过它是由专门组织维护的，而且被广泛采用。然而，许多需要维护的更好的个人和组织的标识的应用还是倾向采用NSI的PIN名域。
+对于这些也需要唯一性和持久性的应用，URN名域是唯一适合解决方式。标准化解决机构的存在，使其它应用可以在开放而非私有的方式下，在自己的系统内引用PIN URNs。这种名域规则规定了一种正式名域。
+
+2. 规范
+名域ID：
+“pin”被请求
+注册信息：
+注册版本号：1
+注册日期：2000-09-30
+本名域声明注册人：
+Network Solutions
+505 Huntmar Park Drive
+Herndon, VA 22070
+结构声明：
+这是一个文字数字混合字符单调空间，它不包含任何在NS内部解释器论域之外可知的结构。以后可以通过赋值方法允许其他人给这个单调名域的子空间赋值，但是它只在内部有效而且不能被外部引用或信任。
+相关补充文档：
+无
+标识唯一性注意事项：
+标识由NS专有的注册系统赋值以便保证唯一性。此时，这种算法将接着最近的赋值被重新赋予一个正整数值。将来，这种算法将改变为包含所有的数字和字母。在两种情况下，系统都将把最新生成的标识与所有已存在的比较，以确定它尚未赋值。
+标识持续性注意事项：
+这种赋值过程保证了名字不会被重复分配，而且个人或组织与名字的绑定是持久的，不管是否有人改名或死亡，组织重组或解体。
+标识赋值过程：
+名字通过NS专有的注册进程获得。
+标识解析过程：
+PIN URNs通过NS的URN解释器求得。由于一个PIN URN标识了一个个人或组织，所以对PIN URN的解析将只能返回由一个电子代理提供的信息，这个代理只是被命名的个人或组织的一种表示方式。
+词汇等价规则：
+URN不区分大小写。
+URN语法一致性：
+		没有附加的保留字。
+确认机构：
+没有其它机构提供特殊情况的解析。
+作用域：
+全局。
+
+3. 例子
+下面这个例子是虚构的，它们只是用来作演示的。
+URN:pin:bs4321234
+URN:pin:324kj5hkj45
+URN:pin:mm2136
+
+4. 安全注意事项
+	由于这个名域中的URNs是非透明的，因此除了常规的使用和解析之外，它不存在其它的安全问题。
+	需要注意的是，任何试图通过一个非NS提供的解释器解析PIN URN的尝试都很容易出错。无论如何，这种尝试都会被认为是未经授权的。
+
+参考文献
+   [1]  Moats, R., "URN Syntax", RFC 2141, May 1997.
+
+作者地址
+   Michael Mealling
+   Network Solutions, Inc.
+   505 Huntmar Park Drive
+   Herndon, VA  22070
+   US
+
+联系方式：
+   电话： +1 770 935 5492
+   EMail: michaelm@netsol.com
+   主页:   http://www.netsol.com
+
+
+完整版权说明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC3043  The Network Solutions Personal Internet Name (PIN): A URN Namespace for People and Organizations      RFC3043  Network Solutions的个人网络名(PIN): 一种个人和组织的统一资源名域
+
+
+
+
+2
+RFC文档中文翻译计划
+
+

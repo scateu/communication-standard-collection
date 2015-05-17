@@ -1,0 +1,341 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：prince1680（prince1680  prince1680@163.com）
+译文发布时间：2001-5-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                         M. Patrick
+Request for Comments: 3046                                  Motorola BCS
+Category: Standards Track                                   January 2001
+
+
+
+DHCP 中继代理信息选项
+（RFC3046  DHCP Relay Agent Information Option）
+
+
+本备忘录的状态
+
+   本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+
+版权声明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+摘要
+
+   新的高速公众 Internet 访问技术呼唤高速调制解调器附加在局域网 (LAN) 中的一个或多个用户前置机上。这对于动态主机配置协议在该环境下分配用户前置机的 IP 地址是有利的，DHCP 在 RFC 2131 中已定义。但是，随着这种“公共”DHCP 的使用，产生了一系列的安全和其他方面的问题。该文档描述了解决这些问题的 DHCP 新选项。该选项扩充了在 RFC 2132 中定义的 DHCP 选项集。
+
+   该新选项称为中继代理信息选项，并在将客户端的 DHCP 包转发到 DHCP 服务器时由 DHCP 中继代理插入。服务器识别出中继代理信息选项后，可以使用这些信息执行 IP 地址或其他参数的分配。DHCP 服务器在服务器到客户的响应中将这些选项逐个地返回到代理中继，并由中继代理在将响应转发到客户端之前捕获这些选项。
+
+   "中继代理信息" 选项被识别为一个 DHCP 选项，但它可以包含一个或多个可由中继代理识别并转达信息的“子选项”。中继代理最初的子选项将在公共电路访问单元中定义。它包括呼入电路的一个“电路 ID”，和一个“远端 ID” - 远端高速调制解调器提供的可信任的标识符。
+
+
+目录
+
+   1   导言...................................................  2
+   1.1 高速电路交换数据网络...................................  2
+   1.2 电路访问设备中的 DHCP 中继代理.........................  4
+   2.0 中继代理信息选项.......................................  5
+   2.1 代理操作...............................................  6
+   2.1.1 重新转发 DHCP 请求...................................  7
+   2.2 服务器选项.............................................  7
+   3.0 中继代理信息子选项.....................................  8
+   3.1 代理电路 ID............................................  8
+   3.2 代理远程 ID............................................  9
+   4.0 解决的问题.............................................  9
+   5.0 安全考虑............................................... 10
+   6.0 IANA 考虑.............................................. 11
+   7.0 知识产权通告........................................... 12
+   8.0 参考................................................... 12
+   9.0 Glossary............................................... 13
+   10.0 作者地址.............................................. 13
+   11.0 完整的版权声明 ....................................... 14
+
+1   导言
+
+1.1 高速电路交换数据网络
+
+   公众访问 Internet 通常是通过一个交换数据网络的电路来实现的。今天，这已是拨号调制解调器连接到远程访问服务器的主要实现方法。但是，较高速度的电路访问网络也包括 ISDN，ATM，帧中继和线缆数据网络。所有这些网络都可以描绘为“星形”拓扑结构，通过这种结构，多个用户可以使用交换电路或永久电路连接到一个“电路访问单元”。
+
+   使用拨号调制解调器，只有单个主机 PC 可以连接到网络的中点。PPP 协议在单个主机 PC 中广泛应用于 IP 地址的分配。
+
+   然而，新的高速电路技术经常提供一个到一个或多个主机 PC 的 LAN 接口（特别是以太网）。对连接到这种电路中的主机计算机通过 DHCP 进行 IP 地址的集中分配是非常满意的。DHCP 服务器可以，但通常不是，与中枢电路的集中访问设备共同实现。DHCP 服务器经常在“中枢 LAN”中作为单独的服务器进行连接，并隶属于中央访问设备（或多个设备）。
+
+   下面的图 1 表示了一个高速 Internet 电路访问的物理模型。
+
+                   +---------------+                              |
+     中枢          |   电路        |-- ckt 1--- 调制解调器-- 主机-|- 主机 A
+     LAN     |     |   访问        |                         Lan  |- 主机 B
+             |     |   单元 1      |                              |- 主机 C
+             |-----|               |--                            |
+             |     |   (中继代理)  |...
++---------+  |     +---------------+
+|  DHCP   |--|
+| 服务器  |  |
++---------+  |
+             |
+             |     +---------------+
++---------+  |     |   电路        |-- ckt 1--- 调制解调器2-- 主机--- 主机 D
+| 其他    |  |     |   访问        |                          Lan
+| 服务器  |--|-----|   单元 2      |
+|  (Web,  |  |     |               |-- ckt 2--- 调制解调器3-- 主机--- 主机 E
+|   DNS)  |  |     |   (中继代理)  |...                       Lan
+|         |        +---------------+
++---------+
+
+         图 1:  DHCP 高速电路访问模型
+
+   注意，在该模型中，“调制解调器”在用户站点连接到 LAN，而不是连接到单个主机，多个主机在该站点实现。尽管可以在用户站点通过一个全功能的 IP 路由器来实现，但需要相对昂贵的设备（与通常调制解调器的花费相比较），此外，一台路由器还需要一个 IP 地址，不是为每个主机，而是为路由器本身。最后，一个用户端的路由器还需要为每个用户提供一个逻辑子网（LIS）。图 1 的这个模型对相对较小的社团网络环境来说是适合的，但对大型的、公共访问的网络来说就不适合了。在图 1 的这种情况下，它对实现 IP 网络模型比较有利，即在这种 IP 网络模型中，不为调制解调器（或用户站点的其他网络设备）分配 IP 地址，特别是不为用户端 LAN 的整个 LIS（逻辑子网）分配 IP 地址。
+
+   注意，使用这种模型获得 IP 地址，意味着只有中央站点可用时才能获得 IP 地址。某些主机 lan 的安装可以使用一个本地的 DHCP 服务器或其他方式来获得 IP 地址，以供内部使用。
+
+1.2 电路访问设备中的 DHCP 中继代理
+
+   使用 DHCP 为公共高速电路访问分配 IP 地址是比较适合的。大多数的电路访问单元（如，RAS，线缆调制解调器终端系统，ADSL访问单元等等）都是通过附加的 DHCP 服务器连接到 LAN（或本地 internet）的。.
+
+   基于扩充和安全的原因，在电路访问单元中实现“路由跳步”是较有利的，正象今天高容量 RAS 做的那样。电路访问设备的作用即象电路中的路由器的作用，又象 DHCP 中继代理的作用。
+
+   DHCP 中继代理和电路访问设备的协同定位的优点在于：
+
+   DHCP 广播响应仅路由到正确的电路，也就是说，避免将 DHCP 响应广播到数以千计的访问电路；
+
+   用于甄别电路的远程连接的机制（例如，作为电路访问设备的远程访问服务器需要用户 ID），同样可由 DHCP 用于主机的标识符和参数的分配，包括 IP 地址的集中分配。这样可以从受信任的源 - 中继代理 - 提供一个安全的远端 ID。
+
+   当多个主机向特定的主机转发 DHCP 请求时将发生一系列的问题，这台特定的主机用于将公共访问高速电路和 LAN 连接起来。这些问题中，大多是由于从不受信任的源发出的 DHCP 客户请求而引起的安全问题。中继代理怎样知道向哪个电路转发响应？系统怎样阻止 DHCP IP 枯竭攻击，也就是攻击者使用虚假的 MAC 地址发出多个请求，请求 DHCP 服务器的所有可用的 IP 地址？一个 IP 地址或 LIS 怎样永久分配给一个特定用户或调制解调器？怎样防止通过使用分配 IP 地址的客户标识符字段进行“欺骗”？怎样防止“欺骗”其他客户 MAC 地址的拒绝服务攻击？
+
+   所有的这些问题都可以通过电路访问设备加以解决，电路访问设备作为受信任的部分，在 DHCP 客户请求中附加信息，并转发到 DHCP 服务器。
+
+2.0 中继代理信息选项
+
+   本文档定义了一个新的称为中继代理信息选项的 DHCP 选项。它是特定 agent-supplied 选项的一个容器。中继代理信息选项的格式是：
+
+          代码   长度    代理信息字段
+         +------+------+------+------+------+------+--...-+------+
+         |  82  |   N  |  i1  |  i2  |  i3  |  i4  |      |  iN  |
+         +------+------+------+------+------+------+--...-+------+
+
+   长度 N 给出代理信息字段的所有个数（八进制）。代理信息字段由每个子选项的“子选项/长度/值”的元组序列组成，并按下列格式进行编码：
+
+          子选项  长度    子选项值
+         +------+------+------+------+------+------+--...-+------+
+         |  1   |   N  |  s1  |  s2  |  s3  |  s4  |      |  sN  |
+         +------+------+------+------+------+------+--...-+------+
+          子选项  长度    子选项值
+         +------+------+------+------+------+------+--...-+------+
+         |  2   |   N  |  i1  |  i2  |  i3  |  i4  |      |  iN  |
+         +------+------+------+------+------+------+--...-+------+
+
+   没有定义“pad”子选项，并且信息字段也不应由一个 255 子选项结束。DHCP 代理信息选项的长度 N 应包括子选项“代码/长度/值”元组所有的字节。因为至少要定义一个子选项，中继代理信息的最小长度为 2。子选项的长度 N 应是该子选项值字段的八进制数。一个子选项的长度可以是 0。子选项可以不按子选项代码顺序排列。
+
+   最初分配的 DHCP 中继代理子选项如下：
+
+                 DHCP 代理子选项代码              子选项描述
+                 -------------------       ------------------------------
+                         1                   代理电路 ID 子选项
+                         2                   代理远程 ID 子选项
+
+2.1 代理操作
+
+   所有增加的 DHCP 中继代理选项应当是可配置的，且默认值是 disable 的。中继代理应当可以对每个子选项单独配置，以便于控制在客户-到-服务包中插入的位置。
+
+   DHCP 中继代理增加一个中继代理信息字段，应当作为最后一个选项添加（如果存在“结束选项”255，则应在其之前）到包的 DHCP 选项字段，该包是从客户端转发到服务器的可被识别的任何 BOOTP 或 DHCP 包。
+
+   中继代理从一个不受信任的电路接收到一个 giaddr 设置为 0 的（指定它是路由的第一跳）DHCP 包，但包中却已包含中继代理信息选项，应丢弃该包并增加错误计数。一个受信任的电路可以在中继代理和客户端之间包含一个受信任的下行（靠近客户端）网络元件（桥），但并不置位 giaddr 字段。在这种情况下，中继代理并不增加“第二个”中继代理选项，但按正常的 DHCP 中继代理选项转发该 DHCP 包，置位 giaddr 字段并认为它是正确的。
+
+   “受信任”与“不受信任”电路之间的区分机制由电路终端元件的类型来决定，也可以包括本地管理。例如，一个线缆调制解调器终端系统可以将其他线缆调制解调器发来的上行包认为是“不受信任”的，但一个通过 DSLAM 进行交换的 ATM 交换终端 VC 可以将这样的 VC 认为是“受信任”的，并接受由 DSLAM 添加的中继代理选项。
+
+   添加代理信息选项后，中继代理可以对创建的 DHCP 包的最大尺寸进行配置。在添加代理信息选项后，其大小超过该最大尺寸配置的包将直接转发而不添加代理信息选项。这种情况下，应当增加错误计数。这种可配置性缺乏时，代理增加转发的 DHCP 包的大小不应超过转发接口的 MTU 值。
+
+   当转发一个服务器-到-客户的响应到客户时，服务器回应的中继代理信息选项必须由添加它的中继代理或受信任的下行网络元件来删除。
+
+   代理不应当在包中增加“选项过载”选项或使用“file”或“sname”字段增加中继代理信息选项。同时，也不应当解析或删除 sname 或 file 字段中的中继代理选项，sname 或 file 字段位于通过代理转发的服务器-到-客户包中。
+
+   特定子选项的中继代理操作由该子选项指定。
+
+   中继代理不需要监控或修改源于客户端并发向一个服务器单播地址的 DHCP 包，这也包括进入更新状态时发送的 DHCP-REQUEST。
+
+   中继代理必须不准修改使用 IPSEC 验证头或 IPSEC 封装安全载荷 [6] 的 DHCP 包。
+
+2.1.1 重新转发 DHCP 请求
+
+   DHCP 中继代理可以接收一个从靠近客户的 BOOTP/DHCP 中继代理转发来的客户 DHCP 包。对这样的包，其 giaddr 应为非 0，可以有也可以没有 DHCP 中继代理选项。
+
+   中继代理配置为接收到非 0 giaddr 的客户 DHCP 包也添加中继代理选项时，则中继代理应当丢弃包，如果该包由本地代理自己使用 giaddr 地址进行欺骗。
+
+   否则，中继代理应当转发任何接收到的有效的非 0 giaddr 的 DHCP 包，而不添加任何中继代理选项。根据 RFC 2131, 它也不修改 giaddr 值。
+
+2.2 服务器选项
+
+   DHCP 服务器所不能识别的中继代理信息选项在接收时将被忽略，且也不返回响应。这是服务器对不能识别选项的处理方式。
+
+   声明支持中继代理信息选项的 DHCP 服务器应当在所有的响应中回复中继代理信息选的所有内容。服务器应当将中继代理信息选项作为响应的最后一个选项复制过来。服务器不应当将回应的中继代理信息选项放在超载的 sname 或 file 字段。如果服务器不能将全部中继代理信息选项它段复制到响应中，则应当发送不带中继信息字段的响应，且为这种情况增加错误计数。
+
+   DHCP 服务器对特定子选项的操作由该子选项指定。
+
+   注意，DHCP 中继代理不需要监控在客户与服务器之间直接发送的单播信息（也即那些不通过中继代理发送的信息）。但是，某些中继代理可以选择这样的监控和添加中继代理选项。因此，服务器应有处理单播信息中中继代理选项的准备，但不要期望它们总存在。
+
+3.0 中继代理信息子选项
+
+3.1 代理电路 ID 子选项
+
+   这些子选项可以由 DHCP 中继代理加入，用于拆除交换虚电路或永久虚电路。它们编码为电路的一个代理-本地标识符，从这个电路中，可以接收 DHCP 客户-到-服务器包。该子选项由代理使用，用于转发 DHCP 响应到正确的电路。 该字段可能的用法包括：
+
+       - 路由器接口号
+       - 交换式 Hub 端口号
+       - 远程访问服务器端口号
+       - 帧中继 DLCI
+       - ATM 虚电路号
+       - 线缆数据虚电路号
+
+   服务器可以使用电路 ID 作为 IP 和其他参数指定的策略。电路 ID 应当按确保字符串精确匹配的策略经过认真核对；也就是说，电路 ID 不应当由服务器进行内部解析。
+
+   DHCP 服务器应当在统计报告（包括它的 MIB）和日志中报告当前连接过程的代理电路 ID 值。因为电路 ID 只是局限于一个特定的中继代理中，电路 ID 应当由标识中继代理的 giaddr 值来核定。
+
+          子选项  长度     电路 ID
+         +------+------+------+------+------+------+------+------+--
+         |  1   |   n  |  c1  |  c2  |  c3  |  c4  |  c5  |  c6  | ...
+         +------+------+------+------+------+------+------+------+--
+
+3.2 代理远程 ID 子选项
+
+   在 DHCP 中继代理中可以加入这些子选项，用于拆除交换虚电路或永久虚电路，并可以有识别远端主机终止电路的机制。可以使用远端 ID 字段进行编码，例如：
+
+       -- 一个拨号连接中 "呼入 ID" 电话号码
+       -- 一个远程访问服务器提示的 "用户名"
+       -- 一个远端呼入 ATM 地址
+       -- 一个线缆调制解调器的 "modem ID"
+       -- 端到端链接的远端 IP 地址
+       -- 一个 X.25 连接的远端 X.25 地址
+
+   远端 ID 必须全程唯一。
+
+   DHCP 服务器可以使用这些选项为特殊用户、主机或调制解调器选择特定的参数，选项值应当按确保字符串精确匹配的策略经过认真核对；也就是说，选项不应当由服务器进行内部解析。
+
+   中继代理可以使用这个字段附加或代替代理电路 ID 字段来选择要转发 DHCP 响应（如，Offer，Ack，或 Nak）的电路。DHCP 服务器应当向关联的特定客户在任何报告或 MIB 中报告这个值。
+
+          子选项  长度     代理远端 ID
+         +------+------+------+------+------+------+------+------+--
+         |  2   |   n  |  r1  |  r2  |  r3  |  r4  |  r5  |  r6  | ...
+         +------+------+------+------+------+------+------+------+--
+
+4.0 解决的问题
+
+   在未受信的主机通过公共网络中的一条电路访问 Internet 的环境下，DHCP 中继代理选项解决了几个问题。该解决方案假定：公共主机通过 DHCP 中继代理的所有 DHCP 协议通信及 HDCP 中继代理和 DHCP 服务器之间的 IP 网络都不存在安全问题。
+
+   广播转发
+
+      电路访问设备仅在代理电路 ID 指定的电路上转发正常的 DHCP 广播响应。
+
+   DHCP 地址枯竭
+
+      通常，DHCP 服务器在一个范围内维护一个“三元组”的数据库：
+
+            (客户 IP 地址，客户 MAC 地址，客户远端 ID)
+
+      DHCP 服务器应当实现分配到单个远端 ID 的 IP 地址数的约束。
+
+   静态分配
+
+      DHCP 服务器可以使用远端 ID 来选择要分配的 IP 地址。它可以允许为特定远端 ID 进行 IP 地址的静态分配，且不允许未授信的远端 ID 的地址请求。
+
+   IP 欺骗
+
+      在转发的 DHCP Ack 包中，电路访问设备可以将 DHCP 服务器分配的 IP 地址与要转发的电路相关联。电路访问设备可以阻止使用源 IP 地址转发的 IP 包，而不是那些与接收电路相关联的包。这样可以在中央 LAN 中阻止简单 IP 欺骗攻击和其他主机的 IP 欺骗。
+
+   用户标识符欺骗
+
+      通过使用代理提供的代理远端 ID 选项，DHCP 服务器不必使用未授信的和非标准的客户标识符字段。
+
+   MAC 地址欺骗
+
+      通过使一个 MAC 地址与一个代理远端 ID 相关联，DHCP 服务器可以阻止将一个 IP 地址与不同远端 ID 的攻击者欺骗的同一个 MAC 地址相关联。
+
+5.0 安全考虑
+
+   DHCP 当前定义为没有授权或安全的机制。潜在的攻击危险将在 RFC 2131 [1] 中 DHCP 协议规范的第 7 节中讨论。
+
+   本文档介绍了几种对 IP 地址分配操作的安全进行攻击的机制，包括 IP 欺骗，客户端 ID 欺骗，MAC 地址欺骗和 DHCP 服务器地址枯竭。伪装的不受信任的 DHCP 客户端依赖于 DHCP 中继代理和 DHCP 服务器之间隐含的信赖关系，产生一个新的标识符，“远端 ID”，同样可以伪装受信任。远端 ID 是由被访问的网络或 Modem 而不是由客户端设备提供。验证远端 ID 的加密或其他技术当然可行并鼓励使用，但超出本文档的范围。
+
+   该选项面向于网络基础的环境 -- 中继代理，DHCP 服务器和两个设备之间的整个网络 -- 是信任和安全的。在本文档中，单词 "信任" 意味着未授权的 DHCP 通信不能进入受信任的网络中，除非通过安全和信任的中继代理及那些所有的安全和信任的网络内部设备。在实际网络中配置该选项之前，该选项潜在的配置员应当给予这个模型中潜在的安全弱点以充分的考虑。
+
+   请注意，任何未来的 DHCP 客户端到服务器之间通信的验证机制，在服务器端验证计算时，必须注意省略 DHCP 中继代理选项。 这是在将有多个子选项的 HDCP 中继代理选项组织为单个选项时的主要原因，并且要求中 继代理在转发到客户端之前移除选项。
+
+   对公众数据电路访问单元的通用转发算法的说明超出本文档的范围，注意，IP 的自动转发或 ARP 广播包的向后回播会暴露出严重的 IP 安全问题。例如，一个前向的广播 DHCP-DISCOVER 或 DHCP-REQUEST 会重新向后回播，任何主机均可容易地欺骗 DHCP 服务器。
+
+6.0 IANA 考虑
+
+   IANA 用于维护 BOOTP-DHCP 参数注册项中的 "DHCP 中继代理子选项" 的一个数码空间。初始的子选项在本文的 2.0 节已描述。
+
+   IANA 使用 RFC 2434 [3]中描述的 "IETF 意见" 指定将来的 DHCP 中继代理子选项。将来提议的子选项将象征性地在 Internet-Drafts 中予以描述，并在核准以 RFC 出版时，由 IANA 分配一个数字代码。
+
+7.0 知识产权通告
+
+   This section contains two notices as required by [5] for standards track documents.
+
+   The IETF takes no position regarding the validity or scope of any intellectual property or other rights that might be claimed to pertain to the implementation or use of the technology described in this document or the extent to which any license under such rights might or might not be available; neither does it represent that it has made any effort to identify any such rights.  Information on the IETF's procedures with respect to rights in standards-track and standards-related documentation can be found in BCP-11.  Copies of claims of rights made available for publication and any assurances of licenses to be made available, or the result of an attempt made to obtain a general license or permission for the use of such proprietary rights by implementors or users of this specification can be obtained from the IETF Secretariat.
+
+   The IETF has been notified of intellectual property rights claimed in regard to some or all of the specification contained in this document.  For more information consult the online list of claimed rights.
+
+8.0 参考
+
+   [1]  Droms, R., "Dynamic Host Configuration Protocol", RFC 2131,
+        March 1997.
+
+   [2]  Alexander, S. and R. Droms, "DHCP Options and BOOTP Vendor
+        Extension", RFC 2132, March 1997.
+
+   [3]  Narten, T. and H. Alvestrand, "Guidelines for Writing an IANA
+        Considerations Section in RFCs", BCP 26, RFC 2434, October 1998.
+
+   [4]  Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March 1997.
+
+   [5]  Bradner, S., "The Internet Standards Process -- Revision 3", BCP
+        9, RFC 2026, October 1996.
+
+   [6]  Kent, S. and R. Atkinson, "Security Architecture for the
+        Internet Protocol", RFC 2401, November 1998.
+
+9.0 术语表
+
+   DSLAM   Digital Subscriber Link Access Multiplexer
+   IANA    Internet Assigned Numbers Authority
+   LIS     Logical IP Subnet
+   MAC     Message Authentication Code
+   RAS     Remote Access Server
+
+10.0 作者地址
+
+   Michael Patrick
+   Motorola Broadband Communications Sector
+   20 Cabot Blvd., MS M4-30
+   Mansfield, MA 02048
+
+   Phone: (508) 261-5707
+   EMail: michael.patrick@motorola.com
+
+11.0  完整的版权声明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works.  However, this document itself may not be modified in any way, such as by removing the copyright notice or references to the Internet Society or other Internet organizations, except as needed for the purpose of developing Internet standards in which case the procedures for copyrights defined in the Internet Standards process must be followed, or as required to translate it into languages other than English.
+
+   The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+感谢
+
+   Funding for the RFC Editor function is currently provided by the Internet Society.
+RFC3046  DHCP Relay Agent Information Option                  DHCP 中继代理信息选项
+
+
+
+
+1
+RFC文档中文翻译计划
+

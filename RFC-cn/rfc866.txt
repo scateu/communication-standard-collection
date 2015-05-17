@@ -1,0 +1,29 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：顾国飞（ggfei    ggfei@263.net ）
+译文发布时间：2001-4-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                          J. Postel
+Request for Comments: 866                                            ISI
+                                                                May 1983
+
+RFC866 活动用户
+（RFC866  Active Users）
+本RFC规范了一个ARPA Internet community上的标准。在ARPA Internet上的所有主机应当采用和实现这个标准。
+一个有用的测量和调试工具是活动用户服务，此服务器返回所有当前用户列表。当前用户就是登录的用户,可以用SYSTAT或WHO列出。 
+* 基于TCP的活动用户服务 
+活动用户服务可以定义为一个基于TCP的连接应用。服务器在端口11侦听TCP连接，一旦建立连接，当前用户列表就返回给连接用户。接收到的信息会被抛弃。在传输完列表后，连接会关闭。 
+* 基于UDP的活动用户服务 
+如果使用UDP也是可以的。端口也是11，在此端口接收到数据报后，会返回当前活动活动用户列表的数据报。如果列表在一个数据报中装不下，可以发许多个，但不能将一个用户的信息分在两个数据报中传输。接收方应该一直等待一段时间以便所有数据报到达，到达顺序没有要求。 
+* 用户列表语法 
+用户列表没有什么规定，最好是使用ASCII可打印字符，空格，回车和换行。每个用户占用一行。
+RFC866  Active Users                                                         RFC866 活动用户        
+
+1
+
+
+1
+中文文档翻译计划
+
+

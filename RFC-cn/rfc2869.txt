@@ -1,0 +1,1424 @@
+
+
+
+
+
+
+Network Working Group                                           C. Rigney
+Request for Comments: 2869                                     Livingston
+Category: Informational                                        W. Willats
+                                                        Cyno Technologies
+                                                               P. Calhoun
+                                                         Sun Microsystems
+                                                                June 2000
+
+
+                           RADIUS扩展
+
+Status of this Memo
+
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要
+
+本文档描述了利用远程拨入用户认证服务(RADIUS)协议在网络访问服务器(NAS)和共享的计费服务器之间传送认证、授权和计费信息的额外属性。其中RADIUS协议在RFC 2865和RFC 2866中描述。 
+
+目  录
+1引言	6
+2具体操作	6
+ 2.1RADIUS对之间计费更新的支持	6
+ 2.2RADIUS对Apple远程接入协议的支持	7
+ 2.3RADIUS对扩展认证协议（EAP）的支持	11
+ 2.3.1协议回顾	11
+ 2.3.2重传	12
+ 2.3.3分片	13
+ 2.3.4举例	13
+ 2.3.5选择使用	20
+3报文格式	20
+4报文类型	20
+5属性   	20
+ 5.1Acct-Input-Gigawords	23
+ 5.2Acct-Output-Gigawords	23
+ 5.3Event-Timestamp	24
+ 5.4ARAP-Password	25
+ 5.5ARAP-Features	26
+ 5.6ARAP-Zone-Access	28
+ 5.7ARAP-Security	29
+ 5.8ARAP-Security-Data	30
+ 5.9Password-Retry	31
+ 5.10  Prompt	31
+ 5.11  Connect-Info	32
+ 5.12  Configuration-Token	33
+ 5.13  EAP-Message	34
+ 5.14  Message-Authenticator	36
+ 5.15  ARAP-Challenge-Response	38
+ 5.16  Acct-Interim-Interval	39
+ 5.17  NAS-Port-Id	40
+ 5.18  Framed-Pool	40
+ 5.19  属性表	41
+6IANA 考虑事项	42
+7安全考虑事项	42
+ 7.1Message-Authenticator安全	42
+ 7.2EAP安全	43
+ 7.2.1EAP服务器和PPP认证者分离	43
+ 7.2.2连接劫持	43
+ 7.2.3中间的攻击	44
+ 7.2.4多数据库	44
+ 7.2.5协商攻击	44
+8.     References ............................................   43
+9.     Acknowledgements ......................................   44
+10.    Chair's Address .......................................   44
+11.    Authors' Addresses ....................................   45
+12.    Full Copyright Statement ..............................   47
+
+1. 引言
+RFC2865和RFC2866描述了如何利用RADIUS协议进行认证和计费，目前正在应用。本文档建议了几个额外的属性，可以实现多种非常有用的功能，这几个额外的属性可以添加到RADIUS协议中。这几个属性目前没有大面积使用的经验，因此只能看作是实验性的。
+扩展认证协议（EAP）是对PPP协议的扩展，通过EAP可以在PPP协议内支持额外的认证方法。本文档描述了RADIUS协议如何利用EAP-Message和Message-Authenticator属性支持EAP。
+所有的属性由Type-Length-Value三元组组成。可以添加新的属性值而又不影响协议的实现。
+
+1.1.  Specification of Requirements
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [4].
+
+   An implementation is not compliant if it fails to satisfy one or more
+   of the must or must not requirements for the protocols it implements.
+   An implementation that satisfies all the must, must not, should and
+   should not requirements for its protocols is said to be
+   "unconditionally compliant"; one that satisfies all the must and must
+   not requirements but not all the should or should not requirements
+   for its protocols is said to be "conditionally compliant."
+
+   A NAS that does not implement a given service MUST NOT implement the
+   RADIUS attributes for that service.  For example, a NAS that is
+   unable to offer ARAP service MUST NOT implement the RADIUS attributes
+   for ARAP.  A NAS MUST treat a RADIUS access-request requesting an
+   unavailable service as an access-reject instead.
+
+1.2.  Terminology
+
+   This document uses the following terms:
+
+   service   The NAS provides a service to the dial-in user, such as PPP
+             or Telnet.
+
+   session   Each service provided by the NAS to a dial-in user
+             constitutes a session, with the beginning of the session
+             defined as the point where service is first provided and
+             the end of the session defined as the point where service
+
+
+
+
+
+Rigney, et al.               Informational                      [Page 3]
+
+RFC 2869                   RADIUS Extensions                   June 2000
+
+
+             is ended.  A user may have multiple sessions in parallel or
+             series if the NAS supports that, with each session
+             generating a separate start and stop accounting record.
+
+   silently discard
+             This means the implementation discards the packet without
+             further processing.  The implementation SHOULD provide the
+             capability of logging the error, including the contents of
+             the silently discarded packet, and SHOULD record the event
+             in a statistics counter.
+
+2.具体操作
+具体操作同RFC2865和RFC2866中定义的完全相同
+RADIUS对之间计费更新的支持
+当用户认证通过以后，RADIUS服务器对认证请求报文Access-Request回应一个认证接受报文Access-Accept。如果服务器希望接到用户的中间流量报文，那么在认证接受报文Access-Accept中必须包含RADIUS属性Acct-Interim-Interval。这个属性指明了中间计费报文的时间间隔（以秒为单位）。
+当然，也可以在NAS上通过静态配置设定一个中间计费报文的时间间隔。需要注意的是：这个NAS上配置的局部的时间间隔值必须覆盖包含在认证接受报文Access-Accept中携带的时间间隔值。
+这个方案并不会破坏后向兼容性。因为不支持这个扩展属性的RADIUS服务器当然不会添加这个新的属性。同样，不支持这个扩展属性的NAS也会忽略此属性。
+注意，在中间计费报文中的信息是累积的，即：报文中的发送分组数量是从会话开始的总的分组数量，而不是从上一个中间计费报文以后的分组数量。
+可以预见，中间计费记录（其中属性Acct-Status-Type = Interim-Update (3)）中除了不包含属性Acct-Term-Cause外，包含了计费结束报文中其它的所有属性。
+既然信息是累积的，NAS必须保证在给定的任何时间在重发队列中对于某一个会话只有一个单独的中间计费报文存在。NAS可以利用fudge因子在对应于不同会话的中间计费报文之间增加一段随机时延。这样可以避免所有的报文立刻发送。
+利用中间计费更新应该认真考虑网络和NAS CPU的负担，因此应该合理选择中间计费间隔Acct-Interim-Interval。
+RADIUS对Apple远程接入协议的支持
+        RADIUS协议提供了允许多个NAS共享同一个认证数据库的一种方法。
+        Apple远程接入协议（ARAP）支持在点到点链路上传送AppleTalk网络流量，点到点链路通常（但不唯一）是异步和ISDN交换电路连接。尽管Apple在未来的远程接入业务中朝着ATCP on PPP的方向发展，但对已经使用远程接入的Macintosh用户来说，RARP仍然是一种普通的方法，而且可能要存在一段时间。
+         有几个NAS提供商支持ARAP，同时，这些提供商在同一个NAS上也支持PPP、IPX和其它协议。在这些支持多协议的设备上通常不用RADIUS对ARAP连接进行认证，即便有，不同的提供商分别提供不同的解决方案。
+         本节描述支持RARP协议的RADIUS几个额外属性的使用。符合本规范的RADIUS客户端和服务器端实现应该用可以互操作的方式对ARAPR连接验证。
+         本节的讨论假定读者对RADIUS协议已很熟悉，因此首先直接探究ARAP应用的具体细节，然后再详细讨论RADIUS协议的额外属性。
+       本文档不讨论的两个ARAP特色如下：
+              1.  用户发起的密码改变。这不是RADIUS的一部分，但可以通过软件过程实现。
+              2.  带外报文。NAS任何时候都可以向ARA客户端发送报文，报文以对话框的形式显示在                       拨号接入用户的屏幕上。这不属于认证的一部分，也不属于此处讨论的范畴。但我们                      注意到 认证接受报文Access-Accept中的Reply-Message属性可以利用带外信道传给用                   户。
+         我们尽可能多地尊重已有的RADIUS协议精神，使设计与以前的技术兼容。更进一步讨论，我们需要在两方面作出平衡选择处理。一方面，过多的新属性造成RADIUS世界的泛滥；另一方面，将整个ARAP操作隐藏在一个单独的复合ARAP属性串中，或者在扩展认证协议（EAP）的机制内解决。
+        但是，我们认为只要保证几个类似命名的属性，ARAP从PPP分离出来就足够了。
+        我们已经假定能够理解ARAP的RADIUS服务器可以进行DES加密且可以产生安全模式挑战字。这正与RADIUS的如下目标一致：灵活服务器/简单NAS。
+        ARAP对一个连接的认证分两个阶段。第一个阶段是利用用户密码作为密钥，互换一个“二次DES”随机数。之所以说是“二次”，是因为ARAP NAS挑战拨号接入用户对自己进行验证，同样，拨号接入用户挑战ARAP NAS从对自己进行验证。
+       特别地，ARAP执行如下过程：
+        1.  NAS在ARAP的msg_auth_challenge分组中向拨号接入用户发送两个32位的随机数。
+        2.  拨号接入用户收到NAS发来的两个随机数后，利用用户密码对这两个随机数进行DES加                    密，然后拨号接入客户端将此加密后的结果连同用户名和客户端产生的两个32位的随机数              在ARAP msg_auth_request分组中回应给NAS。
+        3.  NAS接收到以后，确认由拨号接入客户端发送过来的经过加密的随机数是否是自己所期望              的。如果是，它利用密码对拨号接入客户端发送过来的挑战字进行加密，并且把加密后的               结果在ARAP msg_auth_response分组中发给拨号接入客户端。
+      注意如果拨号接入客户端的响应错误（这意味着用户密码错误），服务器可以重发，直到重发次数达到NAS允许的最大发送次数。在这种情况下，当拨号接入客户端接收到ARAP msg_auth_response分组后，将用ARAP msg_auth_again分组进行确认。
+       第一个“DES Phase”阶段通过以后，ARAP NAS可以利用被Apple称之为“Add-In Security Modules”的机制发起第二个认证阶段。 Security Modules是运行在客户端和服务器上的几小段代码，允许通过通讯链路读和写任意数据，从而实现额外的认证功能。各种安全令牌提供商利用这种机制对ARA呼叫者进行认证。
+        尽管ARAP允许安全模块读写它们所需要的任意信息，但是已经存在的安全模块是利用简单的挑战和响应循环，当然可能携带某些全局控制信息。本文档假定利用一个或几个challenge/response循环可以支持所有已经存在的安全模块。
+       在DES Phase之后，Security Module phase之前，RAP向下发送某些概貌信息，使RADIUS和ARAP集成复杂。这意味着，在某些异常时间，除了对challenge的响应以外，还必须存在概貌信息。幸运的是这些信息只是几个与密码相关的数字，本文档中把这些信息封装在一个单独的新的属性中。
+         向RADIUS发送一个Access-Request报文代表ARAP连接是非常直接的。ARAP NAS产生一个随机的数字挑战字，然后接受拨号接入客户端的响应，客户端的挑战字和用户名。假定用户不是一个guest，在Access-Request分组中转发如下信息： User-Name（最长31个字符），Framed-Protocol （对于ARAP，此域值填为3），ARAP-Password和其它希望携带的属性，如Service-Type， NAS-IP-Address，NAS-Id，NAS-Port-Type，NAS-Port，NAS-Port-Id， Connect-Info等。
+         Request Authenticator是一个NAS产生的16字节的随机数。这个随机数的低8个字节作为两个四字节的随机数放在ARAP msg_auth_challenge报文中传给拨号接入用户。其中字节0-3作为第一个随机数，字节4-7作为第二个随机数。
+       Access-Request报文中的ARAP-Password包含一个16 字节的随机数域，用来携带拨号进入用户对NAS挑战的响应及客户端自己 对NAS的挑战字。高字节包含拨号接入用户对NAS的挑战字（2个32位的数字，共8字节），第字节包含拨号接入用户对NAS挑战的响应（2个32位的数字，共8字节）。
+         User-Password， CHAP-Password 或ARAP-Password三个属性在Access-Request报文中只能出现一个，也可以出现一个或多个EAP-Messages。
+        如果RADIUS服务器不支持ARAP，它应该向NAS返回一个Access-Reject报文。
+        如果RADIUS服务器不支持ARAP，它应该利用Challenge（Request Authenticator中的低8个字节）和用户响应（ARAP-Password 中的低8个字节）来确认用户的响应。
+         如果认证失败，RADIUS服务器应该向NAS返回一个Access-Reject报文，报文中携带可选属性Password-Retry和Reply-Messages。如果携带Password-Retry属性，这就告知ARAP NAS可以选择再发起几个挑战-响应循环，直到循环次数等于Password-Retry属性中的整数值。
+         如果用户认证通过，RADIUS服务器应该向NAS返回一个Access-Accept报文（Code等于2），ID和Response Authenticator跟通常情况一样，其它属性如下：
+        Service-Type of Framed-Protocol
+        Framed-Protocol of ARAP (值为3)
+        Session-Timeout，它代表用户可以连接的最长时间（以秒为单位）。如果用户被授权为无限 制用户，那么在Access-Accept报文中就不应该包含Session-Timeout属性。此时ARAP将用户作为无限制用户超时（值为-1）。
+        ARAP-Challenge-Response，它包含8个字节，代表对拨号接入用户的响应。RADIUS是用如下方法填充出此属性的。RADIUS服务器从ARAP-Password属性中取出高8个字节（实际为拨号接入用户的挑战），然后再用认证用户的密码作为密钥，对前边已取出的用户的挑战进行DES加密。如果用户的密码在长度上小于8个字节，那么就在用户密码填充NULL字节，直到满8个字节；如果用户密码长度大于8个字节，那就应该返回一个Access-Reject报文。
+       ARAP-Features，它包含了NAS在ARAP“feature flags”报文中将携带给用户的信息。
+             字节0：如果值为0，表示用户不能改变密码，如果值不为0，表示用户可以改变密码（RADIUS不处理密码更改，仅用属性指明ARAP是否可以改变密码）。
+              字节1：表示最小的可接受的密码长度（0-8）。
+              字节2-5：表示Macintosh格式的密码产生日期，为一32位的无符号整数，代表从Midnight GMT January 1, 1904以后的总的时间（以秒为单位）。  
+              字节6-9：表示从密码产生以后的有效时间长度（以秒为单位）。
+              字节10-13：以Macintosh格式表示的目前RADIUS时间。
+        作为可选项，回应报文中可以包含Reply-Message属性，其内容为一字符串，最多可以包含253个字符，这些内容可以在对话框中显示给用户。
+        Framed-AppleTalk-Network：此属性可以包含在报文中。      
+        Framed-AppleTalk-Zone：此属性可包含在报文中，最大长度为32个字符。
+         对于一个用户，ARAP定义了区域列表。与区域名字列表一起，ARAP定义了区域访问标志（被NAS使用），此标志说明了如何利用区域名字列表。即：拨号接入用户可能只允许访问缺省区域，或者只能访问区域列表中区域，也或者只能访问除区域列表中列出的以外的其它区域。
+         ARAP NAS中含有一个指定的滤波器，用此滤波器可以处理此问题，其中滤波器起码的区域名字。用此机制，解决了如下问题：用一个单独的RADIUS服务器管理不同的NAS客户端，并且客户端有或许不能全部看到用户区域列表中的区域名字。区域名字只对NAS才有意义。这种方法的不足之处在于滤器必须在首先NAS中以某种方式启动，然后再由RADIUS Filter-Id引用。
+        ARAP-Zone-Access属性中包含一个整数，此属性指明了该如何使用针对一个用户的区域列表该。如果包含此属性且其值为2或4，那么就必须包含Filter-Id属性，Filter-Id属性命名了一个适用访问标记的滤波器。
+        在Access-Accept报文中包含Callback-Number或Callback-Id属性可能导致ARAP NAS在发送Feature Flags开始回调处理后切断连接。其中回调处理是以一种ARAP特有的方式进行。
+         在Access-Accept报文中也可以包含其它属性。
+         ARAP要完成到客户端拨号接入的连接，还需要其它信息。这种信息可由ARAP NAS通过SNMP配置，NAS管理程序或从NAS的AppleTalk堆栈中获得，不需要RADIUS的任何帮助。特别地：
+       1.  将AppearAsNet和AppearAsNode值传送给客户端，告诉它在数据报分组中应该适用什么样的网络和节点值。 AppearAsNet可以从Framed-AppleTalk-Network属性中获得，或者通过配置，或者通过NAS的堆栈获得。
+       2.  拨号接入终端将出现在缺省区域内，缺省区域也就是AppleTalk的名字。 （或者用Framed-AppleTalk-Zone属性指明）
+        3.  其它的NAS特有的资料，如NAS的名字和smartbuffering信息。（Smartbuffering是ARAP的一种机制。它用小的令牌取代普通的AppleTalk数据报，从而改善了某些普通慢链路的性能。）
+        4.  用户的“Zone List”信息。 ARAP规范定义了一个“zone count”域，实际上没有使用。
+        RADIUS用以下方式支持ARAP Security Modules。
+         DES认证结束以后，RADIUS服务器通知ARAP NAS为拨号接入用户运行一个或多个security modules。尽管基本的协议支持连续执行多个security modules，但在实践中，目前的实现只允许实现一个。通过使用多个Access-Challenge请求，就可以支持多个安全模式，但这种功能可能永远不会被使用。
+        同时我们也假定，尽管ARAP允许在点到点链路的端点上安全模式之间使用自由格式的对话，但在实践中，所有的安全模式可以简化为简单的挑战/响应循环。
+        如果RADIUS服务器希望通知ARAP NAS运行一个安全模式，那么它应该给NAS发送一个Access-Challenge报文，作为可选项，报文中可以携带State属性，加上ARAP-Challenge-Response ，ARAP-Features和其它两个属性：
+         ARAP-Security：一个四字节的模式签名，包含一个Macintosh OSType。
+         ARAP-Security-Data：一个字符串，携带了实际的模式挑战和响应。
+         当执行完安全模式，NAS向RADIUS再发送一个Access-Request报文，报文中的属性ARAP-Security-Data包含了安全模式的响应，同时也包含Access-Challenge中得到的State属性。 在这种情况下，authenticator域内不再包含特别的信息，因为可以由存在的State属性来辨别。
+RADIUS对扩展认证协议（EAP）的支持
+扩展认证协议（EAP）描述了在PPP内支持额外认证的一种标准机制。通过EAP，可以支持许多额外认证方案，包括智能卡（Smart card )，Kerberos，Public Key，One Time Passwords和其它多种。为了在RADIUS内支持EAP，本文档引入了两个新的属性： EAP-Message和Message-Authenticator。本节描述了RADIUS如何利用这两个新的属性来支持EAP。
+在提出的方案中，利用RADIUS服务器在NAS和后端安全服务器之间传送封装在RADIUS内的EAP报文。尽管可以利用后端服务器发展的私有协议在RADIUS服务器和后端服务器之间进行会话，但通过将EAP报文封装在RASIUS报文的EAP-Message属性内也是可能的。这样的优点是RADIUS服务器为了支持EAP，不需要增加针对某种认证的代码，这些针对某种认证的代码的可以放在后端安全服务器上。
+协议回顾
+认证对等端（拨号接入用户）和NAS之间的EAP会话以LCP中的EAP协商开始。一旦EAP协商通过，NAS必须向认证对等端发送一个EAP-Request/Identity报文，除非通过其它途径如Called-Station-Id或Calling-Station-Id确定了身份。认证对等端然后向NAS发送一个EAP-Response/Identity报文，NAS收到此报文后封装在RADIUS的Access-Request报文的EAP-Message属性内转发给RADIUS服务器。RADIUS服务器通常将利用EAP-Response/Identity来断定将对用户使用何种EAP类型。
+为了允许不能理解EAP的RADIUS代理转发Access-Request报文，如果NAS发送EAP-Request/Identity，NAS必须将EAP-Response/Identity中的内容拷贝到User-Name属性中，同时在随后的每一个Access-Request报文中的User-Name属性中必须包含EAP-Response/Identity。 也建议将NAS-Port和NAS-Port-Id属性包含在NAS发送的Access-Request报文中，而NAS-Identifier和NAS-IP-Address则必须包括在内。为了允许不理解EAP的代理能够转发Access-Reply，如果在Access-Request中包含User-Name属性，RADIUS服务器在随后的Access-Accept中必须包含User-Name属性。如果没有用户名属性，计费和生成帐单将变得非常难于管理。
+如果通过其它途径如Called-Station-Id或Calling-Station-Id确定了身份，NAS在每一个Access-Request报文中必须包含这些身份属性。
+尽管这种方法将节省一个来回，但是不通用。在某些情况下（如认证和计费是基于Called-Station-Id或Calling-Station-Id），用户的身份可能不需要，因此NAS就不必向认证对等端方发送EAP-Request/Identity报文。当NAS不需要发送EAP-Request/Identity报文时，NAS将向RADIUS服务器发送一个RADIUS Access-Request报文，其中携带EAP-Message属性，意味着EAP-Start。通过携带一个2字节的EAP-Message属性（没有数据）来指明EAP-Start。需要注意的是：由于Access-Request报文中没有携带User-Name属性，这种方法同RFC2865种描述的RADIUS不兼容，同时也不适用于代理的情况，如漫游和共享使用网络。
+如果RADIUS服务器支持EAP，它必须用Access-Challenge报文响应，报文中携带EAP-Message属性。 如果RADIUS服务器不支持EAP，它必须用Access-Reject报文响应。 EAP-Message属性携带包括一个封装的EAP报文，此EAP报文被继续传送给认证端。如果NAS没有向认证对等端发起一个EAP-Request/Identity报文，那么Access-Challenge报文通常会包含一个EAP-Message属性，此属性中封装有一个EAP-Request/Identity报文，请求拨号接入终端确定自己的身份。此时NAS以Access-Request报文作为响应，报文中包含属性EAP-Message，此属性中封装有EAP-Response报文。会话一直继续，直到收到一个RADIUS Access-Reject报文或Access-Accept
+报文。
+       一旦收到一个RADIUS Access-Reject报文，不管有还是没有一个EAP-Failure报文封装在属性EAP-Message中，都将导致NAS向认证对等端发送一个LCP Terminate Request报文。如果收到一个RADIUS Access-Accept报文，并且报文中携带有一个封装有EAP-Success报文的EAP-Message属性，那么认证阶段就结束。 RADIUS Access-Accept/EAP-Message/EAP-Success报文中必须包含所有期望的由Access-Accept带回的属性。
+        对于上面所描述的方案，NAS从来不需要对EAP进行操作。另外一种替代方案是EAP-Request/Identity报文总是由NAS向认证对等端发送。
+        对于代理RADIUS请求，有两种处理方法。如果基于Called-Station-Id来确定域，那么RADIUS服务器可以代理最初的RADIUS Access-Request/EAP-Start。如果域是基于用户身份来确定的，那么本地RADIUS服务器必须用一个RADIUS Access-Challenge/EAP-Identity报文响应。从认证对等端返回的响应必须被代理给最终的认证服务器。
+        对于代理RADIUS请求，NAS可能收到一个Access-Reject报文，此报文是对Access-Request/EAP-Identity报文的响应。如果请求报文被代理给一个不支持EAP-Message扩展的RADIUS服务器，上述情况就会发生。一旦收到一个Access-Reject报文，NAS就必须向认证对等端发送一个LCP Terminate Request报文，终端连接。
+重传
+如同RFC 2284所描述的那样，EAP认证者（NAS）负责认证对等端和NAS之间的报文重传。因此一旦一个报文从认证对等端传到NAS的过程中丢失（反之亦然），NAS将重传。这类似于RFC2865中所描述的RADIUS，RADIUS客户端负责RADIUS客户端和RADIUS服务器之间的报文重传。
+需要注意的是在某些情况下有必要调整重传策略和认证超时时间。例如，如果使用智能卡，那么就必须给用户留出额外的时间以便用户找到卡且输入卡的代号。由于NAS通常不了解所需要的参数，因此这些参数需要RADIUS服务器提供。这个问题可以这样解决：在Access-Challenge报文内包含Session-Timeout和Password-Retry属性。
+如果在Access-Challenge报文中包含Session-Timeout属性和EAP-Message属性，Session-Timeout的值指出了NAS在向拨号接入用户重传EAP-Message报文，等待EAP-Response报文的最长时间（以秒为单位）。
+分片
+利用EAP-Message属性，RADIUS服务器可能将一个大于NAS和认证对等端之间链路MTU的EAP报文封装在属性内。由于RADIUS服务器不可能利用MTU发现来确定链路MTU，因此可以在一个携带EAP-Message属性的Access-Request报文中再携带Framed-MTU属性，由此可以给RADIUS服务器提供信息。
+举例
+下面的例子给出了认证对等端、NAS和RADIUS服务器之间的会话。例中使用One Time Password（OTP）进行认证。用OTP认证，只是为了演示的目的，实际也可以用其它认证协议。若用其它认证协议，行为在某些方面可能不同。
+Authenticating Peer                NAS                                           RADIUS Server
+-------------------     ---                    -------------
+
+                                           <- PPP LCP Request-EAP
+                                           auth
+PPP LCP ACK-EAP
+auth ->
+                                           <- PPP EAP-Request/
+                                           Identity
+PPP EAP-Response/
+Identity (MyID) ->
+                                           RADIUS
+                                           Access-Request/
+                                           EAP-Message/
+                                           EAP-Response/
+                                            (MyID) ->
+                                                                                                      <- RADIUS
+                                                                                                      Access-Challenge/
+                                                                                                      EAP-Message/EAP-Request
+                                                                                                     OTP/OTP Challenge
+                                          <- PPP EAP-Request/
+                                          OTP/OTP Challenge
+PPP EAP-Response/
+OTP, OTPpw ->
+
+                                     RADIUS
+                                     Access-Request/
+                                     EAP-Message/
+                                     EAP-Response/
+                                     OTP, OTPpw ->
+                                                                                         <- RADIUS
+                                                                                        Access-Accept/
+                                                                                        EAP-Message/EAP-Success
+                                                                                        (other attributes)
+                                   <- PPP EAP-Success
+PPP Authentication
+Phase 结束，
+NCP Phase 开始
+
+         如果NAS首先向RADIUS服务器发送一个EAP-Start报文给服务器，那么会话过程如下：
+
+Authenticating Peer               NAS                                        RADIUS Server
+-------------------     ---                    -------------
+
+                                              <- PPP LCP Request-EAP
+                                              auth
+PPP LCP ACK-EAP
+auth ->
+                                            RADIUS
+                                           Access-Request/
+                                           EAP-Message/Start ->
+                                                                                             <- RADIUS
+                                                                                             Access-Challenge/
+                                                                                             EAP-Message/Identity
+                                          <- PPP EA-Request/
+                                          Identity
+PPP EAP-Response/
+Identity (MyID) ->
+                                          RADIUS
+                                          Access-Request/
+                                          EAP-Message/
+                                          EAP-Response/
+                                          (MyID) ->
+                                                                                           <- RADIUS
+                                                                                           Access-Challenge/
+                                                                                           EAP-Message/EAP-Request
+                                                                                           OTP/OTP Challenge
+                                         <- PPP EAP-Request/
+                                         OTP/OTP Challenge
+PPP EAP-Response/
+OTP, OTPpw ->
+RADIUS
+                                         Access-Request/
+                                         EAP-Message/
+                                         EAP-Response/
+                                         OTP, OTPpw ->
+                                                                                            <- RADIUS
+                                                                                            Access-Accept/
+                                                                                           EAP-Message/EAP-Success
+                                                                                            (other attributes)
+                                      <- PPP EAP-Success
+PPP Authentication
+Phase 结束，
+NCP Phase 开始       
+
+         如果客户端EAP认证失败，会话过程如下：
+
+Authenticating Peer                    NAS                                      RADIUS Server
+-------------------     ---                    -------------
+
+                                                   <- PPP LCP Request-EAP
+                                                   auth
+PPP LCP ACK-EAP
+auth ->
+                                                   Access-Request/
+                                                   EAP-Message/Start ->
+                                                                                                  <- RADIUS
+                                                                                                  Access-Challenge/
+                                                                                                  EAP-Message/Identity
+                                                  <- PPP EAP-Request/
+                                                  Identity
+PPP EAP-Response/
+Identity (MyID) ->
+                                                RADIUS
+                                                Access-Request/
+                                                EAP-Message/
+                                                EAP-Response/
+                                                (MyID) ->
+                                                                                                    <- RADIUS
+                                                                                                    Access-Challenge/
+                                                                                                   EAP-Message/EAP-Request
+                                                                                                   OTP/OTP Challenge
+                                         <- PPP EAP-Request/
+                                         OTP/OTP Challenge
+PPP EAP-Response/
+OTP, OTPpw ->
+                                          RADIUS
+                                         Access-Request/
+                                         EAP-Message/
+                                        EAP-Response/
+                                        OTP, OTPpw ->
+                                                                                                <- RADIUS
+                                                                                                Access-Reject/
+                                                                                                EAP-Message/EAP-Failure
+
+                                     <- PPP EAP-Failure
+                                     (客户端终端连接)
+
+          如果RADIUS服务器或者代理不支持EAP-Message，会话过程如下：
+
+Authenticating Peer                    NAS                                        RADIUS Server
+-------------------     ---                       -------------
+
+                                                 <- PPP LCP Request-EAP
+                                                 auth
+PPP LCP ACK-EAP
+auth ->
+                                                 RADIUS
+                                                 Access-Request/
+                                                  EAP-Message/Start ->
+                                                                                                     <- RADIUS
+                                                                                                     Access-Reject
+                                              <- PPP LCP Terminate
+                                              (用户中断连接)
+
+
+          如果本地RADIUS服务器支持EAP-Message，而远端RADIUS服务器不支持，会话过程如下：
+Authenticating Peer                    NAS                                     RADIUS Server
+-------------------     ---                       -------------
+
+                                                  <- PPP LCP Request-EAP
+                                                  auth
+PPP LCP ACK-EAP
+auth ->
+                                                 RADIUS
+                                                 Access-Request/
+                                                EAP-Message/Start ->
+                                                                                                  <- RADIUS
+                                                                                                  Access-Challenge/
+                                                                                                  EAP-Message/Identity
+                                               <- PPP EAP-Request/
+                                              Identity
+PPP EAP-Response/
+Identity
+(MyID) ->
+                                                RADIUS
+                                               Access-Request/
+                                               EAP-Message/EAP-Response/
+                                               (MyID) ->
+                                                                                                  <- RADIUS
+                                                                                                   Access-Reject
+                                                                                                  (proxied from remote
+                                                                                                  RADIUS Server)
+                                            <- PPP LCP Terminate
+                                            (User Disconnected)
+
+
+         如果认证对等不支持EAP，但需要对用户用EAP认证，会话过程如下：
+
+Authenticating Peer              NAS                                            RADIUS Server
+-------------------     ---                       -------------
+
+                                             <- PPP LCP Request-EAP
+                                             auth
+PPP LCP NAK-EAP
+auth ->
+                                            <- PPP LCP Request-CHAP
+                                            auth
+PPP LCP ACK-CHAP
+auth ->
+                                            <- PPP CHAP Challenge
+PPP CHAP Response ->
+                                            RADIUS
+                                            Access-Request/
+                                            User-Name,
+                                            CHAP-Password ->
+                                                                                              <- RADIUS
+                                                                                             Access-Reject
+                                         <-  PPP LCP Terminate
+                                         (User Disconnected)
+
+         如果NAS不支持EAP，而需要对用户使用EAP认证，会话过程如下：
+
+Authenticating Peer               NAS                                         RADIUS Server
+-------------------     ---                       -------------
+
+                                              <- PPP LCP Request-CHAP
+                                              Auth
+PPP LCP ACK-CHAP
+auth ->
+                                             <- PPP CHAP Challenge
+PPP CHAP Response ->
+                                             RADIUS
+                                             Access-Request/
+                                             User-Name,
+                                             CHAP-Password ->
+
+                                                                                                  <- RADIUS
+                                                                                                 Access-Reject
+                                        <-  PPP LCP Terminate
+                                       (User Disconnected)
+
+选择使用
+  目前，由于没有标准化，后端安全服务器和RADIUS服务器之间的会话是私有的。为了提高标准化程度，也为了提供RADIUS供应商和后端安全提供商之间的互通性，建议会话将EAP报文封装在RADIUS内。
+这样作的好处是RADIUS服务器为了支持EAP，不需要与具体某种特定认证有关的代码，与具体某种特定认证有关的代码可以潴留在后端安全服务器上。
+如果RADIUS服务器和后端安全服务器之间的会话使用RAIUS封装的EAP报文，那么后端安全服务器通常会返回一个Access-Accept/EAP-Success报文，报文中不需要包含当前Access-Accept中返回的属性。这意外着RADIUS服务器在向NAS发送Access-Accept/EAP-Success报文之前，必须添加这些属性。
+报文格式
+报文格式同RFC 2865和RFC 2866中描述的完全相同。
+报文类型
+报文类型同RFC 2865和RFC 2866中描述的完全相同。
+参见下面的“属性表”来确定什么报文类型可以包含此处定义的什么样的属性。
+属性   
+RADIUS属性携带着认证、授权和计费请求和响应的详细信息。
+某些属性可能被包含不止一次。这种效果是属性特有的，并且在每一个属性描述中指明。建议相同类型的属性保持顺序不变，而对于不同类型的属性其顺序则不必保持。
+以RADIUS报文的长度指明属性列表的末尾。
+属性格式的概述同RFC 2865描述的相同，但为了引用方便，此处又列出属性。按照从左至右的顺序传输各域。 
+  
+   0                   1                   2
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |  Value ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+     Type域占一个字节。目前最新的RADIUS Type域值在最新的RFC 1994中分配。属性值192-223保留给实验用，值224-240保留给特别的实现用，值241-255保留不用。本规范涉及如下属性值：
+     
+          1-39   (参照RFC 2865 [1], "RADIUS")
+          40-51   (参照 RFC 2866 [2], "RADIUS Accounting")
+          52      Acct-Input-Gigawords
+          53      Acct-Output-Gigawords
+          54      Unused
+          55      Event-Timestamp
+          56-59   Unused
+          60-63   (参照 RFC 2865 [1], "RADIUS")
+          64-67   (参照 RFC 2868)
+          68      (参照 RFC 2867）
+         69      (参照 RFC 2868）
+         70      ARAP-Password
+          71      ARAP-Features
+          72      ARAP-Zone-Access
+          73      ARAP-Security
+          74      ARAP-Security-Data
+          75      Password-Retry
+          76      Prompt
+          77      Connect-Info
+          78      Configuration-Token
+          79      EAP-Message
+          80      Message-Authenticator
+          81-83   (参照 RFC 2868）
+         84      ARAP-Challenge-Response
+          85      Acct-Interim-Interval
+          86      (参照 RFC 2867）
+         87      NAS-Port-Id
+          88      Framed-Pool
+          89      Unused
+          90-91   (参照 RFC 2868）
+         92-191  Unused
+
+   Length
+
+      Length域占一个字节，指明了属性的长度，长度包括Type， Length  和Value域的总长度。如果接收到的报文中属性长度错误，那么整个请求报文都要被默默丢弃。
+  
+  Value
+
+       Value域占0个或多个字节，里边包含属性特有的消息。格式和长度由Type和Length域决定。
+      需要注意的是对RADIUS的类型，其Value域都不以NULL（十六进制00）结束。特别地，“文本”类型和“字符串”类型都不以NULL结束（十六进制00）。属性有一个长度域，不使用结束符。文本包含UTF-8编码的10646字符，而字符串包含8位的二进制数据。服务器和客户端必须能够处理报文中包含的null。利用C作为实现工具的RADIUS一定要注意不能使用strcpy()函数处理字符串。
+       value域的格式使用无种类型中的一种，需要注意的是“文本”是“字符串”的子集。
+
+text    长度为1-253个字节，包含UTF-8格式编码的10646字符。如果文本的长度为0，那么就忽略掉此属性，不被传递。
+
+String     1-253个字节，包含二进制数据（也包括十进制0-255）。如果值域长度为0，那忽略整个属性，不予传递。
+
+Address     32 位的无符号值，最重要的字节在前。
+Integer      32 位的无符号值，最重要的字节在前。
+
+Time     32 位的无符号值，最重要的字节在前 -- 从00:00:00 UTC, January 1, 1970以后的时间（以秒为单位）。
+   
+    
+Acct-Input-Gigawords
+描述
+这个属性描述了自从提供服务以来，Acct-Input-Octets 计数器已经反转过 2^32 多少次，并且此属性只能出现在Accounting-Request记录中，其中Acct-Status-Type值为Stop或Interim-Update。
+       Acct-Input-Gigawords属性格式如下所述，从左至右传输各域。
+  
+   0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |             Value
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+              Value (cont)         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      52 for Acct-Input-Gigawords.
+
+   Length
+
+      6
+
+   Value
+
+      Value 域占4个字节。
+
+Acct-Output-Gigawords
+描述
+这个属性描述了自从传递服务以来，Acct-Output-Octets 计数器已经反转过 2^32 多少次，并且此属性只能出现在Accounting-Request记录中，其中Acct-Status-Type 值为 Stop 或 Interim-Update。
+       Acct-Output-Octets属性格式如下所述，从左至右传输各域。
+      
+   0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |             Value
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+              Value (cont)         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      53 for Acct-Output-Gigawords.
+
+   Length
+
+      6
+
+   Value
+
+      Value 域占4个字节。
+
+Event-Timestamp
+描述
+这个属性包含在Accounting-Request报文中，记录了事件在NAS上的发生时间，从January 1, 1970 00:00 UTC开始计算（以秒为单位）。
+      Event-Timestamp属性格式如下所述，从左至右传输各域。
+
+
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |             Value
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+              Value (cont)         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      55 for Event-Timestamp
+
+   Length
+
+      6
+
+   Value
+
+      Value 域占4个字节，将从January 1,1970 00:00 UTC开始计算的时间（以秒为单位）编码成一个无符号的整数。
+
+
+ARAP-Password
+描述
+这个属性只出现在Access-Request报文中，报文中包含一个ARAP的Framed-Protocol。
+在Access-Request报文中，只需出现User-Password、CHAP-Password或ARAP-Password中的一个，报文中也出现一个或多个EAP-Messages。
+     ARAP-Password属性格式如下所述，从左至右传输各域。
+
+
+
+
+   
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |             Value1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                   |             Value2
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                   |             Value3
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                   |             Value4
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      70 for ARAP-Password.
+
+   Length
+
+      18
+
+   Value
+
+      这个属性包含一个16字节的字符串，用来携带拨号接入用户对NAS挑战的响应及客户端自己对NAS的挑战。高阶字节（Value1 和 Value2）包含了拨号接入用户对NAS挑战的响应（2个32位的数字，共8个字节），低阶字节（Value3 和 Value4）包含了拨号接入用户对NAS的挑战（2个32位的数字，共8个字节），
+
+ARAP-Features
+描述
+这个属性出现在Access-Accept报文中，报文中同时包含一个ARAP的Framed-Protocol属性。 ARAP-Features属性包含了NAS将要以ARAP "feature flags"报文发送给用户的密码信息。
+在Access-Request报文中，只需出现User-Password、CHAP-Password或ARAP-Password中的一个，报文中也出现一个或多个EAP-Messages。
+     ARAP-Features属性格式如下所述，从左至右传输各域。  
+     
+ 
+   0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |     Value1    |    Value2     |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Value3                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Value4                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Value5                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      71 for ARAP-Features.
+
+   Length
+
+      16
+
+   Value
+  
+         Value域是一个复合字符串，包含了NAS将要在ARAP "feature flags"报文中发送给用户的信息。
+
+       Value1: 如果为0，表示用户不能改变他们的密码，如果不等于0，表示用户可以修改他们的密码。（RADIUS不处理密码改变，只是用属性指明ARAP是否可以改变密码）
+       
+       Value2: 可接受的最小的长度的密码，值从0到8。
+
+       Value3: 以Macintosh格式表示的密码产生日期，为一32位的无符号整数，表示从Midnight GMT January 1, 1904以后的秒数。
+
+       Value4: 密码从产生以来的有效时间（以秒为单位）。
+
+       Value5: 以Macintosh格式表示的RADIUS目前 时间。
+
+        
+ARAP-Zone-Access
+
+描述
+这个属性同ARAP的Framed-Protocol属性一起出现在Access-Accept报文中，指出该如何使用针对用户的区域列表。
+     ARAP-Zone-Access属性格式如下所述，从左至右传输各域。
+
+   0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |             Value
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+              Value (cont)         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+   Type
+
+      72 for ARAP-Zone-Access.
+
+   Length
+
+      6
+
+   Value
+
+      Value 域占4个字节，对如下整数值进行编码：
+
+      1      只允许访问缺省区域
+      2      允许访问区域滤波器包含的区域
+      4      允许访问区域滤波器不包含的区域
+
+
+      数值3跳过，不是因为这是位标记，而是因为在某些ARAP实现中，数值3意味着“所有区域”，在所有RADIUS下，这跟完全没有指明区域一样。
+
+      如果存在此属性，并且属性值为2或者4，那就必须携带属性Filter-Id，用Filter-Id命名一个采用访问标记的区域列表滤波器。
+
+ARAP-Security
+
+描述
+这个属性鉴别了一个在Access-Challenge报文中使用的ARAP Security Module。
+       ARAP-Security属性格式如下所述，从左至右传输各域。
+   
+   0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |             Value
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+              Value (cont)         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      73 for ARAP-Security.
+
+   Length
+
+      6
+
+   Value
+
+      Value域占4个字节，包含一个整数，指明安全模式签名，其格式为  Macintosh OSType。（Macintosh OSTypes 是4个ascii字符，分配作为一个32位的整数）
+
+ARAP-Security-Data
+
+       描述 
+
+这个属性包含了实际的安全模式挑战或响应，可以在Access-Challenge和Access-Request报文中找到。
+       ARAP-Security-Data属性格式如下所述，从左至右传输各域。 
+
+    0                   1                   2
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |     String...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      74 for ARAP-Security-Data.
+
+   Length
+
+      >=3
+
+   String
+
+      String 域包含了与在ARAP-Security指定的ARAP Security Module相关的安全模式挑战或响应。
+Password-Retry
+
+     描述 
+
+这个属性可以出现在Access-Reject报文中，用来指明用户在被切断以前可以被允许尝试多少次认证。
+ 此属性最初主要是给ARAP认证使用的。
+      Password-Retry属性格式如下所述，从左至右传输各域。
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |             Value
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+              Value (cont)         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      75 for Password-Retry.
+
+   Length
+
+      6
+
+   Value
+
+      Value 域占4个字节，包含一个整数，指明用户可以尝试密码的次数。
+
+  Prompt
+
+   描述 
+
+这个属性只能出现在Access-Challenge报文中，它向NAS指明当用户进入NAS时，NAS是否应该回显用户的响应。 
+     Prompt属性格式如下所述，从左至右传输各域。
+ 
+   0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |             Value
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+              Value (cont)         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      76 for Prompt.
+
+
+   Length
+
+      6
+
+   Value
+
+      Value 域占4个字节。
+
+       0      没有回显
+       1      回显
+
+  Connect-Info
+
+   描述 
+
+这个属性由NAS发出，指明用户连接的特性。 
+NAS可以在Access-Request或Accounting-Request中包含此属性，指明用户连接的特性。
+       Connect-Info属性格式如下所述，从左至右传输各域。
+
+    0                   1                   2
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |     Text...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      77 for Connect-Info.
+
+   Length
+
+      >= 3
+
+   Text
+
+      文本域包含UTF-8格式编码的10646字符。报文中第一个Connect-Info属性的开始应该包括连接速度。如果传输和接收连接速度不同，那么它们必须全部包含在第一个属性内，首先写传输速度（即NAS modem的传输速度），后面跟一个反斜杠（/），再跟接受速度，然后是其它任选信息。如 "28800 V42BIS/LAPM" 或 "52000/31200 V90"。在Accounting-Request报文中可以包含一个或多个Connect-Info 属性，以便让modems用一种标准的格式报告更多的连接信息，信息的长度可能超过252字节。
+
+      
+  Configuration-Token
+
+   描述 
+
+这个属性应用在基于代理的大型分布式认证网络中。此属性由RADIUS代理服务器放在Access-Accept报文中发送给RADIUS代理客户端，用来指明使用的用户概况（表）。此属性不应该发送给NAS。 
+       Configuration-Token属性格式如下所述，从左至右传输各域。  
+
+   0                   1                   2
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |  String ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      78 for Configuration-Token.
+
+   Length
+
+      >= 3
+
+   String
+
+      String域占一个或多个字节。实际的信息格式与使用的场所和应用有关，一个健壮的实现应该将此域当作未加区分的字节来支持。
+
+      应用此域的条件范围已经超出了本规范的讨论范围。
+
+  EAP-Message
+
+   描述
+
+      本属性用于封装扩展认证协议（EAP）报文，以便让NAS即使不理解EAP协议，也能利用EAP对拨号接入用户进行认证。
+
+      NAS把从用户接收到的EAP报文放在一个或多个EAP属性中，作为Access-Request的一部分，转发给RADIUS服务器，RADIUS服务器可以在Access-Challenge, Access-Accept 或 Access-Reject中返回EAP属性。 
+       RADIUS服务器如果对收到的EAP报文不理解，就返回一个Access-Reject报文。
+
+      NAS把从认证对等端接收到的EAP报文放在一个或多个EAP-Message属性中，放在Access-Request 报文中，转发给RADIUS服务器。如果Access-Request或Access-Challenge报文中包含多个EAP-Messages属性，那么它们必须按连续顺序排好放在Access-Request或Access-Challenge报文中。 Access-Accept和Access-Reject报文中应该只有一个EAP-Message属性，此属性中包含EAP-Success或EAP-Failure。
+
+       希望用EAP实现多种认证方法，包括强壮的加密技术。为了预防攻击者通过攻击RADIUS/EAP破坏EAP（例如，通过 修改EAP-Success或EAP-Failure报文），RADIUS/EAP有必要提供身份保护，至少象EAP方法本身那样强壮。
+
+     因此，必须 用Message-Authenticator属性保护所有携带EAP-Message属性的Access-Request, Access-Challenge, Access-Accept, 和Access-Reject 报文。
+
+          对于带有EAP-Message属性的Access-Request报文，如果报文中没有Message-Authenticator属性，RADIUS服务器就应该丢弃此报文。支持EAP-Message的RADIUS服务器必须计算Message-Authenticator的正确值，如果正确值与发送的值不匹配，RADIUS服务器就丢弃报文。如果RADIUS服务器不支持EAP-Message，当它收到一个含有EAP-Message属性的Access-Request报文时，必须返回一个Access-Reject报文。如果RADIUS服务器收到一个它不能理解的EAP-Message属性，也必须返回一个Access-Reject。
+    
+     对于携带有EAP-Message属性的Access-Challenge, Access-Accept 或 Access-Reject 报文，若报文中不含有Message-Authenticator属性，NAS应该丢弃此报文。如果NAS支持EAP-Message属性，它必须计算正确的Message-Authenticator属性值，如果计算的值与接收到的值不匹配，NAS就丢弃此报文。
+
+         EAP-Message属性格式如下所述，从左至右传输各域。     
+  
+   0                   1                   2
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |     String...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      79 for EAP-Message.
+
+   Length
+
+      >= 3
+
+   String
+
+      String域包含EAP报文，EAP报文在RFC 2284定义。如果报文中含有多个EAP-Message属性，这几个属性应该连成一串，因此允许长度大于253个字节的EAP报文放在RADIUS中传输。 
+
+  Message-Authenticator
+
+   描述
+
+      本属性可用来对Access-Requests报文签名，防止利用CHAP, ARAP 或 EAP认证方法欺骗ccess-Requests。此属性可以用在任何Access-Request报文中，必须用在任何带有EAP-Message属性的Access-Request, Access-Accept, Access-Reject 或 Access-Challenge报文中。
+      
+     如果RADIUS服务器中接收到的Access-Request报文中含有Message-Authenticator属性，那么服务器必须计算正确的Message-Authenticator值，如果计算的结果与发送过来的值不同，就丢弃此报文。
+
+         如果RADIUS客户端接收到的Access-Accept, Access-Reject或Access-Challenge报文中含有Message-Authenticator属性，那么客户端必须计算正确的Message-Authenticator值，如果计算的结果与发送过来的值不同，就丢弃此报文。
+
+        此备忘录的早期草案将此属性称为"Signature"，但是Message-Authenticator更准确。具体操作没有改变，只是名字改变而已。
+
+Message-Authenticator属性格式如下所述，从左至右传输各域。
+
+   
+   0                   1                   2
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |     Type      |    Length     |     String...
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+  Type
+
+     80 for Message-Authenticator
+
+  Length
+
+     18
+
+  String
+
+        如果出现在Access-Request报文中，Message-Authenticator是整个Access-Request报文的HMAC-MD5校验和，包括Type, ID, Length 和 authenticator，计算校验和时利用共享密钥作为密钥，过程如下：     
+
+     Message-Authenticator = HMAC-MD5 (Type, Identifier, Length,
+     Request Authenticator, Attributes)
+
+     计算校验和时，签名字符串应该被看作16个为0的字节。
+
+     对于Access-Challenge, Access-Accept 和 Access-Reject报文，利用Request-Authenticator计算essage-Authenticator如下：
+   
+    Message-Authenticator = HMAC-MD5 (Type, Identifier, Length,
+     Request Authenticator, Attributes)
+
+       计算校验和时，签名字符串应该被看作16个为0的字节，共享密钥作为HMAC-MD5 hash的密钥。在计算Response Authenticator正确计算并且插入到报文中。
+
+     当报文中有User-Password属性时，此属性就不需要了，但在其它认证类型中，可以防止攻击。此属性是为了阻止攻击者启动“欺骗”NAS，实施针对RADIUS服务器的在线字典攻击。此属性不能提供对离线攻击的预防，如攻击者截获包括CHAP 挑战和响应的报文，然后实施针对离线报文的字典攻击。
+
+    IP Security 属性最终会使此属性没有必要，因此此属性只能看作是一个临时的方法。
+    
+  ARAP-Challenge-Response
+
+  描述
+
+     本属性与ARAP的Framed- Protocol属性一起出现在Access-Accept报文中，包含对拨号接入用户挑战的响应。
+
+  ARAP-Challenge-Response属性格式如下所述，从左至右传输各域。  
+
+  0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |     Type      |    Length     |     Value...
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                  |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+  Type
+
+     84 for ARAP-Challenge-Response.
+
+  Length
+
+     10
+
+Value
+
+     Value 域占8个字节，包含对拨号接入用户挑战的响应。RADIUS服务器从ARAP-Password属性的高8字节中取出拨号接入用户的挑战，用挑战用户的密码作为密钥，对取出的高8字节进行DES加密。如果用户密码长度小于8个字节，在作为密钥以前，在用户密码后补NULL，直到长度达到8个字节。
+
+  Acct-Interim-Interval
+
+  描述
+
+     本属性描述了对于某个确定的会话，中间更新流量信息的时间间隔（以秒为单位）。本属性只能出现在Access-Accept报文中。
+
+      Acct-Interim-Interval属性格式如下所述，从左至右传输各域。
+
+  
+ 0                   1                   2                   3
+  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |     Type      |    Length     |             Value
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |          Value (cont)         |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+  Type
+
+     85 for Acct-Interim-Interval.
+
+  Length
+
+     6
+
+  Value
+
+     Value域包含NAS发送中间更新信息的时间间隔（以秒为单位），其值必须不能小于60，建议此属性值不要小于600，在实际中应认真考虑此间隔对网络流量的影响。
+
+  NAS-Port-Id
+
+  描述
+
+      本属性包含一个识别正在认证用户的NAS的端口的文本串。此属性只能用在Access-Request 和 Accounting-Request 报文中。需要注意的是此处的端口是NAS物理连接意义上的端口，而不是TCP或UDP的端口号。 
+
+      如果NAS在它的端口范围内区分，那么在Access-Request报文中应该携带NAS-Port或 NAS-Port-Id 。NAS-Port-Id目的是给不能方便地给端口编号的NAS使用。 
+
+     NAS-Port-Id属性格式如下所述，从左至右传输各域。    
+ 
+
+   0                   1                   2
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |     Type      |    Length     |     Text...
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+  Type
+
+     87 for NAS-Port-Id.
+
+  Length
+
+     >= 3
+
+  Text
+
+     Text 域包含以UTF-8格式编码的10646字符命名的端口名字。
+
+  Framed-Pool
+
+  描述
+
+      本属性包含了用于给用户分配地址的地址池名字。如果NAS不支持多个地址池，应该忽略此属性。地址池一般用于IP地址，但是如果NAS支持其它协议，地址池也可以用于其他协议。
+     
+       Framed-Pool属性格式如下所述，从左至右传输各域。   
+
+
+   0                   1                   2
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |     Type      |    Length     |     String...
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+  Type
+
+     88 for Framed-Pool
+
+  Length
+
+     >= 3
+
+  String
+
+     String 域包含了NAS上配置的地址池名字。
+
+  属性表
+
+       下表可以作为关于在什么报文里可能携带什么属性的应用指南。Acct-Input-Gigawords, Acct-Output-Gigawords, Event-Timestamp 和NAS-Port-Id 可能在Accounting-Request报文里出现0次或1次。本文档中增加的其它属性一定不能出现在Accounting-Request内。
+
+Request  Accept  Reject  Challenge   #    Attribute
+0-1      0       0       0           70   ARAP-Password [Note 1]
+0        0-1     0       0-1         71   ARAP-Features
+0        0-1     0       0           72   ARAP-Zone-Access
+0-1      0       0       0-1         73   ARAP-Security
+0+       0       0       0+          74   ARAP-Security-Data
+0        0       0-1     0           75   Password-Retry
+0        0       0       0-1         76   Prompt
+0-1      0       0       0           77   Connect-Info
+0        0+      0       0           78   Configuration-Token
+0+       0+      0+      0+          79   EAP-Message [Note 1]
+0-1      0-1     0-1     0-1         80   Message-Authenticator [Note 1]
+0        0-1     0       0-1         84   ARAP-Challenge-Response
+0        0-1     0       0           85   Acct-Interim-Interval
+0-1      0       0       0           87   NAS-Port-Id
+0        0-1     0       0           88   Framed-Pool
+Request  Accept  Reject  Challenge   #    Attribute
+
+[注解 1] 如果Access-Request 报文中包含User-Password，或者CHAP-Password 或者ARAP-Password 或者一个或多个EAP-Message属性，那么报文中包含的上述四种属性类型一定不能超过一个。如果报文中不包括上述四种属性中的任何一个，那么报文中应该包含or one or more EAP-Message Message-Authenticator属性。如果报文中包含一个EAP-Message属性，那么报文中必须包含Message-Authenticator属性。
+
+    下表定义了上表中各表项的具体含义。
+ 
+    0     本属性一定不能出现
+     0+    此属性可能出现0 次或多次。
+     0-1   此属性可能出现0 次或一次。
+     1     此属性必须出现1 次。
+
+IANA 考虑事项
+         在RFC 2865中"IANA考虑事项"一节中描述的RADIUS命字空间中,IANA注册了本文档定义的报文类型Code，属性类型以及属性值。同BCP 26 一致。
+安全考虑事项
+        本文档中除了Message-Authenticator和EAP-Message外没有额外的安全考虑超出在RFC 2865 中已经标识的。
+Message-Authenticator安全
+       带User-Password的Access-Request报文在发送Access-Request的用户和NAS间建立了身份，因为在NAS和RADIUS服务器之间 使用了共享密钥。带CHAP-Password 或EAP-Message的Access-Request报文没有User-Password属性，因此在没有User-Password的Access-Request报文中应该使用Message-Authenticator属性，以便连接发送请求的NAS的身份。
+
+EAP安全
+    因为EAP的目的是为PPP认证提供增强的安全性，因此RADIUS安全地支持EAP是至关重要的。特别地，必须解决下面的问题：
+
+     EAP服务器和PPP认证者分离
+      连接劫持
+     中间的攻击
+    多数据库
+     协商攻击
+
+EAP服务器和PPP认证者分离
+     EAP端点相互认证，协商加密组，为随后PPP加密取得一个会话密钥是可能的。
+     因为对端和EAP客户在同一台机器上，这不是一个问题。所需要的就是EAP客户模块向PPP加密模块传递一个会话密钥。
+       当EAP和RADIUS一起使用时，情况就比较复杂了，因为一般PPP认证者和EAP服务器不在同一台机器上。例如，EAP服务器可能是一台后端安全服务器，或者RADIUS服务器上的一个模块。
+         在EAP服务器和PPP认证者在不同的机器上的情况下，关于安全有如下几方面的含义。首先，交互认证将在对端和EAP服务器上发生，而不是在对端和认证者之间。这意味着对端不可能证实它连接的NAS或隧道服务器的身份。
+        如前所述，当EAP/RADIUS被用来封装EAP报文时，从NAS或隧道服务器发往RADIUS服务器的EAP/RADIUS Access-Request中需要Message-Authenticator属性。因为Message-Authenticator属性包含一个HMAC-MD5 hash项，使得RADIUS服务器有可能验证Access-Request的完整性和NAS或隧道服务器的身份。类似地，从RADIUS服务器发往NAS的Access-Challenge报文也被验证并由HMAC-MD5 hash项保护完整性，使得NAS或隧道服务器可以判定报文的完整性并且验证RADIUS服务器的身份。 此外，通过包含其它完整性保护方法来发送的EAP报文不能被欺诈的NAS或隧道服务器成功地修改。
+       EAP服务器和PPP认证者在不同的机器上引来的第二个问题是，对端和EAP服务器协商的会话密钥需要传送到认证者。因此必须提供从EAP服务器到要使用密钥的认证者或隧道服务器的传送会话密钥的一个机制。这个传送机制的规范超出了本文档的范围。
+
+连接劫持
+   在这种攻击方式中，攻击者试图在NAS和RADIUS服务器之间或RADIUS服务器和后端安全服务器之间的会话中注入一些报文。同RFC 2865中描述的那样，RADIUS不支持加密，只有Access-Reply和Access-Challenge报文受完整性保护。此外，在RFC 2865中描述的完整性保护机制比一些EAP方法使用的弱，使得攻击EAP/RADIUS有可能扰乱那些方法。
+        如前所述，为了给EAP互换的所有报文提供验证，所有EAP/RADIUS报文必须使用Message-Authenticator属性来验证。
+
+中间的攻击
+       因为RADIUS安全基于共享密钥，在认证或计费报文通过一个代理链转发的情况下不能提供端到端的安全。结果，获得一个RADIUS代理控制权的攻击者将能够修改传送中的EAP报文。
+
+多数据库
+        在许多情况下，为了提供EAP服务，后端安全服务器和RADIUS服务器一块使用。除非后端安全服务器也实现RADIUS服务器的功能，否则要用两个分离的用户数据库，每一个数据库内包含有关用户安全需求的信息。这意味着安全的降低，因为只要成功攻击数据库中的任何一个或攻击它们的后端数据库都可能损害安全性。当使用多个用户数据库时，如果要增加一个用户，就必须进行多个操作，这就增加了出错的概率。当用户信息也放在LDAP上时，危害性又被进一步放大，因为此时必须在三个地方存放用户信息。
+
+       为了解决这些威胁，建议合并数据库。这可以通过以下途径来解决： RADIUS服务器和后端安全服务器在同一个后端服务器上存储信息；后端服务器提供一个完全的RADIUS实现；或将后端安全服务器和RADIUS服务器合并到同一个机器上。  
+ 
+协商攻击
+        在协商攻击中，欺骗的NAS、隧道服务器、RADIUS代理或RADIUS服务器使认证对等端选择一个安全小的方法，这样欺骗者可以比较容易地得到用户密码。例如，一个会话本来在通常用EAP认证，被协商攻击后，可能用CHAP或PAP认证；一个会话本来用一种EAP类型认证，被协商攻击后，可能使用一种安全系数小的EAP类型认证，如MD5。以前认为很遥远的欺骗设备威胁，已经给电话公司交换系统造成了危害。
+
+          要使系统不受协商攻击，需要消除向下协商。这可以通过以下方式实现：对认证对等端而言，使用每一个连接策略，对RADIUS服务器而言，使用每一个用户策略。
+        对于认证对等端而言，认证策略应该建立在每一个连接的基础之上。每一个连接策略允许呼叫一种服务时认证对等端来协商EAP，而呼叫另一种服务时协商CHAP，即使两种服务通过同一个电话号码就可以访问。
+       
+       对于每一个连接策略，只有当期望支持EAP时，认证对等端才会试图协商EAP。因此假定如果认证对等端选择EAP，那么就认为认证对等端需要哪个等级的安全。如果不能提供，那么极有可能是配置错误，甚至认证对等端连接到了错误的服务器上。万一NAS不能协商EAP，或NAS发送的EAP-Request与期望的不同，认证对等端必须端开连接。期望协商EAP的认证对等端一定不能协商CHAP或PAP。
+
+         对于NAS而言，在它知道用户的身份之前，它可能无法确定一个用户是否需要EAP认证。例如，共用NAS，可能对一个专卖者实现EAP，对另外一个则不实现。在这些情况下，如果NAS的每一个用户必须用EAP，那么NAS必须试图为每一个呼叫协商EAP，这样可以避免能够EAP认证的客户端因用多种认证而削弱安全性。
+ 
+       如果协商了CHAP，NAS将把User-Name 和CHAP-Password 属性放在Access-Request报文中传给RADIUS服务器。如果没有要求用户用EAP认证，那么RADIUS服务器可以用Access-Accept或Access-Reject报文响应，这要看用哪一个报文回应更合适。但是，如果已经协商过了CHAP而需要EAP，那么RADIUS服务器必须回一个Access-Reject报文，而不能回应Access-Challenge/EAP-Message/EAP-Request报文。认证对等端必须拒绝重新协商认证，即使是从CHAP协商到EAP。
+
+如果已经协商过了EAP，但RADIUS代理或服务器不支持，那么服务器或代理必须用Access-Reject报文响应。在这些情况下，NAS必须发送一个LCP-Terminate并且切断用户。这是正确的行为，因为认证对等端期望协商EAP，但期望不能被满足。对于支持EAP的认证对等端，如果最初已经协商了EAP，那么解决重新协商认证协议。需要注意的是因RADIUS代理服务器不支持EAP而出现的问题是很难诊断的。因为从一个地方拨号接入的用户（代理支持EAP）或许能够用EAP成功认证，而同一个用户从另一个地方拨号进入时（代理不支持EAP），或许始终被切断。
+
+8.  References
+
+   [1]  Rigney, C., Willens, S., Rubens, A. and W. Simpson, "Remote
+        Authentication Dial In User Service (RADIUS)", RFC 2865, June
+        2000.
+
+   [2]  Rigney, C., "RADIUS Accounting", RFC 2866, June 2000.
+
+   [3]  Blunk, L. and J. Vollbrecht, "PPP Extensible Authentication
+        Protocol (EAP)", RFC 2284, March 1998.
+
+   [4]  Bradner, S., "Key words for use in RFCs to Indicate Requirement
+        Levels", BCP 14, RFC 2119, March, 1997.
+
+   [5]  Reynolds, J. and J. Postel, "Assigned Numbers", STD 2, RFC 1700,
+        October 1994.
+
+   [6]  Zorn, G., Leifer, D., Rubens, A., Shriver, J., Holdrege, M.  and
+        I. Goyret, "RADIUS Attributes for Tunnel Protocol Support", RFC
+        2868, June 2000.
+
+   [7]  Zorn, G., Aboba, B. and D. Mitton, "RADIUS Accounting
+        Modifications for Tunnel Protocol Support", RFC 2867, June 2000.
+
+   [8]  Yergeau, F., "UTF-8, a transformation format of ISO 10646", RFC
+        2279, January 1998.
+
+
+
+
+
+
+Rigney, et al.               Informational                     [Page 43]
+
+RFC 2869                   RADIUS Extensions                   June 2000
+
+
+   [9]  Krawczyk, H., Bellare, M. and R. Canetti, "HMAC: Keyed-Hashing
+        for Message Authentication", RFC 2104, February 1997.
+
+   [10] Alvestrand, H. and T. Narten, "Guidelines for Writing an IANA
+        Considerations Section in RFCs", BCP 26, RFC 2434, October 1998.
+
+   [11] Slatalla, M., and  Quittner, J., "Masters of Deception."
+        HarperCollins, New York, 1995.
+
+9.  Acknowledgements
+
+   RADIUS and RADIUS Accounting were originally developed by Livingston
+   Enterprises (now part of Lucent Technologies) for their PortMaster
+   series of Network Access Servers.
+
+   The section on ARAP is adopted with permission from "Using RADIUS to
+   Authenticate Apple Remote Access Connections" by Ward Willats of Cyno
+   Technologies (ward@cyno.com).
+
+   The section on Acct-Interim-Interval is adopted with permission from
+   an earlier work in progress by Pat Calhoun of Sun Microsystems, Mark
+   Beadles of Compuserve, and Alex Ratcliffe of UUNET Technologies.
+
+   The section on EAP is adopted with permission from an earlier work in
+   progress by Pat Calhoun of Sun Microsystems, Allan Rubens of Merit
+   Network, and Bernard Aboba of Microsoft.  Thanks also to Dave Dawson
+   and Karl Fox of Ascend, and Glen Zorn and Narendra Gidwani of
+   Microsoft for useful discussions of this problem space.
+
+10.  Chair's Address
+
+   The RADIUS working group can be contacted via the current chair:
+
+   Carl Rigney
+   Livingston Enterprises
+   4464 Willow Road
+   Pleasanton, California  94588
+
+   Phone: +1 925 737 2100
+   EMail: cdr@telemancy.com
+
+
+
+
+
+
+
+
+
+
+
+Rigney, et al.               Informational                     [Page 44]
+
+RFC 2869                   RADIUS Extensions                   June 2000
+
+
+11.  Authors' Addresses
+
+   Questions about this memo can also be directed to:
+
+   Carl Rigney
+   Livingston Enterprises
+   4464 Willow Road
+   Pleasanton, California  94588
+
+   EMail: cdr@telemancy.com
+
+   Questions on ARAP and RADIUS may be directed to:
+
+   Ward Willats
+   Cyno Technologies
+   1082 Glen Echo Ave
+   San Jose, CA 95125
+
+   Phone: +1 408 297 7766
+   EMail: ward@cyno.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rigney, et al.               Informational                     [Page 45]
+
+RFC 2869                   RADIUS Extensions                   June 2000
+
+
+   Questions on EAP and RADIUS may be directed to any of the following:
+
+   Pat R. Calhoun
+   Network and Security Research Center
+   Sun Microsystems, Inc.
+   15 Network Circle
+   Menlo Park, CA 94025
+
+   Phone: +1 650 786 7733
+   EMail: pcalhoun@eng.sun.com
+
+
+   Allan C. Rubens
+   Tut Systems, Inc.
+   220 E. Huron, Suite 260
+   Ann Arbor, MI 48104
+
+   Phone: +1 734 995 1697
+   EMail: arubens@tutsys.com
+
+
+   Bernard Aboba
+   Microsoft Corporation
+   One Microsoft Way
+   Redmond, WA 98052
+
+   Phone: +1 425 936 6605
+   EMail: bernarda@microsoft.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rigney, et al.               Informational                     [Page 46]
+
+RFC 2869                   RADIUS Extensions                   June 2000
+
+
+12.  Full Copyright Statement
+
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rigney, et al.               Informational                     [Page 47]
+

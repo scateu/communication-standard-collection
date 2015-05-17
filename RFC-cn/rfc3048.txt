@@ -1,0 +1,588 @@
+
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：周昕（tomzhou  hongouzhou@163.net）
+译文发布时间：2001-6-8
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+网络工作组														B. Whetten
+请求的注解: 3048            				                        Talarian
+分类:  报告                              				        L. Vicisano
+                                                                 Cisco
+                                                         	    R. Kermode
+                                                                 Motorola
+                                                              	M. Handley
+                                                              	ACIRI 9
+                                                                	S. Floyd
+                                                                 ACIRI
+                                                                 M. Luby
+                                                        			Digital Fountain
+                                                            		2001年1月
+
+
+
+
+一到多大规模数据传输可靠多播传输构建模块
+（RFC3048 Reliable Multicast Transport Building Blocks for One-to-Many                   
+Bulk-Data Transfer）
+
+该备忘录的状态
+	该备忘录为互联网团体提供信息。它并不制定任何互联网标准，可以被无限制的发布。
+
+版权声明
+    版权 （C） 互联网团体 （2001） 保留所有的权力
+
+摘要
+    本文描述了一种传输大量数据的可靠多播传输标准的框架。我们已经使用了当前许多类
+型的可靠多播传输体系，从中获得了一些经验，我们力图将这些不同类型的协议归结为一些
+构建模块。由此，我们提出了这样一个标准的框架结构。基于这个目的，本文建议把在各种
+多播协议中的通用部分称为构建模块。而协议中其他包含了高级协议特别指定的紧密联系的
+功能的那些部分则称为协议核心。因此，每个协议都可以通过将协议核心和在各个多播协议
+中通用的部分(即许多的构建模块)合并而构成。
+
+1 简介
+1.1 协议族
+2	构件模块基本原理
+2.1	使用构建模块的优点
+2.2	使用构建模块的代价
+2.3	使用够建模块的要求
+3	协议组成部件
+3.1	子部件的定义
+4	对于构建模块的一些建议
+4.1	基于NACK的可靠性分析
+4.2	FEC编码
+4.3	冲突控制
+4.4	对于通用路由的支持
+4.5	树型结构
+4.6	数据安全
+4.7	通用头文件
+4.8	协议核心
+5	安全性
+6	IANA考虑
+7	结论
+8	致谢
+9	参考文献
+10	作者地址
+11	版权申明
+
+
+1	简介
+RFC2357列出了IETF考虑要将其标准化的可靠多播协议的要求。这些要求包括：
+* 冲突控制	协议必须保证在INTERNET上使用是安全的。需要指出的是它必须满足
+下列三个规则：
+a）	它必须获得好的吞吐量（处理能力），也就是说它不能使过多数据传输或过多
+修复性流量的连接持续超载。
+b）	它必须保证对连接的较好的利用
+c）	它必须满足竞争流量的需求
+* 可扩放性	协议应当能够在包括不同的多播网络拓扑结构，连接速度和接收者数目等
+条件下正常运行。对于协议在运行中何时以及如何崩溃的了解是十分重要
+的。
+* 安全性	协议必须经过分析，看看协议中的哪些成分保证了协议能够处理安全性和
+保密性的事物。这就包括对于协议在数据保密、发送方身份验证等作用的
+理解，同时还包括协议是如何对拒绝服务攻击提供保护等。
+
+	这些要求主要旨在确保每个标准在internet上都能够安全的广泛使用。IRTF可靠多
+播研究组织在RMCC[HFW99] 可靠多播传输冲突控制方面目前的研究工作中显示出的
+突出的成熟性是使得IETF建立RMT工作组的原因之一。RMCC仅指出了设计可靠多
+播系统中的一个子部分。不过碰巧的是，它所指出的要求同时是运用要求与市场要求中
+最重要的部分。
+	协议满足流量控制，伸缩性以及安全性要求的能力受到许多二级要求的影响，这些
+在另一文档[RFC2887]中有描述。概括为以下几点：
+	* 顺序保证	协议至少提供源排序或无序传输的任一种保证。但我们不建议对多
+个发送者之间的完全排序的支持，这是因为这将使得协议的扩展变得困难，而且这在更
+高层中的实现更为容易。
+* 接受方伸缩性	协议应当能够支持在一个传输组中同时有较多数目的接收者。
+典型的接收方大小至少是每个组中同时有1,000-10,000个接收者，甚至最终可扩展到在
+规模更大的Internet上有上百万个接收者。
+* 实时反馈	有些版本的RMCC要求软实时反馈，因此协议可能提供检测并把这
+些信息返回发送方的方法。尽管这不要求协议软实时地传递数据，但能方便提供指定的
+实时反馈是一个重要的运用上的要求。
+* 传输保证	在许多运用程序中，一个或多个逻辑上定义的数据单元被传送到多
+个客户端，例如一个文件或一组文件，一个软件包，一个债券报价，一个债券报价包，
+一个事件消息，一组幻灯片，一个视频的祯或块。一个应用程序数据单元定义为逻辑上
+可分的对应用程序有用的数据单元。在某些情况下，一个应用程序数据单元短到可以装
+入一个包中。（例如一个时间消息或一个股票报价），而在其他情况下，数据单元可能比
+一个包要大的多（例如一个软件包）。协议必须保证传输程序数据单元到接收方的良好
+的处理能力。这意味着，当要把接收的数据恢复成应用程序要接收的数据单元时，大部
+分传送到接收者的数据都是有用的。协议可能提供一种传输验证机制，该机制让接收者
+在数据被接收时通知发送方。有两类验证机制，应用程序数据单元级和传输包一级的。
+前者在应用层是有效的。例如用来通知应用程序有关接收者进度以及判断何时停止传输
+某一特别的应用程序数据单元。包验证在传输层有效。例如在传送已通过验证时，通知
+传输层何时可以释放存储了这些包的缓存空间。包一级的验证还可以对应用层数据单元
+验证有帮助。
+	* 网络拓扑	协议在应用于完全的Internet环境中时应当不会崩溃。不过，我们意
+识到企业内部互联网通常是这些应用的第一个使用环境，因此对这些环境的支持是非常
+重要的。而对于卫星网（包括那些有地面返回通路和完全无返回通路的）支持虽然有是
+更好的但并不做要求。
+	* 组成员身份		组成员身份算法应当是可扩展的。成员身份可以是匿名的（发
+送方不知道接收者列表），或完全分布式的（接收者得到接收者的数目或一个接收失败
+的表）。
+	* 典型应用程序	一个RM（Reliable Multicast可靠多播）协议能够支持的应用应
+该包括多媒体广播，实时股票数据发送，多播文件传输，以及复制服务等。
+
+在文档其他部分“协议族”，“协议部件”，“构建块”，“协议核心”，“协议例程”等
+术语使用时都有指定的含义。协议族是指一组具有相同特点的RM协议。在我们的分
+类中，这些相同的特点是用来实现可靠性的机制。协议部件是决定特定的相同功能的协
+议的逻辑部件。构建块是协议实现的一个组成部分，它可以构成协议的一个或多个部件
+或者是部件的一个部分。协议核心是一个完整的协议例程所要求的一组功能，其他任何
+构件块都没有指定这些功能。协议例程是一个用构建块和协议核心定义的实际的RM协
+议。
+
+1.1.  协议族
+	设计范围文档[RFC2887]对近十年来提出的最流行的方法进行了一个分类。除了冲突控
+制之外，主要的挑战是使用某种能扩张到大量接收者的方式同时确保较好的吞吐量。对于丢
+失包使用备份信道（back-channel）的协议，能够利用网络元素的支持对于在有大量接收者
+时保持较好的吞吐量非常有益处。而在其他的协议中，这种能力对于在有大量接收者时传输
+经过编码的数据同时保持较好的吞吐量也有好处。这种分类把提出的协议分为4类。协议族
+中的某些协议提供包一级的传输验证，这对于传输层是有好处的。协议族中的所有协议可以
+通过一些能够提供应用程序数据单元的传输验证的高级协议来实现。
+(1)	NACK。  象SRM[FJM95]和MDP2[MA99]这样的协议力图通过对请求重发包的请求
+使用NACK来限制流量。它们对于网络的基础构架不做要求。
+(2)	基于树的ACK。  RMTP[LP96，PSLM97]，RMTP-II[WBPM98]，TRAM[KCW98]这
+些协议使用肯定确认（ACKs）。由于ACK可以用来提供传输验证，基于ACK的协议
+减少了对于能提供传输验证的附属协议的需要。为了避免在不断扩大的应用中出现
+ACK内爆，协议可以使用位于网络中的服务器。
+(3)	异步分层编码（ALC）。  这些协议（例如[RV97]，[BLMR98]）采用的是基于发送方
+的前向纠错码的方法，这些方法不需要从接收方或是从网络来的反馈来确保良好的吞
+吐率。这些协议也使用基于发送方的分级广播和接收方驱动协议加入或脱离这些层，
+而不需要通过向发送者发送反馈来保证可扩展的冲突控制。
+(4)	路由辅助。  和SRM一样，PGM[FLST98]，[LG97]这样的协议针对包的恢复使用负
+确认。这些协议利用了新的路由软件来实现集中的负确认和重传的工作。路由辅助协
+议提供的其他功能相对于端到端协议效率更高些。例如[LVS99]就说明了路由辅助如
+何对ALC协议提供了精细的冲突控制。路由辅助协议可以通过设计实现以上所描述
+的所有协议族。
+
+值得注意的是协议族间的差别不需要非常精细，也不一定是互斥的。实际上协议可能是
+属于不同种类的各种机制的组合。例如，基于混合NACK/ACK的协议（例如[WBPM98]）
+就是可能的。还有的例子就是比方说属于第一类又属于第三类的协议利用了路由支持。
+
+2	构件模块基本原理
+	RFC 2357[MRBP98]指出，不可能仅凭一个可靠多播协议就能够满足所有应用的需要。
+因此，IETF希望将那些针对不同应用和网络需要的不同协议进行标准化。本文档关注的是
+“一到多的大数据传输”协议的要求。但希望在今后有其他的协议和构建模块能够满足其他
+类型应用的需要，例如“多到多”的应用。注意，大数据传输倾向于在一个会话期间传输大
+量数据而不是不断的传输数据。研发针对这些不同情况的协议的方法及范围很大程度上取决
+于本文档中提出的“构建模块”的方法成功与否。
+   
+2.1.  构建模块的优点
+	从一些小的模块构建一个大的软件是软件工程中一个广为使用的技术。从这一技术中可
+以得到的好处包括以下几点：
+   o  强调重复利用。一个模块可以在多个协议中使用，这就减少了研发工作的时间要求  
+   o  减小了复杂性。各个模块已经可以用一个简单的API来定义，到了这样的程度，如
+果把大的协议分解为多个小的部分，就会大大减小整个系统的复杂性。
+   o  减少了验证和调试时间。由于复杂性降低，调试这些模块的时间也减小了。一般而言，
+验证一组小的模块也比验证一个大的模块要快一些。  
+   o  将来更新升级更为容易。今后仍有关于可靠多播的研究，我们也期望着目前最新的东
+西能随之进步。用小的模块构建协议能够让协议更容易的更新以体现出今后的研究成果。
+   o  通用诊断。如果到了那样的程度，许多协议共享相同的包头文件，那么包的分析工具
+和其他的诊断工具就可以做成针对多协议工作的。
+   o  减小发展新协议所需要的工作。由于新的应用要求不断推动着新的标准，可以在这些
+新的协议中重复利用这些已有的模块。
+   o  研发工作可并行进行。如果API事先已经定义好，各个模块的研发工作可以并行的
+进行。
+2.2.  使用构建模块的代价
+	像对软件所做的其他的限制一样，这种将一个协议分解成多个小的部分的方法也存在一
+个权衡比较的问题。如果过了某一个点之后，弊大于利，就不值得将一个问题进一步分解。
+这些代价包括： 
+   o  延缓了研发工作。为两个交互作用的模块定义API是一项费时费力的事。随着模块
+数目增加，API数目的增长速率就会超过线性的增长速率。一个部件耦合程度越高，越复杂，
+要定一个简单的API就越难，重复利用的可能性就越小。针对传输协议建立并标准化粒化
+的构件模块是一个棘手的问题，这在某些情况下对基础性的研究有一定的要求。 
+   o  复杂性增加。如果模块太多，由于模块间接口的原因，系统的复杂性实际增加了。
+   o  性能降低。每个API都增加了额外的处理代价。如果在通常的包处理中加入一个API
+其代价就是使得协议性能下降。  
+   o  放弃从前的工作成果。设计可靠的传输协议是耗时费力的过程。在过去的5年中，人
+们已经在这方面做了很多工作，例如RMTP-II，SRM，PGM。要大规模的重新设计这些部
+件的风险之一就是不能利用这些从前的工作成果。
+
+2.3.	对构件模块的要求
+基于以上这些考虑,我们建议一个构件模块必须满足以下的要求：
+o广泛的实用性。  为了保证部件能够被重复利用，应该能够在协议族间通用，并能够
+升级。
+o简明性。  为了保证对部件API所做的限制不会明显的减缓标准的处理过程，API要
+简单，定义直接。在定义这些API时，不需要作相应的基础性的研究。
+o 高效性。  构件模块要尽可能的避免破坏“较快的轨迹”，就是那些通常的包处理过
+程。
+
+
+3．协议部件
+    这一部分从一个协议为应用程序所提供的功能部件的角度提出了对于大数据可靠多播
+协议的功能分解的方法。这也包括一些虽然不是传输协议中必要的部分但直接受可靠多播协
+议某些要求影响的部分。下一节描述的是能够实现这些部件的构件模块。
+    尽管以下列举的内容试图囊括所有与一到多大数据传输应用有关的共同的需求，但是在
+标准化的过程中还是有可能产生新的要求,因此以下列举的内容不能理解为对传输层协议应
+当提供什么、不能做什么的一种指定。不过，需要指出的是，有些功能部件被故意的省略掉
+了，这是我们认为它们与所考虑的应用的类型无关（如一到多的大数据传输）。这当中包括
+有高级信息排序（这些工作仅依靠简单的序列号是无法实现的），原子传输等。另一点值得
+一提的是下面列出的功能部件可能是其他功能部件所要求的而非应用本身直接要求的（如通
+常是实现基于ACK的可靠性时需要有关身份的知识）。
+以下的列表覆盖了各种传输功能部件，并把它们划分为子部件。
+# 数据可靠性（保证良好的吞吐率）
+			|-丢失检测/通知
+			|-丢失恢复
+			|-丢失保护
+# 冲突控制
+			|-冲突反馈
+			|-速率调整
+			|-接收方控制
+# 安全性
+# 组成员身份
+			|-身份通知
+			|-身份管理
+# 会话管理
+			|-组成员跟踪
+			|-会话公告
+			|-会话开始/结束
+			|-会话构造（建立）/检测
+# 树的构造
+    注意，不是所有的协议都需要所有的部件，这取决于协议提供的功能是如何定义的。特
+别是有些最小的服务模型对于很多的功能都不需要，它们可以不需要丢失通知，丢失恢复，
+组成员身份等。
+
+3.1 子部件定义
+* 丢失检测/通知。这包括在传输过程中如何检测丢失的包，以及这些事件的信息如何传递
+到一个或多个代理（这些代理负责从传输错误中恢复传送）。这个任务牵涉到扩展性的问题，
+有可能导致反馈信息的内爆，如果处理不当会导致很差的吞吐率。通常使用基于TRACK（基
+于树的正确认机制）或NACK（负确认）的机制实现这一功能。同样基于这两者组合的机
+制也是可能的。
+* 丢失恢复。该功能要求在传输其他包时对事件通知做出响应，形式可以是复制丢失的包，
+也可以是使用FEC包。该功能实现的方式将极大的影响协议的可扩展性。
+* 丢失保护。该功能是要掩盖包丢失，使其不产生丢失通知事件。该功能可以通过使用预先
+激活方式传输FEC包。每个FEC包可以从一个整的或部分的应用数据单元产生，这一事实
+使得接收方能够在不需要进一步重传的条件下恢复某些丢失的包。在不重传时所能恢复的包
+的数目取决于在第一方发送的FEC包的数目。当没有丢失检测/通知和丢失恢复功能的条件
+下实现了很好的吞吐率时，丢失保护在上面定义的ALC协议族中被使用到了极限。
+* 冲突反馈。对于发送方驱动的冲突控制协议，接收方必须在冲突时提供某种反馈给发送方。
+通常包括丢失率和对往返时间的测量。
+* 速率调整。如果有冲突反馈，发送方必须调整速率以适应网络。[Whetten99]定义了这种
+适应性以及其他的冲突控制要求。
+* 接收方控制。为了避免在单速率机制中因为允许接收者和发送者之间有一个很慢的连接而
+停止所有进程，冲突控制算法通常要求接收者离开组。对于多速率的方法，发送方对不同连
+接速率的接收者可以根据它们连接的速率发送数据，而不会减慢其他接收者的接收速度。
+* 安全性。可靠多播的安全性继承了IP多播服务模型中很多复杂棘手的内容。在这个服务
+模型中，主机不向其他主机发送信息（流），而是从一个组中通过选举来接收信息（流）。这
+意味着每个主机可以加入一个组接收信息。另一方面，主机可以在任何时刻离开组。因此协
+议必须指出其对于以下安全性方面因素的影响：
+# 发送者认证（因为每个主机可以向组发送）
+# 数据加密（因为每个主机都可以加入组接收）
+# 传输保护（通过中断传输状态的拒绝服务攻击，或请求未授权资源）
+# 组钥匙管理（因为每个主机可以在任何时刻加入或离开组）
+    特别指出的是，传输协议应特别注意协议如何在遇到拒绝服务攻击时，通过对控制包的
+轻量认证（HW99）机制保护自己。
+    对于指定资源的多播服务模型，主机加入指定的发送方和组。因此，如果有武断（仲裁）
+的发送者向没有指定接收数据的主机发送数据时，此时对于通过拒绝服务接收数据的主机，
+SSM提供了更多的安全性。不过，在使用SSM时，建议使用其它的针对这些攻击的保护措
+施，因为SSM针对这些攻击的保护可能仍不够。
+    发送者身份认证，数据加密，和组钥匙管理。 尽管这些功能通常在本质上不是传输层
+的内容，协议需要了解它在数据安全方面可能有的影响分枝，以及为了处理这些分支影响而
+与安全层之间采用的特殊的接口。
+* 传输保护。	对于传输层最重要的安全任务是保护传输层本身免受攻击。对于这一点最重
+要的功能就是为了防范状态中断以及拒绝服务攻击所采用的典型的对控制包的轻量认证。
+* 身份通知。通过该功能数据源或在某个层次结构中的某个代理可以学习接收者或者是低级
+的代理的身份或数目。为了是可扩展的，通常典型的情况不需要提供关于每个接收者的身份
+的知识。
+* 身份管理。 该机制的实现使得成员能够加入、离开组，接收、拒绝新成员，或中断现有
+成员的身份。
+* 组成员身份跟踪。这是一个可以选择的特性，协议可以与某个能跟踪一个大的组中每个接
+收者身份的部件相连接。如果这样的话，该特性可以跨段实现，可以通过更高层的协议实现。
+这对于某些要求跟踪使用的系统，以及记账，使用报告等有用。
+* 会话广告。该功能公布会话名称内容，以及接收所需的参数。该功能通常通过高层的协议
+（HPW99），[HJ98]）来实现。
+* 会话开始/结束。这些功能决定了接收和发送者开始和结束的时间。在很多情况下是隐式
+的或通过高层的应用程序或协议实现。不过在某些协议中，由于可扩展性的要求，这一任务
+最好通过传输层实现。
+* 会话建立/监测。考虑到多播会话广泛的程度，对于一个协议而言拥有对协议的各种操作
+建立和监测的工具是特别重要的。
+* 树的建立。对于包括了层次结构元素的协议如PGM，RMTP-II，能够以某种近似多播路
+由拓扑的方式配置这些元素是很重要的。当然，尽管树型配置可以作为会话建立工具的一部
+分，但是如果这种配置可以自动运行的话将会更好。
+
+
+4	对构建模块的建议
+在1.1节中介绍的协议族通常使用了不同的机制来实现在第3节中描述的功能部件。这
+一节的目的是按照定义构件模块的宏部件对这些机制分组。一个构建模块定义为“一个
+能够产生明确的API供其他构建模块或其他协议客户端使用的协议逻辑部件。构建模块
+通常是由实现协议功能部件的算法集和包的格式来定义的。一个构建模块可以通过其
+API与应用程序或者其他构建模块通信。大多数的构建模块都有管理API，通过它与
+SNMP（简单网络管理协议）或其他管理协议通信。在下面一节中，我们将列出一些构
+建模块，它们在目前而言，能够覆盖实现1.1中所列协议中需要的绝大多数功能部件。
+不过这些列出的只是目前所作的最好的猜测，因此它也不一定是完整的。实际的构建模
+块分解，也就是将功能部件划分为构建模块，在今后有可能被修改。
+4.1	基于NACK的可靠性模块
+该模块定义了基于NACK的丢失检测/通知和恢复功能。它的主要内容是防止（压制）
+内爆以及NACK语义。（例如在选择性修复和FEC丢失修复的情况下如何指定要重发的
+包）。压制机制包括：
+#NACK多播
+#NACK单播和多播确认
+这些压制机制要能使延时最小同时使冗余信息最少。同时他们对于处理冲突反馈要有特
+别的处理权限。
+4.2	FEC编码
+该构建模块关注的是在为了防止错误或对于丢失包后做出修复响应的情况下包一级的
+FEC信息,.它确定了在这两种使用情况下如何对FEC编码做出选择以及如何命名或索引
+FEC包。
+4.3	冲突控制
+该构建模块根据处理冲突控制时不同的政策可能有多个版本。目前主要考虑的有两种方
+法：在对会话中所有接收者都提供统一速率的条件下基于源的速率调整和在同一会话中
+不同接收者有不同接收速率的条件下多速率的由接收方驱动的方法。多速率方法可能使
+用多层多播的流[VRC98]或者是单层的路由过滤[LVS99]。两种方法目前都处在研究状
+态，不过第一种方法已经相当成熟使我们能够进行标准化的过程。在写该文档之时，另
+外一种基于路由支持的冲突控制算法开始在IRTF RMRG[LVS99]中出现。这些工作可能
+会使得将来有一个或多个针对冲突控制的构建模块标准化。
+4.4	通用路由支持
+在路由器的某些支持的出现使得设计可靠多播协议的工作变得简单了。在某些应用中，
+虽然这些额外的支持增加了复杂性和花费，但其带来的好处要更大些[FLST98]。可以利
+用路由支持的功能部件包括反馈聚集/压制（对于丢失通知和冲突控制），以及强制重传
+修复包。另一个能利用路由支持的部件是互连网包过滤功能，该功能可以为不同的接收
+者提供对同一个多播流的不同的传输速率。当这一点与ALC协议结合时尤为有益
+[LVS99]。
+设计使用这些路由器内部的机制的过程比设计一个只需要端到主机的协议机制要简单。
+因此，如果能够用某种通用的方式定义这些机制，使得多个协议能够使用他们但并不需
+要依赖他们的话，将会是很有好处的。这个部件有两个部分，一个信号协议和实际的路
+由算法。信号协议允许传输协议向路由器请求它希望的功能，而路由算法实际执行这些
+功能。由于信号协议可能影响通用协议头，因此定义信号协议的工作更为紧急。信号协
+议一个重要的部分就是多个协议包头某种程度的通用性，这一点保证了路由器能够辨识
+解析包头。
+4.5	树的建立
+前面已经说了通过在源和接收方间增加某种对于重传和反馈的集中代理能大大增加可
+靠多播协议的可扩展性。使用这些代理可以形成一棵树，源端是树的根，而接收端就是
+树的叶子，集中式/本地修复节点处在中间。中间的节点可以是指定这一任务的软件也
+可以是执行判决任务的接收者。
+这些代理对于数据传输的作用取决于使用的逻辑树是否很好的与实际的路由协议相匹
+配。该构建模块的意图是构建管理连接代理的逻辑树。理想的情况是，该模块完成这些
+功能时能够根据会话身份，路由拓扑，网络可用性变化的情况做出相应的调整。
+4.6	数据安全性
+安全性问题是IRTF 安全多播组(SmuG)的研究内容.当条件成熟时IETF将对这些安全性
+的要求标准化。
+4.7通用包头。
+在通用路由支持一节中已经指出在不同的包头中有某些程度的通用性是非常重要的。由
+于一些其他的原因，使用相同的数据头也是很有用的。该构建模块包括对协议包头中某
+些位的建议，这些包头应当相互之间通用。
+4.8	协议核心
+以上的构建模块包括了第3节中所列的功能部件，这些功能部件看起来可以满足实现第
+2节中所列构建模块的要求。第三节中其他的没有被包括的功能可以通过每个标准化的
+协议指定作为协议核心的一部分来实现。
+
+5	安全考虑
+RFC2357特别指出TRANSPORT AREA DIRECTORS评审的可靠多播INTERNET草案
+必须明确的研究了其所提协议的安全方面的因素。特别是RMT构建模块必须检测拒绝
+服务攻击，Specifically, RMT building block works in progress must examine the 
+denial-of-service attacks that can be made upon building blocks and affected by building 
+blocks   upon the Internet at large。关于数据安全的讨论，也就是对于非授权用户控制会
+话信息或显露会话信息的讨论有这么一点要求。读者如果要更详细的细节的话可以参考
+RFC2357的第5节。
+
+6	IANA考虑
+由于可能有多个构建模块，并且由于设计的限制单个构建模块可能有多个版本。基于这
+些原因，创建新的构建模块或者新的版本的构建模块要通过一个由IANA管理的构建模
+块注册机构。最开始时，由于4.1到4.3中描述的构建模块都是根据例子或设 计要求提
+出的，因此这个注册表是空的。如果被允许作为RFC公开发布的话(使用“请求规范”
+政策，在RFC2434中有介绍)，被请求的IANA构建模块注册项将作为规范公布。一个
+注册项包括构建模块名称，版本号，简单的文字描述，RFC编号，责任人，IANA对其
+分配一个类型号。
+
+7	结论
+在本文档中，我们简要的描述了一些构建模块，这些模块可能对于产生适用于一到多可
+靠的大数据传输应用范围的可靠多播协议有帮助。前面所示的构建模块列表是根据对于
+这一范围内的协议必须实现的功能以及如何将这些功能分组的考虑而得来的。这个列表
+并不试图做到包罗所有的内容，只不过是充当指导的角色指明在标准化可靠多播传输
+WG的过程中要考虑那些构建模块。
+
+8	致谢
+一到多的大数据传输协议即将在RMT工作组内部进行标准化，本文对于一些针对一到
+多大数据传输协议的构建模块做了一个综述。文中所提的想法并非作者所有的，而是对
+多年来有关多播传输研究结果以及IRTF 可靠多播研究组内部各种演讲，讨论的总结。
+我们仅在此向那些曾经参与这些讨论，研究的人对于他们所做的贡献致以深深的谢意！
+
+9.  参考文献
+   [BKKKLZ95]  J. Bloemer, M. Kalfane, M. Karpinski, R. Karp, M. Luby,
+               D.  Zuckerman, "An XOR-based Erasure Resilient Coding
+               Scheme," ICSI Technical Report No. TR-95-048, August
+               1995.
+
+   [BLMR98]    J. Byers, M. Luby, M. Mitzenmacher, A. Rege, "A Digital
+               Fountain Approach to Reliable Distribution of Bulk Data,"
+               Proc ACM SIGCOMM 98.
+
+   [FJM95]     S. Floyd, V. Jacobson, S. McCanne, "A Reliable Multicast
+               Framework for Light-weight Sessions and Application Level
+               Framing," Proc ACM SIGCOMM 95, Aug 1995 pp. 342-356.
+
+   [FLST98]    D. Farinacci, S. Lin, T. Speakman, and A. Tweedly, "PGM
+               reliable transport protocol specification," Work in
+               Progress.
+
+   [HFW99]     M. Handley, S. Floyd, B. Whetten, "Strawman Specification
+               for TCP Friendly (Reliable) Multicast Congestion Control
+               (TFMCC)," Work in Progress.
+
+   [HJ98]      Handley, M. and V. Jacobson, "SDP: Session Description
+               Protocol", RFC 2327, April 1998.
+
+   [HPW99]     M. Handley, C. Perkins, E. Whelan, "Session Announcement
+               Protocol," Work in Progress, June 1999.
+
+   [HW99]      T. Hardjorno, B. Whetten,  "Security Requirements for
+               RMTP-II," Work in Progress, June 1999.
+
+   [RFC2887]   Handley, M., Whetten, B., Kermode, R., Floyd, S.,
+               Vicisano, L. and M. Luby, "The Reliable Multicast Design
+               Space for Bulk Data Transfer", RFC 2887, August 2000.
+
+   [KCW98]     M. Kadansky, D. Chiu, and J. Wesley, "Tree-based reliable
+               multicast (TRAM)," Work in Progress.
+
+   [Kermode98] R. Kermode, "Scoped Hybrid Automatic Repeat Request with
+               Forward Error Correction," Proc ACM SIGCOMM 98, Sept
+               1998.
+
+   [LDW98]     M. Lucas, B. Dempsey, A. Weaver, "MESH: Distributed Error
+               Recovery for Multimedia Streams in Wide-Area Multicast
+               Networks".
+
+   [LESZ97]    C-G. Liu, D. Estrin, S. Shenkar, L. Zhang, "Local Error
+               Recovery in SRM: Comparison of Two Approaches," USC
+               Technical Report 97-648, Jan 1997.
+
+   [LG97]      B.N. Levine, J.J. Garcua-Luna-Aceves, "Improving Internet
+               Multicast Routing with Routing Labels," IEEE
+               International Conference on Network Protocols (ICNP-97),
+               Oct 28-31, 1997, p.241-250.
+
+   [LP96]      K. Lin and S. Paul. "RMTP: A Reliable Multicast Transport
+               Protocol," IEEE INFOCOMM 1996, March 1996, pp. 1414-1424.
+
+   [LMSSS97]   M. Luby, M. Mitzenmacher, A. Shokrollahi, D. Spielman, V.
+               Stemann, "Practical Loss-Resilient Codes", Proc ACM
+               Symposium on Theory of Computing, 1997.
+
+   [LVS99]     M. Luby, L. Vicisano, T. Speakman. "Heterogeneous
+               multicast congestion control based on router packet
+               filtering", RMT working group, June 1999, Pisa, Italy.
+
+   [MA99]      J. Macker, B. Adamson. "Multicast Dissemination Protocol
+               version 2 (MDPv2)," Work in Progress,
+               http://manimac.itd.nrl.navy.mil/MDP
+
+   [MRBP98]    Mankin, A., Romanow, A., Brander, S. and V.Paxson, "IETF
+               Criteria for Evaluating Reliable Multicast Transport and
+               Application Protocols", RFC 2357, June 1998.
+
+   [RFC2434]   Narten, T. and H. Alvestrand, "Guidelines for Writing an
+               IANA Considerations Section in RFCs", BCP 26, RFC 2434,
+               October 1998.
+
+   [OXB99]     O. Ozkasap, Z. Xiao, K. Birman.  "Scalability of Two
+               Reliable Multicast Protocols", Work in Progress, May
+               1999.
+
+   [PSLB97]    "Reliable Multicast Transport Protocol (RMTP)," S. Paul,
+               K. K. Sabnani, J. C. Lin, and S. Bhattacharyya, IEEE
+               Journal on Selected Areas in Communications, Vol. 15, No.
+               3, April 1997.
+
+   [RV97]      L. Rizzo, L. Vicisano, "A Reliable Multicast Data
+               Distribution Protocol Based on Software FEC Techniques,"
+               Proc. of The Fourth IEEE Workshop on the Architecture and
+               Implementation of High Performance Communication Systems
+               (HPCS'97), Sani Beach, Chalkidiki, Greece June 23-25,
+               1997.
+
+   [VRC98]     L. Vicisano, L. Rizzo, J. Crowcroft, "TCP-Like Congestion
+               Control for Layered Multicast Data Transfer", Proc. of
+               IEEE Infocom'98, March 1998.
+
+   [WBPM98]    B. Whetten, M. Basavaiah, S. Paul, T. Montgomery, N.
+               Rastogi, J. Conlan, and T. Yeh, "THE RMTP-II PROTOCOL,"
+               Work in Progress.
+
+   [WHA98]     D. Wallner, E. Hardler, R. Agee, "Key Management for
+               Multicast: Issues and Architectures," Work in Progress.
+
+   [Whetten99] B. Whetten,  "A Proposal for Reliable Multicast
+               Congestion Control Requirements," Work in Progress.
+               http://www.talarian.com/rmtp-ii/overview.htm
+
+10.  作者联系方法
+   Brian Whetten
+   Talarian Corporation,
+   333 Distel Circle,
+   Los Altos, CA 94022, USA
+
+   EMail: whetten@talarian.com
+
+
+   Lorenzo Vicisano
+   Cisco Systems,
+   170 West Tasman Dr.
+   San Jose, CA 95134, USA
+
+   EMail: lorenzo@cisco.com
+
+
+   Roger Kermode
+   Motorola Australian Research Centre
+   Level 3, 12 Lord St,
+   Botany  NSW  2019, Australia
+
+   EMail: Roger.Kermode@motorola.com
+
+
+   Mark Handley, Sally Floyd
+   ATT Center for Internet Research at ICSI,
+   International Computer Science Institute,
+   1947 Center Street, Suite 600,
+   Berkeley, CA 94704, USA
+
+   EMail: mjh@aciri.org, floyd@aciri.org
+
+
+   Michael Luby
+   600 Alabama Street
+   San Francisco, CA  94110
+   Digital Fountain, Inc.
+
+   EMail: luby@digitalfountain.com
+
+11.  完整版权申明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+一到多大规模数据传输可靠多播传输构建模块
+RFC3048 Reliable Multicast Transport Building Blocks for One-to-Many Bulk-Data Transfer
+
+
+1
+RFC文档中文翻译计划

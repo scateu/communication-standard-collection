@@ -1,0 +1,280 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈建华（chjh21  chjh@263.net）
+译文发布时间：2001-10-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                       F. Yergeau
+Request for Comments: 2279                           Alis Technologies
+Obsoletes: 2044                                           January 1998
+Category: Standards Track
+
+UTF-8，ISO 10646的一种转换格式
+（RFC 2279――UTF-8, a transformation format of ISO 10646）
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程
+度和状态。本备忘录的发布不受任何限制。
+版权声明
+    版权所属Internet社区（1998），保留全部权力。
+摘要
+   ISO/IEC 10646-1定义了一种多8比特字节字符集，称作通用字符集（UCS），它包含了世
+界上大多数可书写的字符系统。然而，多8比特字节字符与许多当前的应用和协议不一致，
+从而导致了一些被称为UCS转换格式（UTF）的发展。每一种UTF有不同的特征。本备忘录中
+的UTF-8保留了全部US-ASCII 范围字符，提供了对文件系统、依赖于US-ASCII值的分析器
+和其他软件的兼容性，并且对其他字符值透明。本备忘录用来更新和替换RFC 2044，特别对
+相关标准的版本问题进行了说明。
+目录
+1、介绍	2
+2、UTF-8定义	3
+3、标准版本	4
+4、例子	4
+5、MIME注册	4
+6、安全考虑	5
+鸣谢	5
+参考	5
+作者地址	6
+版权说明	7
+
+1、介绍
+ISO/IEC 10646-1 [ISO-10646]定义了一种多8比特字节字符集，称作通用字符集（UCS），
+它包含了世界上大多数可书写的字符系统。已定义了两种多8比特字节编码，对每一个字符
+采用四个8比特字节编码的称为UCS-4，对每一个字符采用两个8比特字节编码的称为
+UCS-2。它们仅能够对UCS的前64K字符进行编址，超出此范围的其它部分当前还没有分配
+编址。
+值得注意的是统一的字符编码标准[UNICODE]定义了同样的字符集，而且它进一步定义
+了对实现器非常重要的额外字符属性和其他应用细节，但是没有定义UCS-4编码。直到现在，
+Unicode的变化和ISO/IEC 10646修正彼此穿插，因此他们的字符指令和编码分配保持同步。
+相关的标准委员会同意维持这种非常有用的同步。
+然而，UCS-2和UCS-4编码很难在许多当前的应用和协议中使用，这些应用和协议假定
+字符为一个8或7比特的字节。即使新的可以处理16比特字符的系统，却不能处理UCS-4
+数据。这种情况导致一种称为UCS转换格式（UTF）的发展，它每一种有不同的特征。
+UTF-1仅仅是历史上的重要，它已经从ISO/IEC 1064中删除。UCS-7拥有仅采用8比特
+字节就可对全部BMP指令进行编码的性质，它的最高比特位为零(其他7比特位为US-ASCII
+值, [US-ASCII])，被认为是邮件安全的编码([RFC2152])。本备忘录中的UTF-8对象，使用了
+8比特字节的所有位，保持全部US-ASCII取值范围的性质：US-ASCII字符用一个8比特字
+节编码，采用通常的US-ASCII值，因此，在此值下的任何一个8比特位字节仅仅代表一个
+US-ASCII字符，而不会为其他字符。
+UTF-16计划用于从保留的范围中，转换UCS-4指令的一个子集为UCS-2值对。UTF-16
+影响UTF-8，因为保留范围的UCS-2值必须当作UTF-8变换进行特别处理。
+UTF-8采用变化的8比特字节数对UCS-2或UCS-4字符编码。8比特字节数量，以及每
+一字节的值依赖于ISO/IEC 10646中对此字符指定的整型值。这种转换格式有下列特性（所
+有的值为16进制）：
+－从0000 0000 到 0000 007F（US-ASCII 指令）字符值对应于8比特字节的00到7F（7
+比特US-ASCII值）。由此的结论就是普通的ASCII字符串转换后仍旧是有效的UTF-8
+字符串。
+－US-ASCII值不会出现在其他的UTF-8编码字符流中。这提供了与文件系统或其他软件
+（比如C库中printf()函数）的兼容性，方便解析器解析US-ASCII值，且对其他值透
+明。
+－UTF-8向UCS-4，UCS-2两者中任一个进行相互转换比较容易。
+－多8比特字节序列的第一个8比特字节指明了系列中8比特字节的数目。
+－8比特字节值FE和FF永远不会出现。
+－在8比特字符流中字符边界从哪里开始较容易发现。
+－UCS-4字符串的字典分类顺序保留。由于分类顺序在任一情况下不是文化上有效，因此
+它的重要性当然有限。
+－Boyer-Moore快速搜索算法可以用于UTF-8数据。
+－UTF-8字符串可以通过一个简单的算法进行可靠性验证，也就是说，在任何一种编码下，
+验证有效UTF-8字符串的耗费是低廉的，随着字符长度增加而缩小。
+
+UTF-8源于X/Open联合国际化组织XOJIG的项目，用于描述文件系统的安全UCS 转
+换格式[FSS-UTF]，以便和UNIX系统兼容，以及在一种单一编码中支持多种语言的文字。
+最开始的作者是Gary Miller, Greger Leijonhufvud 和John   Entenmann。后来Ken Thompson 
+和Rob Pike对UTF-8格式作了大量的工作。
+也可以从Unicode 技术支持报告#4 和Unicode标准2.0 [UNICODE]中找到UTF-8的描
+述。权威性的引用，包括对UTF-16数据包含UTF-8的规定，在ISO/IEC 10646-1 [ISO-10646]
+附录R中进行了阐述。
+2、UTF-8定义
+在UTF-8中，字符采用1到6个8比特字节的序列进行编码。仅仅一个8比特字节的一
+个序列中，字节的高位为0，其他的7位用于字符值编码。n（n>1）个8比特字节的一个序
+列中，初始的8比特字节中高n位为1，接着一位为0，此字节余下的位包含被编码字符值的
+位。接着的所有8比特字节的最高位为1，接着下一位为0，余下每个字节6位包含被编码字
+符的位。
+下表总结了这些不同的8比特字节类型格式。字母x指出此位来自于进行编码的UCS-4
+字符值。
+   		UCS-4范围（16进制）  UTF-8 系列（二进制）
+   0000 0000-0000 007F   0xxxxxxx
+   0000 0080-0000 07FF   110xxxxx 10xxxxxx
+   0000 0800-0000 FFFF   1110xxxx 10xxxxxx 10xxxxxx
+
+   0001 0000-001F FFFF   11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+   0020 0000-03FF FFFF   111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+   0400 0000-7FFF FFFF   1111110x 10xxxxxx ... 10xxxxxx
+
+	从UCS-4 到 UTF-8编码过程如下：
+1）从字符值和上表第一列中决定需要的8比特字节数目。着重指出的是上表中的行是相
+互排斥的，也就是说，对于一个给定的UCS-4字符，仅仅有一个有效的编码。
+2）按照上表中第二列每行那样准备8比特字节的高位。
+3）将字符值的位填充在标记为x地方，从字符值的低位开始，将它们放在系列中最后的
+8比特字节中，然后字符值的接着位放置到下一个8比特字节，如此重复，直到所有标
+记位x的位都进行了填充。
+
+理论上，简单的通过用2个0值的8比特字节来扩展每个UCS-2字符，则从UCS-2到
+UTF-8编码的算法可以从上面得到。然而，从D800到DFFF间的UCS-2值对（用Unicode
+说法是代理对），实际上是通过UTF-16来进行UCS-4字符转换，因此需要特别对待：UTF-16
+转换必须未完成，先转换到于UCS-4字符，然后按照上面过程进行转换。
+从UTF-8到UCS-4解码过程如下：
+1）初始化UCS-4字符4个8比特字节的所有位为0。
+2）根据序列中8比特字节数和上表中第二列（标记为x位）来决定哪些位编码用于字符
+值。
+3）从编码序列分配位到UCS-4字符。首先从序列最后一个8比特字节的最低位开始，接
+着向左进行，直到所有标记为x的位完成。
+如果UTF-8序列长度不大于3个8比特字节，解码过程可以直接赋予UCS-2。
+
+注意――上面解码算法的实际实现应该进行安全保护，以便处理解码无效的系列。例如，
+一个幼稚的实现可能（错误）解码无效的UTF-8系列C0 80为字符U+0000，它可能导致安
+全问题和/或其他问题。参见下面的安全考虑部分。
+更详细的算法和公式可以在[FSS_UTF]，[UNICODE] 或[ISO-10646]附录R中找到。
+3、标准版本
+ISO/IEC 10646通过发布修正进行了一次次更新。同样地，Unicode标准的不同版本有：
+1.0, 1.1和2.0。每一个新版本废除和替换了旧版本，但是实现和较重要的数据没有立刻更新。
+一般地，增加新字符的改变不会对旧数据引发特殊的问题。然而，ISO/IEC 10646修正5
+移动和扩展了韩文Hangul组，因此包含Hangul字符的以前版本数据在新版本下无效。Unicode 
+2.0对Unicode 1.1有同样的不同。允许这样不协调变化的正式理由是在实现上和数据中不存
+在Hangul。这个改变事件被称为“韩文混乱”，相关的委员会保证永远不会再进行这样不协
+调的改变。
+关于MIME字符编码标签，新版本和特定的任何不协调的改变都有前因后果，第5节将
+进行讨论。
+4、例子
+UCS-2系列"A<NOT IDENTICAL TO><ALPHA>." (0041, 2262, 0391, 002E)用UTF-8编码
+如下：
+   41 E2 89 A2 CE 91 2E
+对韩文"hangugo" (D55C, AD6D, C5B4)，表示Hangul 字符的UCS-2序列可以编码如下：
+   ED 95 9C EA B5 AD EC 96 B4
+对日文"nihongo" (65E5, 672C, 8A9E)，表示汉字的UCS-2序列可以编码如下：
+   E6 97 A5 E6 9C AC E8 AA 9E
+5、MIME注册
+本备忘录计划服务于MIME字符集参数 [CHARSET-REG]注册基础。被提到的字符集参
+数值是UTF-8。这个字符标签媒介类型包含由ISO/IEC 10646指令组成的字符文本，ISO/IEC 
+10646包括了直到修正5（韩文组）的所有修正版本。此类型使用上面概述的编码方案进行8
+比特字节序列编码。UTF-8适合于在文本的上层类型下使用MIME内容类型
+值得注意的是，"UTF-8"标签不包含一般由ISO/IEC 10646提交的版本标识。特意这样做
+的原因如下：
+MIME字符集标签的设计仅用于给予需要翻译从有线接收的字节序列到字符序列的信
+息，而没有其他的用途(参见 RFC 2045, 2.2节[MIME])。只要字符集标准没有不兼容的改变，
+版本数字没有意义，因为一方接收到不认识的新分配字符，通过标签的理解得不到任何东西。
+标签可能被随时接收，标签自己对新字符不提供任何信息。
+因此，只要标准适当地改进，拥有标识版本标签的益处是显而可见，但对依赖于版本的
+标签不利因素为：当旧的应用收到一个包含新的不认识标签的数据时，它可能认识标签失败，
+而不能完成对数据的处理；而一个普通的熟悉标签会引发大多数正确的数据处理，它可能不
+包含任何新的字符。
+现今“韩文混乱”(ISO/IEC 10646 修正5)是一种不协调的变化，理论上同上面描述的与
+版本无关的MIME字符集标签的适用性相矛盾。但是兼容性问题仅会出现在包含采用Unicode 
+1.1（或等同的ISO/IEC 10646修正5以前）编码的韩文Hangul字符数据中。可以证明没有这
+样的数据值得担心，因此，这是不协调改变可以被接收的主要原因。
+实际上，假定标签理解为对修正5以后的所有版本进行引用，并且假定实际不会出现不
+协调的改变，则独立于版本的标签是有理由的。由此，除非ISO/IEC 10646以后版本出现不
+兼容改变，这里的MIME字符集定义将同以前的版本保持一致，除非IETF明确规定为不同。
+也计划注册字符集参数值为"UNICODE-1-1-UTF-8"，唯一用途是用于可标签的文本数
+据。可标签的文本数据包含没有考虑进ISO/IEC 10646修正5（即修正5前的代码点分配）的
+Hangul音节编码成UTF－8。其他的UTF-8数据不应该使用此标签，特别是不包含任何Hangul
+音节的数据。非常重要的强烈建议是反对不考虑ISO/IEC 10646修正5的情况下，创建任何
+新的包含Hangul的数据。
+6、安全考虑
+UTF-8实现需要进行安全考虑的方面是如何处理非法的UTF-8序列。可以想象，在某些
+环境中攻击者可能进行的攻击是发送一个UTF-8语法不允许的8比特字节序列给不谨慎的
+UTF-8分析器。
+这种攻击一个特别敏感的形态是攻击分析器。此分析器对输入的UTF-8编码格式执行安
+全鉴定有效性检查，但是解释了一些非法的8比特字节作为字符。例如，当遇到单个8比特
+字节序列00时，分析器可能禁止NUL字符，但是允许非法的两个8比特字节序列C0 80，
+解释它为NUL字符。另一个例子是禁止8比特字节序列2F 2E 2E 2F ("/../")的分析器，允许
+非法8比特字节序列2F C0 AE 2E 2F。
+鸣谢
+下列人员参与本备忘录的起草和讨论：
+   James E. Agenbroad    Andries Brouwer
+   Martin J. D|rst       Ned Freed
+   David Goldsmith       Edwin F. Hart
+   Kent Karlsson         Markus Kuhn
+   Michael Kung          Alain LaBonte
+   John Gardiner Myers   Murray Sargent
+   Keld Simonsen         Arnold Winkler
+参考
+   [CHARSET-REG]  Freed, N., and J. Postel, "IANA Charset Registration
+                  Procedures", BCP 19, RFC 2278, January 1998.
+
+   [FSS_UTF]      X/Open CAE Specification C501 ISBN 1-85912-082-2 28cm.
+                  22p. pbk. 172g.  4/95, X/Open Company Ltd., "File
+                  System Safe UCS Transformation Format (FSS_UTF)",
+                  X/Open Preleminary Specification, Document Number
+                  P316.  Also published in Unicode Technical Report #4.
+
+   [ISO-10646]    ISO/IEC 10646-1:1993. International Standard --
+                  Information technology -- Universal Multiple-Octet
+                  Coded Character Set (UCS) -- Part 1: Architecture and
+                  Basic Multilingual Plane.  Five amendments and a
+                  technical corrigendum have been published up to now.
+                  UTF-8 is described in Annex R, published as Amendment
+                  2.  UTF-16 is described in Annex Q, published as
+                  Amendment 1. 17 other amendments are currently at
+                  various stages of standardization.
+
+   [MIME]         Freed, N., and N. Borenstein, "Multipurpose Internet
+                  Mail Extensions (MIME) Part One:  Format of Internet
+                  Message Bodies", RFC 2045.  N. Freed, N. Borenstein,
+                  "Multipurpose Internet Mail Extensions (MIME) Part
+                  Two:  Media Types", RFC 2046.  K. Moore, "MIME
+                  (Multipurpose Internet Mail Extensions) Part Three:
+                  Message Header Extensions for Non-ASCII Text", RFC
+                  2047.  N.  Freed, J. Klensin, J. Postel, "Multipurpose
+                  Internet Mail Extensions (MIME) Part Four:
+                  Registration Procedures", RFC 2048.  N. Freed, N.
+                  Borenstein, " Multipurpose Internet Mail Extensions
+                  (MIME) Part Five: Conformance Criteria and Examples",
+                  RFC 2049.  All November 1996.
+
+   [RFC2152]      Goldsmith, D., and M. Davis, "UTF-7: A Mail-safe
+                  Transformation Format of Unicode", RFC 1642, Taligent
+                  inc., May 1997. (Obsoletes RFC1642)
+
+   [UNICODE]      The Unicode Consortium, "The Unicode Standard --
+                  Version 2.0", Addison-Wesley, 1996.
+
+   [US-ASCII]     Coded Character Set--7-bit American Standard Code for
+                  Information Interchange, ANSI X3.4-1986.
+作者地址
+   Francois Yergeau
+   Alis Technologies
+   100, boul. Alexis-Nihon
+   Suite 600
+   Montreal  QC  H4M 2P2
+   Canada
+
+   Phone: +1 (514) 747-2547
+   Fax:   +1 (514) 747-2561
+   EMail: fyergeau@alis.com
+
+版权说明
+      Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+RFC 2279――UTF-8, a transformation format of ISO 10646            UTF-8，ISO 10646的一种转换格式
+
+
+7
+RFC文档中文翻译计划

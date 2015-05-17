@@ -1,0 +1,176 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：李苏萍（szlisp  szlisp@sina.com）
+译文发布时间：2001-4-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                         Y. Rekhter
+Request for Comments: 1918                                 Cisco Systems
+Obsoletes: 1627, 1597                                       B. Moskowitz
+BCP: 5                                                    Chrysler Corp.
+Category: Best Current Practice                            D. Karrenberg
+                                                                RIPE NCC
+                                                          G. J. de Groot
+                                                                RIPE NCC
+                                                                 E. Lear
+                                                  Silicon Graphics, Inc.
+                                                           February 1996
+RFC1918 私有网络地址分配
+(RFC1918  Address Allocation for Private Internets)
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+目录
+1. 介绍	2
+2. 动力，目的	2
+3. 私有地址空间	3
+4. 使用私有地址空间的利弊	4
+5. 操作考虑	4
+6. 安全考虑	5
+7．总结	5
+8．感谢	5
+参考	6
+作者地址：	6
+
+1. 介绍
+在本文档中，企业表示一个自治地操作一个使用TCP/IP协议网络的实体，特别地，该实体要决定该网络的寻址方案和地址分配。
+该文档描述了私有网络的地址分配。该分配允许一个企业内的所有主机之间以及不同企业内的所有公开主机之间在网络所有层次上的连接。
+2. 动力，目的
+随着TCP/IP技术在包括Internet网本身以外的世界范围内的扩散，越来越多没有连接到Internet网络上的企业使用该技术。这些企业只是使用该技术的寻址能力用于企业内部通信，而没有打算与其他企业或是Internet网络直接相连。
+Internet网络的发展出乎任何人的预料。持续的指数级增长不断引起新的挑战。其中一个挑战是来自Internet社区内部的关注：全球唯一的地址空间将被耗尽。一个与此不同，且更为迫切的关注是： 路由负荷的数量将超过ISP（Internet Service Provider）的能力。社区内正在努力试图找到一个关于这些问题的长期解决方案。同时，有必要再次探讨地址分配过程极其对Internet路由系统造成的影响。
+为容纳路由负荷的增长，一个Internet服务提供商从地址注册组织获得一个地址块，然后根据每个客户的要求将块内的地址分配给客户。这个过程造成的结果是：到许多客户的路由将会被聚合起来,对其他服务提供商呈现为一个单一的路由。为了让路由聚合有效，Internet服务提供商鼓励加入其网络的客户使用提供商的地址块，然后重新为其计算机设定地址。这样的鼓励也许在将来会成为一种要求。
+考虑当前Internet的大小以及它的增长速度，通过从地址注册组织获得全球唯一的IP地址，某个组织一旦连接到Internet网络上，该组织就具有Internet 范围内的 IP 连接，这样的假设不再现实。相反，很可能是这样：当一个组织想要连接到Internet上以获得Internet范围内的IP连接，该组织需要对它所有的公开主机（需要Internet范围IP连接的主机）进行地址转换（renumber）,而不管该组织原先使用的地址是否是全局唯一的。
+典型地，一般所有使用TCP/IP协议的所有主机都被分配一个全局唯一地址。为了延长IPv4地址空间的生命周期，地址注册请求审查将比任何以往时候都更为严格，使得申请更多地址空间难度增大。
+在企业内部使用IP的主机可以分为三类：
+第一类：企业内的主机不需要访问其他企业内的主机或Internet;这类主机可以使用企业内没有多义的但在企业之间可能会有多义的IP地址。
+第二类：主机需要访问外部有限的服务（例如 E-mail, FTP,网络新闻，远程登陆等），这些服务可由中介网关来处理（例如应用层网关）。对于这类中的许多主机而言，不受限制的外部访问（通过IP连接）也许是不必要的，从安全角度考虑，也是不合适的。正如第一类主机那样，该类主机可使用在企业内部无多义而在企业之间可能有多义的IP地址。
+第三类： 主机需要企业外部网络层的访问（假设在通过IP连接的方式下）；这最后一类主机需要全局无多义的IP地址。
+我们将第一、第二类中的主机称作“私有的”，将第三类主机称作“公开的”。
+对于大多数内部主机，许多应用只要求企业内部的连接，而不需要与企业外的连接。在比较大的企业，很容易识别出一大堆使用TCP/IP协议但是不需要与外部企业建立网络层连接的主机。
+下面是一些例子，这些例子中外部连接可能不需要。
+------一个大型机场，通过TCP/IP网络来显示不同航班的到达和离开。很显然，这些显示不必被其他网络直接访问到。
+------大型机构，如银行，连锁店正转向使用TCP/IP 来构建其内部通信。大量的本地工作站，如 收银机, 取钱机和在办公室的设备很少需要与外部的连接。
+------处于安全考虑，许多企业使用应用层网关来将内部网络与外部网络连通。内部网络通常不能直接访问Internet，这样仅有一个或更多个网关在Internet上是可见的。在这种情况下，内部网络可以使用非唯一的IP地址。
+------内部网络的路由器接口通常不必被外部企业直接访问。
+
+3. 私有地址空间
+因特网域名分配组织IANA组织（Internet Assigned Numbers Authority）保留了以下三个IP地址块用于私有网络。
+10.0.0.0       -   10.255.255.255    (10/8比特前缀)
+172.16.0.0     -   172.31.255.255    (172.16/12比特前缀)
+192.168.0.0    -   192.168.255.255   (192.168/16比特前缀)
+我们把第一块称为“24-比特块”，第二块称为“20-比特块”，第三块称为“16-比特块”注意（在前面的CIDR 记号中），第一块地址就是一个A类网络号，第二块地址是16个连续的B类网络号集合，第三块地址是256个连续的C类网络号集合。
+一个决定使用该文档中定义的IP地址空间的企业不需要与IANA组织或Internet 地址注册组织进行协商。这样，该地址空间可以被许多企业使用。私有地址空间中的地址仅在一个企业内部或在一组选择在该空间协同通信的企业内部保证唯一，这样他们可以在自己拥有的私有网络内部实现通信。
+以前，任意一个需要使用全局唯一地址的企业必须向Internet注册机构提出申请。上述定义的私有地址空间中的地址块将不会被Internet注册机构分配给一个申请用于外部连接的IP地址的企业。
+要使用私有地址，企业要决定在可预见的时期内哪些主机不需要与外部建立网络层连接，从而将这些主机归类为“私有的”。这类主机将使用上述定义的私有地址。私有主机能与企业内的所有其他主机通信，包括“公开的”和“私有的”的主机。但它们和企业外部的任何主机都没有IP 连接。尽管如此，它们仍然能通过中介网关（如应用层网关）访问外部服务。
+其他的主机将被归类为“公开的”，这些公开主机必须使用由Internet注册机构分配的全局唯一的地址空间。公开主机可以与企业内部的其他公开主机和私有主机通信，它们可以具有与企业外部公开主机之间的IP连接。公开主机与其他企业内部的私有主机之间没有连接。
+将私有主机转为公开主机或是相反的操作涉及到IP地址的转换，DNS中相关记录的改变和在其他主机上用IP地址来标志该主机的配置文件的改变。
+因为私有地址没有全局意义，因此在企业之间的链路上没有必要传播私有网络的路由信息。源或目的地址为私有地址的包也不应该在这样的链路上被转发。网络中不使用私有地址的路由器，尤其是那些属于ISP的路由器，期望被设置为拒绝（过滤）关于私有地址的路由信息。如果一个路由器接收到这样的信息，拒绝操作不应该被视为路由协议错误。
+对于这样的地址的非直接参考应该被包含在企业内部。关于这样的参考，一个突出的例子是DNS中的 Resource 记录（Resource records） 和其他有关内部私有地址的信息。特别的（In particular）,ISP应该采取措施防止这样的泄露。
+4. 使用私有地址空间的利弊
+普遍地，对于Internet来说，使用私有地址空间一个明显的好处就是在不必要使用全局地址的地方使用私有地址，从而保存了全局唯一地址空间。
+企业同样从使用私有地址空间中获益不菲： 具有比使用全局唯一地址池时有更多的地址空间支配权使得他们在进行网络设计时有很大的灵活性。这使得操作和管理地址分配方案及扩展路径更为容易和便利。
+由于各方面的原因，Internet上已经遇到这样的情形：没有连接到Internet上的某个企业使用了不是IANA分配的地址空间。在某些情况下，这个地址空间已经被分配给了其他企业。如果这样一个企业以后要连接到Inernet上，这将产生很多严重的问题，因为IP路由在地址具有多义性的时候不能进行正常的操作。尽管在理论上，ISP应该通过路由过滤防备此类错误，但实际上往往不会这样做。使用私有地址空间为这样的企业提供了一种安全的选择，能够在企业需要连接到Internet的时候避免产生冲突。
+使用私有地址空间的一个主要缺陷是，它也许实际上减少了企业访问Internet的灵活性。一旦一个企业决定使用私有地址，为了能让部分主机具有与Internet之间IP连接的能力，他也要承担部分主机地址转换的任务。通常地址转换的代价可以用需要从私有地址转换为公开地址的主机数目来衡量。正如我们上面讨论的那样，即使一个网络使用的是全局唯一地址，为了获得Internet范围的IP地址的连接能力，它也可能仍然需要进行地址转换。
+使用私有地址空间的另一个缺陷是：将几个私有网络合并成一个私有网络时，它也可能需要进行地址转换。回顾第二部分列出的例子，我们注意到公司有合并的趋势。如果这些企业在合并前各自使用私有地址构造自己的私有网络，当这些私有网络合并成一个私有网络时，合并后的私有网络地址不一定唯一。结果是，具有不唯一地址的主机需要重新分配地址。
+地址转换的代价可以通过开发和便于转换的开发工具来减轻（例如 DHCP）.当决定是否要采用私有地址时，我们建议咨询计算机和软件厂商是否能获得这类相应的工具。 一个单独的IETF 组织正在致力于完成描述地址转换过程和要求的所有文档。
+5. 操作考虑
+一种可能的策略是先设计网络中的私有部分，给所有内部链接分配私有地址空间。然后在需要的位置安排公开子网，设计外部连接。
+这种设计不必是永久固定的。如果以后一组主机（一台或多台）要求改变它们的地位（从私有到公开，或是相反），通过转换涉及到的主机的地址，在必要的时候改变其物理连接即可完成。如果需要，在某些事先可以预见的位置，建议为公开子网和私有子网配置不同的物理介质，从而方便这样的改变。为了避免主要的网络破坏，建议将主机按照相似的物理连接要求分组，放置在不同的子网内。
+如果能设计一个合适的子网方案，并且该方案能够得到相关设备的支持，建议使用24-比特块私有地址空间（A类网络），采用便于扩展的制作寻址方案。如果使用子网是个问题，那么可以采用16-比特（C类网络）或20-比特（B类网络）地址块。
+有人可能被怂恿为同一物理介质同时分配公开的和私有的地址。如果这是可能的话，这种设计存在着不可知的危险。（注意，这种危险和使用私有地址空间无关，而是由于在一个普通数字链路子网上多个IP子网的存在引起的）。我们建议在处理该领域时要特别注意。
+强烈建议连接企业到外部网络的路由器在链路的两端安装合适的包和路由过滤，以便防止包和路由信息的泄露。一个企业应该从入站的路由信息中过滤掉任何私有网络，从而保护它自己不陷入路由歧义的境遇，这种境遇在如果到私有网络地址空间的路由指向了企业外部时会发生。
+有这样的可能，两个站点，协作使用私有地址空间，通过一个公开网络彼此通信。为了这样做，他们必须使用一些方法，在公开网络边界上进行封装，从而保持他们的私有地址的私有性。
+如果两个（或更多个）组织遵循本文规定的地址分配方案，以后希望建立彼此之间的IP连接时，这时就会有地址唯一性被打破的危险。为减小这样的冒险，强烈建议使用私有IP地址的组织在为其内部分配子块时，随机地从保留的私有地址池中选取IP地址。
+如果一个企业使用私有地址空间，或混合使用私有地址和公开地址空间，企业外部的DNS客户端不应该看到企业使用的私有地址，因为这些地址将会是多义的。一个确保此实现的方法是为每个既包含使用公开地址的主机，又包含使用私有地址的主机的DNS域运行两个权威服务器。一个服务器对公开地址空间可见，它仅包含企业地址中公开地址能访问到的子网。另一个服务器仅能被私有网络访问，它包含所有的数据集合，包括私有地址和能访问私有网络的公开地址。为了保证一致性，每个服务器应该用相同的数据来配置，配置中，公开可见域仅包含一个过滤后的版本。提供这些功能在一定程度上有附加的复杂性
+6. 安全考虑
+安全主题在本备忘录中不讨论。
+7．总结
+  使用上述方案，许多大型企业只需要全局IP地址空间中相对较少的地址块。Internet从保存全局唯一地址空间获得好处，这将有效地延长IP地址空间的生命周期。通过提供一个相对较大的私有地址空间，企业从增加的灵活性中得到好处。但是，企业网络连接性随时间发生变化时，使用私有地址要求一个组织为企业网络中的部分或所有主机转换地址。      
+8．感谢
+  感谢以下各位审议此文并给出建设性意见。
+
+  Tony Bates (MCI), Jordan Becker (ANS), Hans- Werner Braun (SDSC), Ross Callon (BayNetworks), John Curran (BBN Planet), Vince Fuller (BBN Planet), Tony Li (cisco Systems), Anne Lord (RIPE NCC), Milo Medin (NSI), Marten Terpstra (BayNetworks), Geza Turchanyi (RIPE NCC), Christophe Wolfhugel (Pasteur Institute), Andy Linton (connect.com.au), Brian Carpenter (CERN), Randy Bush  (PSG), Erik Fair (Apple Computer), Dave Crocker (Brandenburg Consulting), Tom Kessler (SGI), Dave Piscitello (Core Competence), Matt Crawford (FNAL), Michael Patton (BBN), and Paul Vixie (Internet   Software Consortium) 。
+参考
+[RFC1466] Gerich, E., "Guidelines for Management of IP Address Space", RFC 1466, Merit Network, Inc., May 1993.
+
+[RFC1518] Rekhter, Y., and T. Li, "An Architecture for IP Address  Allocation with CIDR", RFC 1518, September 1993.
+
+[RFC1519] Fuller, V., Li, T., Yu, J., and K. Varadhan, "Classless  Inter-Domain Routing (CIDR): an Address Assignment and   Aggregation Strategy", RFC 1519, September 1993.
+
+作者地址：
+Yakov Rekhter
+   Cisco systems
+   170 West Tasman Drive
+   San Jose, CA, USA
+   Phone: +1 914 528 0090
+   Fax: +1 408 526-4952
+   EMail: yakov@cisco.com
+
+   Robert G Moskowitz
+   Chrysler Corporation
+   CIMS: 424-73-00
+   25999 Lawrence Ave
+   Center Line, MI 48015
+   Phone: +1 810 758 8212
+   Fax: +1 810 758 8173
+   EMail: rgm3@is.chrysler.com
+
+   Daniel Karrenberg
+   RIPE Network Coordination Centre
+   Kruislaan 409
+   1098 SJ Amsterdam, the Netherlands
+   Phone: +31 20 592 5065
+   Fax: +31 20 592 5090
+   EMail: Daniel.Karrenberg@ripe.net
+
+   Geert Jan de Groot
+   RIPE Network Coordination Centre
+   Kruislaan 409
+   1098 SJ Amsterdam, the Netherlands
+   Phone: +31 20 592 5065
+   Fax: +31 20 592 5090
+   EMail: GeertJan.deGroot@ripe.net
+
+   Eliot Lear
+   Mail Stop 15-730
+   Silicon Graphics, Inc.
+   2011 N. Shoreline Blvd.
+   Mountain View, CA 94043-1389
+   Phone: +1 415 960 1980
+   Fax:   +1 415 961 9584
+   EMail: lear@sgi.com
+
+
+   Steve Gonczi
+   Network Engines, Inc.
+   25 Dan Road Canton, MA 02021-2817
+   Phone: 781-332-1165
+   EMail: steve.gonczi@networkengines.com
+
+
+
+   Ted Lemon
+   950 Charter Street
+   Redwood City, CA 94043
+   EMail: ted.lemon@nominum.com
+
+   Rob Stevens
+   Join Systems, Inc.
+   1032 Elwell Ct Ste 243 Palo Alto CA 94203
+   Phone: (650)-968-4470
+   EMail: robs@join.com
+
+RFC1918  Address Allocation for Private Internets                   RFC1918 私有网络地址分配
+
+
+
+
+1
+RFC文档中文翻译计划
+
+

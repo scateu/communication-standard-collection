@@ -1,0 +1,56 @@
+组织：中国互动出版网（<http://www.china-pub.com/>）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm <http://www.china-pub.com/>）
+E-mail：ouyang@china-pub.com <mailto:ouyang@china-pub.com>
+译者：董苛（cnchris    duke913@163.com）
+译文发布时间：2001-10-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                Edwin W. Meyer, Jr.
+Request for Comments: 79                                 MIT Project MAC
+NIC 5601                                               November 16, 1970
+
+                             日志协议错误
+                         Logger Protocol Error
+
+    Steve Crocker最近发现了一个冲突，是一号协议文献中描述的正式的NCP协议和在RFC 66中描述的日志协议之间的冲突。Steve建议发表一则RFC，来对网络社区声名这一点。
+
+    在RFC66中建议道，在RTS或STR请求后紧跟一个ALL定位命令以进行连接。这与一号协议文献中陈述的有关ALL命令只能用于“开放式”连接的限制产生了冲突。
+
+    在连接建立起来之前不要求处理ALL命令是一个简化了的限制，NCP的实施有可能会利用这一点。例如，多路NCP目前就是这么设计的。因为这个原因，也因为我们认为除了有严重的错误外，NCP协议都不能有所改动，所以提出的日志协议需要做出修改，以吻合现有的NCP协议。
+
+         [ This RFC was put into machine readable form for entry ]
+       [ into the online RFC archives by Alison De La Cruz  11/00  ]
+
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+   
+

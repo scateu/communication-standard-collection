@@ -1,0 +1,148 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：（）
+译文发布时间：2001-11-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留
+本文档的翻译及版权信息。
+
+
+
+Network Working Group                                          C. Madson
+Request for Comments: 2404                            Cisco Systems Inc.
+Category: Standards Track                                       R. Glenn
+                                                                    NIST
+                                                           November 1998
+
+
+ESP和AH中HMAC-SHA-1-96的使用
+（RFC2404――The Use of HMAC-SHA-1-96 within ESP and AH）
+本文作用            
+本文为Internet提供了一种标准传输协议，为了进一步的改进还需要讨论和提议，本文需要讨
+论和改进的建议。要得到规定和本协议的状态，请参考最新版的"Internet Official Protocol Standards" 
+(STD 1)，本文的散布不受限制。   
+版权公告
+Copyright (C) The Internet Society (1998).  所有权利保留。
+摘要
+本文讲述了HMAC算法同SHA-算法联合作为修订的IPSEC压缩安全有效载荷(ESP)以及修订
+的IPSET认证报头[AH]中作为认证机制的使用，HMAC同SHA-1结合提供了原始数据认证和安全
+性保护。[Thayer97a]中提供了进一步的有关ESP和AH应用的其它信息。
+
+目录
+1.绪论	2
+2.算法和模式	2
+2.1  性能	2
+3. 密钥原料	2
+4. 同ESP密码机制的相互作用	3
+5. 安全考虑	3
+6. 致谢	3
+7. 参考文献	4
+8.作者地址	4
+
+1.绪论
+本文详细说明了SHA-1同HMAC结合在压缩安全有效载荷(ESP)以及认证报头[AH]中作为密
+钥认证机制的使用，HMAC-SHA-1-96的目的是确定数据包是可信的，没有在传输中被修改过。
+HMAC是一个密钥认证算法，HMAC提供的数据完整性和数据原始性认证依赖于密钥的分发
+范围，如果只有发送方和接收方知道密钥，它就提供了收发方之间数据包的原始数据鉴定和完整
+性检查，如果HMAC是正确的，那就能证明是发送方发来的信息。
+本文中，HMAC-SHA-1-96用在ESP和AH中，要得到进一步关于各种包括机密机制认证的
+ESP是怎样组合在一起提供安全服务的信息，可参考[ESP]和[Thayer97a]，要知道AH进一步的信
+息，参考[AH] and [Thayer97a]。关键字"MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL 
+NOT",   "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", 和 "OPTIONAL"在[RFC 
+2119]中介绍了。      
+2.算法和模式
+[FIPS-180-1]讲述了基本的SHA-1算法，[RFC-2104]讲述了HMAC算法，HMAC算法提供了
+插入不同散列算法（如SHA-1）的架构。HMAC-SHA-1-96以64位的数据分组为操作对象，补位
+要求在[FIPS-180-1]特别讲述了，它也是SHA-1算法的一部分，如果你根据[FIPS-180-1]建立SHA-1，
+则对HMAC-SHA-1-96来说，你就不用添加任何的补位，不需要[AH]中定义的固有信息包补位。
+HMAC-SHA-1-96产生一个160位的认证值，此160位的值可以同RFC2104中描述的那样被
+缩短，要同ESP或AH一起使用，必须支持缩短的前96位值。发送时，缩短的值放在认证字段，
+接收时，整个160位值都被计算出来，并同认证字段比较前96位，HMAC-SHA-1-96不支持其它
+的认证值长度。选取96位是因为它是[AH]的默认认证数据长度，并且符合[RFC-2104]的要求。
+2.1  性能
+[Bellare96a]陈述了“(HMAC)性能是散列函数的基础”，本文中没有关于SHA-1, HMAC or或
+HMAC 同SHA-1结合的详细的性能分析。
+[RFC-2104]中概述了一种对应用的修改，它能提高每个信息包的性能又不影响他们之间协同工
+作。  
+3. 密钥原料
+HMAC-SHA-1-96是一个密钥算法，在[RFC-2104]中没有指定密钥长度，要同ESP或AH一起
+使用，必须（MUST）支持160位的密钥长度，绝对不能（MUST NOT）支持其它长度的密钥，也
+就是说在HMAC-SHA-1-96中只能用160位的密钥。使用160位的密钥是因为[RFC-2104]中推荐了
+（也就是低于160位的认证值会降低安全能力，高于160位的长度对安全能力的提高没有用处）。
+[RFC-2104]讨论了对密钥原料的需求，包括对好的随机序列需求的讨论。必须用一个好的伪随
+机函数来产生需要的160位的密钥。
+在写作本文时，还没发现一套用在HMAC中的弱的密钥，这并不是说不存在弱的密钥，从某
+种意义上说，如果发现了一套这样的密钥，那么他就会被抛弃，取而代之另一套密钥，或者一种
+新的通过验证的安全协议。
+[ARCH]描述了一种当一个SA需要多个密钥时（例如当一个ESP SA需要一个加密密钥和一
+个鉴定密钥时）获得密钥原料的产生机制。为了提供原始数据认证，密钥分发机制必须分配的密
+钥的唯一性，并确保它们只分发给了通讯方。
+关于密钥的重新产生，[RFC-2104]推荐：最近的攻击并没有明确显示需频繁的更改密钥，因为
+这些攻击基本上是不可行的，然而一定时间段内更新密钥是基本的安全策略，因为这样有助于防
+止密钥和函数潜在的虚弱性，减少密码破译者获得的信息，还可限制已被截取的密码的危害。
+   
+4. 同ESP密码机制的相互作用
+到写这篇文章时，还没有一个出版物指出要取消HMAC-SHA-1-96算法，而代之以任何特别
+的算法。   
+5. 安全考虑
+HMAC-SHA-1-96的安全性取决于HMAC的效率，也低一些程度地取决于SHA-1的效率，在
+写这篇文章时还没有对HMAC-SHA-1-96有用的密码攻击。
+[RFC-2104]讲叙了对“最低限度的合理的散列函数”的“生日攻击”是行不通的，对于如
+HMAC-SHA-1-96这样的64字节的散列函数分组，对2**80个分组的成功处理的攻击是不可行的，
+除非当处理了2**30个分组时，发现潜在的散列值冲突了，一个这样防冲突特点差的散列一般都
+被认为无用的。
+当SHA-1没有发展作为一个密码算法时，HMAC从一开始就有此标准，认识到这一点是很重
+要的。
+[RFC-2104]也讨论了靠切断散列值提供另外的安全性，强烈推荐包括HMAC的规范采用此种
+切割方法。
+因[RFC-2104]提供了一种HMAC组合不同散列算法的结构，那么用其它算法（如MD5）代替
+SHA-1是可能的，[RFC-2104]详细讨论了HMAC的优势和缺陷。
+对任何密码算法来说，它的能力部分取决于算法应用的正确性密钥处理机制和它的应用的安
+全性，关联的秘密密钥的强度，还取决于所有特殊系统中应用程序的强度，[RFC-2202]中提供了帮
+助检查HMAC-SHA-1-96代码正确性的测试向量和实例程序代码。
+6. 致谢
+本文部分来源于Jim Hughes，在DES/CBC+HMAC-MD5 ESP转化方面同Jim Hughes一起工作
+的人们，ANX参与者以及IPsec工作组的成员的先期工作。
+我在此还要感谢Hugo Krawczyk，他提出了对关于本文的密码方面的内容解释和建议。   
+7. 参考文献
+   [FIPS-180-1] NIST, FIPS PUB 180-1: Secure Hash Standard,
+                April 1995.
+                http://csrc.nist.gov/fips/fip180-1.txt (ascii)
+                http://csrc.nist.gov/fips/fip180-1.ps  (postscript)
+   [RFC-2104]   Krawczyk, H., Bellare, M. and R. Canetti, "HMAC: Keyed-
+                Hashing for Message Authentication", RFC 2104, February
+                1997.
+   [Bellare96a] Bellare, M., Canetti, R., and H. Krawczyk, "Keying Hash
+                Functions for Message Authentication", Advances in
+                Cryptography, Crypto96 Proceeding, June 1996.
+   [ARCH]       Kent, S., and R. Atkinson, "Security Architecture for
+                the Internet Protocol", RFC 2401, November 1998.
+   [ESP]        Kent, S., and R. Atkinson, "IP Encapsulating Security
+                Payload", RFC 2406, November 1998.
+   [AH]         Kent, S., and R. Atkinson, "IP Authentication Header",
+                RFC 2402, November 1998.
+   [Thayer97a]  Thayer, R., Doraswamy, N., and R. Glenn, "IP Security
+                Document Roadmap", RFC 2411, November 1998.
+   [RFC-2202]   Cheng, P., and R. Glenn, "Test Cases for HMAC-MD5 and
+                HMAC-SHA-1", RFC 2202, March 1997.
+   [RFC-2119]   Bradner, S., "Key words for use in RFCs to Indicate
+                Requirement Levels", BCP 14, RFC 2119, March 1997.
+8.作者地址
+   Cheryl Madson
+   Cisco Systems, Inc.
+   EMail: cmadson@cisco.com
+   Rob Glenn
+   NIST
+   EMail: rob.glenn@nist.gov
+ The IPsec working group can be contacted through the chairs:
+   Robert Moskowitz
+   ICSA
+   EMail: rgm@icsa.net
+   Ted T'so
+   Massachusetts Institute of Technology
+   EMail: tytso@mit.edu
+RFC2404――The Use of HMAC-SHA-1-96 within ESP and AH         ESP和AH中HMAC-SHA-1-96的使用
+
+
+2
+RFC文档中文翻译计划

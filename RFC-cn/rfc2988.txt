@@ -1,0 +1,132 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：吴晓东（dongfang7  dongfangqiyue@sina.com）
+译文发布时间：2001-4-9
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+Network Working Group                                          V. Paxson
+Request for Comments: 2988                                         ACIRI
+Category: Standards Track                                      M. Allman
+                                                            NASA GRC/BBN
+                                                           November 2000
+
+RFC2988 计算TCP的重发定时器
+（RFC2988  Computing TCP's Retransmission Timer）
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+	本文档定义一种标准算法，传输控制协议（TCP）的发送方需要使用该算法来计算和维护它们的重发定时器。它扩展了RFC 1122的第4.2.3.1节的讨论，并且把支持该算法的要求从应该升级到必须。
+目录
+1 介绍	2
+2 基本算法	2
+3 采样RTT	3
+4 时钟间隔	3
+5 维护RTO定时器	3
+6 安全考虑	4
+鸣谢	4
+参考	5
+作者地址	5
+版权说明	6
+致谢	6
+
+1 介绍
+	传输控制协议（TCP）[Pos81]使用一个重发定时器，在缺乏任何远端的数据接收方反馈的情况下来保障数据的传递。该定时器的时间间隔被称为RTO（重发超时）。RFC 1122 [Bra89]指明，RTO应该按照[Jac88]的描述进行计算。
+	本文档使设置RTO的算法法规化。另外，本文档扩展了RFC 1122的第4.2.3.1节的讨论，并且把支持该算法的要求从应该升级到必须。RFC 2581[APS99]描述了该算法，TCP使用它在RTO超时之后和一次重发被发出之后开始发送。本文档不改变在RFC 2581[APS99]中所描述的行为。
+	在某些情况下，对于一个TCP发送方而言，采用比本文档下面所要详述的算法更加保守一点的方法可能更有利一些。然而，一个TCP不可以采用比本文档下面的算法更为激进的方法。
+	在本文档中的关键词“必须”“不可以”“须要”“将要”“将不”“应该”“不应该”“建议”“可以”“可选”等应该按照[Bra97]中的描述进行翻译。
+2 基本算法
+	要计算当前的RTO，TCP发送方需要维护两个状态变量，SRTT （平滑环回时间）和RTTVAR（环回时间变量）。另外，我们假设一个时钟间隔G秒。
+	规定计算SRTT、RTTVAR和RTO的法则如下：
+(2.1)  在对一个收发双方之间所发出的一个段完成回环时间（RTT）测量之前，发送方应该将RTO设置为3秒（见RFC 1122 [Bra89]），虽然5.5节中讨论的反复重发问题的“还原” 仍然适用。
+    注意到有一些设施可能采用一种“心跳式”定时器，它能够产生一个介于2.5秒和3秒之间的值。因此，在该定时器绝不会在短于2.5秒的时间内超时的情况下，作为一个较低的2.5秒的步进也是可以接受的，使用间隔为G的心跳式定时器的设施，它不应该设置该定时器的值低于2.5 + G秒。
+    (2.2)  当完成第一个RTT测量R时，宿主机必须设置
+            SRTT <- R
+            RTTVAR <- R/2
+            RTO <- SRTT + max (G, K*RTTVAR)
+          其中K = 4。
+    (2.3)  当完成一个并发的RTT测量R'时，宿主机必须设置
+            RTTVAR <- (1 - beta) * RTTVAR + beta * |SRTT - R'|
+SRTT <- (1 - alpha) * SRTT + alpha * R'
+用来更新RTTVAR的SRTT的值，就是那个使用第二次分配来更新SRTT之前的SRTT值本身。就是说，更新RTTVAR和SRTT必须按照上述的顺序进行计算。
+上述计算应该使用alpha=1/8和beta=1/4进行计算（如[JK88]所推荐）。
+	在计算之后，宿主机必须更新RTO <- SRTT + max (G, K*RTTVAR)。
+(2.4)  一旦RTO计算好，如果它小于1秒钟，则RTO应该补充到1秒。
+传统地，TCP设施使用粗间隔时钟来测量RTT并触发RTO，这使得应用于RTO上的最小值很大。研究表明，需要一个很大的最小RTO值来保持TCP的保守，以避免虚假重发 [AP99]。因此，本规范要求有一个很大的最小RTO值作为保守之需，而同时承认，在未来的某个时刻，研究可能表明一个小一些的最小RTO值是可接受的，或者，是优越的。
+(2.5)  可以给RTO使用最大值，如果该值至少有60秒。
+3 采样RTT
+TCP必须使用Karn的算法[KP87]来采样RTT。亦即，不可以使用重发过的段进行RTT 采样（由此，究竟响应是针对于信包的第一个实例还是后来的实例就变得很模糊）。TCP可以安全地从重发段进行RTT采样的唯一情况是当该TCP使用了时间戳选项[JBB92]，因为时间戳选项去除了关于数据段实例所触发的响应的不明确性
+传统上，TCP设施一次进行一个RTT测量（典型情况每RTT一次）。然而，当使用时间戳选项时，每一个ACK响应可以用作一个RTT样本。RFC 1323 [JBB92]建议，使用大的阻塞窗口的TCP连接应该在每个数据窗口中采取许多的RTT样本，以避免被评估的RTT中的假名效应。一个TCP设施必须在每一个RTT期间进行一次RTT测量（除非无法经由Karn的算法计算）。
+对于相当适度的阻塞窗口尺寸，研究表明，每段定时并不能导致更好的RTT评估[AP99]。另外，当间于每两个RTT多次采样时，在第二节中定义的alpha和beta值可能保持不充分的RTT历史。一种改变这些常量的办法目前还是一个开放的研究问题。
+4 时钟间隔
+在计算RTT度量和不同状态变量的时候，不需要使用时钟间隔。然而，如果在RTO计算中的K*RTTVAR项等于零，则间隔出现的不一致情况必须经由扩展达到G秒（亦即，使用步骤2.3中的方程）。
+RTO <- SRTT + max (G, K*RTTVAR)
+经验表明，更精细的时钟间隔（<= 100毫秒）某种程度上性能优于更粗的时钟间隔。
+注意到[Jac88]描述了几种聪明的技巧，可以用来从粗时钟间隔定时器中获得更好的时钟精度。这种方法被广泛的使用在现存的TCP设施上。
+5 维护RTO定时器
+一个设施必须维护重发定时器，使得一个段绝不会过早的重发，亦即，在该段的前一次发送之后少于一个RTO的时间里重发。
+	下面是推荐的维护重发定时器的算法。
+(5.1)  每一次一个包含数据的包被发送（包括重发），如果该定时器没有运行则启动它，使得它在RTO秒之后超时（按照当前的RTO值）。
+(5.2)  当所有的发出数据都被确认之后，关闭该重发定时器。
+(5.3)  当接收到一个ACK确认一个新的数据，重新启动该重发定时器，使得它在RTO秒之后超时（按照当前的RTO值）。
+	当重发定时器超时后，作下列事情：
+(5.4)  重发最早的尚未被TCP接收方响应的段。
+    (5.5)  宿主机必须设置RTO <- RTO * 2（“还原定时器”）。在上面(2.5)中讨论的最大值可以用来为该两倍乘操作提供一个上限。
+(5.6)  启动重发定时器，使得在RTO秒之后它会超时（对于5.5所描述的两倍乘操作之后的RTO的值而言）。
+注意到在重发之后，一旦一个新的RTT测量完成（这只有在新的数据被发出并且得到响应时才会发生），在第二节中描述的计算就会执行，包括RTO计算，而这可能会导致“崩溃的”RTO在按指数补偿之后被放弃（规则5.5）。
+注意到一个TCP设施可能在还原定时器多次之后清除SRTT和RTTVAR的值，因为有可能当前的SRTT和RTTVAR的值在此情况下是伪造的。一旦SRTT和RTTVAR被清除，它们需要使用下一个按照2.2的RTT采样而不是使用2.3的采样进行初始化。
+6 安全考虑
+本文档要求一个TCP在一个未被响应的段被重发之前等待一个给定的时间间隔。攻击行为可能造成一个TCP发送方因为增加延时到被定时的信包反应时间上，或者增加延时到它的响应上，而造成RTO计算值过大。然而，对一个信包的反应时间添加延时的能力常常与导致信包丢失的能力相一致，因此很难看出攻击者能够从这种可能导致比简单丢失某些TCP连接的信包更危险的攻击当中获得什么好处。
+Internet在某种相当大的程度上依赖于正确实施RTO算法（它在RFC2581中也有描述）， 以保持网络的稳定性，并且避免阻塞性崩溃。一个攻击者可能造成TCP端节点在面临阻塞时，通过在接收方真正接收到数据之前强行响应数据段的方法，反应更加激进一些，而因此将RTO降低到一个不安全的值。但是，这样做需要正确地欺骗响应动作，而这是非常困难的，除非该攻击者可以控制在收发双方之间的路径上的流量。另外，即使如果攻击者可以引起发送方的RTO达到非常小的值，这显示出该攻击者不能调控这种行为使之成为一种攻击（这比较于他们可以造成的其他危险而言，如果他们能够欺骗那些属于该连接的信包的话），因为发送方TCP在面临由真正阻塞引起的不正常的发送出去的信包丢失时，仍然能够还原它的定时器值。
+鸣谢
+本备忘录中所描述的算法是由Van Jacobson在[Jac88]中创建的。
+参考
+   [AP99]  Allman, M. and V. Paxson, "On Estimating End-to-End Network Path Properties", SIGCOMM 99.
+   [APS99] Allman, M., Paxson V. and W. Stevens, "TCP Congestion Control", RFC 2581, April 1999.
+   [Bra89] Braden, R., "Requirements for Internet Hosts -- Communication Layers", STD 3, RFC 1122, October 1989.
+   [Bra97] Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, March 1997.
+   [Jac88] Jacobson, V., "Congestion Avoidance and Control", Computer Communication Review, vol. 18, no. 4, pp. 314-329, Aug.  1988.
+   [JK88]  Jacobson, V. and M. Karels, "Congestion Avoidance and Control",  ftp://ftp.ee.lbl.gov/papers/congavoid.ps.Z.
+   [KP87]  Karn, P. and C. Partridge, "Improving Round-Trip Time Estimates in Reliable Transport Protocols", SIGCOMM 87.
+   [Pos81] Postel, J., "Transmission Control Protocol", STD 7, RFC 793, September 1981.
+作者地址
+   Vern Paxson
+   ACIRI / ICSI
+   1947 Center Street
+   Suite 600
+   Berkeley, CA 94704-1198
+
+   Phone: 510-666-2882
+   Fax:   510-643-7684
+   EMail: vern@aciri.org
+   http://www.aciri.org/vern/
+
+   Mark Allman
+   NASA Glenn Research Center/BBN Technologies
+   Lewis Field
+   21000 Brookpark Rd.  MS 54-2
+   Cleveland, OH  44135
+
+   Phone: 216-433-6586
+   Fax:   216-433-8705
+   EMail: mallman@grc.nasa.gov
+   http://roland.grc.nasa.gov/~mallman
+版权说明
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+   This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works.  However, this document itself may not be modified in any way, such as by removing the copyright notice or references to the Internet Society or other Internet organizations, except as needed for the purpose of developing Internet standards in which case the procedures for copyrights defined in the Internet Standards process must be followed, or as required to translate it into languages other than English.
+   The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+   This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+致谢
+  Funding for the RFC Editor function is currently provided by the Internet Society.
+RFC2988  Computing TCP's Retransmission Timer                    RFC2988 计算TCP的重发定时器
+
+
+RFC文档中文翻译计划
+
+

@@ -1,0 +1,867 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：徐孜骏（happygogo    happygogo@sina.com）
+译文发布时间：2001-7-3
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                                      M. Myers
+Request for Comments: 2511                                                  VeriSign
+Category: Standards Track                                                  C. Adams
+                                                               Entrust Technologies
+                                                                            D. Solo
+                                                                           Citicorp
+                                                                            D. Kemp
+                                                                                DoD
+                                                                         March 1999
+
+X.509证书请求消息格式
+（Internet X.509 Certificate Request Message Format）
+
+此备忘录的状况
+此文档为因特网社区详细描述了一个因特网标准途径协议，并且请求改善的讨论和建
+议。为了确保此协议的标准化状态，请参考当前版本的因特网官方协议标准（STD1）。本备
+忘录的发布是不受限制的。
+
+版权通知
+    版权所属因特网社会（1999），保留全部权力。
+目录
+1 摘要	2
+2 略读	2
+3 证书请求信息(CertReqMessage)的语法	2
+4 拥有私钥的证明(POP)	3
+4．1 签名密钥	3
+4．2 加密密钥	3
+4．3 协议密钥	4
+4．4 POP语法	4
+5 CertRequest语法	6
+6  Controls语法	7
+6．1 注册号（Registration Token）控制	7
+6．2 鉴定者（Authenticator）控制	7
+6．4 文档选项（Archive Options）控制	8
+6．5 旧证书ID（OldCert ID）控制	9
+6．6 协议加密密钥（Protocol Encryption Key）控制	9
+7 对象标识符（Object Identifiers）	10
+8 对于安全的考虑	10
+9 参考	10
+10 谢辞	11
+附录A． 构造dhMAC	11
+Appendix B. Use of RegInfo for Name-Value Pairs	12
+Appendix C. ASN.1 Structures and OIDs	15
+Full Copyright Statement	21
+
+1 摘要
+    本文描述了证书请求消息格式(CRMF)。它被用来向CA传递一个产生X.509证书请求
+(可能通过RA)。请求消息一般包括公钥和有关的登记信息。
+
+2 略读
+    证书请求构成的步骤如下：
+1)	产生CertRequest值，其值包括：公钥，所有或部分的终端实体（EE）的名字，其他所
+要求的证书值域，以及与登记过程相连系的控制信息。
+2)	可以通过计算CertRequest的值来证明拥有与所请求的证书的公钥相连系的私钥，即可
+计算出POP（proof of possession，拥有私钥的证明）的值。
+3)	以上两项所需要的其他登记信息，这些信息和POP值，CertRequest结构组成证书请求
+信息。
+4)	证书请求信息被秘密传递给CA，传递的方法不是本文叙述的范围。
+
+3 证书请求信息(CertReqMessage)的语法
+    证书请求信息由证书请求，一个可选的检验项，以及一个可选的登记信息项。
+
+ CertReqMessages ::= SEQUENCE SIZE (1..MAX) OF CertReqMsg 
+
+ CertReqMsg ::= SEQUENCE { 
+    certReq   CertRequest,
+    pop       ProofOfPossession  OPTIONAL,
+    -- 其内容依赖于密钥类型
+    regInfo   SEQUENCE SIZE(1..MAX) of AttributeTypeAndValue OPTIONAL }
+
+POP用来证明证书请求者确实拥有所对应的私钥。此项可由certReq计算出来，其内容和结
+构随公钥算法的类型和运作模式的改变而改变。regInfo 项仅包括与证书请求有关的补充信
+息。它还可包括请求者的联系信息，布告信息，或对证书请求有用的辅助信息。直接与证书
+内容有关的信息应该包括在certReq中。然而若RA包含另外的certReq内容，这可以使pop
+项无效。因此其余证书想要的数据可以由regInfo提供。
+
+4 拥有私钥的证明(POP)
+    为了防止某些攻击以及允许CA/RA 检验终端实体和密钥对之间对应的有效性，PKI管
+理操作使终端实体有能力证明拥有(也就是说能用)与证书公钥所对应的私钥。CA/RA在证书
+交换中可自由选择如何实施POP（例如带外的方法或CRMF的带内的方法），也就是说这可
+以是一个策略问题。然而，因为现在有许多非PKIX的操作协议在使用（例如许多电子邮件
+协议），它们并不检验终端实体和私钥之间的对应性，这要求CA/RA必须通过一些方法来实
+施POP。这种对应性仅能被CA/RA假设为已证实，直到普遍存在可操作的协议（如签名，
+加密，协议密钥对），这样才能证明对应性的存在。因此若CA/RA没有证实对应性，在英特
+网PKI中的证书将没有意义。
+    依照证书所要求的密钥类型，POP可用不同方法实现。若密钥可用于多种目的（如RSA
+密钥），那么POP可用任何一种方式实现。
+    本文考虑到POP被CA或RA或两者都验证的情况。一些策略可能要求CA在认证过程
+中检验POP。在此过程中，RA必须提交CertRequest和POP给CA，并且作为一种选择也
+可以检验POP。若策略不要求CA检验POP，那么RA应该提交终端实体的请求和证明给
+CA。如果这不可能的话（例如，RA用带外的方法检验POP），那么RA可以向CA证明所
+要求的证明已经被验证。若CA使用带外的方法证明POP（例如人工传递CA所生成私钥），
+那么POP项不会被用。
+
+4．1 签名密钥
+    对签名密钥来说，终端实体用签名来证明拥有私钥。
+
+4．2 加密密钥 
+    对加密密钥来说，终端实体提供私钥给CA/RA，或为了证明拥有私钥被要求解密。解
+密通过直接或间接来完成。直接的方法是RA/CA发布一个随机测试，终端实体被要求立即
+做出回答。间接的方法是发布一个被加密的证书，让终端实体来证明它有能力对证书解密。
+CA发布的证书使用一种仅能被指定终端实体使用的格式。
+
+4．3 协议密钥 
+    对协议密钥来说，终端实体使用4.2节中的3种方法来加密密钥。对于直接和间接的方
+法，为了证明终端实体拥有私钥（也就是对加密的证书解密或对发布的测试做出回答），终
+端实体和PKI管理机构（即CA/RA）必须建立一个共享的密钥。注意：这并不需要任何限
+制强加在被CA鉴定的密钥上，特别是对于Diffie-Hellman密钥，终端实体可自由选择它的
+算法参数，例如必要时CA能产生一个带有正确参数的短期密钥对（如一次性密钥对）。
+    终端实体也可以MAC（与密钥有关的单向散列函数称为MAC，即消息鉴别码）证书请
+求（使用共享的由Diffie-Hellman算法计算出的密钥）作为第四个可选择的事物来证明POP。
+只要CA已经有了DH证书，这个证书已经被终端实体知道，并且终端实体愿意使用CA的
+DH参数，这个选项就可以使用。
+
+4．4 POP语法
+    ProofOfPossession ::= CHOICE {
+       raVerified        [0] NULL,
+       -- 用于是否RA已经证明请求者拥有私钥
+       signature         [1] POPOSigningKey,
+       keyEncipherment   [2] POPOPrivKey,
+       keyAgreement      [3] POPOPrivKey }
+这个选项可以使用
+   POPOSigningKey ::= SEQUENCE {
+       poposkInput         [0] POPOSigningKeyInput OPTIONAL,
+       algorithmIdentifier     AlgorithmIdentifier,
+       signature               BIT STRING }
+       --签名signature（使用algorithmIdentifier所指的算法）是基于poposkInput 的DER
+编码值。
+       --注意：如果certReq中的 CertTemplate结构包含主体和公钥值，那么
+       --poposkInput必须省略掉，并且signature必须通过certReq 的DER编码值计算出来。
+       --如果certReq中的CertTemplate结构没有包含主体和公钥值，poposkInput必须存在
+       --并被签名。
+       --这种策略保证了公钥不会同时存在于poposkInput和certReq中的 CertTemplate结
+构。
+
+   POPOSigningKeyInput ::= SEQUENCE {
+       authInfo            CHOICE {
+           sender              [0] GeneralName,
+           --用于当存在一个被证实的sender的标识符时（例如一个来自于以前颁发并且
+现在
+           --仍有效的证书的DN（可辨认名））
+           publicKeyMAC        PKMACValue },
+           --用于当现在不存在一个被证实的sender的GeneralName时；
+--publicKeyMAC包括一个基于密码的消息鉴别码（MAC），
+--它是基于publicKey的DER编码值。
+       publicKey           SubjectPublicKeyInfo }  
+
+PKMACValue ::= SEQUENCE {
+      algId  AlgorithmIdentifier,
+      --算法是基于密码的MAC {1 2 840 113533 7 66 13}，参数为PBMParameter。
+      value  BIT STRING }
+
+POPOPrivKey ::= CHOICE {
+       thisMessage       [0] BIT STRING,
+       --此项含有拥有私钥的证明，并且此项包括私钥本身（被加密）。
+       subsequentMessage [1] SubsequentMessage,
+       dhMAC             [2] BIT STRING }
+       --仅用于协议密钥，在此项中证明拥有私钥，此项包括一个基于来自终端实体的私
+有的
+       --DH钥和CA的公共的DH钥的密钥的MAC（基于certReq的参数的DER编码值，
+它
+       --必须都包括subject和公钥）；dhMAC必须根据附录A中的说明计算出来。
+
+SubsequentMessage ::= INTEGER {
+       encrCert (0),
+       --要求结果证书为了终端实体被加密，接着POP将被一个确认消息所证实
+       challengeResp (1) }
+       --要求为了证明拥有私钥，CA/RA参与进和终端实体之间的回答挑战的交流。
+      含有此规格的协议若要成为一个完整的协议将包括确认和回答挑战的消息。
+
+4．4．1 基于密码的MAC的使用
+    当publicKeyMAC被用于POPOSigningKeyInput中来证明请求的真实性，下述的算法将
+被使用。
+
+PBMParameter ::= SEQUENCE {
+         salt                OCTET STRING,
+         owf                 AlgorithmIdentifier,
+         --使用单向函数的算法标识符（建议使用SHA-1算法)
+         iterationCount      INTEGER,
+         --OWF被应用的次数
+         mac                 AlgorithmIdentifier
+         -- MAC的算法标识符 (例如 DES-MAC, Triple-DES-MAC [PKCS11],
+   }   -- 或 HMAC [RFC2104, RFC2202])
+
+    使用PBMParameter来计算publicKeyMAC，由此来证明公钥证书请求来源的过程可以
+由两部分组成。第一部分使用共享的秘密信息来生成一个MAC密钥。第二部分散列公钥，
+并用MAC密钥来产生一个确认值。
+    第一部分算法的初始化假设存在一个共享的分布在一个可信任的位于CA/RA和终端实
+体之间的方式的秘密。salt 值被加之与此共享的秘密，并使用iterationCount次单向散列函
+数。这样，此共享的秘密作为第一次输入，接下来每一次重复计算中，上一次的输出作为这
+一次的输入，最后产生密钥K。
+    在第二部分中，K和公钥作为输入来产生publicKeyMAC，如下所示：
+publicKeyMAC = Hash( K XOR opad, Hash( K XOR ipad, public key) )，opad、ipad定义于
+RFC2104。
+    单向散列函数的算法标识符是SHA-1 {1 3 14 3 2 26}，MAC的算法标识符是
+HMAC-SHA1 {1 3 6 1 5 5 8 1 2}。
+
+5 CertRequest语法
+      CertRequest由请求标识符、证书内容模板和一组可选的控制信息组成。
+
+CertRequest ::= SEQUENCE { 
+    certReqId     INTEGER,          -- 使请求和回答相匹配的标识符
+    certTemplate  CertTemplate,   -- 所发布证书的选择域
+    controls      Controls OPTIONAL }   -- 有关证书发布的属性信息
+
+
+CertTemplate ::= SEQUENCE { 
+    version      [0] Version               OPTIONAL,
+    serialNumber [1] INTEGER               OPTIONAL,
+    signingAlg   [2] AlgorithmIdentifier   OPTIONAL,
+    issuer       [3] Name                  OPTIONAL,
+    validity     [4] OptionalValidity      OPTIONAL,
+    subject      [5] Name                  OPTIONAL,
+    publicKey    [6] SubjectPublicKeyInfo  OPTIONAL,
+    issuerUID    [7] UniqueIdentifier      OPTIONAL,
+    subjectUID   [8] UniqueIdentifier      OPTIONAL,
+    extensions   [9] Extensions            OPTIONAL }
+
+  OptionalValidity ::= SEQUENCE {
+      notBefore  [0] Time OPTIONAL,
+      notAfter   [1] Time OPTIONAL } --至少存在一个
+
+  Time ::= CHOICE {
+      utcTime        UTCTime,
+      generalTime    GeneralizedTime }
+
+6  Controls语法
+    证书请求的产生可以包括一个或多个有关请求过程的控制值。
+
+Controls  ::= SEQUENCE SIZE(1..MAX) OF AttributeTypeAndValue
+
+    以下的控制被定义为：regToken，authenticator，pkiPublicationInfo，pkiArchiveOptions，
+oldCertID， protocolEncrKey（这些项被认为可以超时扩展）。
+
+6．1 注册号（Registration Token）控制
+    regToken控制包含以前的信息（或是基于秘密的评估或是基于了解的信息），这些信息
+往往被CA用于在颁发证书前验证请求者身份。一收到包含regToken的证书请求，CA就验
+证这些信息，以便确认在证书请求中的声称的身份。
+    RegToken可以被CA生成，并在带外提供给订户，或者对CA和订户都可用。任何带
+外的交换的安全性应该足够应付如CA接受了某人的干扰信息而没有接受原本订户的信息
+这样的冒险。
+    RegToken控制将典型的仅被用于终端实体进入PKI的初始化上，而authenticator控制
+（见6．2节）将不仅用于初始化，而且将用于接下来的证书请求上。
+    在一些使用例子中，regToken可能是一个文本字符串或是一个数，如随机数。这个值接
+下来能被作为二进制数或是一个二进制数的字符串表示来编码。不管数的属性，为了确保值
+的统一的编码，regToken的编码将用UTF8。
+
+6．2 鉴定者（Authenticator）控制
+    Authenticator 控制包含一些用于行为基础的信息，这些信息用来在和CA交流中产生非
+密码的身份检查。例子有：母亲未婚时的名字，社会安全号的最后4个数字，或其他和订户
+的CA共享的知识信息；这些信息的散列；或其他用于该目的的信息。Authenticator控制值
+可由CA或订户生成。
+    在一些使用例子中，Authenticator可能是一个文本字符串或是一个数，如随机数。这个
+值接下来能被作为二进制数或是一个二进制数的字符串表示来编码。不管数的属性，为了确
+保值的统一的编码，Authenticator的编码将用UTF8。
+
+6．3 颁发信息（Publication Information）控制
+      pkiPublicationInfo控制使订户可以控制CA证书的发布。它被定义为如下语法：
+
+PKIPublicationInfo ::= SEQUENCE {
+        action     INTEGER {
+                     dontPublish (0),
+                     pleasePublish (1) },
+        pubInfos  SEQUENCE SIZE (1..MAX) OF SinglePubInfo OPTIONAL }
+
+          -- 如果action是"dontPublish"，pubInfos必须不存在。
+          -- (如果action是"pleasePublish"，并且pubInfos被删除，
+          -- action被设为"dontCare" 。）
+
+   SinglePubInfo ::= SEQUENCE {
+         pubMethod    INTEGER {
+             dontCare    (0),
+             x500        (1),
+             web         (2),
+             ldap        (3) },
+         pubLocation  GeneralName OPTIONAL }
+    如果选择dontPublish项，请求者指示PKI不要发布证书（这表示请求者要自己发布证
+书）。
+    如果选择dontCare项，或者如果PKIPublicationInfo控制被从请求中删除，请求者指示
+PKI可以用任何它选择的方法发布证书。
+    如果请求者除了希望CA能够在其他存放处使证书有效，还希望证书至少出现在一些地
+方，那就要为pubInfos设置两个SinglePubInfo值，一个是x500、web或ldap，另一个是
+dontCare。
+    如果pubLocation被用的话，此项表示请求者愿意证书在这些地方被发现（注意，
+GeneralName可包括例如URL和IP地址等）。
+
+6．4 文档选项（Archive Options）控制
+    pkiArchiveOptions控制使订户能够应用这样的信息，这些信息用于建立一个对应于证书
+请求公钥的私钥的文档。它的语法定义如下：
+
+PKIArchiveOptions ::= CHOICE { 
+      encryptedPrivKey     [0] EncryptedKey,
+      -- 私钥的实际值
+      keyGenParameters     [1] KeyGenParameters,
+      -- 使私钥能够重新生成的参数
+      archiveRemGenPrivKey [2] BOOLEAN }
+-- 如果sender 希望receiver保存receiver对应请求所生成的密钥对中的私钥，则设为
+真。
+-- 如果不要被保存，则设为假。
+
+
+EncryptedKey ::= CHOICE { 
+      encryptedValue        EncryptedValue,
+      envelopedData     [0] EnvelopedData }
+      -- 加密私钥必须被放在envelopedData中
+
+
+EncryptedValue ::= SEQUENCE { 
+      intendedAlg   [0] AlgorithmIdentifier  OPTIONAL,
+-- 被加密的值被使用的意指的算法
+symmAlg       [1] AlgorithmIdentifier  OPTIONAL,
+      -- 用于加密值的对称算法
+      encSymmKey    [2] BIT STRING           OPTIONAL,
+      -- 用于加密值的对称密钥（已加密）
+      keyAlg        [3] AlgorithmIdentifier  OPTIONAL,
+      -- 用于加密对称密钥的算法
+      valueHint     [4] OCTET STRING         OPTIONAL,
+      -- 一个有关encValue内容的简单的描述或标识符（它可能只对发送终端有意义，
+      -- 并且只有EncryptedValue 以后可以被发送终端重新检验，它才可以用）
+      encValue       BIT STRING }
+
+
+KeyGenParameters ::= OCTET STRING 
+
+    一种发送密钥的选择是发送有关如何使用KeyGenParameters选项重新产生密钥的信息
+（例如，对许多RSA实行来说，可以发送第一个最初测试的随机数）。对于这个参数的实际
+的语法可以定义在这个文档的接下来版本中，或定义在另一个标准中。
+
+6．5 旧证书ID（OldCert ID）控制
+    如此项存在，则OldCertID详述了被当前证书请求所更新的证书。其语法为：
+
+CertId ::= SEQUENCE {
+         issuer           GeneralName,
+         serialNumber     INTEGER
+     }
+
+6．6 协议加密密钥（Protocol Encryption Key）控制
+    如此项存在，则protocolEncrKey详述了一个CA用于加密对CertReqMessages的回答的
+密钥。此项能被用于当CA有发送给订户的需要加密的信息。这些信息中包括一个由CA生
+成的让订户使用的私钥。protocolEncrKey的编码应为SubjectPublicKeyInfo。
+
+7 对象标识符（Object Identifiers）
+      id-pkix的对象标识符为：
+id-pkix  OBJECT IDENTIFIER  ::= { iso(1) identified-organization(3)
+   dod(6) internet(1) security(5) mechanisms(5) pkix(7) }
+
+-- 用于Internet X.509 PKI 协议及其组件的部分
+   id-pkip  OBJECT IDENTIFIER :: { id-pkix pkip(5) }
+
+   -- 在CRMF中的注册登记控制（Registration Controls）
+   id-regCtrl  OBJECT IDENTIFIER ::= { id-pkip regCtrl(1) }
+   id-regCtrl-regToken            OBJECT IDENTIFIER ::= { id-regCtrl 1 }
+   id-regCtrl-authenticator       OBJECT IDENTIFIER ::= { id-regCtrl 2 }
+   id-regCtrl-pkiPublicationInfo  OBJECT IDENTIFIER ::= { id-regCtrl 3 }
+   id-regCtrl-pkiArchiveOptions   OBJECT IDENTIFIER ::= { id-regCtrl 4 }
+   id-regCtrl-oldCertID           OBJECT IDENTIFIER ::= { id-regCtrl 5 }
+   id-regCtrl-protocolEncrKey     OBJECT IDENTIFIER ::= { id-regCtrl 6 }
+
+   -- CRMF 中的注册信息（Registration Info）
+   id-regInfo       OBJECT IDENTIFIER ::= { id-pkip id-regInfo(2) }
+   id-regInfo-asciiPairs    OBJECT IDENTIFIER ::= { id-regInfo 1 }
+   -- 使用OCTET STRING
+   id-regInfo-certReq       OBJECT IDENTIFIER ::= { id-regInfo 2 }
+   -- 使用CertRequest
+
+8 对于安全的考虑
+    CRMF传送的安全性是基于协议或用于和CA通信的进程的安全结构。这些协议或进程
+需要确保完整性，数据来源的真实性和信息的隐私。如果一个CRMF包括敏感的订户信息，
+并且CA有一个终端实体所知的加密证书，那么强烈建议使用CRMF加密。
+
+9 参考
+    [HMAC] Krawczyk， H.， Bellare， M.和R. Canetti，"HMAC: Keyed- Hashing for Message 
+Authentication"（“HMAC：为了保证信息真实性的密钥Hash散列”）， RFC 2104, 1997.2。
+
+10 谢辞
+    作者非常感谢Barbara Fox， Warwick Ford， Russ Housley和 John Pawling所做的贡献。
+他们的复审和建议进一步阐明和改善了本篇的实用功能。
+
+
+
+附录A． 构造dhMAC
+    本附录描述了计算Diffie- Hellman证书请求的POPOPrivKey结构中的dhMAC位串的方
+法。
+
+1  终端产生一个DH公/私钥对
+    用于计算公钥的DH参数被详述在CA的DH证书中。
+    从CA的DH证书中，CApub = g^x mod p   ，这里g，p是已有的DH参数，而x是
+CA私有的DH组件。
+    对终端E来说，DH private value = y，Epub = DH public value = g^y mod p。
+
+2  MAC进程有以下步骤组成
+a）	    certReq项的值用DER编码，产生一个二进制串。这就是在[HMAC]中提
+到的‘text’，它是HMAC-SHA1算法所应用的数据。
+b）	计算共享的DH secret，如下所示：shared secret = Kec = g^xy mod p。终端E
+计算CApub^y，CApub 是来自于CA的DH证书；CA计算Epub^x，Epub是来自
+于证书请求。
+c）	密钥K来自于Kec，证书请求者名称，证书颁发者名称。如下所示：K = 
+SHA1(DER-encoded-subjectName | Kec | DER-encoded-issuerName)，这里‘|’的意
+思是级连。如果在CA证书中subjectName为空，则替代使用
+DER-encoded-subjectAltName。如果CA证书中issuerName为空，则替代使用
+DER-encoded-issuerAltName。
+d）	按照RFC2104来用数据'text'计算HMAC-SHA1，SHA1(K XOR opad, SHA1(K 
+OR ipad, text)) ，此处opad = 0x36 重复64次，ipad = 0x5C 重复64次。也就是
+说，
+（1）	在K的末端填充0，来生成一个64字节的串（例如，若K为16字节长，
+就要填充48个0字节）。
+（2）	XOR（异或）第1步生成的64字节K和ipad。
+（3）	把‘text’加到第2步生成的64字节串上。
+（4）	对第3步 生成的字节串应用SHA1算法。
+（5）	XOR第1步生成的64字节K和opad。
+（6）	把第4步中SHA1生成的结果加到第5步生成的64字节串上。
+（7）	使用SHA1算法计算第6步中的产生值，最后输出结果。
+例子代码在RFC2104, RFC2202中有。
+       e）d）的输出被编码为位串（"dhMAC")。
+
+3 验证拥有私钥（proof-of-possession）的进程需要CA执行
+    执行从a）到d），然后比较d）步的结果和CA收到的"dhMAC"值。如果它们匹配，则
+有如下结论：
+1）	终端拥有与证书请求中的公钥对应的私钥（因为终端需要私钥来计算shared secret）。
+2）	只有CA能验证请求（CA需要自己的私钥来计算同样的shared secret）。这有助于防止
+CA受骗。
+
+参考文献
+
+   [RFC2104] Krawczyk, H., Bellare, M. and R. Canetti, "HMAC:  Keyed
+             Hashing for Message Authentication", RFC 2104, February
+             1997.
+
+   [RFC2202] Cheng, P. and R. Glenn, "Test Cases for HMAC-MD5 and HMAC-
+             SHA-1", RFC 2202, September 1997.
+
+谢词
+此附录的细节由Hemma Prafullchandra所提供
+
+Appendix B. Use of RegInfo for Name-Value Pairs
+
+   The "value" field of the id-regInfo-utf8Pairs OCTET STRING (with
+   "tag" field equal to 12 and appropriate "length" field) will contain
+   a series of UTF8 name/value pairs.
+
+   This Appendix lists some common examples of such pairs for the
+   purpose of promoting interoperability among independent
+   implementations of this specification.  It is recognized that this
+   list is not exhaustive and will grow with time and implementation
+   experience.
+
+B.1. Example Name/Value Pairs
+
+   When regInfo is used to convey one or more name-value pairs (via id-
+   regInfo-utf8Pairs), the first and subsequent pairs SHALL be
+   structured as follows:
+
+      [name?value][%name?value]*%
+
+   This string is then encoded into an OCTET STRING and placed into the
+   regInfo SEQUENCE.
+
+   Reserved characters are encoded using the %xx mechanism of [RFC1738],
+   unless they are used for their reserved purposes.
+
+   The following table defines a recommended set of named elements.
+   The value in the column "Name Value" is the exact text string that
+   will appear in the regInfo.
+
+      Name Value
+      ----------
+      version            -- version of this variation of regInfo use
+      corp_company       -- company affiliation of subscriber
+      org_unit           -- organizational unit
+      mail_firstName     -- personal name component
+      mail_middleName    -- personal name component
+      mail_lastName      -- personal name component
+      mail_email         -- subscriber's email address
+      jobTitle           -- job title of subscriber
+      employeeID         -- employee identification number or string
+
+   mailStop           -- mail stop
+      issuerName         -- name of CA
+
+      subjectName        -- name of Subject
+      validity           -- validity interval
+
+   For example:
+
+      version?1%corp_company?Acme, Inc.%org_unit?Engineering%
+      mail_firstName?John%mail_lastName?Smith%jobTitle?Team Leader%
+      mail_email?john@acme.com%
+
+B.1.1. IssuerName, SubjectName and Validity Value Encoding
+
+   When they appear in id-regInfo-utf8Pairs syntax as named elements,
+   the encoding of values for issuerName, subjectName and validity SHALL
+   use the following syntax.  The characters [] indicate an optional
+   field, ::= and | have their usual BNF meanings, and all other symbols
+   (except spaces which are insignificant) outside non-terminal names
+   are terminals.  Alphabetics are case-sensitive.
+
+      issuerName  ::= <names>
+      subjectName ::= <names>
+      <names>     ::= <name> | <names>:<name>
+
+      <validity>  ::= validity ? [<notbefore>]-[<notafter>]
+      <notbefore> ::= <time>
+      <notafter>  ::= <time>
+
+   Where <time> is UTC time in the form YYYYMMDD[HH[MM[SS]]].  HH, MM,
+   and SS default to 00 and are omitted if at the and of value 00.
+
+   Example validity encoding:
+
+      validity?-19991231%
+
+   is a validity interval with no value for notBefore and a value of
+   December 31, 1999 for notAfter.
+
+   Each name comprises a single character name form identifier followed
+   by a name value of one or UTF8 characters. Within a name value, when
+   it is necessary to disambiguate a character which has formatting
+   significance at an outer level, the escape sequence %xx SHALL be
+   used, where xx represents the hex value for the encoding concerned.
+   The percent symbol is represented by %%.
+
+      <name> ::= X<xname>|O<oname>|E<ename>|D<dname>|U<uname>|I<iname>
+
+   Name forms and value formats are as follows:
+
+   X.500 directory name form (identifier "X"):
+
+   <xname> ::= <rdns>
+      <rdns>  ::= <rdn> | <rdns> , <rdn>
+      <rdn>   ::= <avas>
+      <avas>  ::= <ava> | <avas> + <ava>
+      <ava>   ::= <attyp> = <avalue>
+      <attyp> ::= OID.<oid> | <stdat>
+
+   Standard attribute type <stdat> is an alphabetic attribute type
+   identifier from the following set:
+
+      C      (country)
+      L      (locality)
+      ST     (state or province)
+      O      (organization)
+      OU     (organizational unit)
+      CN     (common name)
+      STREET (street address)
+      E      (E-mail address).
+
+   <avalue> is a name component in the form of a UTF8 character string
+   of 1 to 64 characters, with the restriction that in the IA5 subset of
+   UTF8 only the characters of ASN.1 PrintableString may be used.
+
+   Other name form (identifier "O"):
+      <oname> ::= <oid> , <utf8string>
+
+   E-mail address (rfc822name) name form (identifier "E"):
+      <ename> ::= <ia5string>
+
+   DNS name form (identifier "D"):
+      <dname> ::= <ia5string>
+
+   URI name form (identifier "U"):
+      <uname> ::= <ia5string>
+
+   IP address (identifier "I"):
+      <iname> ::= <oid>
+
+   For example:
+
+      issuerName?XOU=Our CA,O=Acme,C=US%
+      subjectName?XCN=John Smith, O=Acme, C=US, E=john@acme.com%
+
+References
+
+   [RFC1738]  Berners-Lee, T., Masinter, L. and M.  McCahill,
+             "Uniform Resource Locators (URL)", RFC 1738, December 1994.
+
+Appendix C. ASN.1 Structures and OIDs
+
+PKIXCRMF {iso(1) identified-organization(3) dod(6) internet(1)
+   security(5) mechanisms(5) pkix(7) id-mod(0) id-mod-crmf(5)}
+
+CRMF DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+IMPORTS
+     -- Directory Authentication Framework (X.509)
+        Version, AlgorithmIdentifier, Name, Time,
+        SubjectPublicKeyInfo, Extensions, UniqueIdentifier
+           FROM PKIX1Explicit88 {iso(1) identified-organization(3) dod(6)
+               internet(1) security(5) mechanisms(5) pkix(7) id-mod(0)
+               id-pkix1-explicit-88(1)}
+
+     -- Certificate Extensions (X.509)
+        GeneralName
+           FROM PKIX1Implicit88 {iso(1) identified-organization(3) dod(6)
+                  internet(1) security(5) mechanisms(5) pkix(7) id-mod(0)
+                  id-pkix1-implicit-88(2)}
+
+     -- Cryptographic Message Syntax
+        EnvelopedData
+           FROM CryptographicMessageSyntax { iso(1) member-body(2)
+                us(840) rsadsi(113549) pkcs(1) pkcs-9(9) smime(16)
+                modules(0) cms(1) };
+
+CertReqMessages ::= SEQUENCE SIZE (1..MAX) OF CertReqMsg
+
+CertReqMsg ::= SEQUENCE {
+    certReq   CertRequest,
+    pop       ProofOfPossession  OPTIONAL,
+    -- content depends upon key type
+    regInfo   SEQUENCE SIZE(1..MAX) OF AttributeTypeAndValue OPTIONAL }
+
+CertRequest ::= SEQUENCE {
+    certReqId     INTEGER,          -- ID for matching request and reply
+    certTemplate  CertTemplate,  -- Selected fields of cert to be issued
+    controls      Controls OPTIONAL }   -- Attributes affecting issuance
+
+CertTemplate ::= SEQUENCE {
+    version      [0] Version               OPTIONAL,
+    serialNumber [1] INTEGER               OPTIONAL,
+    signingAlg   [2] AlgorithmIdentifier   OPTIONAL,
+    issuer       [3] Name                  OPTIONAL,
+    validity     [4] OptionalValidity      OPTIONAL,
+    subject      [5] Name                  OPTIONAL,
+
+    publicKey    [6] SubjectPublicKeyInfo  OPTIONAL,
+    issuerUID    [7] UniqueIdentifier      OPTIONAL,
+    subjectUID   [8] UniqueIdentifier      OPTIONAL,
+    extensions   [9] Extensions            OPTIONAL }
+
+OptionalValidity ::= SEQUENCE {
+    notBefore  [0] Time OPTIONAL,
+    notAfter   [1] Time OPTIONAL } --at least one MUST be present
+
+Controls  ::= SEQUENCE SIZE(1..MAX) OF AttributeTypeAndValue
+
+AttributeTypeAndValue ::= SEQUENCE {
+    type         OBJECT IDENTIFIER,
+    value        ANY DEFINED BY type }
+
+ProofOfPossession ::= CHOICE {
+    raVerified        [0] NULL,
+    -- used if the RA has already verified that the requester is in
+    -- possession of the private key
+    signature         [1] POPOSigningKey,
+    keyEncipherment   [2] POPOPrivKey,
+    keyAgreement      [3] POPOPrivKey }
+
+POPOSigningKey ::= SEQUENCE {
+    poposkInput           [0] POPOSigningKeyInput OPTIONAL,
+    algorithmIdentifier   AlgorithmIdentifier,
+    signature             BIT STRING }
+    -- The signature (using "algorithmIdentifier") is on the
+    -- DER-encoded value of poposkInput.  NOTE: If the CertReqMsg
+    -- certReq CertTemplate contains the subject and publicKey values,
+    -- then poposkInput MUST be omitted and the signature MUST be
+    -- computed on the DER-encoded value of CertReqMsg certReq.  If
+    -- the CertReqMsg certReq CertTemplate does not contain the public
+    -- key and subject values, then poposkInput MUST be present and
+    -- MUST be signed.  This strategy ensures that the public key is
+    -- not present in both the poposkInput and CertReqMsg certReq
+    -- CertTemplate fields.
+
+POPOSigningKeyInput ::= SEQUENCE {
+    authInfo            CHOICE {
+        sender              [0] GeneralName,
+        -- used only if an authenticated identity has been
+        -- established for the sender (e.g., a DN from a
+        -- previously-issued and currently-valid certificate
+        publicKeyMAC        PKMACValue },
+        -- used if no authenticated GeneralName currently exists for
+        -- the sender; publicKeyMAC contains a password-based MAC
+        -- on the DER-encoded value of publicKey
+
+    publicKey           SubjectPublicKeyInfo }  -- from CertTemplate
+
+PKMACValue ::= SEQUENCE {
+   algId  AlgorithmIdentifier,
+   -- algorithm value shall be PasswordBasedMac {1 2 840 113533 7 66 13}
+   -- parameter value is PBMParameter
+   value  BIT STRING }
+
+PBMParameter ::= SEQUENCE {
+      salt                OCTET STRING,
+      owf                 AlgorithmIdentifier,
+      -- AlgId for a One-Way Function (SHA-1 recommended)
+      iterationCount      INTEGER,
+      -- number of times the OWF is applied
+      mac                 AlgorithmIdentifier
+      -- the MAC AlgId (e.g., DES-MAC, Triple-DES-MAC [PKCS11],
+}   -- or HMAC [RFC2104, RFC2202])
+
+POPOPrivKey ::= CHOICE {
+    thisMessage       [0] BIT STRING,
+    -- posession is proven in this message (which contains the private
+    -- key itself (encrypted for the CA))
+    subsequentMessage [1] SubsequentMessage,
+    -- possession will be proven in a subsequent message
+    dhMAC             [2] BIT STRING }
+    -- for keyAgreement (only), possession is proven in this message
+    -- (which contains a MAC (over the DER-encoded value of the
+    -- certReq parameter in CertReqMsg, which MUST include both subject
+    -- and publicKey) based on a key derived from the end entity's
+    -- private DH key and the CA's public DH key);
+    -- the dhMAC value MUST be calculated as per the directions given
+    -- in Appendix A.
+
+SubsequentMessage ::= INTEGER {
+    encrCert (0),
+    -- requests that resulting certificate be encrypted for the
+    -- end entity (following which, POP will be proven in a
+    -- confirmation message)
+    challengeResp (1) }
+    -- requests that CA engage in challenge-response exchange with
+    -- end entity in order to prove private key possession
+
+-- Object identifier assignments --
+
+id-pkix  OBJECT IDENTIFIER  ::= { iso(1) identified-organization(3)
+dod(6) internet(1) security(5) mechanisms(5) 7 }
+
+-- arc for Internet X.509 PKI protocols and their components
+
+id-pkip  OBJECT IDENTIFIER ::= { id-pkix 5 }
+
+-- Registration Controls in CRMF
+id-regCtrl OBJECT IDENTIFIER ::= { id-pkip 1 }
+
+-- The following definition may be uncommented for use with
+-- ASN.1 compilers which do not understand UTF8String.
+
+-- UTF8String ::= [UNIVERSAL 12] IMPLICIT OCTET STRING
+
+id-regCtrl-regToken OBJECT IDENTIFIER ::= { id-regCtrl 1 }
+--with syntax:
+RegToken ::= UTF8String
+
+id-regCtrl-authenticator OBJECT IDENTIFIER ::= { id-regCtrl 2 }
+--with syntax:
+Authenticator ::= UTF8String
+
+id-regCtrl-pkiPublicationInfo OBJECT IDENTIFIER ::= { id-regCtrl 3 }
+--with syntax:
+
+PKIPublicationInfo ::= SEQUENCE {
+   action     INTEGER {
+                dontPublish (0),
+                pleasePublish (1) },
+   pubInfos  SEQUENCE SIZE (1..MAX) OF SinglePubInfo OPTIONAL }
+     -- pubInfos MUST NOT be present if action is "dontPublish"
+     -- (if action is "pleasePublish" and pubInfos is omitted,
+     -- "dontCare" is assumed)
+
+SinglePubInfo ::= SEQUENCE {
+    pubMethod    INTEGER {
+        dontCare    (0),
+        x500        (1),
+        web         (2),
+        ldap        (3) },
+    pubLocation  GeneralName OPTIONAL }
+
+id-regCtrl-pkiArchiveOptions     OBJECT IDENTIFIER ::= { id-regCtrl 4 }
+--with syntax:
+PKIArchiveOptions ::= CHOICE {
+    encryptedPrivKey     [0] EncryptedKey,
+    -- the actual value of the private key
+    keyGenParameters     [1] KeyGenParameters,
+    -- parameters which allow the private key to be re-generated
+    archiveRemGenPrivKey [2] BOOLEAN }
+    -- set to TRUE if sender wishes receiver to archive the private
+    -- key of a key pair which the receiver generates in response to
+
+    -- this request; set to FALSE if no archival is desired.
+
+EncryptedKey ::= CHOICE {
+    encryptedValue        EncryptedValue,
+    envelopedData     [0] EnvelopedData }
+    -- The encrypted private key MUST be placed in the envelopedData
+    -- encryptedContentInfo encryptedContent OCTET STRING.
+
+EncryptedValue ::= SEQUENCE {
+    intendedAlg   [0] AlgorithmIdentifier  OPTIONAL,
+    -- the intended algorithm for which the value will be used
+    symmAlg       [1] AlgorithmIdentifier  OPTIONAL,
+    -- the symmetric algorithm used to encrypt the value
+    encSymmKey    [2] BIT STRING           OPTIONAL,
+    -- the (encrypted) symmetric key used to encrypt the value
+    keyAlg        [3] AlgorithmIdentifier  OPTIONAL,
+    -- algorithm used to encrypt the symmetric key
+    valueHint     [4] OCTET STRING         OPTIONAL,
+    -- a brief description or identifier of the encValue content
+    -- (may be meaningful only to the sending entity, and used only
+    -- if EncryptedValue might be re-examined by the sending entity
+    -- in the future)
+    encValue       BIT STRING }
+    -- the encrypted value itself
+
+KeyGenParameters ::= OCTET STRING
+
+id-regCtrl-oldCertID          OBJECT IDENTIFIER ::= { id-regCtrl 5 }
+--with syntax:
+OldCertId ::= CertId
+
+CertId ::= SEQUENCE {
+    issuer           GeneralName,
+    serialNumber     INTEGER }
+
+id-regCtrl-protocolEncrKey    OBJECT IDENTIFIER ::= { id-regCtrl 6 }
+--with syntax:
+ProtocolEncrKey ::= SubjectPublicKeyInfo
+
+-- Registration Info in CRMF
+id-regInfo OBJECT IDENTIFIER ::= { id-pkip 2 }
+
+id-regInfo-utf8Pairs    OBJECT IDENTIFIER ::= { id-regInfo 1 }
+--with syntax
+UTF8Pairs ::= UTF8String
+
+id-regInfo-certReq       OBJECT IDENTIFIER ::= { id-regInfo 2 }
+
+--with syntax
+CertReq ::= CertRequest
+
+END
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+RFC2511――Internet X.509 Certificate Request Message Format                  X.509证书请求消息格式
+
+
+2
+RFC文档中文翻译计划

@@ -1,0 +1,251 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：李兴娟（bloodrose    lxjuan@eyou.com）
+译文发布时间：2001-10-15
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                           SNMPv2 Working Group
+Request for Comments: 1901                                    J.Case 
+Category: Experimental                              SNMP Research,Inc.   
+   K. McCloghrie
+Cisco Systems, Inc.
+         M. Rose
+Dover Beach Consulting, Inc.
+      S. Waldbusser
+International Network Services
+      January 1996
+
+基于团体的SNMPv2介绍
+（RFC1901――Introduction to Community-based SNMPv2）
+本备忘录的状态
+本文档讲述了一种用于Internet团体的试验性协议。本备忘录没有确定任何具体类型的
+Internet标准。需要进行进一步的讨论和建议以得到改进。本备忘录的发布不受任何限制。
+
+目录
+1 介绍	2
+2  SNMPV2框架的内容	2
+2．1管理信息结构	2
+2．2文本惯例	2
+2．3一致性声明	3
+2．4协议操作	3
+2．5传输映射	3
+2．6协议工具	3
+3 基于团体的管理框架	4
+4 安全考虑	5
+5 作者地址	5
+6 致谢	5
+7 参考资料	6
+
+1 介绍
+本文档的目的是为SNMP版本2（SNMPv2）定义基于团体的管理框架。在[1-6]中对
+SNMPv2框架进行了详尽的描述。这种框架来源于初始的基于Internet标准的网络管理框架
+（SNMPv1），它包括三个文档：
+
+STD 16，RFC 1155 [7] 定义了管理信息的结构（SMI），以及用来描述和命名被管理对
+象的机制。
+STD 16， RFC 1212 [8]定义了更加简洁的描述机制，该机制完全与SMI一致。
+STD 15， RFC 1157 [9]定义了简单网络管理协议（SNMP），网络使用该协议访问被管
+理对象。
+   要了解SNMPv1和SNMPv2之间的共存性信息，请参阅[10]。
+2  SNMPv2框架的内容
+   一个管理系统包括：几个（潜在多个）节点，每个节点具有一个称为代理（agent）的处
+理实体，它负责访问管理的基础结构；至少一个管理站；一种管理协议，用于在代理和管理
+站之间传送管理信息。协议操作的执行位于一种管理框架下，该框架定义了认证、授权、访
+问控制和保密策略。
+  
+   管理站管理的应用程序，用来监测和控制被管理元素。被管理元素是一些设备，诸如主机、
+路由器、终端服务器等等，通过访问这些元素的管理信息来监测和控制它们。
+2．1管理信息结构
+   管理信息看起来是一个被管理对象的集合，它位于一个虚拟的信息存储库中，这个库称为
+管理信息库（MIB）。相关对象的集合定义在MIB模块中。使用OSI抽象语法符号（ASN.1）
+[11]的一个子集书写这些模块。《Structure of Management Information for SNMPv2》文档[1]
+定一个这个子集。
+   
+   SMI分成三部分：模块定义，对象定义和陷阱定义。
+（1）	当描述信息模块时要使用模块定义。使用一个ASN.1宏MODULE-IDENTITY来
+简洁的表达一个信息模块的语义。  
+（2）	当描述被管理对象时要使用对象定义。使用一个ASN.1宏OBJECT-TYPE来简洁
+的表达被管理对象的语法和语义。
+（3）	当描述没有经过请求而主动传送的管理信息时要使用通知定义。使用一个ASN.1
+宏NOTIFICATION-TYPE来简洁的表达一个通知的语法和语义。
+2．2文本惯例
+   当定义一个MIB模块时，通常定义与SMI中类型相似的新类型，这是很有用的。与SMI
+中定义的类型相比，这些新类型每个都有一个不同的名字，一种相似的语法，以及更加详细
+准确的语义。这些最近定义的类型被称为文本惯例，以便人们方便地阅读MIB模块。?Textual 
+Conventions for SNMPv2?文档[2]定义了所有MIB模块都可以使用的初始文本惯例集
+合。
+
+ 使用文本惯例定义的对象总是利用定义它们原始类型的规则编码。但是，文本惯例本身常
+常具有特殊的语义。因此，使用一个ASN.1宏TEXTUAL-CONVENTION来简洁的表达一个
+文本惯例的语法和语义。
+2．3一致性声明
+在达到实际级别的实现时，定义可以接受的更为低层的实现将是有用的。            ? 
+Conformance Statements for SNMPv2?文档[3]定义了针对这一目的的符号。符号有两
+种：
+
+（1）	当根据对象定义描述对代理的需求时，使用Compliance声明。使用一个ASN.1
+宏MODULE-COMPLIANCE来简洁的表达这种需求。
+（2）	当根据对象定义描述代理的能力时，使用Capability声明。使用一个ASN.1宏
+AGENT-CAPABILITIES来简洁的表达这种能力。
+
+   最后，相关对象的集合组合在一起，形成一个一致性单元。使用一个ASN.1宏
+OBJECT-GROUP来简洁的表达一个组的语法和语义。
+2．4协议操作
+   管理协议提供了消息之间的交换，这些消息在代理和管理站之间传送管理信息。这些消息
+的格式是一种“包裹式”的消息，它封装了一个协议数据单元（PDU）。
+
+《Protocol Operations for SNMPv2》文档[4]根据PDU的发送和接收定义了协议的操作。
+2．5传输映射
+   第二版的简单网络管理协议可能应用在多种不同的协议组上。所以? Transport Mappings 
+for SNMPv2 ?文档[5]定义了如何把SNMPv2映射到初始的传输域集合上。在将来有可能定义
+其它的映射。
+
+   尽管定义了多种映射模式，但是到UDP的映射是首选映射。因此，为了提供最大级别的
+互用性，选择应用其他映射的系统也应该提供到UDP映射的代理服务。
+2．6协议工具
+   《Management Information Base for SNMPv2》文档[6]定义了描述SNMPv2实体行为
+的被管理对象。
+3 基于团体的管理框架
+   管理框架的目的是定义一个基础结构，功过这个基础结构可以在多种配置和环境下实现高
+效的网络管理。按照规定，管理框架的一部分和扩展部分是安全机制，利用该安全机制实现
+协议交互时的管理层定义的安全级别。
+   
+   本文档确定的管理框架与SNMPv1 [9] 中定义的相似。在这种管理框架中，每条消息与一
+个“团体”关联，定义见[9]。使用这种管理框架的SNMP版本2通常称为“基于团体的SNMPv2”
+（SNMPv2C）。
+ 
+   特别说明，[9]的3.2.5部分定义了团体的概念，[9]的4.1部分定义了生成和接受消息的过
+程原理。下面的更新应用于：
+（1）	[1]更新了定义在[9]的3.2.5部分中访问类型。
+（2）	[6]更新了定义在[9]的4.1中的过程原理，增加了对相关统计计数器的附加需求。
+（3）	删去了[9]的4.1部分中对过程原理的这些需求，“发送应答消息的源传输地址应
+该与发送初始请求消息的目的传输地址一致。”也就是说，应答消息的源传输地
+址可以是属于该代理的任意传输地址。
+
+消息的格式也是来源于[9]，只是在消息“包裹”中使用了新的版本号。由于SNMPv2新
+的PDU类型[4]、新的错误代码[4]等等，所以有必要采用新的版本号。根据这些改变，包裹
+变为：
+COMMUNITY-BASED-SNMPv2 DEFINITIONS ::= BEGIN
+    -- 高层消息
+        Message ::=
+                SEQUENCE {
+                     version
+                        INTEGER {
+                            version(1)  --修改了RFC 1157
+                        },
+                    community           -- 团体名
+                        OCTET STRING,
+                    data                -- [4]中定义的PDUs
+                        ANY
+                }
+        }
+
+    END
+
+   注意，在这种管理框架中，SNMPv2  PDU[4]中的错误状态成员不再使用
+‘authorizationError(16)’值。然而，有可能在将来的管理框架中使用。
+4 安全考虑
+   本备忘录没有讨论安全主题。
+5 作者地址
+   Keith McCloghrie
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA  95134-1706
+   US
+
+   Phone: +1 408 526 5260
+   EMail: kzm@cisco.com
+6 致谢
+   本文档是四个主要成员重要工作的结果：
+
+   effrey D. Case (SNMP Research, case@snmp.com)
+   Keith McCloghrie (Cisco Systems, kzm@cisco.com)
+   Marshall T. Rose (Dover Beach Consulting, mrose@dbc.mtview.ca.us)
+   Steven Waldbusser (International Network Services, stevew@uni.ins.com)
+
+   此外，还有感谢SNMPv2工作组的贡献。特别的是，感谢以下的成员：
+   Alexander I. Alten (Novell)
+     Dave Arneson (Cabletron)
+     Uri Blumenthal (IBM)
+     Doug Book (Chipcom)
+     Kim Curran (Bell-Northern Research)
+     Jim Galvin (Trusted Information Systems)
+     Maria Greene (Ascom Timeplex)
+     Iain Hanson (Digital)
+     Dave Harrington (Cabletron)
+     Nguyen Hien (IBM)
+     Jeff Johnson (Cisco Systems)
+     Michael Kornegay (Object Quest)
+     Deirdre Kostick (AT&T Bell Labs)
+     David Levi (SNMP Research)
+     Daniel Mahoney (Cabletron)
+     Bob Natale (ACE*COMM)
+     Brian O'Keefe (Hewlett Packard)
+     Andrew Pearson (SNMP Research)
+     Dave Perkins (Peer Networks)
+     Randy Presuhn (Peer Networks)
+     Aleksey Romanov (Quality Quorum)
+     Shawn Routhier (Epilogue)
+     Jon Saperia (BGS Systems)     
+     Bob Stewart (Cisco Systems, bstewart@cisco.com), chair
+     Kaj Tesink (Bellcore)
+     Glenn Waters (Bell-Northern Research)
+Bert Wijnen (IBM)
+7 参考资料
+[1]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Structure of Management Information for Version 2
+     of the Simple Network Management Protocol (SNMPv2)", RFC 1902,
+     January 1996.
+
+[2]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Textual Conventions for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1903, January 1996.
+
+[3]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Conformance Statements for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1904, January 1996.
+
+[4]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Protocol Operations for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1905, January 1996.
+
+[5]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Transport Mappings for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1906, January 1996.
+
+[6]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Management Information Base for Version 2 of the
+     Simple Network Management Protocol (SNMPv2)", RFC 1907,
+     January 1996.
+
+[7]  Rose, M., and K. McCloghrie, "Structure and Identification of
+     Management Information for TCP/IP-based internets", STD 16, RFC
+     1155, May 1990.
+
+[8]  Rose, M., and K. McCloghrie, "Concise MIB Definitions", STD 16,
+RFC 1212, March 1991.
+
+[9]  Case, J., Fedor, M., Schoffstall, M., Davin, J., "Simple Network
+     Management Protocol", STD 15, RFC 1157, SNMP Research, Performance
+     Systems International, MIT Laboratory for Computer Science, May
+     1990.
+
+[10] SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Coexistence between Version 1 and Version 2 of the
+     Internet-standard Network Management Framework", RFC 1908,
+     January 1996.
+
+[11] Information processing systems - Open Systems Interconnection -
+     Specification of Abstract Syntax Notation One (ASN.1),
+     International Organization for Standardization.  International
+     Standard 8824, (December, 1987).
+
+RFC1901――Introduction to Community-based SNMPv2       基于团体的SNMPv2介绍
+
+
+2
+RFC文档中文翻译计划

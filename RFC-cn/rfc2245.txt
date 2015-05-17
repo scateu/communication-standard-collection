@@ -1,0 +1,197 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：牛韬 （NT niutao@sohu.com）
+译文发布时间：2001-6-29
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+
+Network Working Group                                          C. Newman
+Request for Comments: 2245                                      Innosoft
+Category: Standards Track                                  November 1997
+
+匿名SASL机制
+（Anonymous SASL Mechanism）
+
+本备忘录的状态
+
+   本文档描述了一个应用于Internet团体的Internet标准跟踪协议，并且希望大家对其进
+一步完善进行讨论和建议。此协议的标准规定和状况请参阅“Internet 正式协议标准”，此
+备忘录的发布没有任何限制。
+
+版权声明
+
+   Copyright (C) The Internet Society (1997).  All Rights Reserved.
+
+摘要
+
+   按照一般的惯例，在Internet中允许用户匿名使用某些服务。传统上，匿名服务使用无
+格式密码机制，把"anonymous"作为用户名和可选择的踪迹信息，如电子邮件地址及密码。
+明文登录命令在新的IETF协议中是不允许的，在SASL框架中前后文联系中需要用到新的匿
+名登录的方法。
+目录
+1. 本文档中的约定	2
+2. 匿名SASL机制	2
+3. 例子	3
+4. 安全考虑	3
+5. 参考文献	4
+6. 作者地址	5
+7.  全部版权声明	5
+
+1. 本文档中的约定
+
+   本文档中将要解释的关键词，如“必须”、“不必”、“应当”、“不应当”和“可以”等词将
+会在“简要说明RFC需求水平所用的关键词”［KEYWORDS］中定义。
+
+2. 匿名SASL机制
+
+   此机制的名称与匿名访问的联系是“ANONYMOUS”（匿名的）。此机制由从客户到服务器的
+简单消息组成。客户发送的人们易懂的字符表格中的任意踪迹信息。这一踪迹信息将会何占
+用三个表格：一个Internet电子邮件地址、不包含"@"字符并且能被客户域的系统管理员解
+释的不透明的字符串、或空。由于隐私原因，只有得到用户的允许，其电子邮件地址才会被
+使用。
+
+
+   允许进行匿名访问的服务器将会声称支持ANONYMOUS机制，并且允许任何人登录和使用这
+一机制，通常对于受限访问。
+
+   客户端信息使用的扩展的BNF[ABNF]正式语法如下：
+
+   message         = [email / token]
+
+   TCHAR           = %x20-3F / %x41-7E
+                     ;; any printable US-ASCII character except '@'
+
+   email           = addr-spec
+                     ;; as defined in [IMAIL], except with no free
+                     ;; insertion of linear-white-space, and the
+                     ;; local-part MUST either be entirely enclosed in
+                     ;; quotes or entirely unquoted
+
+   token           = 1*255TCHAR
+
+3. 例子
+
+
+   这儿有一个IMAP客户匿名登录到服务器上的例子。在这个例子中，“C：”和“S：”指标行
+分别是由客户和服务器发送的。如果换行的那些行中没有新的“C:”或“S:”，那么这个换行
+处不是命令的一部分，而是为了使其编辑更清晰些。
+
+   注意这个例子是使用的是SASL的IMAP轮廓[IMAP4]。富于挑战性的基于64位编码和响应，
+前面所述的带“+”号的响应，也是IMAP4轮廓的一部分，而不是SASL自身的一部分。新的
+SASL轮廓将会包含带有ANTHENTICATE命令自身的客户消息，因此如下面所示（服务器响应
+带一个空的“+”），附加的消息往返就可以消除了。 
+
+   在这个例子中，用户的不透明验证标记是“sirhc”。
+
+        S: * OK IMAP4 server ready
+        C: A001 CAPABILITY
+        S: * CAPABILITY IMAP4 IMAP4rev1 AUTH=CRAM-MD5 AUTH=ANONYMOUS
+        S: A001 OK done
+        C: A002 AUTHENTICATE ANONYMOUS
+        S: +
+        C: c2lyaGM=
+        S: A003 OK Welcome, trace information has been logged.
+
+4. 安全考虑
+
+   匿名机制允许任何人对信息进行访问。因此其默认情况下应设为禁止，管理员可以做出明
+确的决定是否将其打开。
+
+   如果匿名用户拥有任何写入权力，就可能通过占满全部可用空间发生拒绝式服务攻击。这
+可以通过关闭匿名用户的写权限进行预防。
+
+   如果匿名用户对同一区域进行了读写访问，那么服务器能够用作无身份的信息交换通讯机
+制。接受匿名提交的服务器会实现普通的“下降的盒子”模式，这种模式会禁止匿名读取已
+经接受提交匿名信息的区域。
+
+   如果匿名用户能够运行许多高级的操作（如IMAP SEARCH BODY命令），也可能会导致拒绝
+式服务攻击。建议服务器能限制匿名用户的数量、限制他们的权限或限制他们可以使用的资
+源
+
+   如果没有给匿名用户停顿的空闲时间并且也没有限制匿名用户的数量，就可以发生拒绝式
+服务攻击。服务器应当允许匿名用名有不进行操作的时间。
+
+   踪迹信息不进行验证，因此它有可能会被伪造。这可以用于使其它人陷入访问可疑信息的
+麻烦。管理员如果想要研究弊端就应该认识到信息是可伪造的。
+
+   用客户的真实的Email地址作为踪迹信息而未经明确许可会侵犯用户的隐私权。  有关是
+对一些敏感主题（如性虐待）的档案进行匿名访问的用户信息是有强烈隐私保密需要的。客
+户端没有经用户明确同意，不应发送email地址，并且应该提供可选择的没有踪迹信息代码
+的匿名服务―这样就只公开源IP地址和时间。匿名代理服务器应提高其抗干扰性，但也不能
+不考虑潜在的可能导致拒绝式服务攻击的因素。
+
+   匿名联接容易受到在中间进行攻击的人的影响，他们可以游览甚至改变所传送的数据。提
+倡客户端和服务器支持外部的完整性和使用加密机制。
+
+   不能进行外部匿名登录的协议更容易受到某几种普通的实现技术影响，会被中断插入。特
+特别是Unix服务器提供用户登录―在最初起动时作为root身份，而在明确登录后才被切换
+到合适的用户身份。一般情况下，这种服务器在明确登录前拒绝任何数据访问命令并且匿名
+用户可以进入一个受限的安全环境中（例如，Unix的chroot函数）。如果匿名用户没有明确
+请求访问，如果没有外部保护措施的话，匿名用户又没有明确请求进行访问，那么整个数据
+访问机制完全暴露在外部安全攻击之下。
+   提供受限数据访问的协议不应允许在明确身份登录以前进行匿名数据访问。
+
+5. 参考文献
+
+   [ABNF] Crocker, D. and P. Overell, "Augmented BNF for Syntax
+   Specifications: ABNF", RFC 2234, November 1997.
+
+   [IMAIL] Crocker, D., "Standard for the Format of Arpa Internet Text
+   Messages", STD 11, RFC 822, August 1982.
+
+   [IMAP4] Crispin, M., "Internet Message Access Protocol - Version
+   4rev1", RFC 2060, December 1996.
+
+   [KEYWORDS] Bradner, S., "Key words for use in RFCs to Indicate
+   Requirement Levels", RFC 2119, March 1997.
+
+   [SASL] Myers, J., "Simple Authentication and Security Layer (SASL)",
+   RFC 2222, October 1997.
+
+6. 作者地址
+
+   Chris Newman
+   Innosoft International, Inc.
+   1050 Lakes Drive
+   West Covina, CA 91790 USA
+
+   Email: chris.newman@innosoft.com
+
+
+7.  全部版权声明
+
+   Copyright (C) The Internet Society (1997).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+RFC2245――Anonymous SASL机制                                           匿名SASL机制
+
+
+1
+RFC中文文档翻译计划

@@ -1,0 +1,24 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2002-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+RFC 185                                                 Jeanne North
+NIC 7129                              ARPA Network Information Center
+Category G.2                        Stanford Research Institute (ARC)
+                                                             7-JUL-71
+NIC的指南和手册分发
+               （NIC DISTRIBUTION OF MANUALS AND HANDBOOKS）
+网络信息中心（Network Information Center，缩写为NIC）要求，无论网络共享者何时提出基本指南或者手册，都必须提供足够的拷贝数量供网络中心分发。由于要保证良好的网络通讯，网络中心现在计划把这种文档分发给所有的代理站点作为参考资料拷贝来使用、联络他们的用途，而且，如果愿意的话，也可以对外发布使大家理解网络。
+目前，由于需要增加和更换以及收到这种发行物的网络共享者的数量接近80名，所以现在NIC要拿到至少100份文档的拷贝。因此，NIC要求在发布时必须提供100份网络成员发行指南和其他大型工作文档的拷贝。
+[这个RFC文档是由得到GTE支持的（原来的BBN公司）Alex McKenzie以计算机可读的文件格式归档到在线RFC文档库的。12/96]
+
+RFC185――NIC DISTRIBUTION OF MANUALS AND HANDBOOKS                   NIC的指南和手册分发
+
+
+
+
+1
+RFC文档中文翻译计划
+

@@ -1,0 +1,957 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：龙天泳（longty2000  ）
+译文发布时间：2001-4-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                 W. Simpson, Editor
+Request for Comments: 1661                                    Daydreamer
+STD: 51                                                        July 1994
+Obsoletes: 1548
+Category: Standards Track
+
+
+
+RFC1661  PPP协议
+（RFC1661 The Point-to-Point Protocol (PPP)）
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+摘要
+  PPP为基于点对点连接的多协议自寻址数据包的传输提供了一个标准方法。PPP包含以下三个成分：
+　　1． 压缩多协议自寻址数据包的方法。
+　　2． 用于建立、设定和测试数据链路连接的LCP。
+　　3． 一族用于建立、设定不同网络层协议的NCP。
+　　本文档定义了PPP的组织和方法，以及PPP封装，与之一起定义的还有：扩展选项协商机制，他使得（人们）可以就丰富的设定参数进行磋商，同时还提供额外的管理功能。PPP链路控制协议（LCP）九是用这种机制描述的。
+
+
+
+
+
+
+目录
+1 介绍	3
+1-1 要求说明书	4
+1-2 术语	4
+2 PPP封装	5
+3 PPP链路操作	6
+3-1 概述	6
+3-2 阶段划分框图	6
+3-3 链路死亡（物理连接不存在）	6
+3-4 链路建立阶段	7
+3-5 认证阶段	7
+3-6 网络层协议阶段	7
+3-7 链路终止阶段	8
+4 自动机协商选项	8
+4-1 状态迁移图	9
+4-2 状态	10
+4-3 事件	12
+4-4 动作	14
+4-5 环躲避（循环避免）	15
+4-6 计数器和定时器	16
+5 LCP包格式	16
+5-1. Configure-Request	18
+5-2. Configure-Ack	18
+5-3. Configure-Nak	19
+5-4. Configure-Reject	20
+5-5. Terminate-Request and Terminate-Ack	20
+5-6. Code-Reject	21
+5-7. Protocol-Reject	22
+5-8. Echo-Request and Echo-Reply	22
+5-9. Discard-Request	23
+6. LCP配置选项	24
+6-1. Maximum-Receive-Unit (MRU)	25
+6-2. Authentication-Protocol	25
+6-3. Quality-Protocol	26
+6-4. Magic-Number	27
+安全考虑	30
+参考资料	30
+致谢	31
+主席地址	31
+作者地址	32
+             
+
+
+1 介绍
+　　PPP是为在同等单元之间传输数据包这样的简单的链路而设计的。这种链路提供全双工操作，并按照顺序传递数据包。（人们）有意让PPP为基于各种主机、网桥和路由器的简单连接提供一种共通的解决方案。
+　　封装：
+　　PPP封装提供了不同网络层协议同时通过统一链路的多路技术。（人们）精心的设计PPP封装，使其保有对常用支持硬件的兼容性。
+　　当使用默认的类HDLC帧（HDLC-like framing）时，仅需要8个额外的字节，就可以形成封装。在带宽需要付费时，封装和帧可以减少到2或4个字节。
+　　为了支持高速的执行，默认的封装只使用简单的字段，多路分解只需要对其中的一个字段进行检验。默认的头和信息字段落在32-bit边界上，尾字节可以被填补到任意的边界。
+
+　　链路控制协议（LCP）：
+　　为了在一个很宽广的环境内能足够方便的使用，PPP提供了LCP。LCP用于就封装格式选项自动的达成一致，处理数据包大小的变化，探测looped-back链路和其他普通的配置错误，以及终止链路。提供的其他可选设备有：对链路中同等单元标识的认证，和当链路功能正常或链路失败时的决定。
+
+　　网络控制协议：
+　　点对点连接可能和当前的一族网络协议产生许多问题。例如，基于电路交换的点对点连接（比如拨号模式服务），分配和管理IP地址，即使在LAN环境中，也非常困难。这些问题由一族网络控制协议（NCP）来处理，每一个协议管理着各自的网络层协议的特殊需求。
+
+　　配置：
+　　（人们）有意使PPP链路很容易配置。通过设计，标准的默认值处理全部的配置。执行者可以对默认配置进行改进，它被自动的通知给其同等单元而无需操作员的干涉。最终，操作员可以明确的为链路设定选项，以便其正常工作。
+1-1 要求说明书
+　　在本文档中，用以下几个词来表示说明书的要求，这些词一般以大写字体书写。
+　　MUST--要求；MUST NOT--禁止；SHOULD--推荐；MAY--可选。 
+
+1-2 术语
+　　本文档中，频繁使用以下术语：
+　　datagram -- 在网络层中的传输单元（例如IP）。一个datagram可能被压缩成一个或几个packets，在数据链路层中传输。
+　　frame -- 在数据链路层中的传输单元。 一个frame包括一个头和/或尾字节，后面跟有几个单元的数据。
+　　packet -- 封装的基本单元，它穿越网络层和数据链路层的分解面。通常一个packet映射成一个frame，但也有例外：即当数据链路层执行拆分或将几个packet合成一个frame的时候。
+　　peer -- 点对点链路的另一端。
+　　silently discard
+　　-- 丢弃packet而不进行进一步的处理。执行（这个动作）应该提供记录错误，包括丢弃packet的内容，的容量，并且应该在一个统计计数器中记录这一事件。
+2 PPP封装
+　　PPP封装用于消除多协议datagrams的歧义。封装需要帧同步以确定封装的开始和结束。提供帧同步的方法在参考文档中。
+　　PPP封装的概要如下所示。字段的传输从左到右。
+　　　协议字段：
+　　协议字段由一个或两个字节组成。它的值标识着压缩在packet的信息字段里的datagram。字段中最有意义位（最高位）被首先传输。
+　　该字段结构与ISO 3309地址字段扩充机制相一致。该字段必须是奇数：最轻意义字节的最轻意义位（最低位）必须等于1。另外，字段必须被赋值，以便最有意义字节的最轻意义位为0。收到的不符合这些规则的frames，必须被视为带有不被承认的协议。
+　　在范围"0***"到"3***"内的协议字段，标识着特殊packets的网络层协议。在范围"8***" 到"b***"内的协议字段，标识着packets属于联合的（相关的）网络控制协议（NCP）。在范围"4***"到"7***"内的协议字段，用于没有相关NCP的低通信量协议。在范围"c***"到"f***"内的协议字段，标识着使用链路层控制协议（例如LCP）的packets。
+　　到目前为止，协议字段的值在最近的"Assigned Numbers" RFC [2]里有详细的说明。本说明书保留以下的值：
+　　Value (in hex) 　　　　Protocol Name
+
+　　0001 　　　　　　　　　Padding Protocol填料协议
+　　0003 to 001f　　　　　 reserved (transparency inefficient)保留（透明度效率低的）
+　　007d 　　　　　　　　　reserved (Control Escape)保留（控制逃逸）
+　　00cf 　　　　　　　　　reserved (PPP NLPID)保留(PPP NLPID)
+　　00ff 　　　　　　　　　reserved (compression inefficient)保留(压缩效率低的)
+　　8001 to 801f 　　　　　unused（未使用）
+　　807d 　　　　　　　　　unused（未使用）
+　　80cf 　　　　　　　　　unused（未使用）
+　　80ff 　　　　　　　　　unused（未使用）
+
+　　c021 　　　　　　　　　Link Control Protocol链路控制协议
+　　c023 　　　　　　　　　Password Authentication Protocol密码认证协议
+　　c025 　　　　　　　　　Link Quality Report链路品质报告
+　　c223 　　　　　　　　　Challenge Handshake Authentication Protocol挑战-认证握手协议
+　　新的协议的开发者必须从the Internet Assigned Numbers Authority (IANA), at IANA@isi.edu.处获得号码。
+
+　　信息字段：
+　　信息字段是0或更多的字节。对于在协议字段里指定的协议，信息字段包含datagram。
+　　信息字段的最大长度，包含填料但不包含协议字段，术语叫做最大接收单元（MRU），默认值是1500字节。若经过协商同意，也可以使用其它的值作为MRU。
+
+　　填料：
+　　在传输的时候，信息字段会被填充若干字节以达到MRU。每个协议负责根据实际信息的大小确定填料的字节数。
+3 PPP链路操作
+3-1 概述
+　　为了通过点对点链路建立通信，PPP链路的每一端，必须首先发送LCP packets以便设定和测试数据链路。在链路建立之后，peer才可以被认证。
+　　然后，PPP必须发送NCP packets以便选择和设定一个或更多的网络层协议。一旦每个被选择的网络层协议都被设定好了，来自每个网络层协议的datagrams就能在连路上发送了。
+链路将保持通信设定不变，直到外在的LCP和NCP关闭链路，或者是发生一些外部事件的时候（休止状态的定时器期满或者网络管理员干涉）。
+
+3-2 阶段划分框图
+　　
+
+　　在设定、维持和终止点对点链路的过程里，PPP链路经过几个清楚的阶段，如框图所示。这张图并没有给出所有的状态转换。
+3-3 链路死亡（物理连接不存在）
+　　链路一定开始并结束于这个阶段。当一个外部事件（例如载波侦听或网络管理员设定）指出物理层已经准备就绪时，PPP将进入链路建立阶段。
+　　在这个阶段，LCP自动机器将处于初始状态，向链路建立阶段的转换将给LCP自动机器一个UP事件信号。
+执行笔记：
+　　典型的，在与调制解调器断开之后，链路将自动返回这一阶段。在用硬件实现的链路里，这一阶段相当的短--仅够侦测设备的存在。
+3-4 链路建立阶段
+　　LCP用于交换配置信息包（Configure packets），建立连接。一旦一个配置成功信息包（Configure-Ack packet）被发送且被接收，就完成了交换，进入了LCP开启状态。
+　　所有的配置选项都假定使用默认值，除非被配置交换所改变。
+　　有一点要注意：只有不依赖于特别的网络层协议的配置选项才倍LCP配置。在网络层协议阶段，个别的网络层协议的配置由个别的网络控制协议（NCP）来处理。
+　　在这个阶段接收的任何非LCP packets必须被silently discarded（静静的丢弃）。
+　　收到LCP Configure-Request（LCP配置要求）能使链路从网络层协议阶段或者认证阶段返回到链路建立阶段。
+3-5 认证阶段
+　　在一些链路上，在允许网络层协议packets交换之前，链路的一端可能需要peer去认证它。
+　　默认的，认证是不需要强制执行的。如果一次执行希望peer根据某一特定的认证协议来认证，那么它必须在链路建立阶段要求使用那个认证协议。
+　　应该尽可能在链路建立后立即进行认证。而，链路质量检查可以同时发生。在一次执行中，禁止因为交换链路质量检查packets而不确定地将认证向后推迟这一做法。
+　　在认证完成之前，禁止从认证阶段前进到网络层协议阶段。如果认证失败，认证者应该跃迁到链路终止阶段。
+　　在这一阶段里，只有链路控制协议、认证协议，和链路质量监视协议的packets是被允许的。在该阶段里接收到的其他的packets必须被静静的丢弃。
+　　执行笔记：
+　　一次执行中，仅仅是因为超时或者没有应答就造成认证的失败是不应该的。认证应该允许某种再传输，只有在若干次的认证尝试失败以后，不得已的时候，才进入链路终止阶段。
+　　在执行中，哪一方拒绝了另一方的认证，哪一方就要负责开始链路终止阶段。
+3-6 网络层协议阶段
+　　一旦PPP完成了前面的阶段，每一个网络层协议（例如IP，IPX，或AppleTalk）必须被适当的网络控制协议（NCP）分别设定。每个NCP可以随时被打开和关闭。
+　　执行笔记：
+　　因为一次执行最初可能需要大力浪的时间用于链路质量检测，所以当等待peer设定NCP的时候，执行应该避免使用固定的timeouts。
+　　当一个NCP处于Opened状态时，PPP将携带相应的网络层协议packets。当相应的NCP不处于Opened状态时，任何接收到的被支持的网络层协议packets都将被静静的丢弃。
+　　执行记录：
+　　当LCP处于Opened状态时，任何不被该执行所支持的协议packets必须在Protocol-Reject里返回。只有支持的协议才被静静的丢弃。
+　　在这个阶段，链路通信量由LCP，NCP，和网络层协议packets的任意可能的联合组成。
+3-7 链路终止阶段
+　　PPP可以在任意时间终止链路。引起链路终止的原因很多：载波丢失、认证失败、链路质量失败、空闲周期定时器期满、或者管理员关闭链路。
+　　LCP用交换Terminate（终止）packets的方法终止链路。当链路正被关闭时，PPP通知网络层协议，以便他们可以采取正确的行动。
+　　交换Terminate（终止）packets之后，执行应该通知物理层断开，以便强制链路终止，尤其当认证失败时。　　　Terminate-Request（终止-要求）的发送者，在收到Terminate-Ack（终止-允许）后，或者在重启计数器期满后，应该断开连接。收到Terminate-Request的一方，应该等待peer去切断，在发出Terminate-Request后，至少也要经过一个Restart time（重启时间），才允许断开。PPP应该前进到链路死亡阶段。
+　　在该阶段收到的任何非LCP packets，必须被静静的丢弃。
+　　执行笔记：
+　　LCP关闭链路就足够了，不需要每一个NCP发送一个Terminate packets。相反，一个NCP关闭却不足以引起PPP链路的终止，即使那个NCP是当前唯一一个处于Opened状态的NCP。
+4 自动机协商选项
+　　finite-state automaton（有限态自动机）由事件、动作和状态转换定义。事件包括接收外部命令，例如Open and Close（打开和关闭）、重启定时器期满、和接收从peer来的packets。动作包括启动重启定时器和向peer传输packets。
+　　一些packets类型--Configure-Naks（设定-成功）和Configure-Rejects（设定-拒绝），或Code-Rejects（编码-拒绝）和Protocol-Rejects（协议-拒绝），或Echo-Requests（回波-要求），Echo-Replies（回波-应答）和Discard-Requests（丢弃-要求）--在自动机描述中不加以区分。从后面的描述可知，这些packets确实有着不同的功能。然而他们总是引起相同的转换。
+
+Events Actions
+
+Up = lower layer is Up tlu = This-Layer-Up
+Down = lower layer is Down tld = This-Layer-Down
+Open = administrative Open tls = This-Layer-Started
+Close= administrative Close tlf = This-Layer-Finished
+
+TO+ = Timeout with counter > 0 irc = Initialize-Restart-Count
+TO- = Timeout with counter expired zrc = Zero-Restart-Count
+
+RCR+ = Receive-Configure-Request (Good) scr = Send-Configure-Request
+RCR- = Receive-Configure-Request (Bad)
+RCA = Receive-Configure-Ack sca = Send-Configure-Ack
+RCN = Receive-Configure-Nak/Rej scn = Send-Configure-Nak/Rej
+
+RTR = Receive-Terminate-Request str = Send-Terminate-Request
+RTA = Receive-Terminate-Ack sta = Send-Terminate-Ack
+
+RUC = Receive-Unknown-Code scj = Send-Code-Reject
+RXJ+ = Receive-Code-Reject (permitted)
+or Receive-Protocol-Reject
+RXJ- = Receive-Code-Reject (catastrophic)
+or Receive-Protocol-Reject
+RXR = Receive-Echo-Request ser = Send-Echo-Reply
+or Receive-Echo-Reply
+or Receive-Discard-Request
+4-1 状态迁移图
+　　全部的状态转换如下表。状态在水平轴，事件在垂直轴。状态转换和动作备表示成：动作/新状态的形式。多个动作用逗号分隔，无先后顺序。状态后面跟的那个字母是说明性的脚注。短划线（'-'）代表无效的转换。
+
+| State
+| 0 1 2 3 4 5
+Events| Initial Starting Closed Stopped Closing Stopping
+------+-----------------------------------------------------------
+Up | 2 irc,scr/6 - - - -
+Down | - - 0 tls/1 0 1
+Open | tls/1 1 irc,scr/6 3r 5r 5r
+Close| 0 tlf/0 2 2 4 4
+|
+TO+ | - - - - str/4 str/5
+TO- | - - - - tlf/2 tlf/3
+|
+RCR+ | - - sta/2 irc,scr,sca/8 4 5
+RCR- | - - sta/2 irc,scr,scn/6 4 5
+RCA | - - sta/2 sta/3 4 5
+RCN | - - sta/2 sta/3 4 5
+|
+RTR | - - sta/2 sta/3 sta/4 sta/5
+RTA | - - 2 3 tlf/2 tlf/3
+|
+RUC | - - scj/2 scj/3 scj/4 scj/5
+RXJ+ | - - 2 3 4 5
+RXJ- | - - tlf/2 tlf/3 tlf/2 tlf/3
+|
+RXR | - - 2 3 4 5
+
+| State
+| 6 7 8 9
+Events| Req-Sent Ack-Rcvd Ack-Sent Opened
+------+-----------------------------------------
+Up | - - - -
+Down | 1 1 1 tld/1
+Open | 6 7 8 9r
+Close|irc,str/4 irc,str/4 irc,str/4 tld,irc,str/4
+|
+TO+ | scr/6 scr/6 scr/8 -
+TO- | tlf/3p tlf/3p tlf/3p -
+|
+RCR+ | sca/8 sca,tlu/9 sca/8 tld,scr,sca/8
+RCR- | scn/6 scn/7 scn/6 tld,scr,scn/6
+RCA | irc/7 scr/6x irc,tlu/9 tld,scr/6x
+RCN |irc,scr/6 scr/6x irc,scr/8 tld,scr/6x
+|
+RTR | sta/6 sta/6 sta/6 tld,zrc,sta/5
+RTA | 6 6 8 tld,scr/6
+|
+RUC | scj/6 scj/7 scj/8 scj/9
+RXJ+ | 6 6 8 9
+RXJ- | tlf/3 tlf/3 tlf/3 tld,irc,str/5
+|
+RXR | 6 7 8 ser/9
+　　那些其中运行着重启计时器的状态，是可以由存在的TO事件确认的。只有 Send-Configure-Request，Send-Terminate-Request和Zero-Restart-Count动作才启动或者重新启动重启定时器。当从任意一个定时器运行的状态转换到一个定时器不运行的状态时，重启定时器（Restart timer）停止。
+　　根据消息通过体系机构而不是信号通知体系机构，（人们）定义了事件和动作。如果希望一个动作去控制特定的信号（如DTR），那么就可能需要额外的动作。
+　　[p] 被动选项；见Stopped状态讨论。
+　　[r] 重启选项；见Open事件讨论。
+　　[x] 交叉连接；见RCA事件讨论。
+4-2 状态
+　　下面是每个自动机状态的详细描述。
+　　Initial（初始）：
+　　在初始状态，下层是不可获得的（Down），并且没有Open发生。Restart timer不在该状态下运行。
+　　Starting（启动）：
+　　启动状态是初始状态的Open相似物。一个管理的Open被初始化，但下层仍旧不可用（Down）。Restart timer不在该状态下运行。
+　　当下层变为可用（Up）时，发送一个Configure-Request。
+　　Closed（关闭）：
+　　在关闭状态，链路时可用的（Up），但是没有Open发生。Restart timer不在该状态下运行。当收到Configure-Request packets时，发送一个Terminate-Ack。Terminate-Acks被静静的丢弃，以防止造成循环。
+Stopped（停止）
+　　停止状态是关闭状态的Open相似物。当在This-Layer-Finished动作之后，或是发送Terminate-Ack之后，自动机正等待Down事件的时候，进入该状态。Restart timer不在该状态下运行。
+　　当收到Configure-Request packets时，发送一个适当的响应。当收到其他packets时，发送一个Terminate-Ack。Terminate-Acks被静静的丢弃，以防止造成循环。
+　　基本原理：
+　　停止状态是链路终止，链路设定失败，和其他自动机失败模式的一个接合（中间）状态。这些各自独立的状态被潜在的联合起来。
+　　在Down事件应答（从This-Layer-Finished动作）和Receive-Configure-Request事件之间，有一种竞赛条件。当Configure-Request在Down事件之前到来，代替Down事件的是自动机返回到Starting状态。这防止了由重复产生的攻击。
+　　执行选项：
+　　在peer对Configure-Requests响应失败之后，一个执行可以被动的等待peer发送Configure-Requests。在这种情况下，在状态Req-Sent，Ack-Rcvd，和Ack-Sent里，动作This-Layer-Finished不用于TO- 事件。
+　　这个选项对于专用电路或者没有可用的状态信号的电路有用，但禁止用于交换电路。
+　　Closing（结束）
+　　在结束状态里，为了终止连接作了一次尝试。发送了一个Terminate-Request，并运行了Restart timer，但没有收到Terminate-Ack。
+　　当收到Terminate-Ack时，就进入了Closed状态。当Restart timer期满时，传输一个新的Terminate-Request，并且Restart timer被重新启动。在Restart timer达到Max-Terminate时间后，就进入了Closed状态。
+　　Stopping（停下）
+　　停下状态是结束状态的Open相似物。发送了一个Terminate-Request，并运行了Restart timer，但没有收到Terminate-Ack。
+　　基本原理：
+　　停下状态提供了一个很好的机会在允许新的通信量之前终止链路。在链路终止后，经由Stopped或Starting状态，会出现一个新的配置（设定）。
+　　Request-Sent（要求-发送）
+　　在要求-发送状态，尝试着配置（设定）连接。发送了一个Terminate-Request，并运行了Restart timer，但没有收到Terminate-Ack。
+　　Ack-Received（Ack-接收）
+　　在Ack-接收状态，发送了一个Configure-Request，接收了一个Configure-Ack。因为还没有发送Configure-Ack，所以Restart timer仍旧运行。
+　　Ack-Sent（Ack-发送）
+　　在Ack-发送状态，Configure-Request和Configure-Ack都被发送了。但没有接收到Configure-Ack。因为还没有接收到Configure-Ack，所以Restart timer仍旧运行。
+　　Opened（开启）
+　　在开启状态，发送了一个Configure-Ack，也接收了一个Configure-Ack。Restart timer不运行。
+当进入该状态时，执行应该通知上层，现在Up。相反，当离开该装态时，执行应该通知上层，现在Down。
+　　4-3 事件
+　　自动机里的状态转换和动作是由事件引起的。
+　　Up：
+　　当低层指出已准备好携带packets时，发生此事件。
+　　典型的，该事件被调制解调器处理或呼叫过程，或被一些其他的连接于物理媒体的PPP用于通知LCP，链路正进入链路建立阶段。
+　　它也能被LCP用于通知每个NCP，链路进入网络层协议阶段。即，来自LCP的动作This-Layer-Up触发了NCP中的Up事件。
+　　Down：
+　　当低层指出不再准备携带packets时，发生此事件。
+　　典型的，该事件被调制解调器处理或呼叫过程，或被一些其他的连接于物理媒体的PPP用于通知LCP，链路正进入链路死亡阶段。
+　　它也能被LCP用于通知每个NCP，链路离开网络层协议阶段。即，来自LCP的动作This-Layer-Down触发了NCP中的Down事件。
+　　Open：
+　　该事件指出链路的通信量是可以管理的：即，网络管理者（人或程序）指出链路允许被Opened。当这一事件发生，且链路不处于Opened状态时，自动机则试图给peer发送配置packets。
+　　如果自动机不能开始配置（下层是Down，或者前一个Close事件还没有结束），那么链路的建立将被自动的推迟。
+　　当收到一个Terminate-Request，或者其他导致链路不可用的事件发生时，自动机将进入一个状态，在那里链路准备re-open。无需额外的管理干涉。
+　　执行选项：
+　　经验表明：当用户想就链路进行重新谈判时，他们将额外的执行一条Open命令。这表明新的值将被协商。既然这不是Open事件的含义，那就暗示着在Opened, Closing, Stopping或Stopped状态，当执行一条Open用户命令时，执行发行一个Down事件，紧接着一个Up事件。一定要注意不能有从另一个源发生的Down事件的干涉。紧接着Up事件的Down事件将引起一次有秩序的链路的再协商（通过先前进到Starting状态，再进入到Request-Sent状态）。该再协商没有负面影响。
+　　Close：
+　　该事件意味着链路没有通信量。即，网络管理者（人或程序）指示链路不允许被开放。当该事件发生且链路不处于Closed状态时，自动机试图终止连接。拒绝重新配置链路的尝试，直到一个新的Open事件发生。
+　　执行笔记：
+　　当认证失败，链路应该被终止，以防止受到重复性的攻击和为其他用户服务。这可以通过模仿一个Close事件给LCP，然后紧跟着一个Open事件来完成，既然链路在管理上是可被访问的。一定要注意不能有从另一个源发生的Down事件的干涉。
+　　紧接着Up事件的Down事件将引起一次有秩序的链路的再协商（通过先前进到Closing状态，再进入到Stopping状态），This-Layer-Finished动作能断开链路的连接。在Stopped或Starting状态，自动机等待下一次连接尝试。
+　　Timeout (TO+,TO-)：
+　　该事件表明Restart timer期满。Restart timer用于记录对Configure-Request和Terminate-Request packets的响应的时间。
+　　TO+事件表明Restart counter持续大于零，它触发了相应的Configure-Request或Terminate-Request packet的发送。
+　　TO-事件表明Restart counter持续不大于零，不再需要发送packets。
+　　Receive-Configure-Request (RCR+,RCR-)：
+　　当收到一个来自peer的Configure-Request packet时，该事件发生。Configure-Request packet表明希望开创一个连接并且可以指定配置选项。
+　　RCR+事件表明Configure-Request是可接受的，并且触发相应的Configure-Ack的传输。
+　　RCR-事件表明Configure-Request是不可接受的，并且触发相应的Configure-Nak 或Configure-Reject的传输。
+　　执行笔记：
+　　这些事件可以发生在已经处于Opened状态的连接上。该执行必须准备立即再协商配置选项。
+　　Receive-Configure-Ack (RCA)：
+　　当收到一个来自peer的有效Configure-Ack packet时，该事件发生。Configure-Ack packet是对Configure-Request packet的肯定应答。序列之外的或者无效的packet被静静的丢弃。
+　　执行笔记：
+　　既然在到达Ack-Rcvd或Opened状态之前，正确的packet已经被收到了，那就绝不可能有另一个这样的packet的到来。像说明的一样，所有无效的Ack/Nak/Rej packets将被静静的丢弃，并不影响自动机的（状态）转换。
+　　然而，格式正确的packet不可能通过coincidentally-timed cross-connection（同步交换连接）到达（目的地）的。它更可能是执行出错的结果。至少，这种情况应该被记录下来。
+　　Receive-Configure-Nak/Rej (RCN)：
+　　当收到一个来自peer的有效Configure-Nak或Configure-Reject packet时，该事件发生。Configure-Nak或Configure-Reject packet是对Configure-Request packet的否定应答。序列之外的或者无效的packet被静静的丢弃。
+　　执行笔记：
+　　尽管Configure-Nak和Configure-Reject在自动机中引起相同的状态转换，但这些packets对发送于Configure-Request packet中的配置选项有着截然不同的影响。
+　　Receive-Terminate-Request (RTR)：
+　　当收到一个Terminate-Request packet时，该事件发生。Terminate-Request packet表明希望peer去关闭连接。
+　　执行笔记：
+　　该事件于Close事件不同，它需要考虑局域网管理者的Open命令。执行必须准备接收新的没有网络管理者干涉的Configure-Request。
+　　Receive-Terminate-Ack (RTA)：
+　　当收到一个来自peer的Terminate-Ack packet时，该事件发生。Terminate-Ack packet通常是对Terminate-Request packet的响应。Terminate-Ack packet也可以表明peer正处于Closed或Stopped状态，适应于链路配置的再同步。
+　　Receive-Unknown-Code (RUC)：
+　　当收到一个来自peer的un-interpretable（不能说明的）packet时，该事件发生。发送一个Code-Reject packet作为响应。
+　　Receive-Code-Reject, Receive-Protocol-Reject (RXJ+,RXJ-)：
+　　当收到一个来自peer的Code-Reject或Protocol-Reject packet时，该事件发生。
+　　当拒绝值可接受时（例如一个扩充编码的Code-Reject，或一个NCP的Protocol-Reject，这些在一般操作的范围内），RXJ+事件出现。执行必须停止发送损坏了的packet类型。
+　　当拒绝值是灾难性的时候（例如一个Configure-Request的Code-Reject，或一个LCP的Protocol-Reject），RXJ- 事件出现。该事件传达了一个不可校正的错误（导致连接终止）。
+　　Receive-Echo-Request, Receive-Echo-Reply, Receive-Discard-Request(RXR)：
+　　当收到一个来自peer的Echo-Request，Echo-Reply或Discard-Request packet时，该事件发生。Echo-Reply packet是对Echo-Request packet的响应。Echo-Reply或Discard-Request packet没有响应。
+4-4 动作
+　　自动机中的动作有事件引起。典型的，动作表明了packets的传输，和/或Restart timer的启动和停止。
+　　Illegal-Event (-)：不合法的事件
+　　该动作指出一个在正常执行的自动机中不可能出现的事件。执行有一个内在的错误，应该把它报告并记录下来。没有转换被执行，执行不应该reset or freeze（重新安排或冻结）。
+　　This-Layer-Up（tlu）
+　　动作给自动进入打开阶段的上边的层做指示。
+典型的，该动作被LCP用于对一个NCP发送向上的事件信号，或者链路质量协议，或者可以被一个NCP用于显示该链路可用于它的网络层往来。
+　　This-Layer-Down（tld）
+　　该动作给自动留下打开的阶段的上边的层做指示。
+　　典型地，该动作被LCP用于向一个NCP发送向下的事件，证实协议，或者可以被一个NCP用于显示该链路对它的网络层传输不再可用。
+　　This-Layer-Started了（tls）
+　　该动作对自动进入开始状态的更低的层做指示，并且需要更低的层用于该链路。
+　　当更低的层可用的时候，更低的层应该用一个向上的事件响应。
+　　该动作的结果是高度的依赖动作的执行的。
+　　This-Layer-Finished（tlf）
+　　该动作给自动进入最初，关闭了或者停止的阶段的更低的层做指示，并且，在链路上不再需要更低的层。
+　　当更低的层终止的时候，更低的层应该用一个向下的事件应答。
+　　典型地，该动作可以被LCP用于前进到链路死掉的状态，或者可以被一个NCP用于给当没有其他的NCPs打开时链路可以被终止的LCP做指示。
+　　该动作的结果是高度的依赖动作的执行的。
+　　Initialize-Restart-Count（irc）
+　　该动作对Restart计数器设置适当的值（Max-Terminate 或 Max-Configure）。
+　　每次传输，包括第一次传输，计数器自减。
+　　执行记录：
+　　附加的设置Restart计数器，当使用了重定时返回时，该执行必须设置超时周期到初始值。
+　　Zero-Restart-Count（zrc）
+　　该动作对Restart计数器清零。
+　　执行记录：
+　　该动作允许FSA在进行到要求的最终状态之前暂停，允许用peer进行传输。
+　　附加的清零Restart计数器，该执行必须设置超时周期到初始值。
+　　Send-Configure-Request（scr）
+　　一个Configure-Request的包被传送。
+　　这表明要用指定的一套特殊的配置选项打开一个连接。
+　　为了防止包丢失，Restart计时器在Configure-Request包被传送的时候打开。
+　　每次一个Configure-Request被发送的时候，Restart计数器自减。
+　　Send-Configure-Ack（sca）
+　　一个Configure-Ack包被传送。这确认接收了一个带有一套可接受的配置选项的Configure-Request包。
+　　Send-Configure-Nak（scn）
+　　一个Configure-Nak或Configure-Reject包被稳妥的传送。
+　　否定的响应表明一个Configure-Request包带有一套不可接受的配置选项。
+　　Configure-Nak包被用于拒绝一个配置选项值，并提议一个新的，可接受的值。
+　　Configure-Reject包被用于拒绝全部的关于一个配置选项的协商，典型的因为不被认可或不被满足。
+　　在关于LCP包格式的章节对Configure-Nak的使用比Configure-Reject有更充分的描述。
+　　Send-Terminate-Request（str）
+　　一个Terminate-Request包被传送。
+　　这表示想要关上连接的愿望。
+　　当Terminate-Request包被传送时Restart计时器被开启，来防止包丢失。
+　　每次一个Terminate-Request被发送的时候，Restart计数器自减。
+　　Send-Terminate-Ack (sta)
+　　一个Terminate-Ack包被传送。
+　　这确认Terminate-Request的包的接收，或者以别的方式对于自动同步起作用。
+　　Send-Code-Reject（scj）
+　　一个Code-Reject包被传送。
+　　这表示未知的种类的包的接收。
+　　Send-Echo-Reply (ser)
+　　一个Echo-Reply包被传送。
+　　这确认一个Echo-Request包的接收。
+4-5 环躲避（循环避免）
+　　协议做避开协商成环状的配置选项的适当尝试。
+　　不过，协议不保证环将不发生。
+　　和任何协商一样，有可能来设置2个PPP由不收敛的矛盾的方法来执行。
+　　同样，也有可能配置收敛的，重要的时间这样去做的方法。
+　　设备应该考虑这些，并且应该满足环侦测机制或更高水平的超时。
+4-6 计数器和定时器
+　　重启动定时器
+　　有一个特殊的定时器被自动使用。
+　　重启动定时器被用于计算Configure-Request和Terminate-Request包的传输时间。
+　　重启动定时器的满期产生一个超时事件，并且通信Configure-Request或Terminate-Request包重新传送。
+　　重启动定时器必须是可配置的，但是应该缺省为三（3）秒。
+　　执行记录：
+　　重新开始计时器应该根据链路的速度。
+　　缺省值被指定为低的速度（2,400～9,600 bps），高交换的等待时间链路（典型电话线）。
+　　更高的速度链路或和低交换等待时间的链路应该相对应有更快的再次传输时间。
+　　代替恒定值，重新开始计时器可以从最初的小的值开始增加到配置的最终值。
+　　每一个小于最终值的连续值应该至少是前一个值的两倍。
+　　初始值应该对包的大小来说足够大，用于以线路速率传输两倍的round trip时间，并且至少附加100毫秒来允　　许peer来处理响应之前的包。
+　　一些电路又加了200毫秒的附加迟延。
+　　以14,400 bps运作的调制解调器的round trip时间范围中精确到160到600毫秒以上。
+　　Max-Terminate
+　　必须有一个Terminate-Requests的restart计数器。
+　　Max-Terminate显示Terminate-Request包发送，但是认为peer不会应答的，没有收到Terminate-Ack的包的个数。
+　　Max-Terminate必须是可配置的，但是应该缺省为二（2）秒传输。
+　　Max-Configure
+　　推荐为Configure-Requests采用一个类似的计数器。
+　　Max-Configure显示Configure-Request包发送，在peer不会应答前的，没有接收到一个有效的Configure-　　Ack，Configure-Nak 或 Configure-Reject的包的个数。
+　　Max-Configure必须是可配置的，但是应该缺省为十（10）次传输。
+　　Max-Failure
+　　推荐为Configure-Nak采用一个相关的计数器。
+　　Max-Failure显示Configure-Nak包发送，在假定配置不收敛之前发Configure-Ack的Configure-Nak包的个数。
+　　任何更进一步的用于peer请求的选项被转换到Configure-Reject包，并且不在附加局部要求选项。
+　　Max-Failure必须是可配置的，但是应该缺省为五（5）次传输。
+5 LCP包格式
+　　LCP包有3类：
+　　1.链路配置包，用于建立和配置链路（Configure-Request，Configure-Ack，Configure-Nak，和Configure-Reject）。
+　　2.链路结束包被用于结束一个链路（Terminate-Request 和 Terminate-Ack）
+　　3.链路维修包被用于管理和调试一个链路（Code-Reject, Protocol-Reject, Echo-Request, Echo-Reply, 和 Discard-Request）。
+　　为了简单的利益，LCP包里没有版本域。
+　　一个正确的运作的LCP的执行将总是对带有简单地可以识别的LCP包的未知协议和代码进行响应。这样倘若一个确定性的可靠的机制用于其他版本的执行。
+　　不管哪个配置选项被允许，所有的LCP链路配置，链路终止和代码-拒绝包（代码1到7）总被发送，就像没有配置选项被协商一样。
+　　特别是，每个配置选项都指定缺省值。
+　　这就保证了这样的LCP包总是可以识别的，甚至当1个链路的结束错误的相信该链路是开着的。
+　　确切的说1个LCP包被封装在PPP信息域中，该PPP协议域表示类型为十六进制c021（链路控制协议）。
+　　链环控制协议包格式的摘要如下。
+　　域被从左往右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 数据...
++-+-+-+-+
+
+代码
+　　代码域是一个八位字节，确定LCP包的种类。
+　　当收到一个带有未知域的包时，一个Code-Reject包被传送。
+　　LCP代码域的Up-to-date值在最近的"指定号码"RFC[2]中被指定。该文档涉及以下的值：
+　　1 Configure-Request
+　　2 Configure-Ack
+　　3 Configure-Nak
+　　4 Configure-Reject
+　　5 Terminate-Request
+　　6 Terminate-Ack
+　　7 Code-Reject
+　　8 Protocol-Reject
+　　9 Echo-Request
+　　10 Echo-Reply
+　　11 Discard-Request
+标识符
+　　标识符域是一个八位字节，对匹配请求和回复中有帮助。当带有无效标识符域的包被接收时候，该包将不影响自动机制，被静静的丢弃。
+长度
+　　长度域是二个八位字节，指出LCP包的长度，包括代码，标识符，长度和数据域。该长度必须不超过链路的MRU。
+　　长度域以外的字节被当作填料而忽略处理。当收到带有无效标识符该包将不影响自动机制，被静静的丢弃。
+数据
+　　数据域是零或多个八位字节，由长度域声明。数据域的格式由代码域决定。
+5-1. Configure-Request
+　　描述
+　　一个执行想要打开一个连接必须传送一个Configure-Request。选项域被填充任何想要的对链路默认的改变。配置选项应该不被包括到默认值中。Configure-Request的接收上，必须传送适当的答复。
+　　下面给出Configure-Request包的格式的摘要。域从左到右传输。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 选项 ...
++-+-+-+-+
+代码
+　　1 为Configure-Request
+　　标识符
+　　只要选项域改变的内容改变，并且只要收到先前请求的有效响应，标识符域必须被改变。对重发来说，标识符可以保持不变。
+　　选项
+　　选项域是长度的变量，并包含零个或多个发送方需要协商的配置选项的列表。全部配置选项总是被同时协商。在下一章中对配置选项的格式有更详细的描写。
+5-2. Configure-Ack
+　　描述
+　　如果Configure-Request中收到的每一个配置选项和全部的值都是能接受的，那么该执行必须传送一个Configure-Ack。该确认配置选项必须不被任何途径的重命令或更改。
+　　Configure-Ack的接收中，标识符域必须匹配最后传送的Configure-Request。另外，Configure-Ack中的配置选项必须完全匹配最后传输的Configure-Request。错误包被静静的丢弃。
+一个Configure-Ack包格式如下。域从左到右传输。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 选项 ...
++-+-+-+-+
+代码
+
+　　 2 为Configure-Ack
+　　标识符
+　　标识符域是引起Configure-Ack的Configure-Request的标识符域的拷贝。
+　　选项　
+　　选项域是长度的变量，并包含零个或多个发送方确认的配置选项的列表。全部配置选项总是被同时确认。
+5-3. Configure-Nak
+　　描述
+　　如果每一个收到的配置选项要求是可认知的，但是一些值不能被接受，那么该执行必须传送一个Configure-Nak。选项域仅由来自Configure-Request的不可接受的配置选项所填充。全部可接受的配置选项填充在Configure-Nak外，但是来自Configure-Request的配置选项必须不被重命令。
+　　没有值域的选项（布尔选项）一定使用Configure-Reject答复来代替。
+　　允许仅有一个单一要求的每一个配置选项必须被修正到可接受的值到Configure-Nak发送方。当与被请求的值不一致时，默认值可以被使用。
+　　一个详细的配置选项类型能以不同的值被列出超过一次时，Configure-Nak必须包括Configure-Nak发送方所接受的全部选项值的列表。包括Configure-Request中当前可接受的值。
+　　最后，一个执行可以被配置到要求明确的配置选项。若该选项未被列出，则该选项可以被添加到没有应答的配置选项的列表中，以便提示peer添加该选项到Configure-Request包中。任何用于该选项的值域必须指出Configure-Nak发送方的可接受值。
+　　在一个Configure-Nak接收中，标识符域必须匹配最后一个传输的Configure-Request。错误包被静静的丢弃。
+　　当一个新的Configure-Request发送时正确的Configure-Nak的接收，配置选项可以被作为Configure-Nak中的指定。当当前配置选项是多种情况时，peer应该选择一个单一的值包含到下一个Configure-Request包中。
+　　一些配置选项有可变长度。既然没有应答的选项被peer修正了，该执行必须能够处理与来自原Configure-　Request不同的选项长度。
+　　Configure-Nak包格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 选项 ...
++-+-+-+-+
+代码
+
+3 为Configure-Nak
+　　标识符
+　　标识符域是导致Configure-Nak的Configure-Request的标识符的拷贝。
+　　选项
+　　选项域是长度的变量，包含零到多个没有应答的发送方的配置选项。
+　　全部配置选项总是同时没有应答的。
+5-4. Configure-Reject
+　　描述
+　　如果Configure-Request中收到的一些配置选项是不可辨认的或者不被商议所接受（由网络管理员配置的），则该执行必须传送一个Configure-Reject。选项域仅由来自Configure-Request不可接受的配置选项所填充。所有可识别的和可通过商议解决的配置选项被过滤出Configure-Reject，但是另外的配置选项必须不被任何方式的重定义或修改。
+　　在Configure-Reject的接受中，标识符域必须匹配最后传输的Configure-Request。
+　　另外，Configure-Reject的配置选项必须是最后传输的Configure-Request的正确的子集。错误包被静静的丢弃。
+　　有效的Configure-Reject接收指出当一个新的Configure-Request发送的时候，必须不包含任何Configure-Reject中列出的配置选项。
+　　Configure-Reject包的格式如下。域从左到右传送。
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 选项 ...
++-+-+-+-+
+
+代码
+　　4 为Configure-Reject
+　　标识符
+　　标识符域是导致该Configure-Reject的Configure-Request的标识符域的拷贝。
+　　选项
+　　选项域是长度的变量，包含零或者多个发送者拒绝的配置选项列表。全部的配置选项总是被同时拒绝的。
+5-5. Terminate-Request and Terminate-Ack
+　　描述
+　　LCP包含Terminate-Request 和 Terminate-Ack代码是为了提供关闭一个连接的机制。
+　　一个执行想要关闭一个连接应该传送一个Terminate-Request。Terminate-Request包应该继续发送，直到收到Terminate-Ack，低层显示已经关闭了，或者已经接收到了充分大的数量，以致peer有确切地理由关闭。
+　　在一个Terminate-Request接收上，必须传送一个Terminate-Ack。
+　　接收一个未被引出的Terminate-Ack表示peer在Closed（关闭）或Stopped（停止）状态，或者需要另外再商议。
+　　Terminate-Request 和 Terminate-Ack包格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 数据...
++-+-+-+-+
+代码
+　　5 为Terminate-Request；
+　　6 为Terminate-Ack。
+　　标识符
+　　传送过程中，无论何时数据域的内容发生了改变，而且无论何时接收到一个对前一个请求有效的答复，标识符域必须改变，对于重新传送，标识符可以保持不变。
+　　接收过程中，Terminate-Request的标识符域被拷贝到Terminate-Ack包的标识符域。
+　　数据
+　　数据域为零个或多个八位字节，包含发送方使用的未解释的数据。该数据可以由任何二进制值组成。该域的结束可以由长度指出。
+5-6. Code-Reject
+　　描述
+　　一个带有未知代码的LCP包的接收显示peer由一个不同的版本操作。这必须传送一个Code-Reject报告回给未知代码的发送方。
+　　一个基本的该版本协议的Code-Reject的接收中，执行应该报告问题并结束连接，既然该情形不像能被自动矫正。
+　　Code-Reject包格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 被拒绝的包 ...
++-+-+-+-+-+-+-+-+
+代码
+　　7 为Code-Reject
+　　标识符
+　　对于每次Code-Reject发送，该标识符域必须被改变。
+　　被拒绝的包
+　　被拒绝的包域包含被拒绝的LCP包的拷贝。它由信息域开始，并且不包括任何数据链路层的头或者FCS。被拒绝的包必须被缩短来符合peer指定的MRU。
+5-7. Protocol-Reject
+　　描述
+　　一个带有未知协议域的PPP包的接收显示peer试图使用一个不支持的协议。这通常发生在peer试图配置一个新的协议时。如果LCP自动处理处于Opened（打开）状态，那么必须通过传送一个Protocol-Reject报告回该peer。
+　　在Protocol-Reject接收中，执行必须及早停止发送被指出的协议的包。
+　　Protocol-Reject包只能在LCP的Opened（打开）状态被发送。在其他不是Opened（打开）状态下接收到的Protocol-Reject包应该被静静的丢弃。
+　　Protocol-Reject包格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 被拒绝的协议 | 被拒绝的信息 ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+代码
+　　8 为Protocol-Reject
+　　标识符
+　　对每一次Protocol-Reject发送，标识符域必须被改变。
+　　被拒绝的协议
+　　被拒绝的协议域为二个八位字节，包含被拒绝的PPP协议域。
+　　被拒绝的信息
+　　被拒绝的信息域包含被拒绝的包的拷贝。由信息域开始，不包含任何数据链路层头或FCS。被拒绝的信息必须削减来适应peer制定的MRU。
+5-8. Echo-Request and Echo-Reply
+　　描述
+　　LCP包含Echo-Request 和 Echo-Reply代码来供给一个数据链路层回送机制来演习链路双方的使用。这对调试、链路质量检测、执行测试和众多的其他功能有帮助。
+　　一个在LCP的Opened（打开）状态接收Echo-Request时，必须传送一个Echo-Reply。
+　　Echo-Request 和 Echo-Reply包必须仅在LCP的Opened（打开）状态下发送，在其他不是Opened（打开）状态下接收到的Echo-Request 和 Echo-Reply包应该被静静的丢弃。
+　　Echo-Request 和 Echo-Reply包格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Magic-Number |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 数据 ...
++-+-+-+-+
+
+　　代码
+　　9 为Echo-Request；
+　　10 为Echo-Reply
+　　标识符
+　　传输中，无论何时数据域内容的改变，并且无论何时接收到前一个请求的有效的响应，标识符域必须被改变。对于重新传送标识符可以保持不变。
+　　接收中，Echo-Request的标识符域被拷贝到Echo-Reply包的标识符域。
+　　Magic-Number
+　　Magic-Number域是四个八位字节，对检测处于looped-back条件下的链路有帮助。在该Magic-Number配置选项被成功的协商之前，Magic-Number必须被以零传送。在Magic-Number配置选项中由更详细的说明。
+　　数据
+　　数据域是零或者多个八位字节，包含被发送方使用的未解释的数据。该数据可以由任何二进制值组成。该域的结束由长度指出。
+5-9. Discard-Request
+　　描述
+　　LCP包含一个Discard-Request代码为了供给一个用于演习本地到遥远的链路方向的数据链路层接收器机制。有助于调试、执行测试、和众多的其他功能。
+　　Discard-Request包必须仅在LCP的Opened（打开）状态被发送。接收中，接收器必须静静的丢弃任何收到的Discard-Request。
+　　Discard-Request包格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 代码 | 标识符 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Magic-Number |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 数据 ...
++-+-+-+-+
+代码
+　　11 为Discard-Request
+　　标识符
+　　每个Discard-Request发送，标识符域必须改变。
+　　Magic-Number
+　　Magic-Number域为四个八位字节，对检测处于looped-back条件下的链路有帮助。在该Magic-Number配置选项被成功的协商之前，Magic-Number必须被以零传送。在Magic-Number配置选项中由更详细的说明。
+　　数据
+　　数据域是零或者多个八位字节，包含被发送方使用的未解释的数据。该数据可以由任何二进制值组成。该域的结束由长度指出。
+6. LCP配置选项
+　　LCP配置选项允许点对点链路的默认特征的更改的协商。如果一个配置选项不包含在Configure-Request包中，配置选项被假定为默认值。
+　　一些配置选项可以被列出超过一次。配置选项详细的效果，由每一个配置选项描述所指出。（该说明书内的配置选项均不能被列出超过一次。）
+　　列表最后的配置选项由LCP包的长度域所指出。
+　　若不另外指定，所有的配置选项由半双工方式支持：典型的，线路的接收方是来自Configure-Request发送者的观点。
+　　设计思想
+　　选项指出另外的性能和提出选项的执行的要求。不了解任何选项的执行应该与实现每一个选项的操作交互执行。
+　　对每一个允许链路没有选项协商的正确功能的每一个选项指定默认值，尽管低于最佳性能。
+　　除非明确的指出，一个选项的确认并不需要peer来比默认附加任何动作。
+　　没有必要为Configure-Request中的选项发送默认值。
+　　配置选项格式如下。域从左到右传送。
+
+0 1
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 | 数据 ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+　　类型
+　　类型域是一个八位字节，指出配置选项的类型。LCP选项类型域的Up-to-date值在大多数当前的"Assigned 　　Numbers" RFC [2]中被指定。
+　　该文档涉及以下值：
+
+0 RESERVED（保留）
+1 Maximum-Receive-Unit（最大-接收-单元）
+3 Authentication-Protocol（鉴定-协议）
+4 Quality-Protocol（质量-协议）
+5 Magic-Number
+7 Protocol-Field-Compression（协议-域-压缩）
+8 Address-and-Control-Field-Compression（地址-和-控制-域-压缩）
+
+　　长度
+　　长度域是一个八位字节，并且指出该配置选项，包括类型、长度和数据域的长度。
+　　如果在一个Configure-Request中收到了一个可通过谈判解决的配置选项，但是带有一个非法的或者未被承认的长度，Configure-Nak应该被传送包括带有适当的长度和数据的想得到的配置选项。
+　　数据
+　　数据域是零个或者更多的八位字节，并且包含配置选项的特殊详细信息。数据域的类型和长度由类型和长度域所决定。
+　　当数据域由长度到扩充超过信息域的结束所指出，整个包被不通知自动机制静静的丢弃。
+6-1. Maximum-Receive-Unit (MRU)
+　　描述
+　　该配置选项可以被发送到通知peer该执行可以接收更大的包，或者请求peer发送小一点的包。
+　　默认值是1500个八位字节。如果请求小一点的包，万一链路同步丢失，一个执行必须仍然能够接收整个1500个八位字节的全部信息域。
+　　执行记录：
+　　该选项用于指出一个执行的容量。peer不必需要最大容量的使用。例如，当一个2048个八位字节MRU被指出，　　peer不需要用2048个八位字节发送每个包。peer不需要Configure-Nak指出它将仅发送小一点的包，既然该执行将总是需要对至少1500八位字节的支持。
+　　Maximum-Receive-Unit配置选项格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 | Maximum-Receive-Unit |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+　　类型
+　　1
+　　长度
+　　4
+　　Maximum-Receive-Unit
+　　Maximum-Receive-Unit域是二个八位字节，在信息和填料域中指定最大字节数。它并不包括帧、协议域、FCS也不包括任何透明位或字节。
+6-2. Authentication-Protocol
+　　描述
+　　一些链路可能想要peer在允许网络层协议包被交换之前鉴别它自己。
+　　该配置选项提供一种使用详细而准确的协议进行鉴定的方法。默认的，不需要鉴定。
+　　一个执行必须不在Configure-Request包中包含多重鉴定协议配置选项。代替的，应该首先尝试配置最值得要的协议。如果协议是Configure-Nak的，那么该执行应该在下一个Configure-Request中尝试下一个最值得要的协议。
+　　该执行发送Configure-Request指出它所期待的来自它的peer的鉴定。如果一个执行发送一个Configure-Ack ，那么它同意进行指定协议的鉴定。一个执行接收一个Configure-Ack应该期待peer用公认协议进行鉴别。
+没有必要采用全双工或者将同一个协议用于两个方向。允许每个方向采用不同的协议是极好的。这将，当然，取决于协商的详细协议。
+　　Authentication-Protocol配置选项格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 | Authentication-Protocol |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 数据 ...
++-+-+-+-+
+　　类型
+　　3
+　　长度
+　　>=4
+　　Authentication-Protocol
+　　Authentication-Protocol域是两个八位字节，指出想要鉴定的协议。该域的值总是与PPP协议域值一样用于同样的鉴定协议。
+　　Authentication-Protocol域的Up-to-date值在最近的"Assigned Numbers" RFC [2]中被指定。
+　　当前的值被赋值如下：
+　　值（十六进制） 协议
+　　c023 　　　　　密码证明协议
+　　c223　　　　　　挑战握手验证协议
+　　数据
+　　数据域是零或多个八位字节，包含作为由详细协议决定了的附加数据。
+6-3. Quality-Protocol
+　　描述
+　　一些链路上可能想要决定何时，和间隔多长时间，该链路丢弃数据。该过程被叫做链路质量监测。
+　　该配置选项提供一种用于链路质量监测的使用详细协议的商议方法。默认的，禁止链路质量监测。
+　　该执行发送的Configure-Request指出它希望接收的来自它的peer的监测信息。
+　　如果一个执行发送一个Configure-Ack，那么它同意使用详细协议。一个协议接收一个Configure-Ack应该等待peer发送确认协议。
+　　不必要进行全双工或双方都使用同样的协议的质量监测。最好两端使用不同的可接受的协议。这将，当然，取决于商议的详细的协议。
+　　Quality-Protocol配置选项格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 | Quality-Protocol |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 数据 ...
++-+-+-+-+
+
+　　类型
+　　4
+　　长度
+　　>=4
+　　Quality-Protocol
+　　Quality-Protocol域是两个八位字节，指出链路想要的质量监测协议。该域的值总是与用于相同的监测协议的PPP协议域值相同。
+　　Quality-Protocol域的Up-to-date值在最近的"Assigned Numbers" RFC [2]中指定。当前值的赋值如下：
+　　值（十六进制） 协议
+　　c025 　　　　链路质量报告
+　　数据
+　　数据域是零或者多个八位字节，包含由详细协议决定的附加数据。
+6-4. Magic-Number
+　　描述
+　　该配置选项提供一种侦测looped-back链路和其他数据链路层异常的方法。该配置选项可以被一些其他配置选项例如Quality-Protocol配置选项所需求。默认的，该Magic-Number并不协商，并且零被插入到Magic-Number 可能用到的其他地方。
+　　请求该配置选项之前，一个执行必须选择它的Magic-Number。推荐Magic-Number使用在大多数随机的方式可能性为了保证一个执行有一个唯一的号码的可能性高。选择唯一号码的好方法是用一个唯一的种子开始。建议使用唯一包含的机器序列号，其他网络硬件地址，当时的时钟，等等。独特的好的随机种子是物理事件的inter-arrival时间的精确测量，比如其他连接网络的接收包，服务器响应时间，或者人类用户的键入速率。它也建议尽可能的多的来源被同步。
+　　当接收到一个带有Magic-Number配置选项的Configure-Request时候，接收到的Magic-Number与最后一个发送给peer的Configure-Request的Magic-Number相比较。如果两个Magic-Number不同，则该链路不被looped-back，而且Magic-Number应该被确认。如果两个Magic-Number相等，那么有可能，但是不确定，该线路是looped-back，并且该Configure-Request实际上是上一次发送的。为了确认它，必须发送一个Configure-Nak指定一个不同的Magic-Number值。一个新的Configure-Request应该不被发送到peer，直到一般处理导致它的发送（那就是说，直到收到一个Configure-Nak或者Restart计时器溢出）。
+　　接收到一个带有Magic-Number的Configure-Nak与最后发送给peer的Configure-Nak不同，这就证明该链路不是looped-back，并且指出唯一的一个Magic-Number。如果该Magic-Number等于最后发送的Configure-Nak，有可能增加了一条looped-back链路，必须选择一个新的Magic-Number。其他情况，应该发送一个新的带有新的Magic-Number的Configure-Request。
+　　如果该链路确实是looped-back，该次序（传送Configure-Request,接收Configure-Request, 传送Configure-Nak, 接收Configure-Nak）将被重复做下去。若该链路不是looped-back，该次序将发生很少的几次，但是它非常不像能再三的重复。更像，所选择的Magic-Number很快会跳出，结束该顺序。下面的表格表明了链路的两端带有统一分配的Magic-Number冲突的可能性：
+
+　　碰撞次数 可能性
+-------------------- ---------------------
+1 1/2**32 = 2.3 E-10
+2 1/2**32**2 = 5.4 E-20
+3 1/2**32**3 = 1.3 E-29
+
+　　唯一的或者随机的好的源被发生的分歧所需要。如果一个唯一的好的源不能被找到，推荐配置选项不能被激活：带有该选项的Configure-Requests应该不被传送并且peer发送的任何Magic-Number配置选项应该既被确认也被拒绝。在这种情况下，looped-back链路不能通过执行被可靠的监测出来，虽然peer仍然可以察觉他们。
+　　如果一个执行传送一个带有Magic-Number配置选项的Configure-Request，那么当它接收一个带有Magic-Number配置选项的Configure-Request时它必须不响应。那就是说，如果一个执行想使用Magic Numbers，那么它必须也允许它的peer这样做。如果一个执行确实接收一个Configure-Request对Configure-Request的响应，只能表示该链路不是loop-back，并且它的peer将不使用Magic-Number。在这种情况下，一个执行应该行动好像协商已经成功（好像它真的收到了一个Configure-Ack）。
+　　Magic-Number也可以被用于监测通常操作的looped-back链路，正如经过配置选项协商。所有的LCPEcho-Request, Echo-Reply, 和 Discard-Request 包都有一个Magic-Number域。如果Magic-Number被成功的协商，一个执行必须传送那些带有Magic-Number域的包的域到协商的Magic-Number。
+　　这些包的Magic-Number域应该被接收的时候检查。所有收到的Magic-Number域必须等于零或者peer的唯一的Magic-Number，取决于是不是peer协商了Magic-Number。
+　　一个Magic-Number域的接收等于协商本地Magic-Number指出一个loop-back链路。一个Magic-Number的接收或者协商本地Magic-Number，该peer的协商Magic-Number，或者零如果peer不协商一个，指出一个被（漏）配置用于与一个不同的peer通讯。
+　　情况未指明的任一事例恢复程序，和任何执行到执行的不同，一个稍微保守式程序被假定一个LCP关闭时间。一个更开放事件将开始重新设置链路的处理，直到looped-back条件被终止才完成，并且Magic-Numbers被成功的协商。一个更开放式的程序（在looped-back链路情况下）开始传送LCPEcho-Request包，直到收到适当的Echo-Reply，指出looped-back条件的终止。
+　　Magic-Number配置选项格式如下。域从左到右传送。
+
+0 1 2 3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 | Magic-Number
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+Magic-Number (内容) |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+　　类型
+　　5
+　　长度
+　　6
+　　Magic-Number
+　　Magic-Number域是四个八位字节，指出一个很像链路结尾唯一指定的号码。零的Magic-Number是违法的，必须总是没有应答，如果不被彻底拒绝。
+
+6-5. Protocol-Field-Compression (PFC)
+　　描述
+　　该配置选项提供一种PPP协议域的压缩协商方法。默认的，所有执行必须传送带有二个八位字节PPP协议域的数据包。
+　　PPP协议域号被选择那些值可以被压缩进一个与二个八位字节有明显区别的单一八位字节形态。该配置选项被发送来通知peer该执行能接收这种单一八位字节协议域。
+　　以前说过，协议域使用一种扩展机制与用于地址域的ISO 3309扩展机制一致：每一个八位字节的最低有效位（LSB）被用来指出协议域的扩展。一个二进制"0"作为LSB指出协议域由以下八位字节继续。二进制"1"作为LSB标志的存在于协议域的最后八位字节。注意到任何"0"的八位字节号码可以被预制到域中，并且将仍然指出相同的值（认为两个八位字节代表3，00000011 和 00000000 00000011）。
+　　当使用低速连接，值得通过发送尽可能小的冗余数据来保存带宽。Protocol-Field-Compression配置选项允许在执行简单和带宽效率之间进行平衡。如果顺利的协商，ISO 3309扩展机制可以被用来压缩协议域到一个八位字节来代替二个八位字节。大多数来自典型的数据协议分派的协议域值不超过256的包是可压缩的。
+　　被压缩的协议域必须不被传送，除非该配置选项被协商。协商后，PPP执行必须接受带有既有双-八位字节又有单-八位字节协议域的PPP包，必须不区别两者。
+　　当发送任何LCP数据包时从不压缩协议域。该规则保证LCP包的明确识别。
+　　当一个协议域被压缩，数据链路层FCS域在被压缩的帧中计算，而不是最初的未压缩的帧。
+　　Protocol-Field-Compression配置选项格式如下。域从左到右传送。
+
+0 1
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+　　类型
+　　7
+　　长度
+　　2
+
+6-6. Address-and-Control-Field-Compression (ACFC)
+　　描述
+　　该配置选项提供一种数据链路层地址和控制域压缩的方法。默认的，所有执行必须传送带有地址和控制域的适当的链路帧。
+　　既然这些域通常用于点对点链路有常量，容易压缩。该配置选项被发送来通知peer该执行能接收压缩地址和控制域。
+　　如果当Address-and-Control-Field-Compression未被协商时接收到一个压缩了的帧，该执行可以静静的丢弃该帧。
+　　当发送任何LCP包时，地址和信息域必须不被压缩。该规则保证明确识别LCP包。
+　　当地址和控制域被压缩时，数据链路层FCS域被在被压缩的帧计算，而不是最初的未压缩帧。
+　　Address-and-Control-Field-Compression配置选项格式如下。域从左到右传递。
+
+0 1
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| 类型 | 长度 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+　　类型
+　　8
+　　长度
+　　2
+　　安全考虑
+安全问题在关于鉴定阶段、Close(关闭)事件和鉴定协议配置选项的章节进行了简单的讨论。
+安全考虑
+   Security issues are briefly discussed in sections concerning the
+   Authentication Phase, the Close event, and the Authentication-
+   Protocol Configuration Option.
+参考资料
+   [1]   Perkins, D., "Requirements for an Internet Standard Point-to-
+         Point Protocol", RFC 1547, Carnegie Mellon University,
+         December 1993.
+
+   [2]   Reynolds, J., and Postel, J., "Assigned Numbers", STD 2, RFC
+         1340, USC/Information Sciences Institute, July 1992.
+致谢
+   This document is the product of the Point-to-Point Protocol Working
+   Group of the Internet Engineering Task Force (IETF).  Comments should
+   be submitted to the ietf-ppp@merit.edu mailing list.
+
+   Much of the text in this document is taken from the working group
+   requirements [1]; and RFCs 1171 & 1172, by Drew Perkins while at
+   Carnegie Mellon University, and by Russ Hobby of the University of
+   California at Davis.
+
+   William Simpson was principally responsible for introducing
+   consistent terminology and philosophy, and the re-design of the phase
+   and negotiation state machines.
+
+   Many people spent significant time helping to develop the Point-to-
+   Point Protocol.  The complete list of people is too numerous to list,
+   but the following people deserve special thanks: Rick Adams, Ken
+   Adelman, Fred Baker, Mike Ballard, Craig Fox, Karl Fox, Phill Gross,
+   Kory Hamzeh, former WG chair Russ Hobby, David Kaufman, former WG
+   chair Steve Knowles, Mark Lewis, former WG chair Brian Lloyd, John
+   LoVerso, Bill Melohn, Mike Patton, former WG chair Drew Perkins, Greg
+   Satz, John Shriver, Vernon Schryver, and Asher Waldfogel.
+
+   Special thanks to Morning Star Technologies for providing computing
+   resources and network access support for writing this specification.
+主席地址
+   The working group can be contacted via the current chair:
+
+      Fred Baker
+      Advanced Computer Communications
+      315 Bollay Drive
+      Santa Barbara, California  93117
+
+      fbaker@acc.com
+作者地址
+   Questions about this memo can also be directed to:
+
+      William Allen Simpson
+      Daydreamer
+      Computer Systems Consulting Services
+      1384 Fontaine
+      Madison Heights, Michigan  48071
+
+      Bill.Simpson@um.cc.umich.edu
+          bsimpson@MorningStar.com
+
+
+
+　    
+RFC1661 The Point-to-Point Protocol (PPP)                                   RFC1661  PPP协议
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

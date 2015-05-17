@@ -1,0 +1,125 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-11-7
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                        S. Bostock
+Request for Comments: 1420                                 Novell, Inc.
+Obsoletes: 1298                                              March 1993
+
+
+IPX上的SNMP
+（RFC1420――SNMP over IPX）
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+摘要
+本文档详细说明了一种由Internet 网包交换(Internetwork Packet Exchange，缩写为
+IPX)协议[2]提供用于封装简单网络管理协议(Simple Network Management Protocol，缩写为
+SNMP) [1]数据包约定的传输机制。
+
+目录
+1. 介绍	1
+2. 从SNMP到IPX的映射	2
+2.1  套接字的分配	2
+2.2 中断	2
+2.3  最大消息尺寸	2
+3.  文档的获得	3
+4. 鸣谢	3
+5. 参考文献	3
+6. 安全因素	4
+7. 作者地址	4
+
+1. 介绍
+现在，对于基于TCP/IP的网际网，在[1]中定义的简单网络管理协议(Simple Network 
+Management Protocol SNMP)被当作完整的网络管理框架来使用。连同它的两个定义了管理
+信息结构(Structure of Management Information，缩写为SMI) [3，4]和管理信息库
+(Management Information Base，缩写为MIB)[5]的相关标准，SNMP已经在运行Internet
+协议族的许多运营的网络中得到广泛应用。
+在TCP/IP环境中SNMP的成功导致它被部署在基于非TCP/IP的网际网中。这个规范
+描述了用于Novell的NetWare环境中的在IPX协议[2]上的SNMP的映射。
+正如在[6]中解释的那样，对于SNMP，首选的映射是在UDP[7]上。同样，这个规范专
+门用在不支持UDP传输的环境中。本规范的任何一部分都不能被解释成这样一个建议，即
+在一个异构的环境中，一个被管理的代理应该支持多个映射。相反，强烈推荐管理站点支持
+在所有流行的传输方式上的SNMP映射。
+2. 从SNMP到IPX的映射
+因为IPX提供的一种数据报服务非常类似于由IP/UDP提供的数据报服务，所以从SNMP
+到IPX的映射可以直接进行。
+虽然在NetWare协议族的其他方面已经做了修改，但是在这方面IPX面临着和Xerox
+的Internet数据报协议(Internet Datagram Protocol，缩写为IDP)[8]相同的问题。这种套接
+字地址空间的特许权是由Novell管理的。
+SNMP包总是会把在IPX包头中的数据包类型字段设置成4 (也就是包交换包)。
+2.1  套接字的分配
+SNMP协议实体将从套接字36879 (目的地址的套接字字段设置为十六进制数900F)接
+收GetRequest-PDU、GetNextRequest- PDU和SetRequest-PDU的消息，从套接字36880 
+(目的地址的套接字字段设置为十六进制数9010)接收Trap-PDU的消息。
+GetResponse-PDU的消息将会对由相应的GetRequest-PDU、GetNextRequest- PDU
+或SetRequest-PDU产生的IPX地址和套接字进行编址。
+2.2 中断
+当通过IPX传送SNMP中断时，在Trap-PDU中的代理地址字段包含着IP地址“0.0.0.0”。
+SNMP管理器可以根据由传输服务提供的信息来确定中断的源地址。
+2.3  最大消息尺寸
+虽然 SNMP不要求构造应用来接收长度超过484字节的消息，但是我们建议最好可实
+现支持最大长度是546字节的SNMP消息包(在IPX中允许的最大尺寸)。此外，这也是保证
+能够穿过不提供分段存储IPX路由器的数据包的最大长度的极限。如果已经知道依靠的中间
+路由器和/或中间的数据链路层协议的最大长度，那么应用可以选择采用更长的数据包长度。
+3.  文档的获得
+本节提供了一些要点，来获得选定的文档。
+可以从以下地址获得有关IPX的完整描述：
+Novell，Inc.
+122 East 1700 South
+P. O. Box 5900
+Provo，Utah 84601 USA
+800 526 5463
+Novell Part # 883-000780-001
+可以从以下地址获得有关IDP(XNS部分)的完整描述：
+Xerox System Institute
+475 Oakmead Parkway
+Sunnyvale，CA 94086
+Attn.: Fonda Pallone
+(415) 813-7164
+4. 鸣谢
+本规范源自RFC 1298，基于IETF中“SNMP over a Multiprotocol Internet”工作组的
+讨论。
+5. 参考文献
+[1] Case，J.，Fedor，M.，Schoffstall，M.，and J. Davin，“Simple Network Management 
+Protocol”，STD 15，RFC 1157，SNMP Research，Performance Systems International，
+Performance Systems International，MIT Laboratory for Computer Science，May 1990.
+[2] Novell，Inc.，“NetWare System Technical Interface Overview”，part number 
+883-000780-001，June 1989.
+[3] Rose M.，and K. McCloghrie，“Structure and Identification of Management 
+Information for TCP/IP-based internets”，STD 16，RFC 1155，Performance Systems 
+International，Hughes LAN Systems，May 1990.
+[4] Rose，M.，and K. McCloghrie，Editors，“Concise MIB Definitions”，STD 16，RFC 
+1212，Performance Systems International，Hughes LAN Systems，March 1991.
+[5] Rose M.，and K. McCloghrie，Editors，“Management Information Base for 
+Network Management of TCP/IP-based Internets”，STD 17，RFC 1213，Hughes LAN 
+Systems，Inc.，Performance Systems International，March 1991.
+[6] Kastenholz，F.，“SNMP Communications Services”，RFC 1270，Clearpoint 
+Research Corporation，October 1991.
+[7] Postel J.，“User Datagram Protocol”，STD 6，RFC 768，USC/Information 
+Sciences Institute，August 1980.
+[8] Xerox System Integration Standard，“Internet Transport Protocols”，XSIS 
+028112，Xerox Corporation，December 1981.
+6. 安全因素
+在本备忘录中不讨论有关安全的问题。
+7. 作者地址
+Steve Bostock
+Novell，Inc.
+2180 Fortune Drive
+San Jose，CA 95131
+Phone: 408 473 8203
+Fax:408 435 1706
+Email: steveb@novell.com
+RFC1420――SNMP over  IPX                                                     IPX上的SNMP
+
+
+1
+RFC文档中文翻译计划

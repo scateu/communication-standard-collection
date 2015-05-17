@@ -1,0 +1,307 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：牛韬（NT   niutao@sohu.com）
+译文发布时间：2001-11-17
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+
+Network Working Group                                          M. Elkins
+Request for Comments: 2015                     The Aerospace Corporation
+Category: Standards Track                                   October 1996
+
+具有相当好的保密性(PGP)
+多用途网际邮件扩充协议(MIME)安全
+（RFC2015――MIME Security with Pretty Good Privacy (PGP)）
+
+本备忘录的状态
+
+   本文档描述了一个用于Internet社团的Internet标准跟踪协议，希望得到有关进一步改
+进的讨论及建议。有关本协议的标准状态及状态，请参照“Internet正式协议标准”（STD1）  
+的当前版本。本备忘录的发布不受任何限制。
+
+摘要
+
+   本文档描述了如何将较好的安全保密性应用于RFC1847中描述的多用途邮件扩充协议安
+全内容类型描述。
+
+1.  介绍
+
+   那些早期将PGP集成于MIME（包括那些较偏的应用/pgp内容类型）的工作经历了很多的
+问题，它们中最重要的问题就是，如果不分解指定给PGP的数据结构，无法恢复带符号的消
+息。应用RFC1847中所提议的完美的方法解决了这一问题，RFC1847为MIME定义了多部分格
+式。毫无疑问，多部分安全格式将带符号消息主体与符号分开了，并且拥有其它的大量的令
+人满意的特征。该文档列在RFC1848之后，RFC1848为提供安全和身份验证定义了MIME对象
+安全服务（MOSS）。
+
+   本文档定义了三个新的内容类型为实现使用PGP的安全和隐私定义了三个新的内容类型：
+application/pgp-encrypted，application/pgp-signature 和application/pgp-keys。
+
+1.1  一致
+
+   为了实现与规格说明书的一致性，绝对有必要遵守所有标必需标签的条目。
+
+2.  PGP 数据格式
+
+   PGP 在加密时能够产生任何ASCII的外壳（在第3节进行了描述）或8位二进制输出。生
+气数字签名，或提取公用密钥数据。ASCII外壳的输出对于数据传输来说是必需的方法 。这
+允许那些没有办法破译此文档中所用的描述格式的人能够从这些信息中提取和使用PGP信
+息。
+
+   当要传输的数据需要分成几部分传输时，MIME消息/部分机制应当使用胜于多部分ASCII
+外壳PGP的格式
+
+3.  内容传略编码约束
+
+   多部分/带符号的和多部分/加密的是由代理进行了不透明加工的，也就是说数据以任何一
+种方式[1]处理都不会发生变化。然而，许多现有的邮件网关会进行测试，是否下一个网段不
+支持MIME或8位数据和执行向可打印符号或Base64的转换。这样的话，对于多部分/带符号
+就出现了一些严重的问题，特别是当此类操作发生时，签名是无效的。由于这一原因，所有
+根据该协议标记的数据必须被强制转换为7位（8位数据应使用可打印符号或基于64位的符
+号进行编码）。注意，这同样包含标记对象被加密的情况（见第6节）。这一约束将提高接收
+到的签名合法性的可能。
+
+   只有被加密的数据允许包含8位字符，因此不需要将其转换为7位格式。
+
+    实现者注意：无法进行充分的强调――对使用这一标准的应用应当遵循MIME的建议――
+“对产生的要保守，对接收到的要宽容。” 在这一特定的情况下意味着要聪明的使用任意内
+容传输编码模式接收消息的实现，但是限制产生本备忘录产生的7位格式。这就允许在以后
+与Internet SMTP框架的事件保持兼容性，变为8位。
+
+4.  PGP 加密数据
+
+   在使用PGP加密前，数据应当使用MIME规范格式（主体与头部）。
+
+   PGP加密数据通过"multipart/encrypted" 内容类型表示，在[1]中进行了描述，并且必
+须要有"application/pgp-encrypted"的协议参数值。注意，参数的值必须用引号包含起来。
+
+   multipart/encrypted 必须确保包含两个部分。第一个MIME主体部分必须拥有
+"application/pgp-encrypted"的内容类型，这一主体包含着控制信息。遵守这一标准的消息
+在主体部分必须包含一个域"Version:1"。因为PGP数据包格式包含解密需要的所有其它信
+息，而没有其他需要的数据。
+
+   第二部分MIME主体部分必须饱含真正的加密数据。它必须拥有内容类型为
+"application/octet-stream"的标志。
+
+   范例消息:
+
+     From: Michael Elkins <elkins@aero.org>
+     To: Michael Elkins <elkins@aero.org>
+     Mime-Version: 1.0
+     Content-Type: multipart/encrypted; boundary=foo;
+        protocol="application/pgp-encrypted"
+
+     --foo
+     Content-Type: application/pgp-encrypted
+
+     Version: 1
+
+     --foo
+     Content-Type: application/octet-stream
+
+     -----BEGIN PGP MESSAGE-----
+     Version: 2.6.2
+
+     hIwDY32hYGCE8MkBA/wOu7d45aUxF4Q0RKJprD3v5Z9K1YcRJ2fve87lMlDlx4Oj
+     eW4GDdBfLbJE7VUpp13N19GL8e/AqbyyjHH4aS0YoTk10QQ9nnRvjY8nZL3MPXSZ
+     g9VGQxFeGqzykzmykU6A26MSMexR4ApeeON6xzZWfo+0yOqAq6lb46wsvldZ96YA
+     AABH78hyX7YX4uT1tNCWEIIBoqqvCeIMpp7UQ2IzBrXg6GtukS8NxbukLeamqVW3
+     1yt21DYOjuLzcMNe/JNsD9vDVCvOOG3OCi8=
+     =zzaA
+     -----END PGP MESSAGE-----
+
+     --foo--
+
+5.  PGP 标记数据
+
+   PGP 标记消息通过"multipart/signed" 内容类型表示，在[1]中进行了描述，使用必须拥
+有值为"application/pgp-signature"（必须用引号引起来）的“协议”参数，参数"micalg"
+必须拥有为"pgp-<hash-sybol>"的值，在这里<hash-symbol>标记消息完整性检查（MIC）用
+于产生签名。<hash-symbol>通常定义的值为"md5"用于MD5的校验和，"sha1"用于SHA.1
+算法。
+
+   multipart/signed 主体必须包含两个部分。第一部分包含MIME规范格式的标记数据，包
+含描述该数据的适当的内容头的集合。
+   第二部分必须包含PGP数据标记。它必须包含内容类型为"application/pgp-signature"
+的标注。
+
+   当产生PGP数字签名时：
+
+   (1)  要进行标记的数据必须先被转化为其type/subtype特定规范格式。对于
+text/plain，这就意味着转化为合适的字符集并且将行末尾转换为标准的回车和换行序列。
+
+   (2)  然后使用一个合适的内容转换编码，每一行经过编码的数据必须以标准的回车、换
+行序列结束。
+
+   (3)  MIME 内容报头然后被加到主体上来，每一个都以标准的回车、换行序列结束。
+
+   (4)  正如在[1]中所描述的，数字签名必须要同时基于要进行标记的数据和其内容报头计
+算出来。
+
+   (5)  要产生的签名必须与待标记的数据相分离，这样处理不管怎样都不会改变原有的数
+据。
+
+   范例消息:
+
+     From: Michael Elkins <elkins@aero.org>
+     To: Michael Elkins <elkins@aero.org>
+     Mime-Version: 1.0
+     Content-Type: multipart/signed; boundary=bar; micalg=pgp-md5;
+     protocol="application/pgp-signature"
+
+     --bar
+     & Content-Type: text/plain; charset=iso-8859-1
+     & Content-Transfer-Encoding: quoted-printable
+     &
+     & =A1Hola!
+     &
+     & Did you know that talking to yourself is a sign of senility?
+     &
+     & It's generally a good idea to encode lines that begin with
+     & From=20because some mail transport agents will insert a greater-
+     & than (>) sign, thus invalidating the signature.
+     &
+     & Also, in some cases it might be desirable to encode any   =20
+     &railing whitespace that occurs on lines in order to ensure  =20
+     & that the message signature is not invalidated when passing =20
+     & a gateway that modifies such whitespace (like BITNET). =20
+     &
+     & me
+
+     --bar
+     Content-Type: application/pgp-signature
+
+    -----BEGIN PGP MESSAGE-----
+   Version: 2.6.2
+
+   iQCVAwUBMJrRF2N9oWBghPDJAQE9UQQAtl7LuRVndBjrk4EqYBIb3h5QXIX/LC//
+   jJV5bNvkZIGPIcEmI5iFd9boEgvpirHtIREEqLQRkYNoBActFBZmh9GC3C041WGq
+   uMbrbxc+nIs1TIKlA08rVi9ig/2Yh7LFrK5Ein57U/W72vgSxLhe/zhdfolT9Brn
+   HOxEa44b+EI=
+   =ndaj
+   -----END PGP MESSAGE-----
+
+   --bar--
+
+   在前例中的 "&"  表示基于其的数据部分符号是计算出来的。
+
+   尽管不是必须的，不过通常来说如果任意一行数据以"From"开始，并且编码"F"，那么在
+第一步中使用可打印字符进行编码是一个好的主意（用MIME规范格式写出要标记的数据）。
+这可以避免一个报文传略代理在行首插入一个">"，而">"将会使签名无效。
+
+   基于接收标记消息的基础上的应用必须：
+
+   (1)  在需要验证的数字签名之前，将行结束符转换为规范的回车、换行序列。这很有必
+要，因为本地MTA可能已经转换为局部的行结束转换。
+
+   (2)  将标记的数据和与其的关联内容报头一起随着PGP签名传递给签名认证服务。
+
+6.  加密和标记了的数据
+
+   有时对于数字标记和随后加密将要发送的数据来说这还是比较令人满意的。这个协议允许
+使用两种方法来实现这个任务。
+
+6.1  RFC1847 的封装
+
+   [1], 规定数据应当先被标记为一个multipart/signature 主体。然后进行加密形成最终
+的multipart/encrypted 主体，也就是
+
+    Content-Type: multipart/encrypted;
+       protocol="application/pgp-encrypted"; boundary=foo
+
+    --foo
+    Content-Type: application/pgp-encrypted
+
+    Version: 1
+
+    --foo
+    Content-Type: application/octet-stream
+
+    -----BEGIN PGP MESSAGE-----
+    & Content-Type: multipart/signed; micalg=pgp-md5
+    &     protocol="application/pgp-signature"; boundary=bar
+    &
+    & --bar
+    & Content-Type: text/plain; charset=us-ascii
+    &
+    & This message was first signed, and then encrypted.
+    &
+    & --bar
+    & Content-Type: application/pgp-signature
+    &
+    & -----BEGIN PGP MESSAGE-----
+    & Version: 2.6.2
+    &
+    & iQCVAwUBMJrRF2N9oWBghPDJAQE9UQQAtl7LuRVndBjrk4EqYBIb3h5QXIX/LC//
+    & jJV5bNvkZIGPIcEmI5iFd9boEgvpirHtIREEqLQRkYNoBActFBZmh9GC3C041WGq
+    & uMbrbxc+nIs1TIKlA08rVi9ig/2Yh7LFrK5Ein57U/W72vgSxLhe/zhdfolT9Brn
+    & HOxEa44b+EI=
+    & =ndaj
+    & -----END PGP MESSAGE-----
+    &
+    & --bar--
+    -----END PGP MESSAGE-----
+    --foo--
+
+    (The text preceded by '&' indicates that it is really
+    encrypted, but presented as text for clarity.)
+
+6.2  组合方法
+
+   第2.x版PGP同样允许用一种操作将数据进行标记和加密。这种方法是一种可以接受的捷
+径，并且可以花费较少的费用。生成的数据应当形成上面所描述的"multipart/encrypted" 对
+象。
+
+   至于multipart/signed对象，用这种组合方式加密和标记的消息同样需要遵循相同的规
+范约束。
+
+   很明确，允许一个代理对组合的消息进行译码并将其作为使用标记数据嵌入到加密版本中
+的multipart/signed 对象进行重新写入
+
+7.  PGP公共密钥的分配
+
+   Content-Type: application/pgp-keys
+   Required parameters: none
+   Optional parameters: none
+
+   这是一用于传播公共密钥块的内容类型。
+
+8.  注意
+
+   PGP and Pretty Good Privacy 是 Philip Zimmermann的商标。
+
+9.  安全考虑
+
+   使用本该协议与PGP具有相同的安全考虑，并未考虑对其使用时增加或者减少的消息安全
+性问题。如果要获得更多的信息，请查阅[3]。
+
+10.  作者地址
+
+        Michael Elkins
+        P.O. Box 92957 - M1/102
+        Los Angeles, CA 90009-2957
+
+        Phone: +1 310 336 8040
+        Fax: +1 310 336 4402
+
+参考文献
+
+   [1]  Galvin, J., Murphy, G., Crocker, S., and N. Freed, "Security
+        Multiparts for MIME: Multipart/Signed and Multipart/Encrypted",
+        RFC 1847, October 1995.
+
+   [2]  Galvin, J., Murphy, G., Crocker, S., and N. Freed, "MIME Object
+        Security Services", RFC 1848, October 1995.
+
+   [3]  Atkins, D., Stallings, W., and P. Zimmermann, "PGP Message
+        Exchange Formats", RFC 1991, August 1996.
+RFC2015―MIME Security with Pretty Good Privacy (PGP)
+多用途网际邮件扩充协议(MIME)安全具有相当好的保密性(PGP)
+
+
+1
+RFC文档中文翻译计划

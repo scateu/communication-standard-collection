@@ -1,0 +1,225 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：kevin73（kevin73  panzy@bit-way.com）
+译文发布时间：2001-04-12
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+Network Working Group                                            E. Chen
+Request for Comments: 1998                                           MCI
+Category: Informational                                         T. Bates	
+                                                           cisco Systems
+                                                             August 1996
+
+RFC1998多穴路由中团体属性的应用
+ （RFC1998 An Application of the BGP Community Attribute in Multi-home Routing）
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+摘要
+本文档介绍了BGP团体属性[2]的应用来简化执行和配置在多提供者互联网（multi-provider Internet）中的路由策略。他显示了基于团体的配置如何能够被用来替代基于AS的BGP“LOCAL_PREF"属性定制，后者在今天广泛应用。本技术不仅在提供者级别上简化了配置和管理，同时也介绍了一个范例说明本技术有潜力让用户可以控制自己的路由策略以及提供在前缀层次上而在通常的AS层次上策略配置的能力。
+
+
+目录
+1 介绍	2
+2 基于AS的配置和他的缺点	2
+3 BGP团体属性如何工作	3
+BGP团体属性概述	3
+基于团体的配置	3
+4 应用实例	4
+参考资料	5
+安全方面的考虑	5
+致谢	5
+作者地址	5
+附录	5
+附录A: 团体配置	6
+附录B:统一配置路由图	7
+
+1 介绍
+  	在多提供者互联网中，通常一个服务订户（用户）有多个服务提供者，或者安排了到全球互联网的冗余连接。正如[3]中讨论，在这种情况下的路由策略通常需要服务订户和服务提供者之间的合作，比较典型的是路由配置的定制（比如，BGP“LOCAL-PREF”）同时在提供者和用户房使用。由于提供者服务大量的用户，在提供者级别上路由配置的定制会导致管理和扩展的问题。
+	本文档介绍了BGP团体属性的应用，简化了多提供者互联网中路由策略的配置。更明确的，本技术介绍了基于团体的而不是基于AS配置BGP“LOCAL-PREF”。他从根本上取消了在提供者级别上定制BGP“LOCAL-PREF”属性的配置，同时保证了同样的路由功能和灵活性。
+	同时也介绍了范例，说明他提供客户控制自己的路由策略以及提供基于前缀级别而不是当今常用的基于AS级别策略配置的能力。
+2 基于AS的配置和他的缺点
+	在应用通常的路由策略比如负荷分担或者备份时，通常需要配置BGP "LOCAL_PREF" 属性。
+有两个主要原因：
+。缺乏支持[4]中所说的“目的地优先属性”（DPA）的路由软件。
+	DPA允许指定一个全球性的转发优先从而可以实现流量对某条路经的偏好。如[3]中讨论，本属性对有“LOCAL-PREF”和相同AS-path长度的路优选非常有用。
+。在多提供者互联网中，通常一个提供者给来自自己的路由比来自别的提供者的路由安排更高的BGP "LOCAL_PREF" 值，这样可以提供某种程度的客户路由保护且有利于某些路由策略的应用。然而，这样会导致备份安排等应用的复杂化，所以要定制“LOCAL-PREF”配置。
+图一显示了在多提供者互联网中备份安排的典型应用。在图一中，AS1和AS2都是提供者，AS3和AS4分别是AS1和AS2的客户。AS3和AS4达成了双边协议提供互相的备份。也就是说，AS3使用到AS4的直连，在正常情况下只到达AS4，在AS1和AS3之间有故障时中转。为了意识到这个路由安排，AS3要求它的提供者AS1调整它的BGP "LOCAL_PREF"配置使得AS1通过 AS2到达AS4。
+
+                          +------+      +------+
+                          | AS1  |------| AS2  |
+                          +------+      +------+
+                             |             |
+                          +------+      +------+
+                          | AS3  |------|  AS4 |
+                          +------+      +------+
+
+                     	图一：典型备份实例  
+
+主要由于扩展和管理的考虑，很多提供者仅仅执行基于AS的"LOCAL-PREF" 定制而不是基于前缀。如果需要基于前缀的"LOCAL-PREF" 的配置，需要使用BGP AS-PATH操作技术。然而，当前只有部分厂商提供这个功能。
+在提供者级别配置基于AS的“LOCAL-PREF”有几个缺点。
+*由于合作和配置的过程导致低效率。更重要的，一旦改变（比如加了一个新的AS）需要重新配置。
+*基于AS的定制使路由配置复杂化而且增加了网络操作的复杂性。对提供者来说已经导致了一个严重的扩展问题。
+*如果没有AS操作（比如假AS）则不能应用基于前缀的配置。
+*很难保证配置的及时更新。
+3 BGP团体属性如何工作
+BGP团体属性概述
+BGP团体路径属性是可转发变长属性[1，2]。属性内包含了一系列的四字节值，每一个说明了一个特殊的团体。团体属性值编码，使用AS号作为头两个子节，剩下两个字节AS自己定义。如[2]中定义，团体是共享相同特性的一组目的地（也就是前缀）。每一个目的地都可以属于多个团体。所有的具有团体属性的前缀属于属性中的团体列表内。
+	BGP团体允许定义一系列前缀为组并且根据组的表示符做路由决策。
+	公认的团体NO_EXPORT (0xFFFFFF01) 和 NO_ADVERTISE(0xFFFFFF02) 是必须遵守的，可以用来优化路由改善路由聚合。
+基于团体的配置
+用BGP团体属性[2]，提供者现在可以使用基于团体的而不是基于AS的BGP“LOCAL-PREF”配置。提供者首先需要和客户协商一套团体并且映射到某个BGP“LOCAL-PREF”值。然后提供者应用统一的BGP配置到所有的客户，客户得到包含团体值的路由，设置正确的BGP“LOCAL-PREF”值。需要定制提供者BGP“LOCAL-PREF”配置的客户只要发送相应的团体号在路由通告里就可以了。
+	本技术的主要优点是：
+	*客户完全控制本过程，从而客户可以更好的理解自己的拓扑结构和需要的路由策略。
+	*基于路由定制BGP“LOCAL-PREF”配置现在可以实现，这样，在某些情况下，AS-Path操作就不需要了
+	*解决了提供者在发布定制的配置到客户时面临的扩展问题
+4 应用实例
+MCI当前大量使用BGP“LOCAL-PREF”属性值作为路由策略配置过程的一部分。不同的BGP“LOCAL-PREF”值安排给不同源的路由。表1详述了这些值。
+
+                  +-------------------------+------------+
+                  |        分类             | LOCAL_PREF |
+                  +-------------------------+------------+
+                  |客户路由                  |        100 |
+                  |客户备份路由              |         90 |
+                  |别的ISP路由              |         80 |
+                  |客户提供的备用            |         70 |
+                  +-------------------------+------------+
+                    表 1：定义LOCAL_PREF 值
+
+
+   注意：
+	*在我们的网络配置中，‘100’是默认值。
+	*大多数情况下，客户设置的MED属性对客户备份路由有效（比如，T1备份T3）。然而，在某些情况下“LOCAL-PREF”配置还是有必要的除非可以得到BGP DPA属性。
+	使用BGP团体属性，几个团体值（MCI 的 AS号码：3561=0x0DE9）已经被定义，客户可以用来标记路由配置相应的“LOCAL-PREF”值。表2列出了相应的团体属性值（以及团体到LOCAL-PREF的映像。
+
+                    +---------------------+------------+
+                    |     团体            | LOCAL_PREF |
+                    +---------------------+------------+
+                    |3561:70 (0x0DE90046) |         70 |
+                    |3561:80 (0x0DE90050) |         80 |
+                    |3561:90 (0x0DE9005A) |         90 |
+                    +---------------------+------------+
+                 Table 2: 团体到LOCAL-PREF的映像
+
+	客户一般请求MCI来配置BGP“LOCAL-PREF”值而不是默认的使用定义的团体来标记他们的路由。团体值配置可以基于AS路径表或者IP地址接入表。Cisco系统软件的一个例子在附录A中给出显示如何实现这一点。
+	统一的BGP配置（附录B，另外一个cisco系统软件特例），MCI应用来处理客户对端基于受到的团体配置相应“LOCAL-PREF”值。
+	本技术经过测试并被几个客户使用，反映很好。我们正开始升级所有的定制BGP“LOCAL-PREF”配置到统一基于配置的团体。
+参考资料
+	[1] Rekhter, Y., and Li, T., "边界网关协议版本4 (BGP-4)",RFC 1771, March 1995。
+	[2] Chandra, R., Traina, P., and T. Li, "BGP团体属性", RFC 1997, August 1996。
+	[3] Chen, E., and T. Bates, "当前在多提供者互联网中对称路由和负荷分担的应用", 未完成。
+	[4] Chen, E., and T. Bates, "BGP的目的地优先属性",未完成。
+  	[5] Chen, E., and T. Bates, "BGP目的优先属性在对称路由中的应用",未完成。
+   	[6] cisco 系统, cisco IOS 软件版本 10.3 路由产品配置指导(Addendum), May 1995.
+
+安全方面的考虑
+本备忘录不讨论安全问题。
+
+致谢
+特别感谢cisco 系统的Ravi Chandra, Tony Li和Paul Traina 设计和应用团体属性。
+
+作者地址
+   Enke Chen
+   MCI
+   2100 Reston Parkway
+   Reston, VA 22091
+
+   Phone: +1 703 715 7087
+   EMail: enke@mci.net
+
+
+   Tony Bates
+   cisco Systems
+   170 West Tasman Drive
+   San Jose, CA 95134
+
+   Phone: +1 408 527 2470
+   EMail: tbates@cisco.com
+
+附录
+	以下附录列出cisco系统软件配团体的例子，为了统一的路由图定义基于相应的团体值设置了相应“LOCAL-PREF"值。这些例子只用于显示本文档期望出现的结果是可以实现的。请参考[6]得到cisco配置和语法的信息。
+
+附录A: 团体配置
+	团体配置值能够基于AS路径表或者基于IP的直接入表。下面是两种情况的例子：
+   !!
+   router bgp xxxx
+   neighbor x.x.x.x remote-as 3561
+   neighbor x.x.x.x filter-list 20 out
+   neighbor x.x.x.x route-map config-community out
+   neighbor x.x.x.x send-community
+   !
+   !!# match all
+   ip as-path access-list 1 permit .*
+   !
+   !!# list of customer ASs
+   ip as-path access-list 20 permit ^$
+   ip as-path access-list 20 permit ^64700_
+   ip as-path access-list 20 deny .*
+   !
+   !!# AS path based matching, backup for another ISPs customer
+   ip as-path access-list 40 permit _64710_
+   ip as-path access-list 40 permit _64711_
+   ip as-path access-list 40 deny .*
+   !
+   !!# route-map
+   route-map config-community permit 10
+   match as-path 40
+   set community 0x0DE90046
+   route-map config-community permit 20
+   match as-path 1
+   !
+	注意：团体能够被配置基于IP前缀而不是AS号。例如
+   !
+   access-list 101 permit ip 192.160.154.0 0.0.0.0 255.255.255.0 0.0.0.0
+   !
+   route-map config-community permit 10
+   match ip address 101
+   set community 0x0DE90046
+   route-map config-community permit 20
+   match as-path 1
+   !
+
+附录B:统一配置路由图
+
+	这里是为所有BGP客户统一配置的路由图。
+   !!# routes primary via another ISP
+   ip community-list 70 permit 0x0DE90046
+   ip community-list 70 deny
+   !
+   !!# routes also homed to another ISP, but with DPA or
+   !!# AS-path length as the tie-breaker
+   ip community-list 80 permit 0x0DE90050
+   ip community-list 80 deny
+   !
+   !!# customer backup routes
+   ip community-list 90 permit 0x0DE9005A
+   ip community-list 90 deny
+   !
+   !!# the route-map applied to BGP customers
+   route-map set-customer-local-pref permit 10
+   match community 70
+   set local-preference 70
+   route-map set-customer-local-pref permit 20
+   match community 80
+   set local-preference 80
+   route-map set-customer-local-pref permit 30
+   match community 90
+   set local-preference 90
+   route-map set-customer-local-pref permit 40
+   match as-path 1
+   set local-preference 100
+   !
+RFC1998   An Application of the BGP Community Attribute 	in Multi-home Routing 多穴路由中团体属性的应用
+
+
+
+
+1
+RFC文档中文翻译计划
+
+

@@ -1,0 +1,24 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                     Alex McKenzie
+RFC # 634                                                 BBN-NET
+NIC # 30445                                               April 10，1974
+
+Haskins实验室网络地址的变更
+（Change in Network Address for Haskins Lab）
+5月8日到5月22日的某一天，可能在这个学期末之前， Haskins实验室“Very Distant Host”的连接将由BBN (IMP #5)迁移到Harvard (IMP #9)。Haskins 计算机的主机编号将仍然保留为主机（Host）3(编号从0到3)。因此，Haskins实验室主机的网络地址将由197变更为201。因为变更的日期依赖于本地电话公司安装新电路的日期，所以我不能给出更精确的具体日期。
+[这个RFC文档是由得到GTE（原来的BBN公司）支持的Alex McKenzie以计算机可读的文件格式归档到在线RFC文档库的。11/99]
+
+RFC634――Change in Network Address for Haskins Lab            Haskins实验室网络地址的变更
+
+
+
+
+1
+RFC文档中文翻译计划
+

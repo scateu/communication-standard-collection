@@ -1,0 +1,745 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：kenvin（kenvin9   kenvinhuang@gtong.net）
+译文发布时间：2001-3-30
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                                 W. Yeong
+Request for Comments: 1777                         Performance Systems International
+Obsoletes: 1487                                                        T. Howes
+Category: Standards Track                                     University of Michigan
+                                                                       S. Kille
+                                                             ISODE Consortium
+                                                                   March 1995
+
+
+
+RFC1777  轻量级目录访问协议
+(RFC1777  Lightweight Directory Access Protocol)
+
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+
+摘要
+   在本文档中描述的协议是设计来在不增加目录访问协议(DAP)的资源需求的情况下访问X.500的目录服务.本协议特别定位于那些能提供对X.500的目录进行简单的读/写交互的简单的管理和浏览应用,同时它也是对DAP本身的一种补充.
+
+  LDAP主要包括以下几个方面:
+    - 协议元素直接提供TCP或其他传输协议传输,而不管顶层的会晤和表示层.
+    - 大多数的协议数据以一般的字符串进行编码(如标识名)
+    - 用一个轻量级的BER编码来对所有协议元素进行编码.
+
+
+
+
+
+
+
+目录
+1.  历史	3
+2.  协议的模型	3
+3.  映射到传输服务	3
+3.1.  传输控制协议 (TCP)	3
+3.2.  面向连接的传输服务 (COTS)	4
+4.  协议的元素	4
+4.1.  绑定操作	7
+4.2.  放弃绑定操作	8
+4.3.  查找操作.	8
+4.4.  修改操作	10
+4.5.  添加操作	11
+4.6.  删除操作	12
+4.7.  修改RDN操作	12
+4.8.  比较操作	13
+4.9.  丢弃操作	13
+5.  协议元素的编码	14
+6.  安全方面的考虑	14
+7.  参考书目	14
+8.  作者地址	15
+附录 A - 完整的 ASN.1 定义	16
+1.  历史
+     在Internet上,对X.500技术的巨大兴趣,使人们努力去减少在使用该技术时所需要花费的较高的"条目开销",如目录协助服务,DIXIE.尽管这些努力取得了成功,但他们所选用的是一些特殊的实现方法,因此具有有限的可应用性.本文档也是在定义目录协议的可选方法上进行,但跟以前不同的是,它有意识地避免对特殊实现的依赖.
+2.  协议的模型
+   本协议所采纳的通用模型是一个客户在一个服务器上进行协议操作.在这个模型中,一个客户通过发送一个带有描述需要在服务器上实施的操作的协议请求给服务器,接着服务器负责在目录中实施所必须的操作.在完成必要的操作之后,服务器返回一个带有结果或出错信息的回应给请求服务的客户.为了保证减少目录使用所需开销这个目标,尽量减少客户的复杂性是本协议的一个目标,以推动利用目录服务的应用的广泛发布.
+
+   要注意到的是,尽管只要回应已经在本协议中定义,服务器必须把该回应返回给客户,但在客户和服务器的实现上,并不需要同步他们的行为:服务器和客户可以以任何顺序来交换多个操作请求和回应的消息,只要最终客户能对每个要求必须有一个回应的请求都接收到一个回应.
+  
+    考虑服务器代表客户实施协议操作这种模型,也要注意到协议服务器同时要对处理结果进行筛选,而不依赖于客户的筛选操作.本协议不把筛选结果返回给客户,因为在这个模型中,一个服务器要保证在目录上所有必需的操作,而只把最终结果或出错信息返回给客户.
+    
+   注意到本协议可以映射到目录抽象服务的一个严格子集,因此它可以完全由DAP来提供.
+3.  映射到传输服务
+     本协议设计来运行在面向连接的,可靠的传输上,所传输的数据流的每一个字符的所有的8位都有意义.在这里定义了规定的两种底层服务,尽管其他的服务也是可能的.
+   3.1.  传输控制协议 (TCP)
+       LDAP消息协议数据单元(LDAPMessage PDU)直接映射到TCP字节流.运行在TCP上的服务器实现应该提供一个在389端口上的监听程序.
+   3.2.  面向连接的传输服务 (COTS)
+       连接建立后,并不需要使用特殊的T-连接.所有LDAP消息协议数据单元(LDAPMessage PDU)直接映射到T-数据上.
+4.  协议的元素
+     为了能进行协议数据的交换,所有的协议操作都封装在一个通用信封中,LDAP消息(LDAPMessage)定义在下面:
+
+     LDAPMessage ::=
+         SEQUENCE {
+              messageID      MessageID,
+              protocolOp     CHOICE {
+                                  bindRequest         BindRequest,
+                                  bindResponse        BindResponse,
+                                  unbindRequest       UnbindRequest,
+                                  searchRequest       SearchRequest,
+                                  searchResponse      SearchResponse,
+                                  modifyRequest       ModifyRequest,
+                                  modifyResponse      ModifyResponse,
+                                  addRequest          AddRequest,
+                                  addResponse         AddResponse,
+                                  delRequest          DelRequest,
+                                  delResponse         DelResponse,
+                                  modifyRDNRequest    ModifyRDNRequest,
+                                  modifyRDNResponse   ModifyRDNResponse,
+                                  compareDNRequest    CompareRequest,
+                                  compareDNResponse   CompareResponse,
+                                  abandonRequest      AbandonRequest
+                             }
+         }
+
+     MessageID ::= INTEGER (0 .. maxInt)
+
+     LDAP消息(LDAPMessage)的功能是给所有的协议交换定义一个包含通用字段的信封.在现在,唯一的通用字段是一个消息标识符,该标识符需要一个与在本次LDAP会晤中发送出的其他请求不同的值.
+
+     消息标识符必须包含在LDAPMessage信封中.该消息标识符最早是包含在客户请求的LDAPMessage 中的.
+  
+   除了在上面定义的LDAPMessage ,在定义协议操作时,也使用下面这些定义.
+        LDAPString ::= OCTET STRING
+
+    LDAPString是一种符号上的方便表示,它表明尽管LDAPString 是一种用字符串类型来编码的串,但实际上该串能使用的合法字符集由IA5字符集限定.
+  
+     LDAPDN ::= LDAPString
+     RelativeLDAPDN ::= LDAPString
+
+     一个LDAPDN 和一个RelativeLDAPDN被独立地定义,分别代表一个标识名和一个相对标识名.用来命名地编码符合[5]中的规范,也就是:
+
+     <distinguished-name> ::= <name>
+     <relative-distinguished-name> ::= <name-component>
+    
+      <name> 和<name-component> 在[5]定义.
+
+     AttributeValueAssertion ::=
+         SEQUENCE {
+              attributeType       AttributeType,
+              attributeValue      AttributeValue
+         }
+
+    AttributeValueAssertion 的类型定义与X.500目录标准类似
+
+     AttributeType ::= LDAPString
+     AttributeValue ::= OCTET STRING
+
+   一个AttributeType的值代表X.500标准中的AttributeType 的文本串值.例如,AttributeType 'organizationName' 与对象标识2.5.4.10在本协议中是通过字符串""organizationName"这个AttributeType来表示的.在协议实现中,如果遇到一个无法用文本字符串来赋值的AttributeType,那么就应该用该对象的对象标识符的ASCII 编码串来赋给AttributeType.例如,如果在协议实现中无法把字符串"organizationName"赋给一个organizationName AttributeType,那么可以用ASCII 串"2.5.4.10"来代表该AttributeType.
+
+   一个类型为AttributeValue 的域的值用目录中的AttributeValue 类型的一个八位编码串来表示. 同本文档在下面定义的各种属性的编码对比,有不同目录服务的AttributeValue类型的字符串编码的定义.
+ 
+     LDAPResult ::=
+         SEQUENCE {
+             resultCode    ENUMERATED {
+                             success                      (0),
+                             operationsError              (1),
+                             protocolError                (2),
+                             timeLimitExceeded            (3),
+                             sizeLimitExceeded            (4),
+                             compareFalse                 (5),
+                             compareTrue                  (6),
+                             authMethodNotSupported       (7),
+                             strongAuthRequired           (8),
+                             noSuchAttribute              (16),
+                             undefinedAttributeType       (17),
+                             inappropriateMatching        (18),
+                             constraintViolation          (19),
+                             attributeOrValueExists       (20),
+                             invalidAttributeSyntax       (21),
+                             noSuchObject                 (32),
+                             aliasProblem                 (33),
+                             invalidDNSyntax              (34),
+                             isLeaf                       (35),
+                             aliasDereferencingProblem    (36),
+                             inappropriateAuthentication  (48),
+                             invalidCredentials           (49),
+                             insufficientAccessRights     (50),
+                             busy                         (51),
+                             unavailable                  (52),
+                             unwillingToPerform           (53),
+                             loopDetect                   (54),
+                             namingViolation              (64),
+                             objectClassViolation         (65),
+                             notAllowedOnNonLeaf          (66),
+                             notAllowedOnRDN              (67),
+                             entryAlreadyExists           (68),
+                             objectClassModsProhibited    (69),
+                             other                        (80)
+                           },
+             matchedDN     LDAPDN,
+             errorMessage  LDAPString
+         }
+
+   LDAPResult 是本协议中从服务器返回给客户用以指明操作成功或失败的结构.对不同的请求,服务器应该返回包含LDAPResult 结构中的不同域的回应给客户,来指明协议操作请求的最终状态.对服务器来说,这个结构中的errorMessage 域应该用来返回一个包含可读文本的错误诊断的ASCII 串给客户.由于这个错误诊断不是标准的,在实现中不应该依赖这些返回值.如果服务器不返回一个文本的错误诊断,LDAPResult 结构中的errorMessage 应该包含一个长度为零的字符串.
+   
+   对于noSuchObject, aliasProblem,invalidDNSyntax,isLeaf,及aliasDereferencingProblem这些resultCodes,相应的matchedDN域应该设为在DIT中最为匹配的条目,而且应该是所提供名字的简短格式.或者,如果别名已被丢弃,应该返回结果名字.在其他情况下,matchedDN 域都应该设为NULL DN(也就是长度为零的字符串)
+
+
+4.1.  绑定操作
+   绑定操作的功能是在客户和服务器之间初始化一个协议会晤,并允许服务器对客户进行认证.在一个协议会晤中,绑定操作必须是服务器接收到的第一个操作请求.绑定请求定义如下:
+
+     BindRequest ::=
+         [APPLICATION 0] SEQUENCE {
+                             version   INTEGER (1 .. 127),
+                             name      LDAPDN,
+                             authentication CHOICE {
+                                  simple        [0] OCTET STRING,
+                                  krbv42LDAP    [1] OCTET STRING,
+                                  krbv42DSA     [2] OCTET STRING
+                             }
+         }
+ 
+    绑定请求的参数是:
+
+   - 版本:一个版本号指定本协议会晤中所使用协议的版本.本文档描述的是LDAP版本2.注意,由于没有版本选择谈判,客户只须把这个参数设为它所希望的值.
+
+   - 名称:客户希望绑定的目录对象的名称.这个域可以是空值(一个长度为零的字符串),用来表示匿名绑定.
+
+   - 认证:如果有的话,绑定请求提供的用来认证该名称的信息,"简单"认证选项提供了一个最小的认证机制,在这个最小认证机制中,认证域只包含一个明文密码.这个选项在不认证或匿名绑定时也可以使用,在这种情况下,该域包含一个长度为零的字符串.LDAP服务器上的版本4的Kerberos认证和DSA 认证分别通过使用"krbv42LDAP" 和 "krbv42DSA"认证选项来实现.注意在这里尽管他们是作为独立的条目来引用,但并不需要把他们分开(也就是一个DSA可以直接同LDAP对话).
+     为了支持所有的实现,两种独立的认证选项都提供了.对不同的服务,每个八为字节的串都应该包含一个相应的kerberos戳. (例如:从krb_mk_req()调用返回的值).
+LDAP服务器上的认证的建议服务名称是"ldapserver";DSA服务器上的认证的建议服务名称是"x500dsa".  在两种情况中,建议的服务实例名称都为服务所在的主机的名称.当然,实际的服务名称和实例名称依赖于本地kerberos主数据库中的值.
+
+      绑定操作需要如下定义的绑定回应:
+
+     BindResponse ::= [APPLICATION 1] LDAPResult
+
+   一个绑定回应只简单地包含一个服务器在该客户发出绑定请求后的协议会晤初始化状态,
+  
+   在接收到一个绑定请求后,如果有必要,一个协议服务器要认证发出请求的客户,并尝试同该客户建立协议会晤.接着,服务器返回一个指明会晤建立请求的状态的绑定回应给 客户.
+4.2.  放弃绑定操作
+      放弃绑定操作的功能是临时终止一个协议会晤.放弃绑定操作定义如下:
+
+     UnbindRequest ::= [APPLICATION 2] NULL
+
+    没有定义放弃绑定操作回应.在发送一个放弃绑定请求后,一个协议的客户可以假设协议会晤已被终止.在收到一个放弃绑定请求后,一个协议服务器可以假设发送请求的客户已终止该会晤,所有已收到的请求可以被丢弃.
+4.3.  查找操作.
+   查找操作允许客户请求代表他的服务器进行一次查找.查找请求定义如下:
+
+     SearchRequest ::=
+         [APPLICATION 3] SEQUENCE {
+             baseObject    LDAPDN,
+             scope         ENUMERATED {
+                                baseObject            (0),
+                                singleLevel           (1),
+                                wholeSubtree          (2)
+                           },
+             derefAliases  ENUMERATED {
+                                        neverDerefAliases     (0),
+                                        derefInSearching      (1),
+                                        derefFindingBaseObj   (2),
+                                        derefAlways           (3)
+                                   },
+             sizeLimit     INTEGER (0 .. maxInt),
+             timeLimit     INTEGER (0 .. maxInt),
+             attrsOnly     BOOLEAN,
+             filter        Filter,
+             attributes    SEQUENCE OF AttributeType
+     }
+
+     Filter ::=
+         CHOICE {
+             and                [0] SET OF Filter,
+             or                 [1] SET OF Filter,
+             not                [2] Filter,
+             equalityMatch      [3] AttributeValueAssertion,
+             substrings         [4] SubstringFilter,
+             greaterOrEqual     [5] AttributeValueAssertion,
+             lessOrEqual        [6] AttributeValueAssertion,
+             present            [7] AttributeType,
+             approxMatch        [8] AttributeValueAssertion
+         }
+
+     SubstringFilter
+         SEQUENCE {
+
+             type               AttributeType,
+             SEQUENCE OF CHOICE {
+                 initial        [0] LDAPString,
+                 any            [1] LDAPString,
+                 final          [2] LDAPString
+             }
+         }
+
+   查找请求的参数是:
+
+   - baseObject: 一个相对于要进行查找操作的条目的基本对象条目
+   - scope: 指示要查找的范围.该域可能的语义上的值与目录查找操作中的范围域的语义值是一致的.
+   - derefAliases :指示在操作中别名对象该如何处理.该域可能的语义上的值按照升序的顺序进行.
+          neverDerefAliases:在查找或定位查找的基本对象时不丢弃别名引用
+          derefInSearching: 在查找过程中,丢弃基本对象的下一级的别名引用,但对基本对象进行定位时,不丢弃别名引用.           
+          derefFindingBaseObject: 在定位基本对象时,丢弃别名引用,但在查找基本对象的下一级时,不丢弃别名引用.
+          derefAlways: 在定位基本对象和查找基本对象的下一级时都丢弃别名引用.
+   - sizelimit: 一个sizelimit限制了可以返回的最大查找结果的条目数量.如果该域的值为0,表示不限制查找的sizelimit .
+   - timelimit: 一个timelimit 限制了一个查找最多允许的时间(以秒计算).如果该域的值为0,表示不限制查找的timelimit  .
+   - attrsOnly: 指示在返回的查找结果中是否要包含属性类型和属性值,或者仅包含属性类型.如果该域设为TRUE,仅返回属性类型(没有值),如果该域设为FALSE,同时返回属性类型和属性值.
+   - filter: 一个过滤器定义了一个必须满足的条件,以使该查找能匹配给定的条目.
+   - attributes: 要返回的查找结果中的每一个条目的属性列表.一个空的列表表示查找结果应该包含中每一个条目的所有属性.
+
+    在收到一个查找请求后,服务器返回如下定义的查找回应结果:
+
+  Search Response ::=
+      CHOICE {
+           entry          [APPLICATION 4] SEQUENCE {
+                               objectName     LDAPDN,
+                               attributes     SEQUENCE OF SEQUENCE {
+                                                   AttributeType,
+                                                   SET OF AttributeValue
+                                              }
+                          },
+           resultCode     [APPLICATION 5] LDAPResult
+       }
+
+   在收到一个查找请求后,一个服务器将对DIT进行必要的查找.
+
+   服务器将把一序列的回应返回给客户.这些回应包括:
+
+   - 零个或多个查找回应,每个回应包含在查找时所找到的一个条目.在每个回应的后面跟着回应的序列号.
+   
+  - 一个包含操作成功或对所发生错误的详细描述的单个查找回应.
+        
+     每个返回的条目必须包括所有的属性,以及在查找请求的 'attributes'域中指定的所要求的关联的值.
+
+     注意一个X.500的"列表"操作可以通过具有检查objectClass属性是否存在这样一个过滤器的一个LDAP查找操作来模拟. 同样, 一个X.500的"读"操作可以通过具有同样过滤器的基本对象的LDAP查找操作来模拟.
+4.4.  修改操作
+    修改操作允许一个客户请求一个代表他的服务器在DIB上实施 一个修改操作.修改请求定义如下:
+
+ModifyRequest ::=
+    [APPLICATION 6] SEQUENCE {
+         object         LDAPDN,
+         modification   SEQUENCE OF SEQUENCE {
+                             operation      ENUMERATED {
+                                                 add       (0),
+                                                 delete    (1),
+                                                 replace   (2)
+                                            },
+                             modification   SEQUENCE {
+                                               type    AttributeType,
+                                               values  SET OF
+                                                         AttributeValue
+                                            }
+                        }
+    }
+
+   修改请求的参数是:
+
+   - object: 要修改的对象.这个字段的值指定在丢弃所有的别名后的被修改的对象.服务器在决定哪个对象被修改时,不会进行任何别名丢弃.
+   - 在要修改条目上要进行的修改操作的列表.整个对条目进行修改的操作列表通常按照他们在列表的顺序,作为一个简单的原子操作来进行操作.因为一个单独的修改操作将导致目录大纲的冲突,在整个操作列表中的操作完成后,结果条目必须符合目录的大纲.在每个修改结构中可能会被实施的的"操作"字段分别有以下的语义:
+              
+             add: 把列出的值加到指定的属性中,如有必要,建立该属性               
+             delete: 从指定的属性中删除列出的值.
+             如果没有值被列出来,或者该属性的全部当前值已被列出来要求删除,那么把整个属性删除掉.            
+             replace: 用列出的新值来替换掉指定属性中已存在的值,如果有必要,建立该属性.
+
+   在收到修改请求后,,服务器尝试进行修改操作,结果在修改回应中返回.该回应定义如下
+
+     ModifyResponse ::= [APPLICATION 7] LDAPResult
+
+   在收到一个修改请求后,服务器将对DIB进行必要的修改操作.
+
+   服务器将给客户返回一个修改回应,该回应或者指明已成功完成修改DIB的操作,或者指明修改失败的原因.注意到由于要保证修改请求的修改操作列表中的各个操作的原子性,客户如果收到的回应指明了某种类型的错误,他可以期望并没有对DIB进行任何的修改操作;如果收到的回应指明已成功完成操作,他可以期望所有对DIB进行任何的修改都已经完成.
+4.5.  添加操作
+    添加操作允许客户请求在目录中添加新的条目.添加操作定义如下:
+
+     AddRequest ::=
+         [APPLICATION 8] SEQUENCE {
+              entry          LDAPDN,
+              attrs          SEQUENCE OF SEQUENCE {
+                                  type          AttributeType,
+                                  values        SET OF AttributeValue
+                             }
+         }
+
+   添加操作的参数是:
+
+   - entry: 要添加的条目的标识名称.注意,为了成功添加一个条目,一个名称除了RDN的最后一部分,其他部分必须要存在.
+   - attrs: 组成要添加的条目的内容的属性列表
+
+     
+   在收到添加请求后,,服务器尝试进行添加操作,结果在添加回应中返回.该回应定义如下
+
+     AddResponse ::= [APPLICATION 9] LDAPResult
+
+ 在收到添加请求后,服务器尝试进行添加操作,添加的结果在添加回应中返回.
+4.6.  删除操作
+        删除操作允许客户请求从目录中删除一个条目.删除操作的定义如下:s:
+
+     DelRequest ::= [APPLICATION 10] LDAPDN
+
+        删除请求只包含要删除条目的标识名.在收到删除请求后,,服务器尝试进行删除操作,结果在删除回应中返回.该回应定义如下
+   
+     DelResponse ::= [APPLICATION 11] LDAPResult
+
+       在收到删除请求后,服务器尝试进行删除操作,删除的结果在删除回应中返回.注意这个操作只能删除树叶对象
+4.7.  修改RDN操作
+        修改RDN操作允许客户改变目录中一个条目名称的最后一部分.修改RDN操作的定义如下:
+
+     ModifyRDNRequest ::=
+         [APPLICATION 12] SEQUENCE {
+              entry          LDAPDN,
+              newrdn         RelativeLDAPDN,
+              deleteoldrdn   BOOLEAN
+         }
+
+   修改RDN操作的参数如下:
+
+   - entry: 要改变的条目的名称
+   - newrdn: 形成新名字的最后一部分的RDN 
+   - deleteoldrdn: 一个用来控制旧的RDN属性值是作为条目的属性值来保留,还是从条目中删除的布尔参数.
+
+     在收到改变RDN请求后,服务器尝试进行改变名字的操作,结果在改变RDN回应中返回.该回应定义如下
+
+     ModifyRDNResponse ::= [APPLICATION 13] LDAPResult
+
+     在收到改变RDN请求后,服务器尝试进行改变名字的操作,改变名字的结果在改变RDN回应中返回.基于deleteoldrdn 参数的设置,形成旧的RDN的属性或者被从条目中删除,或者被保留下来.
+4.8.  比较操作
+     比较操作允许客户对一个断言和目录中提供的条目进行比较.比较操作定义如下:
+
+     CompareRequest ::=
+         [APPLICATION 14] SEQUENCE {
+              entry          LDAPDN,
+              ava            AttributeValueAssertion
+         }
+
+   比较操作的参数是:
+
+   - entry: 要比较的条目的名称
+   - ava: 与要比较的条目的进行比较的断言
+
+    服务器在收到一个比较操作请求后,进行比较操作后的结果在比较回应中返回.比较回应定义如下:
+
+     CompareResponse ::= [APPLICATION 15] LDAPResult
+
+    在收到一个比较操作请求后,服务器尝试进行需要进行的比较.比较结果将在比较回应中返回给客户.要注意到,出错信息和比较结果都在同样的结果中返回.
+4.9.  丢弃操作
+    丢弃操作的功能是允许客户请求服务器终止一个已发出的操作请求.丢弃操作定义如下:
+
+     AbandonRequest ::= [APPLICATION 16] MessageID
+
+    在丢弃操作中没有定义相应的回应.在发送一个丢弃操作后,一个客户可能期望丢弃请求中包含的消息ID标识的操作已被丢弃.如果服务器在把一个查找操作的
+回应发送给客户时,收到对该查找操作的丢弃请求,服务器应停止发送回应,并立即终止该查找操作.
+5.  协议元素的编码
+   LDAP中的协议元素被编码以便使用ASN.1 [11]中的基本编码规则(BER) [12]来进行交换.然而,在使用BER中的某些元素时,将导致非常高的开销,在进行LDAP元素的BER编码时,有以下的附加限制:
+   (1) 只使用长度编码的已定义格式.
+   (2) 位串和八位字节串及所有字符串类型只使用原始格式进行编码.
+6.  安全方面的考虑
+     本协议的这个版本只提供明文口令这种简单的鉴别手段,及版本4的kerberos 鉴别手段.未来版本的LDAP将可能包括对其他鉴别手段的支持.
+7.  参考书目
+   [1] The Directory: Overview of Concepts, Models and Service.  CCITT
+       Recommendation X.500, 1988.
+
+   [2] Information Processing Systems -- Open Systems Interconnection --
+       The Directory: Overview of Concepts, Models and Service.  ISO/IEC
+       JTC 1/SC21; International Standard 9594-1, 1988
+
+   [3] Rose, M., "Directory Assistance Service", RFC 1202, Performance
+       Systems International, Inc., February 1991.
+
+   [4] Howes, T., Smith, M., and B. Beecher, "DIXIE Protocol
+       Specification, RFC 1249, University of Michigan, August 1991.
+
+   [5] Kille, S., "A String Representation of Distinguished Names", RFC
+       1779, ISODE Consortium, March 1995.
+
+   [6] Howes, T., Kille, S., Yeong, W., and C. Robbins, "Lightweight
+       Directory Access Protocol", RFC 1488, University of Michigan,
+       ISODE Consortium, Performance Systems International, NeXor Ltd.,
+       July 1993.
+
+   [7] Kerberos Authentication and Authorization System.  S.P. Miller,
+       B.C. Neuman, J.I. Schiller, J.H. Saltzer; MIT Project Athena
+       Documentation Section E.2.1, December 1987.
+
+   [8] The Directory: Models.  CCITT Recommendation X.501 ISO/IEC JTC
+       1/SC21; International Standard 9594-2, 1988.
+
+  [10] The Directory: Abstract Service Definition.  CCITT Recommendation
+       X.511, ISO/IEC JTC 1/SC21; International Standard 9594-3, 1988.
+
+  [11] Specification of Abstract Syntax Notation One (ASN.1).  CCITT
+       Recommendation X.208, 1988.
+
+  [12] Specification of Basic Encoding Rules for Abstract Syntax
+       Notation One (ASN.1).  CCITT Recommendation X.209, 1988.
+8.  作者地址
+       Wengyik Yeong
+       PSI Inc.
+       510 Huntmar Park Drive
+       Herndon, VA 22070
+       USA
+
+       Phone:  +1 703-450-8001
+       EMail:  yeongw@psilink.com
+
+       Tim Howes
+       University of Michigan
+       ITD Research Systems
+       535 W William St.
+       Ann Arbor, MI 48103-4943
+       USA
+
+       Phone:  +1 313 747-4454
+       EMail:   tim@umich.edu
+
+       Steve Kille
+       ISODE Consortium
+       PO Box 505
+       London
+       SW11 1DX
+       UK
+
+       Phone:  +44-71-223-4062
+       EMail:  S.Kille@isode.com
+
+附录 A - 完整的 ASN.1 定义
+Lightweight-Directory-Access-Protocol DEFINITIONS IMPLICIT TAGS ::=
+
+BEGIN
+
+LDAPMessage ::=
+    SEQUENCE {
+         messageID      MessageID,
+                        -- unique id in request,
+                        -- to be echoed in response(s)
+         protocolOp     CHOICE {
+                             searchRequest       SearchRequest,
+                             searchResponse      SearchResponse,
+                             modifyRequest       ModifyRequest,
+                             modifyResponse      ModifyResponse,
+                             addRequest          AddRequest,
+                             addResponse         AddResponse,
+                             delRequest          DelRequest,
+                             delResponse         DelResponse,
+                             modifyDNRequest     ModifyDNRequest,
+                             modifyDNResponse    ModifyDNResponse,
+                             compareDNRequest    CompareRequest,
+                             compareDNResponse   CompareResponse,
+                             bindRequest         BindRequest,
+                             bindResponse        BindResponse,
+                             abandonRequest      AbandonRequest,
+                             unbindRequest       UnbindRequest
+                        }
+    }
+
+BindRequest ::=
+    [APPLICATION 0] SEQUENCE {
+         version        INTEGER (1 .. 127),
+                        -- current version is 2
+         name           LDAPDN,
+                        -- null name implies an anonymous bind
+         authentication CHOICE {
+                             simple        [0] OCTET STRING,
+                                       -- a zero length octet string
+                                       -- implies an unauthenticated
+                                       -- bind.
+                             krbv42LDAP    [1] OCTET STRING,
+                             krbv42DSA     [2] OCTET STRING
+                                       -- values as returned by
+                                       -- krb_mk_req()
+                                       -- Other values in later versions
+                                       -- of this protocol.
+
+                        }
+    }
+
+BindResponse ::= [APPLICATION 1] LDAPResult
+
+UnbindRequest ::= [APPLICATION 2] NULL
+
+SearchRequest ::=
+    [APPLICATION 3] SEQUENCE {
+         baseObject     LDAPDN,
+         scope          ENUMERATED {
+                             baseObject            (0),
+                             singleLevel           (1),
+                             wholeSubtree          (2)
+                        },
+         derefAliases   ENUMERATED {
+                             neverDerefAliases     (0),
+                             derefInSearching      (1),
+                             derefFindingBaseObj   (2),
+                             alwaysDerefAliases    (3)
+                        },
+         sizeLimit      INTEGER (0 .. maxInt),
+                        -- value of 0 implies no sizelimit
+         timeLimit      INTEGER (0 .. maxInt),
+                        -- value of 0 implies no timelimit
+         attrsOnly     BOOLEAN,
+                        -- TRUE, if only attributes (without values)
+                        -- to be returned.
+         filter         Filter,
+         attributes     SEQUENCE OF AttributeType
+    }
+
+SearchResponse ::=
+    CHOICE {
+         entry          [APPLICATION 4] SEQUENCE {
+                             objectName     LDAPDN,
+                             attributes     SEQUENCE OF SEQUENCE {
+                                              AttributeType,
+                                              SET OF
+                                                AttributeValue
+                                            }
+                        },
+         resultCode     [APPLICATION 5] LDAPResult
+    }
+
+ModifyRequest ::=
+    [APPLICATION 6] SEQUENCE {
+         object         LDAPDN,
+
+         modifications  SEQUENCE OF SEQUENCE {
+                             operation     ENUMERATED {
+                                             add      (0),
+                                             delete   (1),
+                                             replace  (2)
+                                           },
+                             modification  SEQUENCE {
+                                             type     AttributeType,
+                                             values   SET OF
+                                                        AttributeValue
+                                           }
+                        }
+    }
+
+ModifyResponse ::= [APPLICATION 7] LDAPResult
+
+AddRequest ::=
+    [APPLICATION 8] SEQUENCE {
+         entry          LDAPDN,
+         attrs          SEQUENCE OF SEQUENCE {
+                             type          AttributeType,
+                             values        SET OF AttributeValue
+                        }
+    }
+
+AddResponse ::= [APPLICATION 9] LDAPResult
+
+DelRequest ::= [APPLICATION 10] LDAPDN
+
+DelResponse ::= [APPLICATION 11] LDAPResult
+
+ModifyRDNRequest ::=
+    [APPLICATION 12] SEQUENCE {
+         entry          LDAPDN,
+         newrdn         RelativeLDAPDN -- old RDN always deleted
+    }
+
+ModifyRDNResponse ::= [APPLICATION 13] LDAPResult
+
+CompareRequest ::=
+    [APPLICATION 14] SEQUENCE {
+         entry          LDAPDN,
+         ava            AttributeValueAssertion
+    }
+
+CompareResponse ::= [APPLICATION 15] LDAPResult
+
+AbandonRequest ::= [APPLICATION 16] MessageID
+
+MessageID ::= INTEGER (0 .. maxInt)
+
+LDAPDN ::= LDAPString
+
+RelativeLDAPDN ::= LDAPString
+
+Filter ::=
+    CHOICE {
+        and            [0] SET OF Filter,
+        or             [1] SET OF Filter,
+        not            [2] Filter,
+        equalityMatch  [3] AttributeValueAssertion,
+        substrings     [4] SubstringFilter,
+        greaterOrEqual [5] AttributeValueAssertion,
+        lessOrEqual    [6] AttributeValueAssertion,
+        present        [7] AttributeType,
+        approxMatch    [8] AttributeValueAssertion
+    }
+
+LDAPResult ::=
+    SEQUENCE {
+        resultCode    ENUMERATED {
+                        success                      (0),
+                        operationsError              (1),
+                        protocolError                (2),
+                        timeLimitExceeded            (3),
+                        sizeLimitExceeded            (4),
+                        compareFalse                 (5),
+                        compareTrue                  (6),
+                        authMethodNotSupported       (7),
+                        strongAuthRequired           (8),
+                        noSuchAttribute              (16),
+                        undefinedAttributeType       (17),
+                        inappropriateMatching        (18),
+                        constraintViolation          (19),
+                        attributeOrValueExists       (20),
+                        invalidAttributeSyntax       (21),
+                        noSuchObject                 (32),
+                        aliasProblem                 (33),
+                        invalidDNSyntax              (34),
+                        isLeaf                       (35),
+                        aliasDereferencingProblem    (36),
+                        inappropriateAuthentication  (48),
+                        invalidCredentials           (49),
+                        insufficientAccessRights     (50),
+                        busy                         (51),
+
+                        unavailable                  (52),
+                        unwillingToPerform           (53),
+                        loopDetect                   (54),
+                        namingViolation              (64),
+                        objectClassViolation         (65),
+                        notAllowedOnNonLeaf          (66),
+                        notAllowedOnRDN              (67),
+                        entryAlreadyExists           (68),
+                        objectClassModsProhibited    (69),
+                        other                        (80)
+                      },
+        matchedDN     LDAPDN,
+        errorMessage  LDAPString
+    }
+
+AttributeType ::= LDAPString
+                -- text name of the attribute, or dotted
+                -- OID representation
+
+AttributeValue ::= OCTET STRING
+
+AttributeValueAssertion ::=
+    SEQUENCE {
+        attributeType        AttributeType,
+        attributeValue       AttributeValue
+    }
+
+SubstringFilter ::=
+    SEQUENCE {
+        type               AttributeType,
+        SEQUENCE OF CHOICE {
+          initial          [0] LDAPString,
+          any              [1] LDAPString,
+          final            [2] LDAPString
+      }
+    }
+
+LDAPString ::= OCTET STRING
+
+maxInt INTEGER ::= 65535
+END
+
+RFC1777  Lightweight Directory Access Protocol                      RFC1777  轻量级目录访问协议
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

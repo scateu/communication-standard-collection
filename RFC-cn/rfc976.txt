@@ -1,0 +1,302 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-5-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                    Mark. R. Horton
+Request for Comments: 976                              Bell Laboratories
+February 1986
+
+
+UUCP邮件交换格式标准
+（RFC976 UUCP Mail Interchange Format Standard）
+
+
+备忘录状态
+为了适应维护ARPA网上不同项目的状态和进展的当前情况的要求，特为社区成员发布
+本RFC。本文档的内容截止到发布之日是精确的，但目的在于进一步改进。后续的RFC将
+会反映这些改进。
+   本文档定义了UUCP项目中两台机器之间传递邮件消息的标准格式。本文没有涉及单台
+机器上消息的存储格式，也不包括一台机器从另一台机器上获取数据的底层传输机制。本文
+讲述了UUCP区中的主机应遵循的标准。本备忘录的分发不受限制。
+
+目录
+1.  简介	1
+2.  基础	2
+2.1  混合地址（Hybrid Addresses）	2
+2.2  传输	3
+2.3  批处理SMTP	3
+2.4  信封（Envelope）	4
+2.5  邮件路由	5
+3.  算法	5
+4.  例子	6
+5.  结论	7
+6.  参考	8
+
+1.  简介
+本文的目的在于定义UUCP项目中主机之间传递邮件消息的标准格式，没有讨论消息在
+一台机器上的存储格式，也不涉及一台机器从另一台机器上获取数据的底层传输机制。我们
+假定远程执行rmail（或者等价的）命令是UUCP网络的基本操作。
+一条基本法则是：如果我们试图发明一种新的标准，通常无法与现有的系统兼容。世界
+上已经有太多的（互相矛盾的）标准，引起了混淆，比如a!b@c.d按照旧的UUCP标准被解
+释为a!(b@c.d)，而在Internet世界里则被解释为(a!b)@c.d。（两个标准都不支持括号，否则
+就可以兼容了。外壳（shell）和UUCP传输机制同样存在严重的问题）。
+ARPA社区已经定义了明确的、具有完善文档的、可扩展的标准族，我们也选择这些标
+准应用于UUCP区。（UUCP区是使用UUCP连接并注册到UUCP项目的社区的子集，代表
+一个管理实体。）因为实际的传输机制取决于两台主机的安排，可能包括UUCP、SMTP、
+NMDF或者其它工具，我们选用RFC920（域）和RFC822（邮件格式）作为UUCP区的标
+准。所有系统间的邮件传输都应遵循这两个标准。另外，如果ARPA社区在以后改变了他
+们的标准，我们也将修改我们的标准以保证与之兼容，以便提供一个合理的软件升级时间。
+本文详述了RFC822和RFC920在UUCP世界中的解释，说明了如何对信封编码以及在
+混合实现环境中如何实现UUCP寻路。
+
+2.  基础
+消息可以分为两部分：信封和消息本身。信封包含邮件传输服务所需要的信息，消息包
+含对收发方有用的信息。消息分为首部和主体。有时候中间主机会改变消息（如增加Received
+行），但除非是网关需要改变传输格式，中间主机一般不得修改消息本身。在UUCP世界中，
+信封包括“目的地址”（通常表现为rmail命令的参数）和“源地址”（通常由消息的第一行
+或者最初几行表示，以“From”或者“>From”开始，又称为“From行”）。RFC32的报头
+行（包括“From：”和“To：”）作为消息的一部分是消息体本身的文本。
+UUCP在运输层及以下各层使用短主机名，如“ucbvax”。我们把这种短名称为“6字符
+名”，因为任何UUCP的实现都至少把前6个字符视为有效的。（有一些把前7个或者前14
+个字符视为有效，但我们必须使用最低的通用标准。）UUCP名可以长于6个字符，但其前
+6个必须各不相同。RFC920域的名称，如“ucbvax Berkeley.EDU”称为“域名”。这两个名
+是不同的。大小写对于6字符名被认为是不同的，但对于域名则认为是相同的。6字符名后
+加上“.UUCP”，如“ubcvax.UUCP”在过去作为对使用6字符名的主机的域格式的引用。
+随着对组织化的域名如“ucbvax.Berkelry.EDU”的支持，这一类名称正在逐步淘汰。
+2.1  混合地址（Hybrid Addresses）
+在UUCP世界中主要使用两种邮件地址语法：旧式UUCP软件使用的“a!b!c!user”（完
+全路径）格式指明了传送邮件到目的地址的路线；遵循RFC822的“user@domain”（域）语
+法格式。大部分情况下都可以根据给定的地址判定地址的类型。但是对于@左侧包含“a!”
+的混合地址，如a!b@c就出现了混淆：即可以解释为(a!b)@c.d，也可以解释为a!(b@c.d)。这
+两种解释都有意义，前者用于RFC822，后者是UUCP软件事实上的标准。
+由于混合地址带来的混乱，我们建议所有的运输层软件在任何时候都应该避免使用混合
+地址。纯粹的完全地址语法可以用来澄清这种混淆，上例中的第一种解释可以写为“c.d!a!b”，
+第二种解释写为“a!c.d!b”。我们建议所有的实现都是用这种“完全域”语法，除非他们确
+实知道下一台机器上运行什么。
+按照RFC822和AT&T消息传输体系，我们建议所有允许混合地址的主机采用(a!b)@c.d
+这种解释。
+
+2.2  传输
+因为许多UUCP域不支持SMTP，我们把用于“远程执行”的方法定义在传输机制的
+基础上。要“远程执行”的命令与其标准输出信息应一起读作：rmail user@domain ...。参数
+user@domain必须符合RFC920和RFC822。允许包含多个地址参数，这样把同一个消息发
+往多个接收方时可以节省传输时间。
+另一种方式是“rmail domain!user”，其中“domain”至少包含一个逗点而且不含“!”。
+这种表示可以被准确地解释为user@domain，可以通过旧式的UUCP主机传输消息而无需担
+心地址被改变。“user”字符串可以包含除“@”之外的任意字符，禁止该字符是因为无法
+确定中间主机如何处理它。（同样建议避免使用“%”，有些主机把“%”视为“@”的同义
+字。）不过，如果传输路径包含不理解域的主机，下面的格式是可能的：
+      rmail a!b!c!domain!user
+域至少要包含一个逗点，因而可以与6字符的UUCP站点名区分开。（单层的域没有逗
+点，应在尾部增加额外的逗点，比如Mark.Horton@att 就成了“att.!Mark.Horton”。把!格式
+改为@格式的解释器应该删除尾部逗点――如果有的话。）我们不希望发生此类情况，除非
+本地网络使用类似user@host的地址。
+简单的应用可以只使用domain!user语法（而不是user@domian），因为这种方式对3类
+网关（参见节3.5）也是安全的。
+
+2.3  批处理SMTP
+符合标准的实现可能会选择支持一种称为“批处理SMTP”的协议。SMTP（简单邮件
+传输协议）是ARPA社区的标准邮件传输协议（RFC821），BITNET和Mailnet也使用该协
+议。因为SMTP被设计为交互式的，把一系列命令组成以批发到远程机器上成批执行是可
+能的。BSMTP的一个优点是UNIX外壳不参与消息的解释，因而电子信息中可以包含空格
+和括号这样的特殊字符（这些字符在X.400地址中将会非常普遍）。
+为了使UNIX支持BSMTP，符合标准的主机应当把用户的邮件命令“b-smtp”解释为
+批处理SMTP（我们使用“b-smtp”而不是“bsmtp”是因为后者与一个登录名冲突）。因为
+许多邮件系统把包含单个逗点一行当作“文件尾”的标志处理，而SMTP把逗点用作必需
+的文件尾标志，为了区分出报头，我们在BSMTP的每一行增加一个特殊的“#”。在邮件发
+送系统中实现这一点的简单方法是包括如下别名：
+      b-smtp: "|egrep '^#' | sed 's/^#//' | /usr/lib/sendmail -bs"
+这样就可以把命令输送给SMTP解释器。更好的方案还要同时检查错误并把错误信息反馈
+给发送方。
+下面的例子说明了一个从seismo.CSS.GOV发往cbosgd.ATT.COM的BSMTP消息。这
+个例子是通过UUCP连接传递给命令“rmail b-smtp”的文件。注意RFC- 822 消息位于DATA
+行和逗点行（最后一行）之间。信封信息在MAIL FROM和RCPT TO行中传递。发送系统
+的名称在HELO行中。实际的信封信息（带有“#”的行以上的部分）被忽略了，不一定要
+出现。
+      From foo!bar Sun Jan 12 23:59:00 1986 remote from seismo Date:
+      Tue, 18 Feb 86 13:07:36 EST
+      From: mark@ucbvax.Berkeley.EDU
+      Message-Id: <8602181807.AA10228@mark@ucbvax.Berkeley.EDU> To:
+      b-smtp@cbosgd.ATT.COM
+
+      #HELO seismo.CSS.GOV
+      #MAIL FROM:<mark@ucbvax.Berkeley.EDU>
+      #RCPT TO:<mark@cbosgd.ATT.COM>
+      #DATA
+      #Date: Tue, 18 Feb 86 13:07:36 EST
+      #From: mark@ucbvax.Berkeley.EDU
+      #Message-Id: <8602181807.AA10228@mark@ucbvax.Berkeley.EDU> #To:
+      mark@cbosgd.ATT.COM
+      #
+      #This is a sample message.
+      #.
+      #QUIT
+
+2.4  信封（Envelope）
+命令的标准输入应该以单独的一行：From domain!user date remote from system开始，后
+面紧跟着RFC822格式的报头和消息主体。可能在该行前还有其他的FROM行――这些行
+是可以增加的，消息途经的每个系统增加一行。“系统字段”也可能堆叠成单独一行，在
+“user”字符串中包含许多“!”。“From”前面可能还会有“>”字符。一般说来，这些“信
+封”信息应该与旧式的UUCP邮件一样遵从相同的约定。主要的区别是当系统名紧凑书写
+时，如果旧式的写法是a!b!c!mysys!me，新的写法改为a!b!c!mysys!domain!me，其中“domain”
+至少包含一个逗点符号，“mysys”通常是称为“domain”的系统的6字符UUCP名。如果
+“domain!”是多余的，就可以在信封中――源路径或者目的地址――省略掉。
+如果需要把信息包装成只有一个FROM行，接收系统可能会丢弃多余的“From_”行。
+它把“path!domain!user”和“信封”信息――包括消息发送方的地址，可能还生成新的一
+行如Received或Sent-By，其中保存着转发日期和转发系统――一起发送出去。（不建议使
+用Received，因为这样的行可能在真正增加该行的系统之前被其他的系统添加，而其他的系
+统可能事实上也包括一个Received行。Sent-By行与Received行类似，但日期不需要改为
+RFC822格式，而且不主张由名称被提及的系统提前增加该行。）
+如果接收系统继续把消息转发给另一个系统，它就会在前面增加一个FROM行，给处于
+发送方相同的user@domain地址并加上自身的系统名。如果接收系统把消息保存到本地的信
+箱内，建议仅在消息前生成一个FROM行并保存日期（使用相同的格式，因为有些邮件阅
+读程序对这种格式是敏感的），而不是用“remote from system”语法格式。
+注意：如果中间系统在user@domain语法格式地址――无论是信封还是消息体中――前
+面增加文本如“system!”，都是不符合本标准和RFC822规范的。
+
+2.5  邮件路由
+为了正确地发送邮件，有时候需要了解目的系统或者中间系统运行了什么软件或者遵从
+什么样的约定。我们曾经试图尽量减少必要的信息量，但是对子域的支持可能需要在不同条
+件下使用不同的方法。为了预报其他系统的行为方式，我们把主机分为三类。这三类包括：
+
+一类 仅使用旧式的UUCP“!”路径。我们设想主机理解本地用户名：“rmail user”和完
+全路径“rmail host1!host2!user”，但我们不对主机做更多的假定。如果没有关于某
+台主机的任何信息，我们可以毫无问题地把它作为第一类处理，因为我们没有对
+其如何处理混合地址作任何假设。
+
+   二类 旧式的UUCP“!”路径和4.2BSD格式的域解析。我们假设除了具有一类主机的功
+能外，还能够理解“rmail user@domain”，其中“domain”位于UUCP区之外但主
+机可以识别。二类主机不必理解“domain!user”，也不需要路由器。符合RFC920
+标准的非UUCP域中的主机被认为是二类主机，即使也可能识别“host!user”。
+
+   三类 具有一类和二类主机的全部功能。另外，三类主机还能够为相距较远的主机发送
+UUCP邮件，并且能够理解如前所述的语法“ramil domain!user”。所有连接到UUCP
+的网关必须是第三类。
+本文档描述了三类主机必须具有的功能。一类和二类主机已经存在，并将继续存在相当
+长的一段时间，但被视为“过时的系统”并最终将升级到3类主机的状态。
+
+3.  算法
+通过UUCP连接传递消息给地址user@domain的算法可以概述如下：
+
+      a.  如果地址的实际格式是@domain1:user@domain2，就把“domain1”而不是
+“domain2”保留下来作为“doamin”，完整的格式读为“domain1!domain2!user”。
+      b.  确定本地可以识别的“domain”中的最明确的部分，记作“d:”，该部分应该是
+“domain”的后缀。这项工作可以通过扫描一个表来完成，表项按照从特殊到一
+般的顺序排列，比较表项与“domain”检查该表项是否与“domain”的尾部匹配。
+例如，对于地址mark@osgd.cb.att.com，如果本地主机能够识别“uucp”和“att.com”，
+那么d就应该是“att.com”。表的最后一项是空字符串，与完全无法识别的域匹配。
+      c.  查看基本表项（found table entry），寻找网关名（g:）和通往g的UUCP“!”格
+式的路径“r:”。G不一定要与本地主机直接相连，但应视作连接域d的网关。（对
+于给定的d，在不同的主机上g和r可能具有不同的值，不过g通常是一样的） 
+      d.  根据r的开始部分查找“下一跳”的主机n，n总是直接与本地主机相连。
+      e.  如果可能则确定g和n的类型。
+      f.  建立n能够解释的适当的目标字符串s（见下面）。
+g.	把消息及目标信息s传递给n。
+如果环境中包括其它类型的不使用UUCP“!”解析的网络，表中可能还会有附加的
+信息，如使用的连接类型。路径信息在其他的环境中可能被替换为那个网络的特殊信
+息。
+上述第二步（b）中提到的表中的第一项一般是非常精确的，能够直接构造知名的路径
+而无需通过域树寻路。域树仅保留用于下列情况：没有更详尽多的信息；信息量很少；默认
+路径是最佳的选择。如果存在更好的路径就可以把该信息写入表中。如果主机有大量的信息
+传送给第二个主机，一般希望在两台主机之间建立直接的UUCP连接并为它们建立相应的
+表项以便直接传递邮件，即使两台主机位于不同的域中。路径表的构造应该为最大的通信量
+保持最短最便宜的路径。
+这里对目标字符串n（上述第六步f）的构造提供几点提示。如果发送站点确定下一跳是
+三类主机，那么“envelope recipient”信息（rmail的s参数）既可以使用域“!”格式
+（host.com!user），也可以采用域“@”格式（user@host.com）。如果下一跳步不是三类主机，
+或者发送站点不能确定，那么应尽可能使用“!”格式，因为无法预知下一跳会如何处理混
+合地址。
+如果已知网关是第三类，可以使用域“!”格式，但是如果发送站点不能确定其类型，或
+者查找中目标字符串完全匹配（而不是与某个父域匹配），则应使用6字符“!”格式“r!user”，
+如“dumbhost!host!user”。如果网关看来实际上是一个子域的网关，即与一个父域匹配（如
+地址user@host.gateway.com，表中没有找到host.gateway.com但发现了gateway.com），可以
+把它假定为第三类。这样在一定程度上可以安全使用如
+dumbhost!domain!host.domain.com!user之类的路径。如果存在到目标主机的直接连接，可以
+使用user@domain或者domain!user两种语法格式。
+符合本标准的主机是三类主机，所有的子域网关必须是三类主机。
+
+4.  例子
+假设主机A.D.COM 向主机C.D.COM发送邮件。设两台主机的6字符名分别为aname
+和dname，途径中间主机bname。
+   主机A的用户输入：   mail user@c.d.com
+   用户界面生成一个文件并使用命令（如sendmail user@c.d.com < file）把它传递给传输机
+制，文件内容如下：
+      Date:  9 Jan 1985   8:39 EST
+      From: myname@A.D.COM (My Name)
+      Subject: sample message
+      To: user@c.d.com
+
+      This is a sample message
+传输机制查找到c.d.com的路径，但在数据库中没有找到；于是寻找d.com，发现其路
+径是bname!dname!%s，而且发现c.cd.com是三类主机。然后加入c.d.com!user，就得到了路
+径bname!dname!c.d.com!user。（如果发现c.d.com的路径是bname!cname!%s，结果路径
+bname!cname!user中的域将被忽略，因为无法确认目标主机属于哪一类。）
+传输机制预备一个FROM行并把它传递给uux： uux - bname!rmail dname!c.d.com!user < 
+file2，file2的内容包括：
+      From A.D.COM!user Wed Jan  9 12:43:35 1985 remote from aname Date:
+      9 Jan 1985   8:39 EST
+      From: myname@A.D.COM (My Name)
+      Subject: sample message
+      To: user@c.d.com
+
+      This is a sample message
+
+   (注意消息尾部的空行――至少需要一个空行。)这将导致B主机执行命令：rmail 
+dname!c.d.com!user。B预备了它自己的FROM行并继续转发邮件：uux - dname!rmail 
+c.d.com!user < file3，file3的内容包括：
+
+      From nuucp Wed Jan  9 12:43:35 1985 remote from bname >From
+      A.D.COM!user Wed Jan  9 11:21:48 1985 remote from aname Date:  9
+      Jan 1985   8:39 EST
+      From: myname@A.D.COM (My Name)
+      Subject: sample message
+      To: user@c.d.com
+
+      This is a sample message
+    C主机执行命令：rmail c.d.com!user并压缩FROM行，然后把消息保存到本地――可能
+使用相同的格式：
+
+      From bname!aname!A.D.COM!user Wed Jan  9 12:43:35 1985 Date:  9
+      Jan 1985   8:39 EST
+      From: myname@A.D.COM (My Name)
+      Subject: sample message
+      To: user@c.d.com
+
+      This is a sample message
+
+5.  结论
+    符合本标准的主机可以接受如下所有的格式：
+
+      rmail localuser               (user中不含“!”、“%”、“@”)
+      rmail hosta!hostb!user         (user中不含“!”、“%”、“@”)
+      rmail user@domain           (域中只有逗点“.”)
+      rmail domain!user            (域中至少包含一个逗点“.”)
+      rmail domain.!user            (域中没有圆点的情形)
+    消息的信封部分（FROM行）应遵循现有的约定使用“!”路径。消息的首部（Word:
+行，如Date:、From:、To:和Subject:）必须符合RFC822规范。所有首部地址必须采用@格
+式。原始站点应确保地址符合RFC822，不能要求转发站点或者网关把地址转换为合法的
+RFC822地址。（同样转发站点或者网关也不得把合法的RFC822地址user@domain转化成不
+符合RFC822的地址gateway!user@domain，即使要转发给一类UUCP主机。）
+
+6.  参考
+
+   [1]  Postel, J., "Simple Mail Transfer Protocol", RFC-821,
+        USC/Information Sciences Institute, August, 1982.
+
+   [2]  Crocker, D., "Standard for the Format of ARPA Internet Text
+        Messages", RFC-822, Department of Electrical Engineering,
+        University of Delaware, August, 1982.
+
+   [3]  Postel, J., and J. K. Reynolds, "Domain Requirements", RFC-920,
+        USC/Information Sciences Institute, October, 1984.
+
+RFC976 UUCP Mail Interchange Format Standard                   UUCP邮件交换格式标准
+
+
+1
+RFC文档中文翻译计划

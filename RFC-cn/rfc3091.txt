@@ -1,0 +1,149 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@163.net）
+译文发布时间：2002-1-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                         H. Kennedy
+Request for Comments: 3091                            University of Michigan 
+Category: Informational                                     1 April 2001
+Pi数字生成协议
+（RFC3091――Pi Digit Generation Protocol）
+这个文档的状态
+这个文档为Internet社区提供了信息。它没有特指任何Internet标准。这个备忘录的发
+布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001)。版权所有。
+摘要
+这个备忘录定义了一种协议，来提供用在主机上的客户机和服务器之间的Pi数字生成
+服务(Pi digit generation service，缩写为PIgen)。
+简介
+这个协议被用来提供用在主机上的客户机和服务器之间的Pi数字生成服务(Pi digit 
+generation service，缩写为PIgen)。典型的客户端是缺少本地Pi支持的工作站主机，而
+且服务器却是具有较大的Pi计算能力的机器。基本的折衷办法是用网络资源和时间来代替
+本地计算周期。
+这个文档中的关键词“MUST”、“MUST NOT”、“REQUIRED”、“SHALL”、“SHALL NOT”、
+“SHOULD”、“SHOULD NOT”、“RECOMMENDED”、“MAY”以及“OPTIONAL”的注释在RFC 2119 
+[RFC2119]中有详细的描述。
+注释
+由这种服务的应用程序提供的所有数字是在小数点后的Pi的值或者相似值里的十进制
+数的ASCII [US-ASCII]表示法。前面由这种协议定义的服务提供的数值必须暗含3的十进
+制数。
+目录
+1.基于数字生成器服务的TCP	2
+1.1.类似的服务	2
+2.基于数字生成器服务的UDP	2
+2.1.数据包的格式	3
+2.1.1. 请求的有效载荷格式	3
+2.1.2. 响应的有效载荷格式	3
+2.2.类似的服务	3
+3.基于数字生成器服务的IP组播	3
+4.服务发现	3
+5.需要考虑的安全因素	3
+6. 参考文献	4
+7. 作者地址	4
+完整的版权声明	4
+致谢	5
+
+1.基于数字生成器服务的TCP
+必要的PIgen服务定义了一种无状态的TCP服务。服务器监听TCP的314159端口。一
+旦服务器建立了一个发送数据流的连接，每次一个Pi的数字，从小数点后开始最重要的数。
+必须丢弃任何输入的数据。连接将持续到客户机关闭连接。
+连接上的数据流会受到通常的TCP流量控制机制的约束，因此这与服务器发送数据比客
+户机处理数据快无关。
+服务器可以采用任何适当的Pi数字生成方法来提供这种服务，包括(但是不限于此) 查
+找[DIGITS]的表格、数字计算法[FIBPI,PIFFT]以及统计采样[MCM]。然而，选定的方法应该
+提供生成Pi数字的精确值。
+Pigen的应用程序必须提供这种服务来有条件地适应这个RFC。
+1.1.类似的服务
+可选的PIgen服务定义了一种无状态的TCP服务。服务器监听TCP的220007端口。一
+旦服务器建立了一个发送数据流的连接，每次一个有理数22/7的数字，从小数点后开始最
+重要的数。必须丢弃任何数据。连接将持续到客户机关闭连接。
+2.基于数字生成器服务的UDP
+可选的PIgen服务定义了一种无状态的UDP服务。服务器监听UDP的314159端口。当
+某个请求一个特定Pi数字的数据报到达时，根据在2.1.1.和2.1.2节里定义的格式，发送
+一个包含着被请求的Pi数字的数值的应答数据报。
+被请求的数字数值可以由任何适当的Pi数字生成方法来确定。推荐的方法包括查找
+[DIGITS]的表格、或者数字计算法[BBPPA]。
+2.1.数据包的格式
+Pigen协议组的基于数据报的部分都具有如下的UDP数据有效载荷格式(在RFC 
+2234[RFC2234]中定义的ABNF)。
+2.1.1. 请求的有效载荷格式
+request= nth_digit
+nth_digit = 1*DIGIT；指定在小数点后的n-th数字
+2.1.2. 响应的有效载荷格式
+reply  = nth_digit “:” DIGIT；DIGIT是在小数点后n-th数字的数值
+2.2.类似的服务
+可选的Pigen服务被定义为一种无状态的UDP服务。服务器侦听UDP端口220007。当
+收到一个请求特定有理数数字22/7的数据报，就会根据2.1.1.和2.1.2节中定义的格式来
+发送一个包含着请求的22/7数字的数值的应答数据报。
+3.基于数字生成器服务的IP组播
+可选的Pigen服务被定义为一种无状态的UDP服务。采用在2.1.2.节中描述的有效载
+荷的格式，把一个Pi数字的随机分布发送给IP组播组 314.159.265.359。
+没有请求体制。如果某个执行这个协议组的服务器加入了 PIgen组播组，并且在30秒
+内没有检测到任何提供数字的服务器，它就会选择成为PIgen组播提供者。
+PIgen组播提供者生成一种Pi的数字的随机分布，并且把它们发送给组播组。如果侦
+听组播组超时，PIgen组播客户端就会增加相关的Pi数值。
+随机选择的数字数值可以由任何适当的Pi数字生成方法来确定。推荐的方法包括查找
+[DIGITS]的表格，或者数字计算法[BBPPA]。为了确保得到充分随机的分布，应该采用一种
+适当的随机数生成器，一些例子见[RANDOM]。
+4.服务发现
+客户机可以通过DNS SRV算法[RFC2782]来发现PIgen服务器。采用的服务是“PIgen”，
+而采用的协议是“tcp”和“udp”。类似的服务(1.1.和2.2.节) 采用某种“pigem”服务来
+发现。这主要适用于地址管理、对失效的转播和收集的反馈、以及静态负载均衡。
+5.需要考虑的安全因素
+就象几乎所有的安全的Internet协议为了运行正常就需要非常精确的Pi数值那样，对
+于只采用一种信任的Pigen.服务器来说，这是强制性的。如果不严格执行这个方针的话，
+Internet就要崩溃了。
+6. 参考文献
+[RFC2119]  Bradner，S.，“Key words for use in RFCs to Indicate Requirement 
+Levels”，BCP 14，RFC 2119，March 1997.
+[US-ASCII] Coded Character Set--7-Bit American Standard Code for Information 
+Interchange，ANSI X3.4-1986.
+[DIGITS]ftp://pi.super-computing.org/pub/pi
+[FIBPI] Pi and the Fibonacci Numbers
+http://www.mcs.surrey.ac.uk/Personal/R.Knott/Fibonacci/fibpi.html
+[PIFFT] Pi Calculation based on FFT and AGM
+http://momonga.t.u-  tokyo.ac.jp/~ooura/pi_fft.html
+[MCM]The Monte Carlo Method
+http://www.daimi.aau.dk/~u951581/pi/MonteCarlo/pimc.html
+[BBPPA] Bailey-Borwien-Plouffe Pi Algorithm
+http://www.mathsoft.com/asolve/plouffe/plouffe.html
+[RFC2234]  Crocker，D. and P. Overell，“Augmented BNF for Syntax Specifications: 
+ABNF”，RFC 2234，November 1997.
+[RANDOM]Randomness for Crypto http://www.cs.berkeley.edu/~daw/rnd/
+[RFC2782]  Gulbrandsen，A.，Vixie，P. and L. Esibov，“A DNS RR for specifying 
+the location of services (DNS SRV)”，RFC 2782，February 2000.
+[CHARGEN]  Postel，J.，“Character Generation Protocol”，STD 22，RFC 864，May 
+1983.
+7. 作者地址
+Hugh Kennedy
+University of Michigan
+2281 Bonisteel Blvd.
+Ann Arbor，MI 48109-2099
+USA
+EMail: kennedyh@engin.umich.edu
+完整的版权声明
+Copyright (C) The Internet Society (2000)。版权所有。
+本文档及其译文可以拷贝和提供给他人，且其衍生物，如评论、解释或帮助实施的作品
+可以全部或部分地定制、拷贝、出版和发布，对此我们不加任何限制，前提是上述版权声明，
+及本段内容包含在所有的拷贝和派生作品中。然而，本文档本身不允许以任何方式修改，例
+如删除Internet社团或其他Internet组织的版权声明或参考，除非是为了开发Internet
+标准的需要。即便在这种情况下，也需要添加Internet标准中定义的版权声明，或者根据
+需要把他翻译成英语以外的其他语言。
+上述准许的有限许可是永久性的， 无论是Internet社团以及其继承者或代理者都将不
+会废止这些许可。
+本文档及其中包含的信息基于“AS IS”提供，而且INTERNET社团和IETF拒绝所有授
+权、表达或影射，包括但不限于任何这里使用的消息的授权将不会违背任何版权或者隐含的
+商业性授权或对特定的合理目的。
+致谢
+目前，RFC编者活动的基金由Internet社团提供。
+RFC3091――Pi Digit Generation Protocol                                   Pi数字生成协议
+
+
+1
+RFC文档中文翻译计划

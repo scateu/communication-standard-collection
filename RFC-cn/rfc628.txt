@@ -1,0 +1,38 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：gridexpert(gridexpert  gridexpert@yahoo.com.cn)
+译文发布时间：2001-11-24
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+Network Working Group                                   Marcial,Keeney
+Request for Comments: 628                                       Spi-Arc 
+Category: Standards Track                                  March 27,1974   
+          
+RFC号码状况及预分配刊物号注释
+（RFC628――Status of RFC Numbers and a Note on Pre-assigned Journal Numbers）
+
+ 在此通告，RFC号码能通过OFFIC-1上的NLS在线获得。不久就不能在
+SRI-ARC上在线获得。你也许依旧访问NIC以获得1个RFC号，如果你不希望使用
+在线工具。
+同样，请注意预分配期刊号（除RFC号）仅能通过位于被采用系统（OFFIC-1
+和SRI-ARC）上的NLS使用。
+
+
+
+
+       [ This RFC was put into machine readable form for entry ]
+       [ into the online RFC archives by Alex McKenzie with    ]
+       [ support from GTE, formerly BBN Corp.            11/99 ]
+
+
+
+
+Rfc628―― Status of RFC Numbers and a Note on Pre-assigned Journal Numbers
+RFC号码状况及预分配刊物号注释
+
+
+1
+RFC文档中文翻译计划

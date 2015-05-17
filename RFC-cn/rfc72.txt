@@ -1,0 +1,81 @@
+组织：中国互动出版网（<http://www.china-pub.com/>）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm <http://www.china-pub.com/>）
+E-mail：ouyang@china-pub.com <mailto:ouyang@china-pub.com>
+译者：董苛（cnchris    duke913@163.com）
+译文发布时间：2001-10-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                 Robert D. Bressler
+Request for Comments #72                              M.I.T./Project MAC
+                                                      September 28, 1970
+
+
+                         建议性的对网络协议改动的禁止  
+             (PROPOSED MORATORIUM ON CHANGES TO NETWORK PROTOCOL)
+
+	
+     Bill Crowther的RFC67提出了一个比印记问题更基础的问题.任何对现有协议的改动都会影响到软硬件发展中已经获得的成果--其中有些已经持续了六个月了.在Multics的情况下不管是已经完成的还是在后期的调试阶段的程序都会受到他的影响.这一点在其他地方也无疑是个事实.
+
+     现在谈论这个问题并不是说现有的协议是完美的,而是说人们已经承认他是可用的而且开始落实他了.因此我们建议，在接着的六个月中,禁止大部分的对这个协议的改动,或不管多久,我们就让他运行下去,去了解他更多的特性.
+
+     这特别的指,如果某些改动只是为了影响实施的效率和方便性,则不予实施.如果设计上的主要错误被发现,应该提出并加以考虑,以进行对现存系统象征性的扩展.不过,
+不能对现有系统的细节进行改动.
+
+     对这个论点,有几点是有帮助的.
+
+                                [第一页]
+
+Network Working Group            RFC 72               Robert D. Bressler
+
+     第一点,可能也是最重要的一点是:要尽快让系统工作起来.主要的好处将在使用他的地方发挥出来,而网络只有在使用中才有发展.我们感觉到,尽管在今后一些时间里重新编写部分NCP的工作将无可质疑的巨大,但是比起走另一条路时对网络使用和高层网络发展的作用力来说,这将是微不足道的.
+
+     另一个马上出现的问题是:那么哪些问题才能构成正式的改动?目前协议发展的历史表明:每当一个建议被提出,都会被修改多次,最后才能得到公认.因此每一个有关改动的建议都有可能妨碍计划的发展好几个月.
+
+     最后的一个因素是:一些想法有可能在最后的实施中才被发现是不可行的.已经商定了目前意见的人们将重新开始讨论,全面的检测也将展开.
+
+    我们认为这些因素已经足够重要,以至于可以冻结网络协议,除非问题严重到一些功能不可以实施.一些只是增强效率的改动将会保留到真正的网络操作已经测试过.
+  
+                               [Page 2]
+
+Network Working Group            RFC 72               Robert D. Bressler
+
+    这并不是说新的想法和观点不能提出,而是说提出时应该理解,它们被讨论只是以后可能实施,但不是马上.这个想法可能会通过给这样的文献起名体现出来,"有关禁止改动后对......的建议"
+
+       [ This RFC was put into machine readable form for entry ]
+
+          [ into the online RFC archives by Bob Hinden 6/97 ]
+
+                                [Page 3]
+
+版权说明
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+Funding for the RFC Editor function is currently provided by the Internet Society.
+   

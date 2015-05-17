@@ -1,0 +1,88 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2001-6-28
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                                           J. Myers
+Request for Comments: 2088                               Carnegie Mellon
+Cateogry: Standards Track                                   January 1997
+
+IMAP4非同步字符
+
+备忘录的状态
+   本文档为Internet社区表述了一种Internet标准跟踪协议，需要进一步讨论和建议以完善。
+请访问“Internet正式协议标准”（STD 1）的最新版本了解本协议的标准化状态和进展。本
+备忘录的发布没有限制。
+目录
+1.  摘要（Abstract）	1
+2.  本文当使用的约定（Conventions Used in this Document）	1
+3.  规范（Specification）	2
+4.  正式语法（Formal Syntax）	2
+6. 引用（References）	2
+7. 安全性考虑（Security Considerations）	3
+8.  作者地址（Author's Address）	3
+
+1.  摘要（Abstract）
+Internet消息访问协议[IMAP4]包含用于通信字符串的“字符”语法结构。当从客户端向
+服务器发送一个字符时，IMAP4要求客户端等待服务器在发送字符数和字符串数据之间发
+送一个命令延续请求。本文档定义了一种替代的字符形式，不要求该网络循环。
+
+2.  本文当使用的约定（Conventions Used in this 
+Document）
+比如，“C：”和“S：”分别表示相应的行由客户端还是服务器发送。
+3.  规范（Specification）
+非同步字符是一种附加的替代字符形式，可以取代IMAP4形式的字符出现在从客户端
+到服务器的通信中。在客户端到服务器的通信中使用的IMAP4形式的的字符，称为同步字
+符。
+非同步字符可以用于任何对CAPABILITY命令返回“LITERAL+”作为一种支持能力的
+IMAP4服务器实现。如果服务器没有声明LITERAL+能力，则客户端必须使用同步字符。
+非同步字符与原有的同步字符之间通过在字符数和右括号（“）”）之间增加一个加号（“+”）
+来区分。服务器在相应非同步字符是不会生成命令延续请求，也不要求客户端在发送非同步
+字符的字节数前等待。
+作为该协议的接收方，IMAP4服务器必须检查收到的每行的末尾，在回车换行CRLF
+之前是否有开括号（“{”}，后面依次为字节数、加号和闭括号（“）”）。如果找到这个序列
+则是非同步字符的字节数，而且服务器必须把这个后续字节的特定数字和后续行视作同一命
+令的一部分。只要在歌行的末尾没有发现非同步字符，服务器仍然可以按行处理命令和拒绝
+错误。
+
+   例如：      C: A001 LOGIN {11+}
+               C: FRED FOOBAR {7+}
+               C: fat man
+               S: A001 OK LOGIN completed
+
+4.  正式语法（Formal Syntax）
+以下的语法规范使用了扩展BNF范式的记号（在RFC-822中描述，[IMAP4]作了修正）。
+下面没有定义的没有指明出处的引用在[IMAP4]中定义。
+
+   literal         ::= "{" number ["+"] "}" CRLF *CHAR8
+                       ;; Number represents the number of CHAR8 octets
+
+6. 引用（References）
+
+   [IMAP4] Crispin, M., "Internet Message Access Protocol - Version 4",
+   draft-crispin-imap-base-XX.txt, University of Washington, April 1996.
+
+   [RFC-822] Crocker, D., "Standard for the Format of ARPA Internet Text
+   Messages", STD 11, RFC 822.
+
+7. 安全性考虑（Security Considerations）
+对于该扩展没有已知的安全性问题。
+
+8.  作者地址（Author's Address）
+
+   John G. Myers
+   Carnegie-Mellon University
+   5000 Forbes Ave.
+   Pittsburgh PA, 15213-3890
+
+   Email: jgm+@cmu.edu
+
+
+RFC2088――IMAP4 non-synchronizing literals                           IMAP4非同步字符		
+
+
+1
+RFC文档中文翻译计划

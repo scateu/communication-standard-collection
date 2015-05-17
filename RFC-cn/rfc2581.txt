@@ -1,0 +1,388 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：x1982212（x1982212   ）
+译文发布时间：2001-10-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                          M. Allman
+Request for Comments: 2581                  NASA Glenn/Sterling Software
+Obsoletes: 2001                                                V. Paxson
+Category: Standards Track                                   ACIRI / ICSI
+                                                              W. Stevens
+                                                              Consultant
+April 1999
+
+
+TCP拥塞控制
+(RFC2581――TCP Congestion Control)
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程
+度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+摘要： 
+这篇文档定义了TCP的四种相互交织的拥塞控制算法：慢启动、拥塞避免、快速重传、
+以及快速恢复。文档也讲述了在一数据段相当长的闲置之后，TCP应该如何开始传送，并讨
+论了各种确认产生方法。
+目录
+1.介绍	2
+2．定义	2
+3．拥塞控制算法	3
+3．1慢启动和拥塞避免	3
+3．2快速重传/快速恢复	4
+4．附加考虑	5
+4．1闲置后重启连接	5
+4．2确认生成	5
+4．3丢失恢复机制	6
+5.安全考虑	6
+6．相对于RFC2001的变化	7
+感谢	7
+参考文献：	7
+作者地址：	9
+
+1.介绍
+	这篇文档讲述了四种TCP拥塞控制算法：慢启动、拥塞避免、快速重传和快速恢复。这
+些算法是在[Jac88]和[Jac90]中被设计出来的。它们在TCP中的使用在[Bra89]中被标准化。
+	这篇文档是对[Ste97]的更新。除了讲述拥塞控制算法外，这篇文档也讲述了在相当长的
+闲置期后TCP连接应该做些什么，讲述并澄清了关于产生TCP ACK的一些问题。
+	[Ste94]提供了实际使用的这些算法的例子，[WS95]解释了这些算法的BSD实现的源代
+码。
+	这篇文档组织结构如下。第二节提供了文档中要使用的各种定义。第三节讲述了拥塞控
+制算法。第四节概括了和拥塞控制算法相关的问题，最后，第五节概括了安全方面的考虑。
+	关键字"MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD 
+NOT", "RECOMMENDED", "MAY"及"OPTIONAL"在这篇文档里面的含义同[Bra97]里描述的一样。
+2．定义
+这一节提供了此文档其余节要使用的一些术语的定义。
+数据段：一个数据段就是任意的TCP/IP数据或确认包（或两者兼备）。
+发送端最大数据段尺寸（SMSS）:SMSS是发送端能发送的最大数据段的尺寸。这个值是
+以网络最大传送单元（MTU），MTU路径发现算法，RMSS(见下一项)，或其它因素为基础的。
+该尺寸不包括TCP/IP头和选项。
+接收端最大数据段尺寸（RMSS）:RMSS是接收端愿意接收的最大数据段的尺寸。这个值
+在连接开始时接收端发送的MSS选项中说明。又或者，如果MSS选项没有使用，就是536字
+节[Bra89]. 该尺寸不包括TCP/IP头和选项。
+满尺寸数据段：一个包括允许最大数目数据的数据段（也就是说，一个包括SMSS字节数
+据的数据段）。
+接收端窗口（rwnd）：最近通知的接收端窗口。
+拥塞窗口（cwnd）：一个TCP状态参量，代表着一个TCP允许发送的最大数据量。在任意
+一个给定的时刻，TCP不会发送序号大于最大确认序号和cwnd、rwnd中较小者的数据。
+初始窗口（iw）：初始窗口是三次握手完成后发送端的拥塞窗口的尺寸。
+丢失窗口（lw）：丢失窗口是在一个TCP根据它的重传定时器检测到了数据丢失之后，拥
+塞窗口的尺寸。
+重启窗口（rw）：重启窗口是TCP在一段闲置期之后重新开始传送后拥塞窗口的尺寸（如
+果使用慢启动算法；参见4.1节以获取更多的讨论）。
+传送尺寸：已经被发送但还没有确认的数据的总量。
+3．拥塞控制算法
+这节定义了四种拥塞控制算法：慢启动，拥塞避免，快速重传和快速恢复，它们在[Jac88]
+和[Jac90]中被提出。在某些情况下，比算法的限定更加保守地行事也许对一个TCP发送端更
+有益，无论如何，TCP不能超出下列算法的限定（也就是说，当下列算法计算出来的cwnd值
+不允许数据被发送时，就不能发送数据）。
+3．1慢启动和拥塞避免
+　　慢启动和拥塞避免算法必须被TCP发送端用来控制正在向网络输送的数据量。为了
+实现这些算法，必须向TCP每连接状态加入两个参量。拥塞窗口（cwnd）是对发送端收到确
+认（ACK）之前能向网络传送的最大数据量的一个发送端限制，接收端通知窗口（rwnd）是对
+未完成数据量的接收端限制。Cwnd和rwnd的最小值决定了数据传送。
+　　另一个状态参量，慢启动阀值（ssthresh），被用来确定是用慢启动还是用拥塞避免
+算法来控制数据传送，讨论如下：
+　　在不清楚环境的情况下向网络传送数据，要求TCP缓慢地探测网络以确定可用流量，
+以避免突然传送大量数据而使网络拥塞。在传送开始时，或者在修复了由重发定时器探测到
+的数据丢失之后使用慢启动算法来达到此目的。
+　　IW，cwnd的初始值，必须小于或等于2*SMSS字节而且不能大于两个数据段。
+　　我们注意到一个非标准的，实验性的TCP的扩充允许TCP使用一个更大的初始窗口
+（IW），在等式1中给予定义[AFP98]：
+　　　 IW = min (4*SMSS, max (2*SMSS, 4380 bytes))           (1)
+　　有了这个扩充，TCP发送端可以使用一个3或4数据段的初始窗口，只要这些数据
+段的总尺寸不超过4380字节。我们没有将这一改变作为这篇文档定义的标准的一部分。但是，
+我们在这篇文档的剩余部分包含了对（1）的讨论，将它作为那些实验的指导方针，而不是遵
+守目前的TCP拥塞控制标准。
+　　Ssthresh的初始值可以任意大（比如，一些实现使用通知窗口的尺寸），但是作为
+对拥塞的响应，其大小可能会被减小。慢启动算法在cwnd<ssthresh时使用，拥塞避免算法
+在cwnd>ssthresh时使用。当cwnd和ssthresh相等时，发送端既可以使用慢启动也可以使
+用拥塞避免。
+　　在慢启动期间，一个TCP的cwnd对每一个接收到的用于确认新数据的ACK至多增加
+SMSS字节。当cwnd超过ssthresh（或者，当cwnd大小达到ssthresh的大小，如上所述）
+或者当观察到拥塞时慢启动结束。
+　　在拥塞避免期间，cwnd以每个往返（RTT）1满尺寸数据段的速度递增。拥塞避免继
+续保持直到拥塞被检测到。等式2给出了一个普通使用的在拥塞避免期间用来修正cwnd值的
+公式
+　　　　　　　　 cwnd += SMSS*SMSS/cwnd                     (2)
+　　此修正被实行于每个新到的非重复ACK。等式（2）为cwnd以每个往返（RTT）1满
+尺寸数据段的速度递增的潜在原则提供了一个可接受的近似值。（注意，如果连接的接收端对
+每一个数据段都要确认，（2）被证明了比每RTT一数据段更有冒险，对每隔一个包进行一次
+确认的接收端来说，（2）冒的险更少一些。
+　　实现说明：因为整数式经常用于TCP实现，等式2中给出的公式在拥塞窗口非常大
+时也许不能够增加cwnd值。如果上述公式结果为0，结果应被设成1字节。
+　　实现说明：早期的实现在等式（2）的右边有一个另外的附加值。这是不合理的，在
+实际中能导致性能降低[PAD+98]。
+　　另一种在拥塞避免期间增加cwnd值的可接受的方法是计算由ACK确认的数据的字节
+数（这种实现的一个缺点是它要求维持一个另外的状态参量）。当确认的数据的字节数达到
+cwnd值，cwnd值能被增加到SMSS字节。注意到在拥塞避免期间，cwnd每次的增加量既不能
+大于每RTT一满尺寸数据段，也不能大于等式2计算的值。
+　　实现说明：一些实现以字节为单位维持cwnd，另外一些实现以满尺寸数据段为单位。
+后者很难使用等式（2），因此可能会选择上一段讨论的计算方法。
+　　当一个TCP用重传定时器检测到数据段丢失时，ssthresh的值必须设定大于等式（3）
+中给出的值：
+　　 ssthresh = max (FlightSize / 2, 2*SMSS)            (3)
+　　正如上面所讨论的，FlightSize是仍在网络中传送的数据量。
+　　实现说明：一个容易犯的错误是一味地使用cwnd而不使用FlightSize，FlightSize
+在一些实现里可能比rwnd增长得更快。
+    此外，一旦超时，cwnd值必须设定不大于丢失窗口尺寸，LW，它和一个满尺寸数据
+段的大小相等（不管IW的值）。因此，在重发丢失数据段之后，TCP发送端使用慢启动算法将
+窗口尺寸从一个满尺寸数据段增加到ssthresh的新值，此时拥塞避免再次发挥决定作用。
+3．2快速重传/快速恢复
+         当一个次序紊乱的数据段到达时TCP接受端应该迅速发送一个重复ACK。这个ACK
+的目的是通知发送端收到了一个次序紊乱的数据段，以及期望的序列号。从发送端的观点来
+看，重复ACK可以由许多网络问题引起。首先，可以由数据段丢失引起。在这种情况下，所
+有在丢失的数据段之后发送的数据段都将触发重复ACK。第二，可以由网络对数据的重新排序
+引起（这在某些网络路径上并不少见[Pax97]）。最后，重复ACK可以由网络对ACK或数据数
+据段的复制引起。另外，当接收数据段填补了全部或部分序列号间隔时，TCP接收端应该立即
+发送一个ACK。这将为一个通过重传超时机制来从数据丢失中恢复的发送端提供更多的及时的
+信息，此机制可能是一个快速重传，或者一个实验性的数据丢失恢复算法，比如
+NewReno[FH98]。
+        TCP发送端应该使用“快速重传”算法来探测或者修复数据丢失，以收到的重复ACK
+为基础。快速重传算法以三个重复ACK的到达（收到四个一样的ACK，其间没有任何其他包到
+达）为一个数据段已经丢失的标志。在收到三个重复ACK之后，TCP不等重传定时器超时就重
+传看来已经丢失的数据段。
+        在快速重传算法发送了看来已经丢失的数据段之后，“快速恢复”算法支配了新数据
+的传送，直到一个非重复ACK到达。不进行慢启动的原因是收到重复ACK不仅意味着一个数
+据段已经丢失，而且意味着数据段非常可能从网络丢失（尽管网络产生大量的重复数据段可
+以保证不丢失）。换句话说，因为接收端只有在当一个数据段已经到达时才产生一个重复ACK，
+由此我们可以知道，已经脱离网络，存储在接收端的缓冲区里的数据段不会再消耗网络资源。
+另外，因为ACK"clock"保存起来了，TCP发送端可以继续发送新的数据段（尽管传送必须
+继续使用一个减小的cwnd）。
+　　　　快速传送和快速恢复算法经常像下面那样一起实现。
+1．	当第三个重复ACK收到时，设置ssthresh不大于等式3给定的值。
+2．	重传丢失的数据段并设置cwnd的值为ssthresh乘以3*SMSS。这将人为地按已经离开网
+络的报文段数目（3）和接收端缓冲数据量来扩充拥塞窗口。
+3．	对每个接收到的附加的重复ACK，将cwnd增大SMSS字节。这将人为地扩充拥塞窗口以反
+映已经离开网络的附加数据段。
+4．	发送一个数据段，如果cwnd和接收端的通知窗口的值允许的话。
+5．	当下一个确认新数据的ACK到达时，设定cwnd值为ssthresh（步骤1设置的值）。这称
+作“deflating"窗口。这个ACK必须是步骤1触发的重发引起的确认，重发之后一个RTT
+（在接收端有了次序紊乱的数据段的情况下，它可能一会儿就到达）。
+另外，此ACK应该确认丢失数据段和第三个ACK副本期间的数据段，如果它们一个也没
+有丢失的话。
+注意：当包的一个传送期间就有很多丢失时，这个算法不能够有效地恢复[FF96]。为解
+决这个问题而提出的一系列修正可以在[FH98]中找到。
+4．附加考虑
+4．1闲置后重启连接
+上面描述的TCP拥塞控制算法有一个众所周知的问题，就是TCP闲置了相当长一段时间
+后，上述算法允许潜在的大量数据爆发性地传送。在一段闲置期之后，TCP不能使用ACK　时
+钟过滤新进入网络的数据段，因为所有的ACK都已经从网络中丢失。因此，正如上面所述，
+在一段闲置期之后TCP可能暗地里发送大量的cwnd尺寸的数据到网络。
+[Jac88]推荐TCP在一段相当长的闲置期之后使用慢启动来重新开始传输。慢启动负责重
+启ACK时钟，正如它在传输开始时所做的那样。这种机制广泛地通过下面的方式来使用。当
+TCP在长于一个超时重传时间里没有收到一个数据段，cwnd就在传输之前被减小为重启窗口
+（RW）的值。为了实现这个标准，我们定义RW=IW。
+我们注意到非标准的实验性的TCP扩充在[AFP98]定义RW=min(IW,cwnd)，其中IW的定
+义经过等式（1）调整过。使用最后一次收到数据段的时间来决定是否减小cwnd不能够在常
+见的HTTP永久连接情况下缩减cwnd[HTH98]。在这种情况下，WWW服务器在传输数据到WWW
+浏览器之前接收一个请求。这个请求的接收导致一个对闲置连接的测试失败，并且允许TCP
+使用可能的不恰当大的cwnd开始传输。
+因此，如果TCP在超过超时重传的时间里没有发送数据的话，TCP应该在开始传输之前
+设置cwnd小于RW。
+4．2确认生成
+TCP接收端应该使用[Bra89]中描述的ACK延迟算法。使用时，TCP接收端不能过分延迟
+确认。可以明确的是，至少应该每隔一个满尺寸数据段生成一个ACK，而且应该在第一个没有
+确认的包到达后500毫秒内生成。
+ACK“应该”每隔一个满尺寸数据段生成一个的要求在[Bra89]的一个地方显示为“应该”，
+另一个地方为“必须”。这里我们明确地说它是“应该”。我们也强调这是一个“应该”，它意
+味着一个实现在仔细考虑了它的含意之后可以而且只能“偏离”此要求。参见[PAD+98]里的
+“Stretch ACK violation”和那里对比每隔一个满尺寸数据段更频繁生成ACK可能带来的性
+能问题的讨论。
+在某些情况下，发送端和接收端可能对一个满尺寸数据段的组成没有达成一致意见。如
+果一个实现每从发送端接收到2*RMSS字节数据就发送至少一个确认的话，那么此实现就被认
+为符合要求（达成一致意见），RMSS是接收端向发送端指定的最大数据段尺寸（据[Bra89]，
+如果接收端没有在连接期间指定一个MSS选项，就是默认的536字节）。发送端可能被迫使用
+尺寸小于RMSS的数据段，由于最大传输单元（MTU），MTU路径发现算法或其它因素的缘故。
+比如，考虑如下情况：接收端通知RMSS为X字节，但是发送端因为MTU路径发现算法（或者
+发送端的MTU尺寸）而以一个尺寸为Y字节的数据段结束。在一个ACK发送之前如果接收端
+等待2*X字节到达，那么它将生成扩展ACK。很明显这将占据多于两个的尺寸大于Y字节的数
+据段。因此，当一个特定的算法没有定义时，接收端最好是试着阻止这种情况，比如通过至
+少每隔一个数据段进行确认，不管尺寸。最后，我们重申，ACK不能被延迟长于500毫秒来等
+待另一个满尺寸数据段到来。
+序号混乱的数据段应该立即被确认，这样可以加速数据丢失恢复。为了触发快速重传算
+法，接收端应该在接收到序号间隔上的一个数据数据段时迅速发送一个ACK副本。为了向发
+送端反馈丢失恢复的信息，接收端应该在接收到填补部分或全部序号间隔的数据数据段时迅
+速发送一个ACK。
+TCP接收端不应该为每个到来的数据段产生多于一个的ACK，other than to update the 
+offered window as the receiving application consumes new data[page 
+42,Pos81][cla82].
+4．3丢失恢复机制
+TCP研究人员已经提出了许多丢失恢复算法，这些算法扩充了快速重传和快速恢复算法。
+其中一些算法以TCP的选择性确认选项为基础[MMFR96],比如[FF96,MM96a,MM96b],其它的不
+要求SACKs[Hoe96,FF96,FH98]。不使用SACK的算法使用“部分确认”（当检测到丢失时仅对
+包含新数据的数据段进行ACK确认，而不是所有传输中的数据）来触发重传。尽管这篇文档
+没有标准化任何可能改进快速重传/快速恢复的特定算法，但是这些算法暗地里是允许的，只
+要它们遵守上面概括的基本的四个算法的一般原则。
+因此，当数据窗口首次被检测到丢失时，ssthresh必须被设定为不大于等式（3）中给
+出的值。其次，直到数据窗口中所有可疑的丢失数据段都被修复为止，每个RTT中传送的数
+据段数量在检测到丢失时不能大于未传送的数据段的数目的一半。最后，当给定的窗口中的
+所有丢失数据段都被重传后，cwnd必须设定不大于ssthresh，并且必须使用拥塞避免来进一
+步增大cwnd。两个连续的数据窗口的丢失，或者重传的丢失，应该被视为拥塞的标志，在这
+种情况下，cwnd（以及ssthresh）必须减小两倍。
+[Hoe96,FF96,MM96a,MM6b]里概括的算法遵循这篇文档里概括的四个基本拥塞控制算法
+的原则。
+5.安全考虑
+这篇文档要求TCP在出现超时重传和确认副本的情况下减小它的发送速率。因此攻击者能
+够通过引起数据包或者它们的确认丢失的方式来削减TCP连接的性能，也可以通过伪造额
+外的确认副本来达到此目的。接连引起两个拥塞控制事件常常使ssthresh减小到它的最
+小值2*SMSS，并使连接迅速进入低速运行的拥塞避免状态。
+Internet很大程度上依赖于这些算法的正确实现来保持网络的稳定、避免拥塞崩溃。攻
+击者能够通过伪造额外的重复确认或对新数据的额外确认的方式来使TCP端点对拥塞作
+出更激烈的反应。这样的攻击甚至可以使网络的一部分陷入拥塞崩溃。
+6．相对于RFC2001的变化
+　这篇文档已经详尽地重写了，逐条列出两篇文档之间的不同是不现实的。这篇文档的目
+的不是为了改变RFC2001中给出的建议，而是为了进一步阐明在2001中没有详细讨论其
+细节的情况。特别是，这篇文档对长时间闲置后TCP连接应该如何动作提出了建议，同时
+也阐明了一些属于TCP ACK生成范畴的问题。最后，初始拥塞窗口的允许上界从一个数据
+段增大到两个数据段。
+感谢
+这里描述的四个算法是由Van Jacobson提出的。
+这篇文档的一些文字摘自W. Richard Stevens 的"TCP/IP Illustrated, Volume 1: The 
+Protocols" (Addison-Wesley, 1994)和Gary R. Wright 和 W.  Richard Stevens的
+“TCP/IP Illustrated, Volume 2: The Implementation” (Addison-Wesley, 1995)。这
+些材料的使用得到了Addison-Wesley的允许。
+Neal Cardwell, Sally Floyd, Craig Partridge 和 Joe Touch提供了许多有价值的建议。
+参考文献：
+[AFP98]  Allman, M., Floyd, S. and C. Partridge, "Increasing TCP's
+            Initial Window Size, RFC 2414, September 1998.
+
+   [Bra89]  Braden, R., "Requirements for Internet Hosts --
+            Communication Layers", STD 3, RFC 1122, October 1989.
+
+   [Bra97]  Bradner, S., "Key words for use in RFCs to Indicate
+            Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [Cla82]  Clark, D., "Window and Acknowledgment Strategy in TCP", RFC
+            813, July 1982.
+
+   [FF96]   Fall, K. and S. Floyd, "Simulation-based Comparisons of
+            Tahoe, Reno and SACK TCP", Computer Communication Review,
+            July 1996. ftp://ftp.ee.lbl.gov/papers/sacks.ps.Z.
+
+   [FH98]   Floyd, S. and T. Henderson, "The NewReno Modification to
+            TCP's Fast Recovery Algorithm", RFC 2582, April 1999.
+
+   [Flo94]  Floyd, S., "TCP and Successive Fast Retransmits. Technical
+            report", October 1994.
+            ftp://ftp.ee.lbl.gov/papers/fastretrans.ps.
+
+   [Hoe96]  Hoe, J., "Improving the Start-up Behavior of a Congestion
+            Control Scheme for TCP", In ACM SIGCOMM, August 1996.
+
+   [HTH98]  Hughes, A., Touch, J. and J. Heidemann, "Issues in TCP
+            Slow-Start Restart After Idle", Work in Progress.
+
+   [Jac88]  Jacobson, V., "Congestion Avoidance and Control", Computer
+            Communication Review, vol. 18, no. 4, pp. 314-329, Aug.
+            1988.  ftp://ftp.ee.lbl.gov/papers/congavoid.ps.Z.
+
+   [Jac90]  Jacobson, V., "Modified TCP Congestion Avoidance Algorithm",
+            end2end-interest mailing list, April 30, 1990.
+            ftp://ftp.isi.edu/end2end/end2end-interest-1990.mail.
+
+   [MD90]   Mogul, J. and S. Deering, "Path MTU Discovery", RFC 1191,
+            November 1990.
+
+   [MM96a]  Mathis, M. and J. Mahdavi, "Forward Acknowledgment: Refining
+            TCP Congestion Control", Proceedings of SIGCOMM'96, August,
+            1996, Stanford, CA.  Available
+            fromhttp://www.psc.edu/networking/papers/papers.html
+
+   [MM96b]  Mathis, M. and J. Mahdavi, "TCP Rate-Halving with Bounding
+            Parameters", Technical report.  Available from
+            http://www.psc.edu/networking/papers/FACKnotes/current.
+
+   [MMFR96] Mathis, M., Mahdavi, J., Floyd, S. and A. Romanow, "TCP
+            Selective Acknowledgement Options", RFC 2018, October 1996.
+
+   [PAD+98] Paxson, V., Allman, M., Dawson, S., Fenner, W., Griner, J.,
+            Heavens, I., Lahey, K., Semke, J. and B. Volz, "Known TCP
+            Implementation Problems", RFC 2525, March 1999.
+
+   [Pax97]  Paxson, V., "End-to-End Internet Packet Dynamics",
+
+            Proceedings of SIGCOMM '97, Cannes, France, Sep. 1997.
+
+   [Pos81]  Postel, J., "Transmission Control Protocol", STD 7, RFC 793,
+            September 1981.
+
+   [Ste94]  Stevens, W., "TCP/IP Illustrated, Volume 1: The Protocols",
+            Addison-Wesley, 1994.
+
+   [Ste97]  Stevens, W., "TCP Slow Start, Congestion Avoidance, Fast
+            Retransmit, and Fast Recovery Algorithms", RFC 2001, January
+            1997.
+
+   [WS95]   Wright, G. and W. Stevens, "TCP/IP Illustrated, Volume 2:
+            The Implementation", Addison-Wesley, 1995.
+作者地址：
+   Mark Allman
+   NASA Glenn Research Center/Sterling Software
+   Lewis Field
+   21000 Brookpark Rd.  MS 54-2
+   Cleveland, OH  44135
+   216-433-6586
+
+   EMail: mallman@grc.nasa.gov
+   http://roland.grc.nasa.gov/~mallman
+
+
+   Vern Paxson
+   ACIRI / ICSI
+   1947 Center Street
+   Suite 600
+   Berkeley, CA 94704-1198
+
+   Phone: +1 510/642-4274 x302
+   EMail: vern@aciri.org
+
+
+   W. Richard Stevens
+   1202 E. Paseo del Zorro
+   Tucson, AZ  85718
+   520-297-9416
+
+   EMail: rstevens@kohala.com
+   http://www.kohala.com/~rstevens
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+RFC2581――TCP Congestion Control                                    TCP拥塞控制
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,755 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：刘颖（liuying  oddodd@263.net）
+译文发布时间：2001-6-10
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                            J. Case
+Request for Comments: 2570                           SNMP Research, Inc.
+Category: Informational                                         R. Mundy
+                                    TIS Labs at Network Associates, Inc.
+                                                              D. Partain
+                                                                Ericsson
+                                                              B. Stewart
+                                                           Cisco Systems
+                                                              April 1999
+
+标准互联网络管理框架第三版介绍
+ （RFC2570 Introduction to Version 3 of the Internet-standard Network Management 
+Framework）
+备忘录状态：
+      本备忘录提供Internet社区的信息，它没有详细说明所有类型的网络标准。本备忘录
+的发布不受任何限制。
+
+版权声明
+Copyright(c)The Internet Society (1999) .保留所有权利。
+ 
+概要：
+      本文的旨在提供网络标准管理框架第三版本的概述，条款取自SNMPv3框架
+（SNMPv3）。本框架起源和构建在最初的网络标准管理框架第一版（SNMPv1）和网络标准
+管理框架第二版（SNMPv2）的基础上。
+   
+     模块化体系结构的设计适应网络框架的发展。
+
+目录
+1、	介绍
+2、	网络标准管理框架
+2.1、基本框架与成分
+2.2、网络标准管理框架体系结构
+3、	SNMPv1管理框架
+3.1、SNMPv1数据定义语言
+3.2、管理信息
+3.3、协议操作
+3.4、SNMPv1安全性与管理
+4、	SNMPv2管理框架
+5、	SNMPv3工作组
+6、	SNMPv3框架模型的详细说明
+6.1、数据定义语言
+6.2、MIB模型
+6.3、协议操作与传输映射
+6.4、SNMPv3安全性与管理
+7、	文档摘要
+7.1、管理信息结构
+7.1.1、SMI的基本规范
+7.1.2、正文约定
+7.1.3 、一致性声明
+7.2、协议操作
+7.3、传输映射
+7.4、协议使用设备
+7.5、体系结构/安全性与管理
+7.6、消息处理与分配（MPD）
+7.7、SNMP应用
+7.8、基于用户的安全模型（USM）
+7.9、基于视图的访问控制（VACM）
+7.10、SNMPv3 的共存与转换
+8、	安全性考虑
+9、	作者地址
+10、	参考书目
+11、	版权声明
+12、	鸣谢
+
+
+1、介绍
+本文是网络标准管理框架第三版本的介绍，条款取自SNMPv3, 具有多种用途。
+
+首先，它描述了SNMP第三版本（SNMPv3）规范与SNMP第一版本（SNMPv2）及
+SNMP第二版本（SNMPv1）之间的关系。
+
+第二，它提供了包含相关规范的多种文档的路径。
+
+第三，本文提供了相关详细说明文档的简单易读的内容摘要。
+
+本文有意从本质上指导，也许有时过于简化。如果本文档与本文标记的细节文档之间发
+生矛盾，以细节文档为主。
+
+进一步来讲，细节文档为了详细说明与各种构成模块之间精确定义的接口，而与这些构
+成模块保持分离。这个路径文档为了可读性而采取不同的途径提供一个包括多种构成模块的
+完整的看法。
+
+
+2、网络标准管理框架
+    第三版网络标准管理框架起源并构建于原来的第一版网络管理框架（SNMPv1）和 第
+二版网络管理框架(SNMPv2)的基础上。
+
+    所有的版本（SNMPv1,SNMPv2,SNMPv3）的网络管理框架具有相同的基本的框架和成
+分。而且，所有版本的网络标准框架规范具有相同的体系结构。
+ 
+2.1基本框架和成分
+      企业配置的网络标准管理框架包括四项基本的成分：
+
+?	一些（通常是许多）被管理结点，每个都包括SNMP实体可提供管理设备的远程访问
+（一般叫做代理）；
+
+?	至少一个SNMP实体和相关的管理应用（一般叫做管理器） 
+
+?	管理协议被用来在SNMP实体间传送管理信息 
+
+?	管理信息
+
+管理协议用来在SNMP实体，如管理器、代理，之间传送管理信息。
+
+    网络标准框架的基本结构在SNMP的各种版本，如SNMPv1,SNMPv2,SNMPv3，是一
+致的。
+
+2．2 网络标准管理框架的体系结构
+网络标准框架的详细说明是基于模块的体系结构。这种框架不仅仅是为动态数据提供的
+一种协议。它包括：
+
+?	数据定义语言， 
+
+?	管理信息定义（管理信息库，MIB）， 
+
+?	协议定义， 
+
+?	安全性和管理
+
+框架逐渐由SNMPv1,发展成SNMPv2,直到SNMPv3，每一个体系结构的成分的定义演
+变得日益丰富、清晰，但是基础的体系结构保持一致。
+
+这种模块性设计的最初动机是为了适应在RFC1052[14]中定义的框架结构的发展。最初
+的设想是用这种性能来减轻基于SNMP管理的网络到基于OSI协议的网络的传输的负担。
+结果，这种框架结构却在独立于协议的数据定义语言和独立于MIB协议的管理信息库方面
+取得成功，这种分开设计允许替换基于SNMP的协议而不需要重新定义或重新建立管理信
+息。历史证明这种体系结构是出于错误动机的正确选择,事实证明，这种结构体系更加灵活
+地完成了从SNMPv1到SNMPv2以及从SNMPv2到SNMPv3版本的转换，远胜于基于简单
+网络管理协议的管理网络的转换。
+
+SNMPv3的框架的构造和拓展的构建原则：
+
+?	参考SNMPv2版本，构建四项基本结构成分 
+
+?	运用相同的分层原则定义安全性和管理部分的新性能
+ 
+     熟悉SNMPv1和SNMPv2管理框架结构的读者会发现SNMPv3管理框架中有相似的
+概念。但请注意，在一些情况下，术语的含义略有不同。
+
+3、SNMPv1管理框架
+  
+    最初的网络标准管理框架（SNMPv1）定义下列文档：
+
+?	STD 16， RFC1155[1]定义了管理信息结构（SMI），是为方便管理而制定的描述和命
+名对象的机制。 
+
+?	STD 16， RFC1212[2]定义了更加简洁的描述机制来描述和命名管理信息的对象，但完
+全与SMI保持一直。 
+
+?	STD 15， RFC1157[3]定义了简单网络管理协议，该协议用来网络访问被管理设备和产
+生事件通知。注意，此文档首次定义了一系列事件通知。
+ 
+   另外，下面两个文档一般和这三个文档联系在一起：
+
+?	STD 17，RFC 1213[13]定义了基本的管理信息。 
+
+?	RFC  1215[25] 定义了简洁描述机制来定义事件通知，也就是在SNMPv1版本中定义
+的陷阱。该文档在简单通知也详细说明了RFC1157中的一般陷阱。
+
+    这些文档描述了第一版SNMP框架的四个部分。
+
+3.1 SNMPv1数据定义语言
+前两个和最后一个文档描述了SNMPv1的数据定义语言。注意，这是因为最初要求SMI
+必须独立于协议，前两个SMI文档没有提供定义事件通知（陷阱）的定义方式。而SNMP
+协议文档定义了一些事件通知（一般陷阱）和定义其他的事件告警的方法。最后一个文档详
+细说明运用SNMPv1协议直接定义事件通知的方法。与此同时，陷阱在标准网络管理结构
+的应用引起争议。例如，RFC 1215以建议的身份提出而一直没有进一步修改，因为大家坚
+信第二版SNMP的框架将代替第一版。注意SNMPv1的数据定义语言部分参照SMIv1.
+
+3.2、 管理信息
+前两个文档描述的数据定义语言第一次被用来定义现在不再使用的MIB-1（在RFC 
+1066[12]中详细阐述），随后用来定义MIB-II （在RFC 1213 [13]中详细阐述）。
+ 
+而后的，当MIB-II公布后，一种由多个工作组制定定义网络标准管理信息库的一个文
+件不同的定义方式，代替了最初由单独一个委员会制定的方式。然而，许多并行和分布式的
+小型MIB文档随授权组应运而生，详细说明网络标准MIB的焦点部分，由那些从事特殊领
+域包括网络管理，系统管理，应用管理的诸多方面问题的专家们制定。
+ 
+3.3 协议操作
+   第三个文档，STD 15，描述SNMPv1协议操作由协议数据单元（PDUs）的绑定变量完
+成，描述了SNMPv1的信息格式。SNMPv1定义的操作有：get, get-next, get-response, 
+set-request, 和trap。也定义了面向无连接传输SNMP的典型分层。
+
+3.4 SNMPv1的安全性与管理
+STD 15 也描述了安全性与管理的方法。许多概念，特别是关于安全性的，在SNMPv3
+框架中继续应用并得以扩展延伸。
+
+SNMPv1 框架描述了SNMPv1 PDUs 在SNMP实体和不同的应用实体和协议实体的
+SNMP的消息封装。在SNMPv3中各自重新命名了应用与实体。
+
+SNMPv1 框架也引入了支持一个或多个授权配置的授权服务。另外SNMPv3还定义了
+其他的安全参数：私有。（注意：一些关于安全性共同体的文献将SNMPv3的安全性能描述
+为具有数据完整性鉴别，数据源鉴别，和机密性鉴别）。这种模型的性能改变和增加了
+SNMPv3框架的安全性。
+
+最后，SNMPv1引入了基于SNMP MIB视图概念的访问控制。SNMPv3框架中阐述了
+基本一致的基于视图的访问控制的概念。由此，SNMPv3 提供了控制被管理设备上的信息
+的方法。
+
+然而，当SNMPv1框架期望定义多种授权方案时，它仅仅在共同体字符串的基础上定
+义了一些琐碎的授权。这是SNMPv1框架广为人知的基本缺陷，但那时商用级的安全性设
+计很有争议，无法统一，因为对于不同的用户来说“安全性”意味着许多不同的含义。归根
+结底，因为许多用户并不需要强大的安全机制。SNMPv1 设计了一个将在今后实现的独立
+的提供授权服务的模块。SNMPv3框架应用了该模块，并定义为其的子系统。
+
+4 SNMPv2管理框架
+SNMPv2 管理框架在[4-9]中全面描述了共存和SNMPv1与SNMPv2转换的问题[10]。
+
+SNMPv2 较SNMPv1 有如下优点：
+
+?	扩展数据类型（例如，64位计数器） 
+
+?	改善效率和性能（取块操作） 
+
+?	事件通知确认（消息操作） 
+
+?	丰富的错误控制（差错与例外） 
+
+?	改进设置，尤其是行的创建与删除 
+
+?	精密调整的数据定义语言
+
+然而，如上描述的SNMPv2框架因为没有达到原来的设计目标而一直没有完成。这些
+没有完成的目标包括预期的所谓的商业级的安全性与管理传输，包括：
+
+?	授权：数据源鉴别，消息完整性和一些方面的重发保护； 
+
+?	私有：机密性； 
+
+?	授权与访问控制； 
+
+?	匹配的远程配置和这些方面的管理性能。
+
+SNMPv3管理框架，如本文还有一些相关的文档，阐述了这些重要的不足。
+
+5.	SNMPv3工作组
+   本文和相关文档由Internet 工程任务组（IETF）的SNMPv3工作组提出。SNMPv3工
+作组授权准备下一代SNMP建议。工作组的目标是为下一代SNMP核心功能的标准提出一
+系列必要的文档。这个在下一代SNMP中最关键的需求是：安全性与管理，使得在基于SNMP
+管理事物的安全性能可用于希望使用SNMPv3管理网络的用户。这些组成网络的系统和这
+些系统中的应用包括管理器对代理，代理对管理器，管理器对管理器之间的传输。
+
+在工作组得到授权许多年以前，有许多旨在安全性一体化和改进SNMP的活动。它们
+包括：
+
+?	“SNMP安全性” 约1991-1992[RFC1351-RFC1353] 
+
+?	“SMP” 约1992-1993 
+
+?	“基于用户的SNMPv2” 约1993-1995[RFC1441-RFC1452]
+
+    每一项改进集合了商业等级，产业力度的安全性能包括授权，私有，授权，基于视图
+的访问控制和管理，包括远程配置。
+ 
+这些改进最终促进了SNMPv2管理框架的发展，在RFC1902-1908中详细记录。然而，
+RFC文档中记述的框架结构没有基于其本身的安全性和管理的参考标准；然而，它与多种
+安全性与管理框架相联系，它们包括：
+
+?	“基于共同体的SNMPv2” (SNMPv2) [RFC1901]，
+
+?	“SNMPv2” [RFC1909-1910] 
+
+?	“SNMPv2*”
+
+    IETF认可 SNMPv2c，但并不认可SNMPv2u和SNMPv2的安全性与管理。
+
+顾问组提出专用SNMP的发展建议，集中 SNMPv2u 和SNMPv2*的概念与技巧的基
+础上，SNMPv3 工作组具有提出下一代SNMP专有系列规范的授权。
+
+为此，工作组宪章包括如下目标：
+
+?	适应广泛的需要不同管理需要的操作环境； 
+
+?	实现SNMPv3以前多种版本间方便的转换； 
+
+?	实现方便的设置与维护； 
+
+
+     SNMPv3工作组的最初工作集中在安全性和管理，包括： 
+
+?	授权和私有， 
+
+?	授权和基于视图的访问控制， 
+
+?	上述基于标准的远程配置。
+
+     SNMPv3 工作组不想重蹈覆辙，但却重新使用SNMPv2起草的标准文档，例如，使
+用RFCs1902到1908的部分设计除上述关注的问题。
+
+     然而，SNMPv3工作组的主要贡献在于倾尽全力阐述了在整个过程中安全性的缺少与
+管理不足，并在此过程中创造了艺术级的管理。他们提供了基于模块体系结构的设计，强
+调分层结构的进化性能。最终使SNMPv3比SNMPv2具有额外的安全性与管理性能。因此，
+工作组成功的完成了其特定的目标，不但得到IETF的承认，而且完善了其安全性和原理
+功能。
+
+6	SNMPv3 框架结构的详细描述
+    SNMPv3的管理结构的规范在不同的文档里以标准组建的形式各自独立。这正是IETF
+的目的所在，适当的保护，任何一个或所有的文档个体在需求改变是可以被修改、升级或
+替换，借此容纳新的认知，和新的技术。
+
+    SNMPv3管理体系结构的定义与实现切实可行参考并结合SNMPv2管理体系结构，并
+且在商业性方面优于SNMPv2。
+
+SNMPv3体系结构增加了在安全性和管理方面的规范。
+
+本文在继承以前各版本的基础上详细说明了SNMPv3的管理体系结构，按照以下四项
+主要原因组织说明： 
+
+?	数据定义语言， 
+
+?	管理信息库模型， 
+
+?	协议操作，和 
+
+?	安全性和管理 
+
+前三种文档系列结合SNMPv2定义，第四种文档系列是SNMPv3中全新的部分，但是
+也是建立于以前相关著作的基础上的。
+
+6.1数据定义语言
+
+数据定义语言在STD 58，RFC 2578 的“管理信息结构第二版（SMIv2）”及相关规范
+中详细说明。这些文档由其他结构各自独立发展来的RFC1902-1904[4-6]修正而来，并由草
+案标准晋升为STD 58 ，RFC 2578-2580[26-28]发表。
+
+管理信息结构（SMIv2）定义了基本数据类型，对象模型，和编写、修改MIB模块的
+规则。相关的说明文档包括：STD 58，RFC 2579，2580。修正的数据定义语言部分参考
+SMIv2.
+
+STD 58,RFC 2579, "SMIv2的正文约定"[27]，定义了最初的有利于人们读写的MIB模
+块的缩写速记词。
+
+STD58，RFC2580，“SMIv2的一致性声明”[28]，定义了用于描述代理执行和某些特
+别执行的容量一致性声明的格式。
+
+6.2MIB 模型
+ 
+MIB模型一般包括对象定义，可能包括事件通知定义，有时也包括根据适当的对象和
+事件通知组进行一致性阐述。同样的，MIB模块定义了被管理结点设备的管理信息，使其
+可供管理代理进行远程访问，传送由管理应用产生的管理协议。
+
+MIB模块根据定义数据定义语言文档的规则定义，主要是附带相关规范的SMI。
+
+基于标准的庞大的，逐步完善的MIB模块，根据标准协议[STD 1，RFC 2400]定时进行
+更新。根据该著述，共有近100中基于标准的MIB模块，共定义了总数近10，000种的对
+象。另外，MIB模块还包括一个更加巨大，而且日益壮大的由各种制造商、科研团体、银
+行、以及未知的和不计其数的被定义对象的企业私有MIB。一般而言，无论用那一版数据
+定义语言定义的MIB模块定义的管理信息，都可以被任何版本的协议使用。例如，按照
+SNMPv1 SMI定义的MIB模块和SNMPv3管理体系结构是兼容的，可被传送到指定的地点。
+而且，根据SNMPv2定义的SNMPv2 SMI(SMIv2)的MIB模块与SNMPv1协议操作也是兼
+容的，可被传送的。然而，也存在显著的例外：按照SMIv2格式定义的64位计数器不能由
+SNMPv1的引擎传送。
+
+6.3协议操作和传输映射
+
+    SNMPv3框架的协议操作和传输影射的规范参考SNMPv2框架的两个文件。
+
+RFC1905，“简单网络管理协议第二版的协议操作”[7]详细阐述了协议操作的规范。
+SNMPv3框架的设计允许各部分的体系结构独立的进化。例如，可以在框架中定义新的协议
+操作规范用以增加新的协议操作。
+
+RFC1906“简单网络管理协议第二版的传输映射”[8]详细阐述了传输映射的规范。
+
+6.4	 SNMPv3的安全性和管理
+ 
+SNMPv3工作组定义了SNMPv3系列文档，包括现在的七个文档：
+
+RFC2570“国际标准网络管理框架第三版的介绍”，即本文。
+
+RFC2571“描述SNMP管理框架的体系结构”[15]，全面描述其体系结构，重点强调
+安全性和管理的体系结构。
+
+RFC2572“简单网络管理协议的消息处理和分配”[16]，描述了SNMP协议引擎中的
+多信息处理模型和消息分配部分。
+
+RFC2573“SNMP的应用”[17]，描述了与SNMPv3引擎相关的五种应用和应用进程
+的原理。
+
+RFC 2574“简单网络管理协议的基于用户的安全模块”[18]，描述了提供SNMP消息
+级的安全性的安全威胁、安全机制、草案和支持数据。
+
+RFC2575“简单网络管理协议的基于视图的访问控制模型”[19]，描述了基于用户的
+访问控制在命令应答器与通知发生器中的应用。
+
+发展的著述“国际标准网络管理框架的第一，第二与第三版本的共存”[20]，描述了
+SNMPv3管理框架，SNMPv2管理框架，和 SNMPv1管理框架的共存。
+
+7文档摘要
+   下面的部分将对各文档提供比前面更详细一点的概要介绍。
+
+7.1管理信息结构
+    由被管理设备收集的管理信息并不实际存储，条款取自管理信息库（MIB）。MIB模块
+定义了收集相关信息的对象。这些模块使用SNMP MIB 模块语言编写，包括OSI的抽象
+注释语言第一版（ASN.1）[11]。STD58，RFC2578，2579，2580，共同定义了MIB模块语
+言，详细说明定义对象的基本数据类型，也详细说明了正文约定的简要说明数据类型的核
+心系列，也详细说明了对象标识符（OID）的管理分配。
+
+   SMI可以分为三部分：模型定义，对象定义，和通知定义。
+
+（1）模型定义用来描述信息模型。ASN.1宏，模块定义用来简明的传达信息模型语义。
+
+ （2）对象定义用来描述被管理设备，ASN.1宏，对象类型用来简明的传达被管理对象的语
+法和语义。
+
+ （3）通知定义运用在管理信息的主动传输。ASN.1宏，通知类型用来简单的传达通知的语
+法和语义。
+
+7.1.1 SMI的基本规范
+      STD 58，RFC 2578 详细说明了MIB模块语言的基本数据类型，包括：Integer32, 
+enumerated integers,Unsigned32,Gauge32, Counter32,  Counter64, TimeTicks, INTEGER, 
+OCTET STRING,OBJECT IDENTIFIER, IpAddress, Opaque, and BITS.也包括一些对象标识符
+的赋值。STD 58，RFC 2578 进一步定义了MIB 模块语言的如下构造： 
+
+?	IMPORTS 允许详细解释应用于MIB模块的各条款，但在其他的MIB模块中定义。 
+
+?	MODULE-IDENTITY 指派MIB 模块的描述和管理信息，例如联系和修正历史。 
+
+?	OBJECT-IDENTITY 和OID的值分配给指定的OID。 
+
+?	OBJECT-TYPE 用来指派被管理设备的数据类型，状态和语义。 
+
+?	SEQUENCE 类型分配给表格中的分纵览列出的对象。 
+
+?	NOTIFICATION-TYPE 创立用来指定事件通知。
+
+7.1.2正文约定
+当描述MIB摸块时，经常利用缩写的语义来表述一系列具有相似特性的对象。这样利用
+基本数据类型定义一种新的数据类型。每种数据类型另起一个新名，指定一个更加严格的基
+本类别。这些新定义的类别就是正文约定，更有利于人们阅读MIB模块和更利于潜在的智能
+管理。这就是STD58，RFC2579，SMIv2的正文约定[27]，的目的所在，定义一种MIB模块语
+言的结构，TEXT-CONVENYION，用来定义新的类型，并且用来指定对所有MIB都适用的正文
+约定。
+
+7.1.3一致性声明
+     也许，结合目前达到的水平的低端执行，定义合适的低端执行是很有用的。这正是
+STD58，RFC2580，SMIv2的一致性阐述[28]，定义了MIB 模块语言的目的所在。有两种构造：
+
+（1）	当描述向代理发出关于对象、事件通知定义的请求时使用一致性声明。
+MODULE-COMPLIANCE 结构就是用来简明的传送这种请求。
+
+（2）	当描述向代理发出关于对象、事件通知定义的性能时使用性能声明。
+AGENT-CAPABILITIES结构就是被用来简明传送这种性能的。
+
+    最后，收集关于对象和相关的事件通知共同组成具有一致性的整体。OBJECT-GROUP结
+构就是用来简明传送这些对象和对象组语义的。NOTIFICATON-GROUP结构就是用来简明传送
+这些事件通知和事件通知组语义的。
+
+7.2协议操作
+    管理协议提供了在代理站和管理站之间传送管理信息的消息交换。这种消息格式是被封
+装为协议数据单元的消息包（PDU）。
+     
+RFC1905，SNMPv2的协议操作，的目的在于定义发送和接收协议数据单元的协议的操
+作。
+
+7.3传输映射
+
+    SNMP消息广泛适用于各种协议族，RFC1906，SNMPv2的传输映射，的目的在于定义
+SNMP消息在初始化设置的传输区域是如何映射的。其他的映射将在今后定义。
+
+虽然，已经定义了多种映射，UDP的映射方式是首选的映射方式。同样的，为了提供
+最大限度的互操作性，配置其他影射的系统也提供UDP映射的代理服务。
+
+7.4协议使用设备
+
+    RFC1907，SNMPv2的管理信息库[9]，的目的在于定义可用于SNMPv2实体的被管理
+设备。
+
+7.5体系结构/安全性和管理
+
+     RFC2571，描述SNMP管理框架的体系结构[15]，的目的在于定义详细说明SNMP管
+理框架的体系结构。在阐述一般的体系结构的同时强调与安全性和管理相关的方面。它定义
+了贯穿SNMPv3管理框架始终的一些术语，因此，在这里阐明并展开其命名：
+
+?	引擎和应用 
+
+?	实体（服务供应商例如包含引擎的代理和管理器） 
+
+?	认证（服务用户），和 
+
+?	管理信息，包括对多种逻辑上下文的支持。
+
+本文包括一个小型的MIB模块，该模块可以被所有的授权SNMPv3协议引擎执行。
+
+7.6消息处理和分配（MPD）
+
+    RFC2572，“简单网络管理的消息处理和分配”[16]，描述了在SNMP结构体系中消息
+的处理和分配。它定义了存在多种版本的SNMP消息的分配到真确的SNMP消息处理模块
+的进程，然后分配协议数据单元到SNMP的应用程序。本文件也描述了一个消息处理模型，
+即SNMPv3的消息处理模块。
+
+    SNMPV3协议引擎必须支持至少一个消息处理模块。一个SNMPv3引擎可以支持一个
+以上的消息处理模块，例如在一个多协议混杂系统可以同时支持SNMPv3，SNMPv1和/或
+SNMPv2c。
+
+7.7 SNMP的应用
+RFC 2573，“SNMP的应用”，的目的在于描述五种类型的与SNMP引擎相关的应用。
+它们是：命令发生器、命令响应器、通知产生器、通知接收器、和代理转发器。
+
+本文也定义了为详细描述管理操作（包括通知），通知过滤，和代理转发对象的
+MIB模块。
+
+7.8基于用户的安全模块（USM）
+RFC 2574，“简单网络管理协议第三版（SNMPv3）的基于用户的安全模块（USM）”，
+描述了SNMPv3的基于用户的安全模块。它定义了提供SNMP消息级安全性的程序原理。
+
+本文描述了两种主要的和两种次要的基于用户的安全模块所要防范的威胁。它们是：信
+息的修改、伪装、信息流的修改和泄露。
+
+USM使用MD5[21]与安全扰码运算法则[22]作为主要的散列算法[23]来确保数据的完整
+性。
+
+?	直接确保数据不遭到修改的攻击 
+
+?	间接确保数据源授权 
+
+?	防止伪装攻击 
+
+USM 使用松散的同步时钟计时器来防止信息流被修改。自动同步时钟机制遵循协议
+中不依赖第三方时间源和相关的安全考虑制定。
+
+USM在密码块序列模式（CBC）中使用数据加密标准（DES）[24]来防止泄露。USM
+中的DES功能为可选项，主要是因为许多国家的出口和使用限制使其包括加密技术再内难
+以出口和使用。
+
+本文也包括适合远程控制与管理USM的配置参数的MIB，包括密钥分配方式和密钥
+管理方式。
+
+如同可以提供多种授权与私有协议，实体可以同时提供多种安全模式。USM使用的所
+有协议都建立在预先设置密钥的基础上，例如，私有密钥机制。SNMPv3体系结构允许不
+对称机制和协议（通常被叫做“公用密钥加密算法”）然而尽管如此，还没有公布的可供
+SNMPv3安全模型使用的公用密钥加密算法。
+
+
+7.9 基于视图的访问控制（VACM）
+    RFC2575，“简单网络管理协议（SNMP）的基于视图的访问控制”，的目的在于描述应
+用于SNMP体系结构的访问控制模型。VACM可以同时应用于含带多消息处理模块和多安
+全模块的单一引擎的执行。
+
+在一个引擎的执行中，体系结构可能存在多种，不同的，同时出现并处于激活状态的访
+问控制模块，然而在实践中却很少有“真正的”和“几乎” 难以实现的同时支持多消息处
+理模块和多安全模块。
+
+7.10 SNMPv3的共存与转换
+   “国际网络管理框架的第一，第二和第三版本的共存”的目的在于描述SNMPv3管理框
+架，SNMPv2的框架和最初的SNMPv1的管理框架的共存。本文特别描述了如下四方面的
+共存：
+
+?	从SMIv1到SMIv2格式的MIB文档的共存 
+
+?	通知参数的映射 
+
+?	支持多种版本的SNMP的多协议网络的共存方式，特别是多协议执行协议操作的处理，
+例如代理的执行 
+
+?	SNMPv1消息处理模型和基于共同体的安全模型，提供使SNMPv1、SNMPv2适应基
+于视图的访问控制模型的转化机制。
+
+8 安全性考虑
+    本文作为路标文档，没有提供新的安全考虑。读者可以参考相关的参考文献汲取安全考
+虑的信息。
+
+9作者地址
+
+   Jeffrey Case
+   SNMP Research, Inc.
+   3001 Kimberlin Heights Road
+   Knoxville, TN 37920-9716
+   USA
+   Phone:  +1 423 573 1434
+   EMail:  case@snmp.com
+
+   Russ Mundy
+   TIS Labs at Network Associates
+   3060 Washington Rd
+   Glenwood, MD 21738
+   USA
+   Phone:  +1 301 854 6889
+   EMail:  mundy@tislabs.com
+
+   David Partain
+   Ericsson Radio Systems
+   Research and Innovation
+   P.O. Box 1248
+   SE-581 12 Linkoping
+   Sweden
+   Phone:  +46 13 28 41 44
+   EMail:  David.Partain@ericsson.com
+
+   Bob Stewart
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA 95134-1706
+   U.S.A.
+   Phone:  +1 603 654 6923
+   EMail:  bstewart@cisco.com
+
+
+10 参考书目
+
+   [1]  Rose, M. and K. McCloghrie, "Structure and Identification of
+        Management Information for TCP/IP-based internets", STD 16, RFC
+        1155, May 1990.
+
+   [2]  Rose, M. and K. McCloghrie, "Concise MIB Definitions", STD 16,
+        RFC 1212, March 1991.
+
+   [3]  Case, J., Fedor, M., Schoffstall, M. and J. Davin, "Simple
+        Network Management Protocol", STD 15, RFC 1157, May 1990.
+
+   [4]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and S.
+        Waldbusser, "Structure of Management Information for Version 2
+        of the Simple Network Management Protocol (SNMPv2)", RFC 1902,
+        January 1996.
+
+   [5]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and S.
+        Waldbusser, "Textual Conventions for Version 2 of the Simple
+        Network Management Protocol (SNMPv2)", RFC 1903, January 1996.
+
+   [6]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and S.
+        Waldbusser, "Conformance Statements for Version 2 of the Simple
+        Network Management Protocol (SNMPv2)", RFC 1904, January 1996.
+
+   [7]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M. and S.
+        Waldbusser, "Protocol Operations for Version 2 of the Simple
+        Network Management Protocol (SNMPv2)", RFC 1905, January 1996.
+
+   [8]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M. and S.
+        Waldbusser, "Transport Mappings for Version 2 of the Simple
+        Network Management Protocol (SNMPv2)", RFC 1906, January 1996.
+
+   [9]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M. and S.
+        Waldbusser, "Management Information Base for Version 2 of the
+        Simple Network Management Protocol (SNMPv2)", RFC 1907, January
+        1996.
+
+   [10] SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M. and S.
+        Waldbusser, "Coexistence between Version 1 and Version 2 of the
+        Internet-standard Network Management Framework", RFC 1908,
+        January 1996.
+
+   [11] Information processing systems - Open Systems Interconnection -
+        Specification of Abstract Syntax Notation One (ASN.1),
+        International Organization for Standardization.  International
+        Standard 8824, (December, 1987).
+   [12] McCloghrie, K. and M. Rose, "Management Information Base for
+        Network Management of TCP/IP-based Internets", RFC 1066, August
+        1988.
+
+   [13] McCloghrie, K. and M. Rose, "Management Information Base for
+        Network Management of TCP/IP-based internets:  MIB-II, STD 17,
+        RFC 1213, March 1991.
+
+   [14] Cerf, V., "IAB Recommendations for the Development of Internet
+        Network Management Standards", RFC 1052, April 1988.
+
+   [15] Harrington, D., Presuhn, R. and B. Wijnen, "An Architecture for
+        Describing SNMP Management Frameworks", RFC 2571, April 1999.
+
+   [16] Case, J., Harrington, D., Presuhn, R. and B. Wijnen, "Message
+        Processing and Dispatching for the Simple Network Management
+        Protocol (SNMP)", RFC 2572, April 1999.
+
+   [17] Levi, D., Meyer, P. and B. Stewart, "SNMP Applications", RFC
+        2573, April 1999.
+
+   [18] Blumenthal, U. and B. Wijnen, "The User-Based Security Model for
+        Version 3 of the Simple Network Management Protocol (SNMPv3)",
+        RFC 2574, April 1999.
+
+   [19] Wijnen, B., Presuhn, R. and K. McCloghrie, "View-based Access
+        Control Model for the Simple Network Management Protocol
+        (SNMP)", RFC 2575, April 1999.
+
+   [20] Frye, R., Levi, D., Routhier, S., and B. Wijnen, "Coexistence
+        between Version 1, Version 2, and Version 3 of the Internet-
+        standard Network Management Framework", Work in Progress.
+
+   [21] Rivest, R., "Message Digest Algorithm MD5", RFC 1321, April
+        1992.
+
+   [22] Secure Hash Algorithm. NIST FIPS 180-1, (April, 1995)
+        http://csrc.nist.gov/fips/fip180-1.txt (ASCII)
+        http://csrc.nist.gov/fips/fip180-1.ps  (Postscript)
+
+   [23] Krawczyk, H., Bellare, M. and R. Canetti, "HMAC:  Keyed-Hashing
+        for Message Authentication", RFC 2104, February 1997.
+
+   [24] Data Encryption Standard, National Institute of Standards and
+        Technology.  Federal Information Processing Standard (FIPS)
+        Publication 46-1.  Supersedes FIPS Publication 46, (January,
+        1977; reaffirmed January, 1988).
+ 
+  [25] Rose, M., "A Convention for Defining Traps for use with the
+        SNMP", RFC 1215, March 1991.
+
+   [26] McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J., Rose,
+        M. and S. Waldbusser, "Structure of Management Information
+        Version 2 (SMIv2)", STD 58, RFC 2578, April 1999.
+
+   [27] McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J., Rose,
+        M. and S. Waldbusser, "Textual Conventions for SMIv2", STD 58,
+        RFC 2579, April 1999.
+
+   [28] McCloghrie, K., Perkins, D., Schoenwaelder, J., Case, J., Rose,
+        M. and S. Waldbusser, "Conformance Statements for SMIv2", STD
+        58, RFC 2580, April 1999.
+
+11 版权声明
+
+   Copyright (C) The Internet Society (1998).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE."
+
+
+12. 鸣谢
+
+感谢互联网协会提供的RFC编者基金。
+
+
+标准互联网络管理框架第三版介绍
+ RFC2570 Introduction to Version 3 of the Internet-standard Network Management Framework
+
+
+1
+RFC文档中文翻译计划

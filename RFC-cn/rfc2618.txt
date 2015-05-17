@@ -1,0 +1,378 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-10-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+Network Working Group                                                B. Aboba
+Request for Comments: 2618											  G. Zorn
+Category: Standards Track										    Microsoft
+																	June 1999
+RADIUS认证客户端MIB
+              (RFC2618―― RADIUS Authentication Client MIB)
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1999)。版权所有。
+摘要
+本备注定义了一套提供RADIUS验证客户端功能的扩展。这些扩展表示的是MIB的一部分，和INTERNET社区的网络管理协议一起使用。使用基于IP管理工作站的这些扩展能够管理RADIUS验证客户端。
+目录
+1. 介绍	2
+2.SNMP管理框架	2
+3.  概述	2
+3.1. 选定对象	3
+4.  定义	3
+5.  参考文献	9
+6.  需要考虑的安全问题	10
+7.  致谢	10
+8.  作者地址	10
+9.  知识产权声明	11
+10.  完整的版权声明	11
+致谢	12
+
+1. 介绍
+本备注定义了MIB的一部分，以和INTERNET COMMUNITY的网络管理协议一起使用。特别的，它描述了用来管理RADIUS验证客户端的管理对象。
+目前，有很多网络设备，如路由器和NASes，都用作RADIUS验证客户端，提供验证和授权服务。结果，有效的RADIUS验证客户端的管理就显得相当的重要。
+2.SNMP管理框架
+目前，SNMP管理框架有五个主要的组成部分：
+o在RFC2571中描述了整体结构。
+o描述和命名用来管理的对象和事件的机制。SMI第一版称做SMIv1，在STD 16，RFC 1155，STD 16，FRC1212，RFC1215中描述。第二版，称做SMIv2，在STD58，RFC2578，RFC2579，RFC 2580中描述。
+o传输管理信息的消息协议。SNMP消息协议的第一版称为SNMPv1，在STD15，RFC1157中描述。第二版称为SNMPv2c，不是INTERNET标准协议，在RFC1901，RFC1906中描述。第三版称为SNMPv3，在RFC1906，RFC2572，RFC2574中描述。
+o访问管理信息的操作协议。第一套可操作的与PDU格式有关的协议在STD15，RFC1157中描述。第二套在RFC1905中描述。
+o在RFC2573中描述的是一套基础应用，还有基于视图的访问控制机制，在RFC2575中描述。
+管理对象通过虚拟信息仓库访问，术语叫做管理信息库或MIB。MIB中的对象使用在SMI中定义的机制来定义。
+本备注指定了一个服从SMIv2的MIB模块。遵从SMIv1的MIB可通过适当的翻译得出，结果在语义上必须等价，除非由于不可翻译而省略对象或事件(use of Counter64)。在翻译时，一些机器可读的SMIv2信息会转换成SMIv1的原文描述。然而，这些丢失的信息被认为不会改变MIB的语义。
+3.  概述
+在“Remote Authentication Dial In User Service (RADIUS)”，RFC 2138中描述的RADIUS验证协议，区分客户端功能和服务器端功能。在RADIUS验证总，客户端发送访问请求，服务器用访问接受、访问拒绝和访问挑战来回应。典型的NAS设备实现客户端功能，因此它们用来实现RADIUS验证客户端MIB，而RADIUS验证服务器实现的是服务器端功能，因此它们用来实现RADIUS验证服务器端MIB。
+然而，也有一些RADIUS验证实体即可以实现客户端，也可以实现服务器端功能。例如，RADIUS代理可以作为对应一个或多个RADIUS验证客户端的服务器，同时也可作为验证客户端对应一个或多个服务器。在这种情况下，结合了客户端和服务器端功能的RADIUS实体即支持客户端也支持服务器端的MIB。
+3.1. 选定对象
+MIB模块包含两个数量，也可以说是一单个表：
+RADIUS Authentication Server Table――RADIUS验证服务器表，包含一行共享同一密码的客户端的RADIUS验证服务器。
+在此表中的每个条目包括十五列表示RADIUS验证客户端活动的视图。
+4.  定义
+RADIUS-AUTH-CLIENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+ MODULE-IDENTITY， 对象类型， OBJECT-IDENTITY，
+ 32位计算器， 32位整数， Gauge32，
+ IpAddress， TimeTicks， mib-2FROM SNMPv2-SMI
+ SnmpAdminStringFROM SNMP-FRAMEWORK-MIB
+ MODULE-COMPLIANCE， 对象类  FROM SNMPv2-CONF;
+
+radiusAuthClientMIB MODULE-IDENTITY
+ LAST-UPDATED "9906110000Z" -- 11 Jun 1999
+ ORGANIZATION "IETF RADIUS Working Group."
+ CONTACT-INFO
+“Bernard Aboba
+ Microsoft
+ One Microsoft Way
+ Redmond， WA  98052
+ US
+ Phone: +1 425 936 6605
+ EMail: bernarda@microsoft.com”
+ 描述
+“实体用此MIB模块实现客户端的RADIUS验证协议。”
+ REVISION "9906110000Z" -- 11 Jun 1999
+ 描述 " RFC 2618发布的初始版本"
+ ::= { radiusAuthentication 2 }
+
+radiusMIB OBJECT-IDENTITY
+ 状态：现行
+ 描述
+“OID分配给IANA工作组的RADIUS 。”
+  ::= { mib-2 67 }
+
+radiusAuthentication  对象标识符 ::= {radiusMIB 1}
+
+radiusAuthClientMIBObjects  对象标识符 ::=
+  { radiusAuthClientMIB 1 }
+
+radiusAuthClient  对象标识符 ::= { radiusAuthClientMIBObjects 1 }
+
+radiusAuthClientInvalidServerAddresses 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“从未知地址接收的RADIUS访问应答包的数量。”
+::= { radiusAuthClient 1 }
+
+radiusAuthClientIdentifier 对象类型
+语法：SnmpAdminString
+最大权限：只读
+状态：现行
+描述
+“RADIUS验证客户端的NAS标识符。它和MIB II中的sysName一样不是必须的。”
+::= { radiusAuthClient 2 }
+
+radiusAuthServerTable 对象类型
+语法：RadiusAuthServerEntry的序列
+最大权限：不可访问
+状态：现行
+描述
+“列出共享同一密码客户端的RADIUS验证服务器的(概念上的)表。”
+::= { radiusAuthClient 3 }
+
+radiusAuthServerEntry 对象类型
+语法： RadiusAuthServerEntry
+最大权限：不可访问
+状态：现行
+描述
+“表示共享同一密码客户端的RADIUS验证服务器的一个条目（概念上的一行）。”
+INDEX{ radiusAuthServerIndex }
+::= { radiusAuthServerTable 1 }
+
+RadiusAuthServerEntry ::=序列{
+radiusAuthServerIndex32位整数，
+radiusAuthServerAddress IpAddress，
+radiusAuthClientServerPortNumber 32位整数，
+radiusAuthClientRoundTripTime TimeTicks，
+radiusAuthClientAccessRequests32位计算器，
+radiusAuthClientAccessRetransmissions  32位计算器，
+radiusAuthClientAccessAccepts 32位计算器，
+radiusAuthClientAccessRejects 32位计算器，
+radiusAuthClientAccessChallenges 32位计算器，
+radiusAuthClientMalformedAccessResponses  32位计算器，
+radiusAuthClientBadAuthenticators32位计算器，
+radiusAuthClientPendingRequests Gauge32，
+radiusAuthClientTimeouts32位计算器，
+radiusAuthClientUnknownTypes  32位计算器，
+radiusAuthClientPacketsDropped32位计算器
+}
+
+radiusAuthServerIndex 对象类型
+语法：32位整数(1..2147483647)
+最大权限：不可访问
+状态：现行
+描述
+“唯一标识一个客户端与之通讯的每个RADIUS验证服务器的数目。”
+::= { radiusAuthServerEntry 1 }
+
+radiusAuthServerAddress 对象类型
+语法：Ip地址
+最大权限：只读
+状态：现行
+描述
+“在表中条目中提到的RADIUS验证服务器的IP地址。”
+::= { radiusAuthServerEntry 2 }
+
+radiusAuthClientServerPortNumber对象类型
+语法：32位整数 (0..65535)
+最大权限：只读
+状态：现行
+描述
+“客户端用来发送到服务器请求的UDP端口。”
+::= { radiusAuthServerEntry 3 }
+
+radiusAuthClientRoundTripTime  对象类型
+语法：TimeTicks
+最大权限：只读
+状态：现行
+描述
+“在最近匹配的RADIUS验证服务器的访问回答/访问挑战与访问请求之间的时间间隔（百分之一秒）。”
+::= { radiusAuthServerEntry 4 }
+
+-- Request/Response statistics
+-- TotalIncomingPackets = Accepts + Rejects + Challenges + UnknownTypes
+-- TotalIncomingPackets - MalformedResponses - BadAuthenticators -
+-- UnknownTypes - PacketsDropped = Successfully received
+-- AccessRequests + PendingRequests + ClientTimeouts =
+-- Successfully Received
+
+radiusAuthClientAccessRequests 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“此服务器发送的RADIUS访问请求包的数量。不包含重发包的数量。”
+::= { radiusAuthServerEntry 5 }
+
+radiusAuthClientAccessRetransmissions 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“重发至此RADIUS验证服务器的访问请求包的数量。”
+::= { radiusAuthServerEntry 6 }
+
+radiusAuthClientAccessAccepts 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“从此服务器接收的RADIUS访问接受包（有效或无效）包的数量。”
+::= { radiusAuthServerEntry 7 }
+
+radiusAuthClientAccessRejects 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“从此服务器接收的RADIUS访问拒绝包（有效或无效）包的数量。”
+::= { radiusAuthServerEntry  8 }
+
+radiusAuthClientAccessChallenges 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“从此服务器接收的RADIUS访问挑战数据包（有效或无效）的数量。”
+::= { radiusAuthServerEntry 9 }
+
+-- “Access-Response”包括接受访问、验证访问权限或者拒绝访问
+
+radiusAuthClientMalformedAccessResponses 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“从此服务器接收的错误访问响应包的数量。错误包包括那些无效长度的包。错误验证或签名属性或无知类型等不属于错误访问响应。”
+::= { radiusAuthServerEntry 10 }
+
+radiusAuthClientBadAuthenticators 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“从此服务器接收的包含无效验证或签名属性的RADIUS访问响应包的数量。”
+::= { radiusAuthServerEntry 11 }
+
+radiusAuthClientPendingRequests 对象类型
+语法：Gauge32
+最大权限：只读
+状态：现行
+描述
+“到此服务器的时间没有超时或接收到回应的RADIUS访问请求包的数量。发送一个访问请求时，此变量增加，接收到一个访问接受、访问拒绝或访问挑战、超时或重传，则使此变量减少。”
+::= { radiusAuthServerEntry 12 }
+
+radiusAuthClientTimeouts 对象类型
+  语法：32位计算器
+  最大权限：只读
+  状态：现行
+  描述
+“到此服务器的验证超时的数量。超时后，客户端可能重传到相同的服务器，或发送到另一个服务器，或放弃。到同一服务器的重试按照重传和超时记数。发送到另一个服务器按照请求超时记数。”
+::= { radiusAuthServerEntry  13 }
+
+radiusAuthClientUnknownTypes 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“在此服务器的验证端口接收到的不明类型RADIUS包的数量。”
+::= { radiusAuthServerEntry  14 }
+
+radiusAuthClientPacketsDropped 对象类型
+语法：32位计算器
+最大权限：只读
+状态：现行
+描述
+“此服务器验证端口接收到的，由于某些原因而被丢弃的RADIUS包的数量。”
+::= { radiusAuthServerEntry  15 }
+
+-- conformance information
+
+radiusAuthClientMIBConformance
+ 对象标识符 ::= { radiusAuthClientMIB 2 }
+radiusAuthClientMIBCompliances
+ 对象标识符 ::= { radiusAuthClientMIBConformance 1 }
+radiusAuthClientMIBGroups
+ 对象标识符 ::= { radiusAuthClientMIBConformance 2 }
+
+-- 一致性状态
+
+radiusAuthClientMIBCompliance MODULE-COMPLIANCE
+  状态：现行
+  描述
+  “实现RADIUS验证客户端MIB的验证客户端服从的状态。”
+  MODULE  -- this module
+MANDATORY-GROUPS { radiusAuthClientMIBGroup }
+  ::= { radiusAuthClientMIBCompliances 1 }
+
+-- 一致性单元
+
+radiusAuthClientMIBGroup 对象类
+  对象 { radiusAuthClientIdentifier，
+radiusAuthClientInvalidServerAddresses，
+radiusAuthServerAddress，
+radiusAuthClientServerPortNumber，
+radiusAuthClientRoundTripTime，
+radiusAuthClientAccessRequests，
+radiusAuthClientAccessRetransmissions，
+radiusAuthClientAccessAccepts，
+radiusAuthClientAccessRejects，
+radiusAuthClientAccessChallenges，
+radiusAuthClientMalformedAccessResponses，
+radiusAuthClientBadAuthenticators，
+radiusAuthClientPendingRequests，
+radiusAuthClientTimeouts，
+radiusAuthClientUnknownTypes，
+radiusAuthClientPacketsDropped
+}
+  状态：现行
+  描述
+“提供RADIUS验证客户端管理的对象的初步收集。”
+  ::= { radiusAuthClientMIBGroups 1 }
+
+END
+5.  参考文献
+[1]  Harrington， D.， Presuhn， R.， and B. Wijnen， "An Architecture for Describing SNMP Management Frameworks"， RFC 2571， April 1999.
+[2]  Rose， M.， and K. McCloghrie， "Structure and Identification of Management Information for TCP/IP-based Internets"， STD 16， RFC 1155， May 1990.
+[3]  Rose，M.，and K. McCloghrie，"Concise MIB Definitions"，STD 16，RFC 1212，March 1991.
+[4]  Rose， M.， "A Convention for Defining Traps for use with the SNMP"， RFC 1215， Performance Systems International， March 1991.
+[5]  McCloghrie， K.， Perkins， D.， Schoenwaelder， J.， Case， J.， Rose， M. and S. Waldbusser， "Structure of Management Information Version 2 (SMIv2)"， STD 58， RFC 2578， April 1999.
+[6]  McCloghrie，K.，Perkins，D.，Schoenwaelder，J.，Case，J.，Rose，M. and S. Waldbusser，"Textual Conventions for SMIv2"， STD 58， RFC 2579， April 1999.
+[7]McCloghrie，K.，Perkins，D.，Schoenwaelder，J.，Case，J.，Rose，M. and S. Waldbusser，"Conformance Statements for SMIv2"，STD 58， RFC 2580，April 1999.
+[8]Case，J.，Fedor，M.，Schoffstall，M.，and J. Davin，"Simple Network Management Protocol"，STD 15，RFC 1157，May 1990.
+[9]Case，J.，McCloghrie， K.， Rose， M.， and S. Waldbusser， "Introduction to Community-based SNMPv2"， RFC 1901， January 1996.
+[10]Case，J.，McCloghrie，K.，Rose，M.，and S. Waldbusser，"Transport Mappings for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 1906，January 1996.
+[11] Case，J.，Harrington D.，Presuhn R.，and B. Wijnen，"Message Processing and Dispatching for the Simple Network Management Protocol (SNMP)"，RFC 2572，April 1999.
+[12] Blumenthal， U.， and B. Wijnen， "User-based Security Model for Version 3 of the Simple Network Management Protocol (SNMPv3)"， RFC 2574， April 1999.
+[13] Case，J.，McCloghrie，K.，Rose，M.，and S. Waldbusser，"Protocol Operations for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 1905，January 1996.
+[14] Levi，D.，Meyer，P.，and B. Stewart，"SNMP Applications"，RFC 2573，April 1999.
+[15] Wijnen， B.， Presuhn， R.， and K. McCloghrie， "View-based Access Control Model for the Simple Network Management Protocol (SNMP)"， RFC 2575， April 1999.
+[16] Rigney， C.， Rubens， A.， Simpson W. and S. Willens， "Remote Authentication Dial In User Service (RADIUS)"， RFC 2138， April 1997.
+6.  需要考虑的安全问题
+在此MIB中没有定义具有读写和/或读、创建的MAX-ACCESS子句的管理对象。因此，如果能正确实现此MIB，那么就没有人能通过直接SNMP SET操作来改变或创建任何此MIB的管理对象。
+此MIB中有很多包含敏感信息的管理对象。它们是： 
+radiusAuthServerAddress
+可用来决定和客户端通讯的RADIUS验证服务器的地址。此信息在定位对验证服务器的攻击时有用。
+radiusAuthClientServerPortNumber 
+可用来决定RADIUS验证客户端发送的端口号。此信息在体现客户端发送数据到验证服务器时有用。
+因此，在网络上通过SNMP发送这些对象时，控制连续对这些对象的访问和可能的连续对这些值的加密是很重要的。不是所有版本的SNMP都提供此安全环境的属性。
+SNMPv1 本身并不是一个安全的环境。即使网络本身是安全的（如使用了IP Sec），但对诸如安全网络中谁允许访问和GET/SET（读/改变/创建/删除）MIB中的对象也是没有控制的。
+建议实施者考虑SNMPv3框架提供的安全属性。特别推荐使用RFC2574基于用户的安全模型和RFC2575基于视图的访问控制模型。使用这些安全特性，可以只对那些有合法权利GET或SET的用户提供对象的访问。
+7.  致谢
+作者对RADIUS工作组为开发该MIB作出的贡献深表谢意。感谢Microsoft的Narendra Gidwani、MERIT的Allan C. Rubens、Livingston的Carl Rigney和American Internet Corporation的 Peter Heitman在该领域中的有益的讨论。
+8.  作者地址
+Bernard Aboba
+Microsoft Corporation
+One Microsoft Wy
+Redmond， WA 98052
+Phone: 425-936-6605
+EMail: bernarda@microsoft.com
+
+Glen Zorn
+Microsoft Corporation
+One Microsoft Way
+Redmond， WA 98052
+Phone: 425-703-1559
+EMail: glennz@microsoft.com
+9.  知识产权声明
+IETF不考虑任何关于知识产权或其他权利的有效性或适用范围的问题，这些权利可能附属于那些实现和使用本文档描述的技术的文档中声明，基于此产权声明的许可不是必须的。而且也无须表示为了识别此声明而做的努力。关于标准制定和标准相关的IETF版权声明过程的信息可以在BCP-11中找到。可以从IETF秘书处得到出版物的有效版权声明的复制和许可证书，还可以使用此详述的制定者和使用者的私人授权，以便得到通用的授权和许可。
+IETF邀请任何感兴趣的组织注意其版权、专利或专利应用、其它专有权利，它们可能需要使用这个标准的技术。请告知IETF 执行董事会相关的信息。
+10.  完整的版权声明
+Copyright (C) The Internet Society (1999)。版权所有。
+This document and translations of it may be copied and furnished to others， and derivative works that comment on or otherwise explain it or assist in its implmentation may be prepared， copied， published and distributed， in whole or in part， without restriction of any kind， provided that the above copyright notice and this paragraph are included on all such copies and derivative works.  However， this document itself may not be modified in any way， such as by removing the copyright notice or references to the Internet Society or other Internet organizations， except as needed for the purpose of developing Internet standards in which case the procedures for copyrights defined in the Internet Standards process must be followed， or as required to translate it into languages other than English.
+The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns. 
+This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES， EXPRESS OR IMPLIED， INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. 
+致谢
+目前，RFC编者活动的基金由Internet社团提供。
+RFC2618――RADIUS Authentication Client MIB                                RADIUS认证客户端MIB
+
+
+
+
+1
+RFC文档中文翻译计划
+

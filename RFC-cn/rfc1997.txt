@@ -1,0 +1,122 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：pan（kevin73  panzhenyu_2@263.net）
+译文发布时间：
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+
+
+Network Working Group                                         R. Chandra
+Request for Comments: 1997                                     P. Traina
+Category: Standards Track                                  cisco Systems
+                                                                   T. Li
+                                                             August 1996
+
+RFC1997 BGP团体属性
+(RFC1997  BGP Communities Attribute)
+本备忘录状态
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
+版权声明
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+边界网关协议[1]是为TCP/IP互联网设计的自治系统间路由协议。
+本文档描述了BGP的一个扩展，可以传送更多的信息到临近和远端的BGP对端。
+提议本技术的目的是辅助策略管理并减少维护互联网的管理复杂度。
+
+目录
+1 介绍	2
+2 术语和定义	2
+3 例子	2
+4 COMMUNITIES（团体）属性	3
+5公认属性	3
+6操作	3
+7聚合	3
+8适用性	4
+9安全考虑	4
+10致谢	4
+11作者地址	4
+参考资料	5
+
+1 介绍
+BGP通过路由信息的分发来支持转发测策略。这个机制在[1]中描述并被转发服务提供者成功应用。然而，路由信息发布的控制目前是基于IP地址前缀或者AS_PATH属性（或者他的一部分）。
+为了推动和简化路由信息的控制本文档建议了目的地组使得路由决策能够基于组的标示符。希望这种机制能够明显简化BGP发言者的路由信息分发配置。
+2 术语和定义
+团体（Community）
+团体是共享相同特性的一组目的的。
+自治系统管理者可以定义目的地所属的团体。默认的，所有目的的属于互联网团体。
+3 例子
+	诸如“NSFNET发起人/AUP”之类的特性可以被加入到所有AUP兼容的目的的并广播到NSFNET中。NSFNET操作者可以定义策略广播所有路由，或者标记/取消标记直接连接的AUP兼容客户，或者仅仅标记商业或外部网站。这样可以保证最少给定连接的一端是AUP兼容的，从而能够执行NSF转发策略。。
+	在这个例子中，我们排除了使用复杂策略路由数据库根据过滤条件产生大量前缀和AS路径的主要动机。我们也排除了由于数据库的带外维护（NACRs邮件，每周配置运行，等等）带来的延迟。
+	第二个例子来自聚合的经验。经常有利于广播聚合前缀或者更特别的成员前缀用来形成聚合优化“下一跳”路由。这些成员前缀仅仅对邻居BGP对端或者邻居对端的AS有用，所以有必要过滤这些信息。通过指定团体值邻居对端可以匹配和过滤，更特别的路由可以被广播同时保证不会被传播到期望的范围外。
+4 COMMUNITIES（团体）属性
+本文档创造的团体路经属性是可选转发的变长属性。
+本属性包括一系列四个字节的值，每一个说明了一个团体。所有的包含这个属性的路属于本属性列表中的团体。
+团体属性的类型编码是8。
+团体被看作32比特的值，然而为了管理上的安排，作了如下的假设：
+团体属性值范围从0x00000000到0x0000FFFF和从0xFFFF0000到0xFFFFFFFF被作为保留。
+剩下的团体属性值应该使用AS号码作为头两个字节。后两个字节的语义可以被AS自己定义。（比如，AS690可以定义研究，教育和商业团体值，用于策略路由。比如AS的操作者使用团体属性值0x02B20000到0x02B2FFFF）。
+5公认属性
+下列属性是全球意义的，它们的操作应该被应用在任何识别团体属性的BGP发言人。
+NO_EXPORT (0xFFFFFF01)
+所有接收到的路由承载的团体属性中包含这个值必须不广播出BGP联盟边界（一个孤立的AS，如果不是联盟的一部分可以看作自己构成一个联盟）。
+NO_ADVERTISE (0xFFFFFF02)
+所有接收到的路由承载的团体属性中包含这个值必须不被广播到BGP对端。
+NO_EXPORT_SUBCONFED (0xFFFFFF03)
+所有的路由接收到团体属性中包含这个值必须不要被广播到外部BGP对端（包括联盟中别的AS的成员）
+6操作
+BGP发言者使用这个属性控制路由信息的接收，选择和发布到别的邻居。
+一个BGP发言者接收没有团体属性的路由可以加入这个属性到路由中并广播到对端。
+一个BGP发言者接收包含团体属性的路由可以根据本地策略修改属性。
+7聚合
+如果一个范围的路由被聚合，合成的路由属性部分没有包括
+ATOMIC_AGGREGATE属性,那么聚合结果中的团体属性应该包括所有的聚合路由的所有团体。
+8适用性
+团体路径属性可以被BGP版本2以及所有的子版本使用除非特别说明。
+9安全考虑
+安全问题不在本备忘录讨论。
+10致谢
+感谢Vince Fuller, Sean Doran和 Andrew Partan 注意到这些问题，我们相信团体属性可以解决他。
+同时感谢Yakov Rekhter 对文档的审核以及建设性的有价值的评论。
+11作者地址
+Paul Traina
+cisco Systems, Inc.
+170 W. Tasman Dr.
+San Jose, CA 95134
+
+EMail: pst@cisco.com
+
+
+Ravishanker Chandrasekeran
+(Ravi Chandra)
+cisco Systems, Inc.
+170 W. Tasman Dr.
+San Jose, CA 95134
+
+EMail: rchandra@cisco.com
+
+
+Tony Li
+EMail: tli@skat.usc.edu
+
+参考资料
+  		[1] RFC 1771
+      		Rekhter, Y., and T. Li, "边界网关协议版本4 (BGP-4)",
+     		March 1995.
+		
+   		[2] RFC 1965
+      		Traina, P., "BGP的自治系统联盟", June 1996.
+RFC1997  BGP Communities Attribute                                     RFC1997 BGP团体属性
+
+
+
+
+
+1
+RFC文档中文翻译计划
+
+

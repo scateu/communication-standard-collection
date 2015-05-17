@@ -1,0 +1,39 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王华伟(wanghuawei  huaweiw@pub.xaonline.com) 
+译文发布时间：2001-5-23
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group					Bill English
+RFC-28							SRI
+13 January 1970
+
+
+			时间标准
+(RFC28    Time Standards)
+
+我们打算在我们的系统中建立一套相对精确地实时时钟。我们非常欢迎关于网络时间标准
+的评论，尤其是关于时间迟滞测量的。由此我们可以确定我们的时钟应该达到的精准程度。
+
+
+时区分布：
+
+A. Bhushan, MIT
+S. Carr, Utah
+G. Cole, SDS
+S. Crocker, UCLA
+K. Fry, MITRE
+J. Heafner, RAND
+B. Kahn, BB&N
+T. O'Sullivan, Raytheon
+L. Roberts, ARPA
+P. Rovner, LL
+R. Stoughton, UCSB
+
+RFC28    Time Standards		时间标准
+RFC文档中文翻译计划		1

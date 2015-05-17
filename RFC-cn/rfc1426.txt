@@ -1,0 +1,228 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王君显（wjxcn    wjxcn@263.net）
+译文发布时间：2002-1-18
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                               J. Klensin, WG Chair
+Request for Comments: 1426                     United Nations University
+                                                        N. Freed, Editor
+                                            Innosoft International, Inc.
+                                                                 M. Rose
+                                            Dover Beach Consulting, Inc.
+                                                            E. Stefferud
+                                     Network Management Associates, Inc.
+                                                              D. Crocker
+                                                       The Branch Office
+                                                           February 1993
+SMTP 8bit-MIME传输服务扩展
+（RFC1426――SMTP Service Extension for 8bit-MIMEtransport） 
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化
+程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+
+摘要
+本文档定义了SMTP服务的一个扩展，来说明为什么US ASCII码范围(hex 00-7F)
+以外的二进制内容可以使用SMTP传输。
+
+目录
+1.  介绍	2
+2.  8BIT MIME 传输扩展的框架	2
+3.  8BIT MIME 传输服务扩展	2
+4.  用法示例	4
+5.  安全考虑	4
+6.  致谢	4
+参考	5
+主席，编者，作者地址	5
+
+1.  介绍
+虽然SMTP被广泛地使用，并且很健壮，仍有一部分Internet 社区提出了各种各
+样的扩展。尤其是很重要的一部分Internet社区希望交换这样一条消息，它的内容由一
+条包含任意字节内容的MIME消息[3]组成。这个文档使用在[5]中描述的机制来定义一
+个SMTP服务的一个扩展，凭借它就可以交换这些内容。注意这个扩展并不排除一个
+SMTP服务器会限制单行长度的可能；服务器可以自由地实现这个扩展，但是这个单行
+长度的限制不要低于1000个字节。
+2.  8bit MIME 传输扩展的框架
+8bit MIME 传输扩展指定如下：
+(1).	SMTP服务扩展的名字在这里定义为：8bit-MIME传输；
+
+(2).	与扩展关联的EHLO 关键字的值是8BITMIME；
+
+(3).	没有任何参数与8BITMIME EHLO关键字一起使用；
+
+(4).	使用BODY关键字时有一个可选参数被加入到MAIL FROM命令。与这个
+参数关联的只是一个关键字，它指示是否一条带有任意字节内容的7bit消
+息（严格遵从[1]）或者一条MIME消息(严格遵从[3])正在被发送。这个参
+数的语法就在下面，使用[2]中的表示方法ABNF(Augmented  Backus-Naur  
+Form)：
+
+body-value ::= "7BIT" / "8BITMIME"
+
+(5).	这个扩展没有定义而外的SMTP动词；
+
+(6).	下面的部分说明如何支持这个扩展以及对SMTP服务器和客户端的行为的
+影响。
+3.  8bit MIME 传输服务扩展
+当一个SMTP客户端希望提交（使用MAIL命令）一条消息的内容主体（消息内
+容的主体由一条包含任意字节内容的MIME消息组成）时，它首先向SMTP服务器发
+出EHLO命令。如果SMTP服务器用代码250来响应EHLO命令，并且响应中包含
+EHLO关键字的值8BITMIME，那么SMTP服务器是正在指示它支持扩展的MAIL命
+令，并且可以接受包含任意字节内容的MIME消息。
+
+当SMTP客户端希望传送一条消息的内容主体（消息内容的主体由一条包含任意
+字节内容的MIME消息组成），它将发送出扩展的MAIL命令。这个命令的语法与[1]中
+的MAIL命令一样，除了在地址只有必须有一个BODY参数。
+
+这个扩展命令的完整语法定义在[5]中。ESMTP关键字是BODY，它的语法由上面
+提到的body-value的语法给出。
+
+BODY参数的值指示是否将要用DATA命令传送的消息内容主体由一条包含任意
+字节排列内容的MIME消息组成（“8BITMIME”），或者全部单一的由[1]（“7BIT”）来
+编码。
+
+一个支持8bit MIME 传输扩展的服务器将保持由DATA命令传送的每一个字节的
+说有位。
+
+自然，通常的SMTP数据填充算法仍然可以使用，这样包含下面五个字符序列
+
+<CR> <LF> <DOT> <CR> <LF>
+
+或者以下面三个字符序列
+
+<DOT> <CR> <LF>
+
+开头的内容将不会过早的结束内容的传输。最后，尽管内容的主体包含包含任意字节的
+内容，每一行的长度（在两个CR-LF之间的字节数）仍旧要服从SMTP服务器的单行
+长度限制（它可能会允许很少，如1000个字节每行）。
+
+一旦一个支持8bit MIME 传输服务扩展的SMTP服务器接收一个包含高8位的字
+节的内容主体，SMTP服务器必须以保持每一个字节所有所有位的方式投递或转发这些
+内容。
+
+如果一个SMTP服务器不支持8bit MIME 传输扩展（不是由于没有用代码250响
+应EHLO命令，就是由于在它的响应中没有包含EHLO关键字值8BITMIME），那么
+SMTP客户端必须保证，在任何情况下，都不会尝试传输包含US ASCII字节范围(hex 
+00-7F)以外的内容。
+
+在这种情况下SMTP客户端有两个选项：首先，它可能实现了一个网关转换来把
+消息转换成为合法的7bitMIME，或者第二，可能把这作为一个永久的错误，并且以通
+常对待投递失败的方式来处理它。从8bit MIME到7bit MIME的转换细节在本文档中并
+不加以说明；然而，以下面的方式转换是强制的：
+(1).	它必须不会引起任何的信息丢失；必须使用MIME传输编码，同样在这种
+情况下需要确保这一点，并且
+(2).	作为结果的消息必须是合法的7bit MIME。
+4.  用法示例
+下面的会话举例说明了8bit MIME 传输服务扩展的使用：
+
+S: <wait for connection on TCP port 25>
+C: <open connection to server>
+S: 220 dbc.mtview.ca.us SMTP service ready
+C: EHLO ymir.claremont.edu
+S: 250-dbc.mtview.ca.us says hello
+S: 250 8BITMIME
+C: MAIL FROM:<ned@ymir.claremont.edu> BODY=8BITMIME
+S: 250 <ned@ymir.claremont.edu>... Sender and 8BITMIME ok
+C: RCPT TO:<mrose@dbc.mtview.ca.us>
+S: 250 <mrose@dbc.mtview.ca.us>... Recipient ok
+C: DATA
+S: 354 Send 8BITMIME message, ending in CRLF.CRLF.
+...
+C: .
+S: 250 OK
+C: QUIT
+S: 250 Goodbye
+5.  安全考虑
+本文档不讨论安全问题，并且也不被认为会引起任何电子邮件特有的和完全遵从[1]
+实现的安全问题。
+6.  致谢
+本文档是很多人的想法，以及人们对这些想法的放映和其他的建议的一个集合体。  
+Randall Atkinson，Craig Everhart，Risto Kankkunen，和Greg Vaudreuil贡献出了他们的
+想法及文稿，可以说是合著者。其他重要的提议，文稿，或者鼓励来自于Harald 
+Alvestrand，Jim Conklin，Mark Crispin，Frank da Cruz，'Olafur Gudmundsson，Per 
+Hedeland，Christian Huitma，Neil Katin，Eliot Lear，Harold A. Miller，Keith Moore，
+Dan Oscarsson，Julian Onions，Neil Rickert，John Wagner，Rayan Zachariassen，以及整
+个IETF SMTP 工作组的姑娘贡献。当然，没有一个个人必须为这个想法的集合体负责。
+实际上，在某些情况下，特定意见的回应将被作为一个问题点接受，除了包含一个来自
+于原始提议的完整的解决方案。
+参考
+
+
+[1] Postel, J., "Simple Mail Transfer Protocol", STD 10, RFC 821,
+   USC/Information Sciences Institute, August 1982.
+
+[2] Crocker, D., "Standard for the Format of ARPA Internet Text
+   Messages", STD 11, RFC 822, UDEL, August 1982.
+
+[3] Borenstein, N., and N. Freed, "Multipurpose Internet Mail
+   Extensions", RFC 1341, Bellcore, Innosoft, June 1992.
+
+[4] Moore, K., "Representation of Non-ASCII Text in Internet Message
+   Headers", RFC 1342, University of Tennessee, June 1992.
+
+[5] Klensin, J., WG Chair, Freed, N., Editor, Rose, M., Stefferud,
+   E., and D. Crocker, "SMTP Service Extensions" RFC 1425, United
+   Nations University, Innosoft International, Inc., Dover Beach
+   Consulting, Inc., Network Management Associates, Inc., The Branch
+   Office, February 1993.
+
+[6] Partridge, C., "Mail Routing and the Domain System", RFC 974,
+   BBN, January 1986.
+
+主席，编者，作者地址
+
+John Klensin, WG Chair
+United Nations University
+PO Box 500, Charles Street Station
+Boston, MA 02114-0500  USA
+
+Phone: +1 617 227 8747
+Fax: +1 617 491 6266
+Email: klensin@infoods.unu.edu
+
+Ned Freed, Editor
+Innosoft International, Inc.
+250 West First Street, Suite 240
+Claremont, CA 91711  USA
+
+Phone: +1 909 624 7907
+Fax: +1 909 621 5319
+Email: ned@innosoft.com
+
+Marshall T. Rose
+Dover Beach Consulting, Inc.
+420 Whisman Court
+Moutain View, CA  94043-2186  USA
+
+Phone: +1 415 968 1052
+Fax: +1 415 968 2510
+Email: mrose@dbc.mtview.ca.us
+
+Einar A. Stefferud
+Network Management Associates, Inc.
+17301 Drey Lane
+Huntington Beach, CA, 92647-5615  USA
+
+Phone: +1 714 842 3711
+Fax: +1 714 848 2091
+Email: stef@nma.com
+
+David H. Crocker
+The Branch Office
+USA
+
+Email: dcrocker@mordor.stanford.edu
+
+RFC1426――SMTP Service Extension for 8bit-MIMEtransport        SMTP 8bit-MIME传输服务扩展
+
+
+1
+RFC文档中文翻译计划

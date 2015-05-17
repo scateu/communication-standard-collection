@@ -1,0 +1,353 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：何炜丽（hwl_myself@sina.com）
+译文发布时间：2001-9-6
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+文档的翻译及版权信息。
+
+
+Network Working Group                               J. Klensin, WG Chair
+Request For Comments: 1869                                           MCI
+STD: 10                                                 N. Freed, Editor
+Obsoletes: 1651                             Innosoft International, Inc.
+Category: Standards Track                                        M. Rose
+                                            Dover Beach Consulting, Inc.
+                                                            E. Stefferud
+                                     Network Management Associates, Inc.
+                                                              D. Crocker
+                                                  Brandenburg Consulting
+                                                           November 1995
+
+
+SMTP服务扩展
+（RFC1869――SMTP Service Extensions）
+目录
+1. 摘要	2
+2. 介绍	2
+3. SMTP 扩展框架	2
+4. EHLO 命令	3
+4.1.  对STD 10, RFC 821的变动	3
+4.2.  命令语法	3
+4.3.  成功响应	4
+4.4. 失败响应	5
+4.5. 扩展服务器的出错响应	5
+4.6. 不支持扩展的服务器响应	5
+4.7. 服务器未正确完成命令的响应	6
+5. 初始 IANA 注册	6
+6. MAIL FROM 和 RCPT TO 参数	6
+6.1.  出错响应	7
+7. 收到: 头部域注释	7
+8. 应用举例	7
+9. 安全考虑	8
+10. 鸣谢	9
+11. 参考文献	9
+12. 主席，编辑及作者地址	9
+
+
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程
+度和状态。本备忘录的发布不受任何限制。
+
+1. 摘要
+本备忘录通过定义服务器SMTP通知客户端SMTP它所支持的服务扩展的方法，定义了一
+个扩展SMTP服务的框架。SMTP服务扩展在IANA中已经注册。本框架并不要求修改现有的SMTP
+服务器或客户端，除非要求使用或提供服务扩展中的特性。
+
+2. 介绍
+    简单邮件传送协议为消息传递代理的转发函数提供了一个稳定有效的基础。虽然已经有
+10年的历史了，但是SMTP还是非常具有活力。然而，对一些协议进行扩展的需要越来越明
+显。除了单独的对这些扩展进行描述外，本文以一种直接方式提供一个框架，其中所有未来
+的扩展都可以以一种单独相容的方式进行。
+
+3. SMTP 扩展框架
+为了对SMTP服务进行扩展，SMTP可以转发邮件，其中包括信封和内容。
+    (1) SMTP 信封简单易懂，它作为SMTP协议单元系列被传递：它包括发送者地址（邮件
+传递出错时，返回信息的接受者）；传递模式（例如，传递到接收者的信箱）；以及一个或多
+个接收者地址。
+
+(2) SMTP内容以SMTP DATA 协议单元形式传递，它包括2部分：头部和主体。头部是一
+个结构根据RFC 822 [2]定义的域/值对的集合，而主体是根据MIME [3]定义的。内容是用
+US ASCII repertoire (ANSI X3.4-1986)表示的自然形式的文本，虽然扩展（例如MIME）对
+内容主体部分的这一限制会有所放松，但头部信息仍然使用US ASCII 编码。
+虽然SMTP被广泛的应用，但是部分因特网社区仍然想对SMTP服务进行扩展。本备忘录
+定义了一种渠道，使得扩展的SMTP客户端和服务器可以识别对方，并且服务器可以通知客户
+端它所支持的服务扩展。
+必须指出：SMTP服务的任何扩展都应深思熟虑。SMTP的实力首先来自于它的简单性。很
+多协议的经验表明：
+几个选择项的协议无处不在，很多选择项的协议无人能懂。
+
+     protocols with few options tend towards ubiquity, whilst
+protocols with many options tend towards obscurity.
+这表明：任何一个扩展，不考虑它的效益，必须根据它的实施，调度，沟通等方面的成
+本，对它进行仔细的查看。在很多情况下，扩展SMTP服务的费用比它本身的效益还要多。
+在这种环境下，本备忘录中描述的服务扩展的框架包括：
+   (1)   一个新的SMTP命令 (section 4)
+ (2)   一个SMTP服务扩展的注册 (section 5)
+ (3)   SMTP MAIL FROM and RCPT TO 命令的附加参数 (section 6).
+4. EHLO 命令
+    一个支持SMTP服务扩展的客户SMTP应以EHLO命令启动SMTP过程，而不是HELO命令。
+如果SMTP服务器支持SMTP服务扩展，他将给予一个表示成功的响应(见section 4.3)，一
+个表示失败的响应（见4.4），或一个表示出错的响应（见4.5）。如果SMTP服务器不支持任
+何SMTP服务扩展，它将给予一个出错响应（见section 4.5）。
+4.1.  对STD 10, RFC 821的变动
+    这一部分希望扩展STD 10, RFC 821而绝不影响已有的服务。所需的最小改动见下述。
+4.1.1.  First command
+RFC 821 表明SMTP进程第一个命令必须是HELO命令。这个要求被订正为允许进程以HELO
+或EHLO命令开始。
+4.1.2.	命令行最大长度
+    这一部分扩展了SMTP MAIL FROM 和 RCPT TO，增加了附加参数和参数值。RFC 821
+规定：MAIL FROM 和 RCPT TO命令行不允许超过512个字符。这个限制被订正为只应用
+于没有任何参数的命令行。每一个新的定义MAIL FROM 和 RCPT TO 参数的描述也必须指
+明每个参数的值的最大长度，使得一些扩展的操作者知道要预先分配多少缓存区。支持SMTP
+扩展操作的最大命令长度是512加上被所有扩展支持的所有的参数的最大长度。
+4.2.	命令语法
+    该命令的语法，使用[2]的ABNF标记法，表示为：
+     ehlo-cmd ::= "EHLO" SP domain CR LF
+	如果成功，服务器SMTP响应“250”；如果失败，服务器SMTP响应“550”；如果出错，
+服务器SMTP响应“500”, “501”,“502”, “504”, 或 “421”中的一个。这个命令被
+指定替代“HELO”命令，并且可以在任何“HELO”命令正确的地方替代。也就是说，如果一
+个“EHLO”命令发出了，并得到了成功的响应，则其后的HELO或EHLO命令将被服务器SMTP
+响应为“503”。如果EHLO命令成功，客户端SMTP不可能隐藏任何返回信息？？？。也就是
+说，如果需要扩展服务的信息时，客户端SMTP必须以EHLO命令启动SMTP进程。
+
+4.3.  成功响应
+    如果服务器SMTP运行，并可以执行EHLO命令，它将返回“250”。这表明服务器和客户
+端SMTP都已经处于初始状态，即进程中没有任何的程序在运行，所有的状态都是稳定的，所
+有的缓冲区都已清空。
+    通常，这个响应是多行的，每一行响应包括一个关键字及一个或多个参数。成功响应的
+语法，用[2]的 ABNF表示法表示，即：
+
+     ehlo-ok-rsp  ::=      "250"    domain [ SP greeting ] CR LF
+                    / (    "250-"   domain [ SP greeting ] CR LF
+                        *( "250-"      ehlo-line           CR LF )
+                           "250"    SP ehlo-line           CR LF   )
+
+                  ; 通常 HELO chit-chat
+     greeting     ::= 1*<CR 或 LF 以外任何其他的字>
+
+     ehlo-line    ::= ehlo-keyword *( SP ehlo-param )
+
+     ehlo-keyword ::= (ALPHA / DIGIT) *(ALPHA / DIGIT / "-")
+
+                  ; 语法和值依赖于ehlo-keyword
+     ehlo-param   ::= 1*<除空格（SP）和所有的控制字符外，包括US ASCII 0-31>
+
+     ALPHA        ::= <52个字母中任何一个 (A 到 Z 在前, a 到 z 在后)>
+     DIGIT        ::= <10个数字中的一个 (0 到 9)>
+
+     CR           ::= <回车符 (ASCII 码 13)>
+     LF           ::= <还行符 (ASCII 码 10)>
+     SP           ::= <空格    (ASCII decimal code 32)>
+
+    虽然EHLO关键字可以描述成上、下、或综合的，但是，他们必须以一种不敏感的方式被
+识别和被处理。这在RFC 821里？？？
+   Although EHLO keywords may be specified in upper, lower, or mixed
+   case, they must always be recognized and processed in a case-insensitive manner. 
+This is simply an extension of practices begun in  RFC 821.
+
+    IANA包括SMTP服务扩展的registry。与每个扩展相关的是响应的EHLO关键字值。每一
+个在IANA中注册的服务扩展必须在RFC中定义。这种RFC应该符合跟踪标准，或定义一个
+IESG认可的经验协议。定义必须包括：
+ (1)   SMTP扩展的文本名；
+ (2)   与扩展相关的EHLO关键字值；
+ (3)   与EHLO关键字值相关的参数语法或可能的取值； 
+ (4)   与扩展有关的任何附加的SMTP动词（附加动词通常与EHLO关键词值相同，但也不一
+定是。）
+ (5)   任何与MAIL FROM 或 RCPT TO 动词有关的扩展的新参数；
+如何支持受扩展影响的服务器和客户端SMTP的行为；
+(6)	扩展中定义的对MAIL FROM, RCPT TO或两者都有的命令的最大长度的改动，需指出
+它们的增量；
+    同时，任何以an upper or lower case "X"的EHLO关键字值是指局域SMTP服务扩展，
+用于双面，而非标准的。以“X”开头的关键字不可以在已注册的服务扩展中使用。
+	任何在EHLO响应中出现的不以“X”开头的关键字值必须与一个标准，标准跟踪，或在
+IANA中注册的IESG认可的经验SMTP服务扩展相对应。给予肯定响应的服务器不可以提供没
+在注册扩展中描述的不以“X”开头的关键字值。
+    附加动词的约束与EHLO关键字一样。特别指出，以“X”开头的动词是局域扩展，没有
+注册或标准化，而以“X”开头的动词一定是注册的了。
+
+4.4. 失败响应
+    如果由于某种原因，服务器SMTP不能列出它所支持的服务扩展，它会返回“554”。
+    在失败响应的情况下，客户端SMTP应该发出HELO或QUIT命令。
+
+4.5. 扩展服务器的出错响应
+    如果服务器SMTP识别了EHLO命令，但是不能解释命令的表达方法，将返回“501”。
+
+    如果服务器SMTP识别了EHLO命令，但是不能执行，将返回“502”。
+
+    如果服务器SMTP认为不再提供SMTP（例如，由于系统即将关闭），将返回“421”。
+
+    在所有的出错响应中，客户端SMTP须发出HELO或QUIT命令。
+
+4.6. 不支持扩展的服务器响应
+   RFC 821规定：遵从RFC 821 但是不支持扩展的服务器SMTP不能识别EHLO,并将随之返
+回“500”。服务器SMTP在返回“500”后还处于同一状态（见section 4.1.1 of RFC 821）。
+客户端SMTP可发出HELO或QUIT命令。
+
+4.7. 服务器未正确完成命令的响应
+     某些SMTP服务器当接到EHLO命令是，就会断开传输通道。这个断开的操作马上发生，
+或在发送一个响应后发生。这种操作是违反RFC 821 的section 4.1.1 的，那里明确的指出
+断开的操作只能发生在QUIT命令发出之后。
+     然而，为了得到最大的吞吐量，建议扩展SMTP客户端使用EHLO作为检测EHLO发出后
+服务器连接是否关闭，无论得到响应前后都可以。如果这种情况发生，客户端必须决定这项
+操作在不使用任何SMTP扩展的情况下是否可以成功的完成。如果可以完成，则可以开通一个
+新的连接，并使用HELO命令。
+     其他不正确执行的的服务器在EHLO命令发出和被拒绝后将不接受HELO命令。在某种情
+况下，这个问题可以如下解决：在收到EHLO命令的失败响应后，发送一个RSET命令，然后
+发送HELO命令。使用这种方法的客户端应明确：很多应用对RSET的响应是失败的响应（例
+如：503，命令序列错误）。这个码可以被忽略。
+
+5.  初始 IANA 注册
+    SMTP服务扩展的IANA初始注册包括以下各项：
+
+   服务扩展         EHLO       关键字参数   动词       增加的行为
+   ------------- ------------ ---------- ---------- ------------------
+   Send             SEND         none       SEND    defined in RFC 821
+   Send or Mail     SOML         none       SOML    defined in RFC 821
+   Send and Mail    SAML         none       SAML    defined in RFC 821
+   Expand           EXPN         none       EXPN    defined in RFC 821
+   Help             HELP         none       HELP    defined in RFC 821
+   Turn             TURN         none       TURN    defined in RFC 821
+
+   这些与[5]中定义的SMTP命令对应。（根据[5],原有的SMTP命令有HELO, MAIL, RCPT, 
+DATA, RSET, VRFY, NOOP, 和 QUIT.）
+
+6.  MAIL FROM 和 RCPT TO 参数
+    一致公认：为SMTP设计的几个扩展将利用与MAIL FROM 和RCPT TO命令有关的附加参
+数。这些命令的语法，跟[1]中的定义一样，使用[2]中的ABNF标识法：
+
+     esmtp-cmd        ::= inner-esmtp-cmd [SP esmtp-parameters] CR LF
+     esmtp-parameters ::= esmtp-parameter *(SP esmtp-parameter)
+     esmtp-parameter  ::= esmtp-keyword ["=" esmtp-value]
+     esmtp-keyword    ::= (ALPHA / DIGIT) *(ALPHA / DIGIT / "-")
+
+                          ; 语法和值依赖esmtp-keyword
+     esmtp-value      ::= 1*< 除 "=", SP之外任何 CHAR, 所有控制字符 
+(包括US ASCII 0-31)>
+
+                          ; 下述命令扩展为可接收扩展参数
+     inner-esmtp-cmd  ::= ("MAIL FROM:" reverse-path)   /
+                          ("RCPT TO:" forward-path)
+
+   所有esmtp-keyword 必须注册为IANA的一部分。这部分定义只提供未来扩展的框架；本
+RFC没有定义扩展MAIL FROM 或 RCPT TO的参数。
+
+6.1.  出错响应
+    如果服务器SMTP没有识别或不能执行一个或多个与特定MAIL FROM 或 RCPT TO命令相
+关的参数，将返回“555”。
+   如果因为某种原因，服务器暂时不能解释个或多个与MAIL FROM 或 RCPT TO命令相关的
+参数，并且，如果对这些参数的定义与其他码不统一，将返回“455”。
+    特定参数和值的错误定义在RFC中的参数定义中。
+
+7. 收到: 头部域注释
+SMTP服务器要求在他们收到的所有消息的头部信息中增加一个恰当的“收到：”域。当
+任一SMTP服务扩展被使用后，在这个域中增加一个“with ESMTP”从句。"ESMTP" 因此被添
+加到在IANA中注册过的标准协议名称的列表中。
+
+8. 应用举例
+(1)   交互方式:
+
+       S: <wait for connection on TCP port 25>
+       C: <open connection to server>
+       S: 220 dbc.mtview.ca.us SMTP service ready
+       C: EHLO ymir.claremont.edu
+       S: 250 dbc.mtview.ca.us says hello
+        ...
+
+       表明：服务器SMTP只执行在[5]中定义的SMTP命令。
+
+ (2)   另一种交互方式:
+
+       S: <wait for connection on TCP port 25>
+       C: <open connection to server>
+       S: 220 dbc.mtview.ca.us SMTP service ready
+       C: EHLO ymir.claremont.edu
+       S: 250-dbc.mtview.ca.us says hello
+       S: 250-EXPN
+       S: 250-HELP
+       S: 250-8BITMIME
+       S: 250-XONE
+       S: 250 XVRB
+        ...
+
+       表明服务器SMTP也执行SMTP的EXPN和HELP命令，一个标准服务扩展（8BITMIME），
+和两个非标准及未注册的服务扩展（XONE 和 XVRB）。
+
+(3)	最后，不支持SMTP服务扩展的服务器表现如下：
+ 
+       S: <wait for connection on TCP port 25>
+       C: <open connection to server>
+       S: 220 dbc.mtview.ca.us SMTP service ready
+       C: EHLO ymir.claremont.edu
+       S: 500 Command not recognized: EHLO
+        ...
+
+       响应“500”表示服务器SMTP未完成所发的命令。客户端可以发HELO命令，并象RFC821
+里规定的一样进行。见section 4.7的附加讨论。
+
+9. 安全考虑
+本建议本身不构成安全问题，也不会影响现存的安全设置。采用这个算法的服务器保证
+HBA 的内容能在网络上传送，这个消息能防止窜改。因为对 HBA 的篡改会导致一些或者
+所有客户拒绝服务。
+    RFC不讨论安全性问题，也不认为可以提高已有的电子邮件系统以及完全遵从RFC-821
+系统的安全系数。它不提供通过响应EHLO命令而得到的服务器的邮件能力。但是，RFC定义
+的服务扩展的任何初始状态的声明所提供的信息可由传输和递送邮件是所需要的动词的选择
+性中容易的推出。其他RFC中描述的服务扩展的安全性的含义针对各自的RFC.
+10. 鸣谢
+本文综合了很多人的思想以及意见和建议。Randall Atkinson, Craig Everhart, Risto 
+Kankkunen 和 Greg Vaudreuil 合作，向我们贡献了足够多的想法和文字材料。Harald 
+Alvestrand, Jim Conklin, Mark Crispin, Frank da Cruz, 'Olafur Gudmundsson, Per   
+Hedeland, Christian Huitma, Neil Katin, Eliot Lear, Harold A. Miller, Keith Moore, 
+John Myers, Dan Oscarsson, Julian Onions, Rayan Zachariassen 以及整个IETF SMTP
+工作组向我们提供了重要的建议，文字材料或鼓励。当然，并没有人负责对这里提到的综合
+想法作出回答。确实，在某种情况下，对一个特定批评的回答即为这个问题的特定性，而不
+是从根本的包括一个完整的不同的解决方法。
+11. 参考文献
+   [1] Postel, J., "Simple Mail Transfer Protocol", STD 10, RFC 821,
+       USC/Information Sciences Institute, August 1982.
+
+   [2] Crocker, D., "Standard for the Format of ARPA Internet Text
+       Messages", STD 11, RFC 822, UDEL, August 1982.
+
+   [3] Borenstein, N., and N. Freed, "Multipurpose Internet Mail
+       Extensions", RFC 1521, Bellcore, Innosoft, September 1993.
+
+   [4] Moore, K., "Representation of Non-ASCII Text in Internet Message
+       Headers", RFC 1522, University of Tennessee, September 1993.
+
+   [5] Braden, R., "Requirements for Internet Hosts - Application and
+       Support", STD 3, RFC 1123, USC/Information Sciences Institute,
+       October 1989.
+
+12. 主席，编辑及作者地址
+   John Klensin, WG Chair
+   MCI
+   2100 Reston Parkway
+   Reston, VA 22091
+
+   Phone: +1 703 715-7361
+   Fax: +1 703 715-7436
+   EMail: klensin@mci.net
+
+   Ned Freed, Editor
+   Innosoft International, Inc.
+   1050 East Garvey Avenue South
+   West Covina, CA 91790
+   USA
+
+   Phone: +1 818 919 3600
+   Fax: +1 818 919 3614
+   EMail: ned@innosoft.com
+
+   Marshall T. Rose
+   Dover Beach Consulting, Inc.
+   420 Whisman Court
+   Moutain V
+RFC1869――SMTP Service Extensions                                 SMTP服务扩展
+
+
+
+1
+RFC文档中文翻译计划

@@ -1,0 +1,36 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：陈贵敏（efoxxx   efoxxx@263.net）
+译文发布时间：2001-7-1
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         A. Bhushan
+Request for Comments: 69                                          M.I.T.
+Updates: 52                                                 22 Sept. '70
+
+
+MIT 的分布式列表变化 
+（RFC69 ――Distribution List Change for M.I.T.） 
+
+
+请从您的分布式列表中删除掉我的名字，并加入Albert Vezza 先生的名字。他的地址
+是：
+
+                  Mr. Albert Vezza               M.I.T.
+                  Rm 831 - Project MAC           (617) 864-6900
+                  545 Technology Square          X5877
+                  Cambridge. Mass. 02139
+
+       [ This RFC was put into machine readable form for entry ]
+          [ into the online RFC archives by Ted Fischer 1/97 ]
+
+RFC69 ――Distribution List Change for M.I.T.                  MIT 的分布式列表变化
+
+
+1
+RFC文档中文翻译计划

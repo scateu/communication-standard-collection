@@ -1,0 +1,46 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：yh_2001（yh_2001   sflu@netbig.com）
+译文发布时间：2001-4-2
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+
+Network Working Group                         A. G. Nemeth
+Request for Comments: 43                      M.I.T. Lincoln Laboratory
+                                              8 April 1970
+
+
+RFC43 会议提议
+（RFC 43  Proposed Meeting）
+    
+    1970年5月8日（星期五）上午9:30,一场会议在M.I.T.林肯实验室被提议。描写终端支持处理TSP (Terminal Support Processor)系统上的本地交互语言LIL(Local Interaction Language)将被介绍。
+
+    TSP系统的目的是给网络用户提供更加灵活的I/O性能。为了实现最大的灵活性，此系统是用户可在叫做LIL的解释语言上编程。
+
+    LIL不但适当的原始操纵树结构（如交互图表）而且是面向I/O的消息。这种语言最一般的意义部分在于被使用在指定I/O操纵者和显示结构。
+
+    在ARPA网络之外操纵交互式程序将在下面讨论。
+
+    这个会议被计划为一个工作组，每个成员将发送或多或少积极而感兴趣的个人独特见解。在LIL工作文档上有关每周预先感兴趣的东西将被邮寄。
+
+    任何人在参加和（或）收到这个文档感兴趣时都要联系在勒星顿林肯实验室里的A. G. Nemeth (x7354)或 J. Forgie (x7173)  02173, (617) 862-5500.
+
+
+
+
+
+[This RFC was put into machine readable form for entry into the RFC archives by Glenn Forbes Fleming Larratt]
+
+December 27, 1996
+RFC 43  Proposed Meeting                                            RFC43 会议提议
+
+
+
+1
+
+
+1
+ＲＦＣ文档中文翻译计划
+
+

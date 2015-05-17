@@ -1,0 +1,521 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：徐继伟（bille bill_e@sina.com）
+译文发布时间：2001-7-4
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                      H. Alvestrand
+Request for Comments: 3066                                 Cisco Systems
+BCP: 47                                                     January 2001
+Obsoletes: 1766
+Category: Best Current Practice
+
+
+
+
+语言鉴定标签
+（Tags for the Identification of Languages）
+本备忘录的状态
+
+   This document specifies an Internet Best Current Practices for the
+   Internet Community, and requests discussion and suggestions for
+   improvements.  Distribution of this memo is unlimited.
+
+版权公告
+
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+摘要
+    
+这个文档描述了一种语言标签，用来说明用在信息对象领域的语言，怎样为此语言标签
+注册值，以及如何来构造这种语言标签的匹配。
+1． 介绍	2
+2． 语言标签	2
+2．1 语言标签语法	2
+2．2 语言标签来源	3
+2．3 语言标签的选择	5
+2．4 语言标签的意义	6
+2．5 语言范围	6
+3． 语言标签的IANA 注册过程	7
+4．安全因素	9
+5． 符号集合问题	9
+6. 鸣谢	9
+7．作者地址	10
+8．参考文献	10
+附录A:	11
+附录B:	12
+版权声明	12
+
+1． 介绍
+    
+在我们这个星球上生存的人，过去的、现在的，已经使用了很多种语言。有很多原因使
+得我们必须在传送信息时确认所使用的语言。
+
+在有些时候，用多于一种语言描述信息也可行的，或者当提供了工具（比如字典）来辅
+助理解时也是可行的。
+
+另外，很多类型的信息处理都需要相应语言的知识，以便明确的阐释信息，进行处理；
+例如，拼写检查，计算机合成语音，布莱叶盲文，或者是高质量打印图像。
+
+一种说明所使用的语言的方法是，在信息内容中加入语言标识符。
+
+这篇文档指定了一种标识符机制，一种为标识机制注册值的功能（函数），并构造了与
+那些值的匹配。
+
+本文档中的部分关键字"MUST","MUST NOT","REQUIRED","SHALL","SHALL 
+NOT","SHOULD","SHOULD NOT","RECOMMENDED"和"MAY" 已经在RFC2119中有了说
+明。
+
+2． 语言标签
+
+2．1 语言标签语法
+
+这种语言标签是由一或几部分构成的：一个主要语言辅标签（subtag），一系列（可能
+是空的）副标签(subsequent subtags)。 这种标签的语法（见rfc2234）是：
+
+Language-Tag = Primary-subtag *( "-" Subtag )
+
+    Primary-subtag = 1*8ALPHA
+
+    Subtag = 1*8(ALPHA / DIGIT)
+
+以上的ALPHA和DIGIT引自rfc2234; 他们分别表示从A 到 Z 的所有字母（大写或小
+写）和数字0到9，"-"表示HYPHEN-MINUS（减号短划）(ABNF:%x2D)。
+
+所有的标签都被忽略大小写；他们中的一些有着大小写的习惯，但并不表示任何意义。
+例如，[ISO 3166]推荐国家表示码用大写（MN Mongolia），然而[ISO 639]推荐语言码用小
+写（mn Mongolian）。
+
+2．2 语言标签来源
+
+根据本文档第三部分的规定，语言标签的名字域由IANA(Internet Assigned Numbers 
+Authority，见[rfc 2860])管理。
+
+下列规则适用于主要的标签：
+
+-根据ISO 标准639中的分配，所有的含2个字母的标签被解释为，“表示语言中的名
+称”（见[ISO 639]），或是稍后被分配为维护和调节的标准体（注意，有一处校正尚未完成，
+它将在ISO 639-1:2000中发布）。
+
+-根据IOS标准639中第二部分的分配，所有的含3个字母的标签被解释为，“表示语言
+名称―2：Ahpha-3 code（见ISO 639-2）“，或者稍后被分配为维护和调节的标准体（也在
+ISO 639-2中有说明）。
+
+-值I 被保留用作IANA定义的注册值；
+
+-值X被保留为私用，所以X就不能被IANA注册。
+
+-除非要修改这个标准，其他的值不可分配。
+
+保留所有其他标签值的原因，是要为ISO 639 标准的修改留有余地；用I和X是我们
+为扩展这个机制，以适应我们需求所能使用的最小权限。
+
+下列规则适用于第二标签（subtag）：
+
+-根据ISO 3166 alpha-2 的国家标识码（见[ISO 3166]），所有的含2个字母的标签被
+阐释，或是稍后被分配为维护和调节的标准体，表示这个语言所在的区域。
+
+-根据本文档的第五部分，含3至8个字母的标签可以通过IANA注册。
+
+-除非本标准被修改，只含1个字母的标签不可用。
+
+除以上提到的标签，第二标签（second subtag）之外，没有对第三标签（third tag）
+以及之后的标签的语法规定。
+
+由本章所分配阐释的代码构造的标签在使用前不需要IANA注册。
+
+标签中的信息可以是：
+
+-国家鉴定，例如en-US（这种用法在ISO 639中有详细说明）。
+
+-方言及变体信息，例如en-scouse.
+
+-没有在ISO 639中列出的语言，也不是变体信息的，可以在它前面加前缀i注册，例
+如I―tsolyani.
+
+-区域鉴定，例如sgn-US-MA(马莎的葡萄园手势语,被发现于美国马萨诸塞的州)。
+
+这篇文档在第三部分描述了标签的注册过程。
+
+ISO 639中定义了一种对语言的添加和更新的维护机构，也就是：
+
+      International Information Centre for Terminology (Infoterm)
+        P.O. Box 130
+        A-1021 Wien
+        Austria
+
+        Phone: +43 1 26 75 35 Ext. 312
+        Fax:   +43 1 216 32 72
+
+ISO 639-2 也同样定义了一种对语言的添加和更新的维护机构：
+
+     Library of Congress
+        Network Development and MARC Standards Office
+        Washington, D.C. 20540
+        USA
+
+        Phone: +1 202 707 6237
+        Fax:   +1 202 707 0115
+        URL: http://www.loc.gov/standards/iso639
+
+ISO 3166维护机构：
+
+      
+        ISO 3166 Maintenance Agency Secretariat
+        c/o DIN Deutsches Institut fuer Normung
+        Burggrafenstrasse 6
+        Postfach 1107
+        D-10787 Berlin
+        Germany
+
+        Phone: +49 30 26 01 320
+        Fax:   +49 30 26 01 231
+        URL: http://www.din.de/gremien/nas/nabd/iso3166ma/
+
+ISO 3166 保留了国家标识码AA, QM-QZ, XA-XZ 和 ZZ 分配给用户，这些不可用作语
+言标签。
+
+2．3 语言标签的选择
+
+我们可能会偶尔遇到同样的文本有几种可能的标签的情况。
+
+如果所有的用户发送同样的标签，在所有的文档中使用同一种语言的标签，那将是再好
+不过的事了。如果应用程序有需要使这些规则在特定场合不适用，则应用协议必须指明是如
+何变化的。
+
+下面几点基于为标注的实体所知的标签的集合：
+
+1．	使用最精确的标签，使意义明确，并且在一定范围内适用；
+
+2．	如果一种语言同时拥有ISO 639-1 的2字母码和ISO 639-2 的3字母码，必须应
+用由ISO 639-1衍生的2字母码。
+
+3．	当一种语言没有ISO 639-1 的2字母码，并且ISO 639-2/T(Terminology)码和ISO 
+639-2/B(Bibliographic)码不同，必须使用Terminology(术语)码。注意：目前，
+所有的语言都包含2字母码，并且开发者（对于这一点的不快）已经适当的与ISO
+取得了联系，所以，我们不希望这种情况发生。
+
+4．	当一种语言同时有两种标签，一个是IANA-registered 标签，另一个是从ISO注册
+码衍生而来（的标签）时，你必须要使用ISO 标签。注意：当这种情况发生时，
+IANAregistered 标签应立即被否决（禁止使用）。
+
+5．	你不应该是用UND（未经决定的）（标签）代码，除非应用协议迫使你给语言标签赋
+值，甚至于这种语言根本不被人所知时，省略标签将是较好的选择。
+
+6．	你不应该使用MUL（多重）标签，如果协议允许你应用多重语言。
+
+注意：为了避免应用中的版本危机（如RFC 1766中提到的那样），ISO 639 
+RA-JAC(Registration Authority Joint Advisory Committee)已经在以下决策问题上
+达成了共识：
+
+  “在ISO/DIS 639-1作为国际标准颁布以后，所有的新的2字节码均不可以被加入
+ISO 639-1中，除非某个3字节码也同时被加入ISO 639-2中。除此之外，在没有相应
+的合法2字节码时，3字节码也同样无效。“
+
+这将是一种保证。例如，一个用户应用"hwi"(hawaiian)（它不包含2字节码），他或
+她将不会发现自己的数据因为最后加入的2字节码而变得无效。
+
+2．4 语言标签的意义
+
+语言标签总是定义一种语言，作为口语（书写语，标志，或者是信号）供人类进行交流
+与传递信息。计算机语言比如程序设计语言被明确的排除在外。没有什么可以保证有同样标
+签的语言之间的关系；特别地，也不能保证它们（语言）见可以相互理解，尽管有时是可以
+的。
+
+标签和他所依存的信息之间的关系，在上下文中出现的地方有标准的定义和描述；因此，
+这一部分只给出一些可用的例子。
+
+--作为一个单一的信息对象，他被认为是一种需要完整对象理解的语言集合。
+  例如，普通文本文件。
+
+--作为信息对象的聚集，他被认为是聚集的内部构件语言的集合。
+  例如，文档士多和图书馆。
+
+--作为提供选择的信息载体，标签和与之联系的集合应该被认为是一种提示，被提示的
+内容是用不同语言描述的；并且要检查每一种选择，以便确定它所用的语言。在这种情况下，
+多重语言的标签并不意味着它需要多种语言才能使得文档被人理解。
+  例如，MIME multipart/alternative.
+
+--在标记语言中，例如HTML 和 XML中，语言信息可以被加入到文档的每一部分当中去
+（包括整个文档本身）。
+  例如，你可以写下<span lang="FR">C'est la vie.</span>一句，在一个挪威语的文档里；
+讲挪威语的用户就可以通过一本French- Norwegian词典弄懂它的意思。如果一个用户通过
+语音合成接口来收听这篇文档，它的格式能被用来发信号给合成器，适当地使用法国的文本
+到语音的发音规则 ,而不误用挪威的规则。
+
+2．5 语言范围
+
+自从RFC 1766发布以来，就有需要建立一个有公共subtsg标签的语言集合，这已经变
+得很明显了。
+
+以下的语言范围定义是有HTTP/1.1衍生而来的[见RFC 2616].
+
+         language-range  = language-tag / "*"
+
+也就是，语言范围有着与语言标签相同的句法，或者说就是符号“*”。
+
+语言范围与语言标签匹配，如果他和标签完全相同，或者，如果它和语言标签有完全相
+同的前缀，以至紧跟前缀的符号就是“-”。
+
+特殊的范围“*”和任何标签匹配。
+
+使用语言范围的某个协议会为 * 的语法制定一个附加规则，例如，HTTP/1.1 指定，* 只
+与那些不与其他的包含在"Accept-Language:"头（header）声明的语言匹配。
+
+注意：这种前缀匹配的规则的使用并不意味着语言标签也以这样的方式（即如果一个用
+户理解了一种特定的标签语言，那么，他将理解所有的以这种标签为前缀的语言）被分配到
+具体的语言，既不总是那么容易触类旁通的。一般来讲，前缀规则允许用户用这种前缀标签，
+在适当条件下。
+
+3． 语言标签的IANA 注册过程
+
+任何人想要使用标签，包括在本文档2。2章没给出解释的，和已经注册IANA的，都必
+须要用到这里给出的过程。
+
+这个过程也可以用来注册IANA信息（关于前面定义的标签），例如，如果有一个用户想
+要定义一个可被公众接受的关于像sgn-US(American Sign Language)这样的语言的参考书
+时，就可用到它。
+
+有第一个subtag即是"x"的标签不需要也不能注册。
+
+注册的过程从填写下面的注册表单开始：
+
+
+
+
+LANGUAGE TAG REGISTRATION FORM
+
+   Name of requester          :                  
+ //姓名
+
+   E-mail address of requester:                 
+  //电子邮件url
+
+   Tag to be registered       :                 
+   //要注册的标签
+
+   English name of language   :             
+      //语言的英文名
+
+   Native name of language (transcribed into ASCII):
+//本国语言名
+
+   Reference to published description of the language (book or article):
+//参考资料
+
+   Any other relevant information:               
+    //其他相关信息
+
+
+
+
+
+在提交给IANA之前，这份表格必须要被发送到 ietf-languages@iana.org 接受为期两
+个星期的评论（这是一份公开列表，附加的请求请寄到 
+ietf-languages-request@iana.org 。
+
+当两星期过去以后，这个标签的审查人（由IETF Applictions Area Director 指派的）
+或者将您的请求提交给 IANA@IANA.ORG ,或者因为表上存在的重大异议而拒绝它。注意，
+评论人可以自行提议反对意见，如果他想这样做。重要的事是所提出的反对意见必须要公
+开可见。
+
+申请人有修改被拒绝的申请，并在次提交的自由；只需再次执行为期2个星期的评论期。
+
+评论人的评定可以在同样规则下，像其他IETF评定[RFC 2026]一样，被呼吁到IESG[RFC 
+2028].所有的注册表单都可以在线填写，http://www.iana.org/numbers.html ，在
+languages 页中。
+
+注册的更新过程与注册过程相同，语言标签评论人决定是否允许一个新的注册人更新由
+其他人注册的信息；正常情况下，原来的注册者的反对将在这个决定中有额外的重量。
+
+不存在注册的删除；当一些注册的标签不再被使用时，例如，因为一个相应的ISO 639
+代码已经被注册，注册将被修改（加上一个标记，例如DEPRECATED: use <new code> 
+instead，到other relevant information 的部分）。
+
+注意：“出版描述（PUBLISHED DESCRIPTION）"的目的是帮助人们证实是否一种语言已
+经被注册了，或者帮人们知道一个特别的标签指的是什么。大多数情况下，一个某种语言
+权威的语法或词典将是很有用的；再没有这些（语法资料或词典）时，其他的熟知的描述
+这种语言的方式也是可用的。语言标签评论人决定什么将构成一份足够好的参考资料。
+
+4．安全因素
+    
+关于语言标签安全问题的唯一的一份论文（自RFC 1766 发布以来），声明了“安全问
+题必将与此备忘录无关“，也讲到了关于语言范围的令人满意的协商结论――忽略发送者的
+国籍，也因此为监视确定了潜在的目标。
+
+一个问题的特殊情形是，你所发送的任何信息对接受方来说都是可见的；有所意识（这
+样的情形会发生）是有好处的。
+
+对额外威胁和可能的反措施的估计，将是每个应用协议的责任了。
+5． 符号集合问题
+
+语言标签可以总是以A-Z,a-z,0-9,和连词符号（HYPHEN-MINUS）表示，所以在语言标
+签的表示上不会有字符集合的问题争论。
+
+决定语言标签所使用的字符集的问题在这个备忘录中没有提到；然而，作出一个适于所
+有情况的正确的决定被认为将是不可能的，除非在文中更换语言时有相应的定义。（当决定
+一个引擎的字体是中文或是日文时，就会产生次最佳输出，就会遇到中日文混合的文本）。
+
+6. 鸣谢
+
+     This document has benefited from many rounds of review and comments
+   in various fora of the IETF and the Internet working groups.
+
+   Any list of contributors is bound to be incomplete; please regard the
+   following as only a selection from the group of people who have
+   contributed to make this document what it is today.
+
+   In alphabetical order:
+
+   Glenn Adams, Tim Berners-Lee, Marc Blanchet, Nathaniel Borenstein,
+   Eric Brunner, Sean M. Burke, John Clews, Jim Conklin, Peter
+   Constable, John Cowan, Mark Crispin, Dave Crocker, Mark Davis, Martin
+   Duerst, Michael Everson, Ned Freed, Tim Goodwin, Dirk-Willem van
+   Gulik, Marion Gunn, Paul Hoffman, Olle Jarnefors, Kent Karlsson, John
+   Klensin, Alain LaBonte, Chris Newman, Keith Moore, Masataka Ohta,
+   Keld Jorn Simonsen, Otto Stolz, Rhys Weatherley, Misha Wolf, Francois
+   Yergeau and many, many others.
+
+   Special thanks must go to Michael Everson, who has served as language
+   tag reviewer for almost the complete period since the publication of
+   RFC 1766, and has provided a great deal of input to this revision.
+
+7．作者地址
+
+     Harald Tveit Alvestrand
+   Cisco Systems
+   Weidemanns vei 27
+   7043 Trondheim
+   NORWAY
+
+   Phone: +47 73 50 33 52
+   EMail: Harald@Alvestrand.no
+
+8．参考文献
+
+     [ISO 639]   ISO 639:1988 (E/F) - Code for the representation of names
+               of languages - The International Organization for
+               Standardization, 1st edition, 1988-04-01 Prepared by
+               ISO/TC 37 - Terminology (principles and coordination).
+               Note that a new version (ISO 639-1:2000) is in
+               preparation at the time of this writing.
+
+   [ISO 639-2] ISO 639-2:1998 - Codes for the representation of names of
+               languages -- Part 2: Alpha-3 code  - edition 1, 1998-11-
+               01, 66 pages, prepared by a Joint Working Group of ISO
+               TC46/SC4 and ISO TC37/SC2.
+
+   [ISO 3166]  ISO 3166:1988 (E/F) - Codes for the representation of
+               names of countries - The International Organization for
+               Standardization, 3rd edition, 1988-08-15.
+
+   [RFC 1327]  Kille, S., "Mapping between X.400 (1988) / ISO 10021 and
+               RFC 822", RFC 1327, May 1992.
+
+   [RFC 1521]  Borenstein, N., and N. Freed, "MIME Part One: Mechanisms
+               for Specifying and Describing the Format of Internet
+               Message Bodies", RFC 1521, September 1993.
+
+   [RFC 2026]  Bradner, S., "The Internet Standards Process -- Revision
+               3", BCP 9, RFC 2026, October 1996.
+
+   [RFC 2028]  Hovey, R. and S. Bradner, "The Organizations Involved in
+               the IETF Standards Process", BCP 11, RFC 2028, October
+               1996.
+
+   [RFC 2119]  Bradner, S."Key words for use in RFCs to Indicate
+               Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RFC 2234]  Crocker, D. and P. Overell, "Augmented BNF for Syntax
+               Specifications: ABNF", RFC 2234, November 1997.
+
+   [RFC 2616]  Fielding, R., Gettys, J., Mogul, J., Frystyk, H.,
+               Masinter, L., Leach, P. and T. Berners-Lee, "Hypertext
+               Transfer Protocol -- HTTP/1.1", RFC 2616, June 1999.
+
+   [RFC 2860]  Carpenter, B., Baker, F. and M. Roberts, "Memorandum of
+               Understanding Concerning the Technical Work of the
+               Internet Assigned Numbers Authority", RFC 2860, June
+2000.
+
+附录A:
+               Language Tag Reference Material
+
+   The Library of Congress, maintainers of ISO 639-2, has made the list
+   of languages registered available on the Internet.
+
+   At the time of this writing, it can be found at
+   http://www.loc.gov/standards/iso639-2/langhome.html
+
+   The IANA registration forms for registered language codes can be
+   found at http://www.iana.org/numbers.html under "languages".
+
+   The ISO 3166 Maintenance Agency has published Web pages at
+
+   http://www.din.de/gremien/nas/nabd/iso3166ma/
+
+附录B:
+                Changes from RFC 1766
+
+   - Email list address changed from ietf-types@uninett.no to ietf-
+     languages@iana.org
+
+   - Updated author's address
+
+   - Added language-range construct from HTTP/1.1
+
+   - Added use of ISO 639-2 language codes
+
+   - Added reference to Library of Congress lists of language codes
+
+   - Changed examples to use registered tags
+
+   - Added "Any other information" to registration form
+
+   - Added description of procedure for updating registrations
+
+   - Changed target category for document from standards track to BCP
+
+   - Moved the content-language header definition into another document
+
+-	Added numbers to the permitted characters in language tags
+
+版权声明
+
+     Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+感谢
+Internet 协会为此RFC编辑功能提供支持。
+
+
+RFC3066――Tags for the Identification of Languages                    语言鉴定标签
+
+
+1
+RFC文档中文翻译计划

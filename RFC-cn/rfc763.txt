@@ -1,0 +1,22 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang  guodagang@163.net）
+译文发布时间：2001-3-27
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+Network Working Group                                           Marshall Abrams
+Request for Comments:  763                                                   NBS
+                                                                        7 May 80
+角色邮箱
+（ROLE MAILBOXES）
+有时候，有必要把一封邮件发送给网上的某个人，而对于这个人，我们只知道他的职位。这种邮件常常会由于雇员更新而导致无法投递。
+在NBS中，我们也会遇到这种问题， 因此已经创建了邮件（MAIL0地址同义字（诸如SYSTEMS、MANAGEMENT和LIAISON），来确保正确地分发邮件，无论这个职位具体是谁。
+建议为所有系统建立MAIL地址同义字。此外，建议NIC或者ARPANet的管理部门选择一套标准的同义字，从而可以增加更多的功能。
+RFC763――ROLE MAILBOXES                                                            角色邮箱
+
+
+
+
+1
+RFC文档中文翻译计划
+

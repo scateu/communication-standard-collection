@@ -1,0 +1,910 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：王安鹏（anpengwang    anpengwang@263.net）
+译文发布时间：2002-1-9
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+Network Working Group                                   T. Showalter
+Request for Comments: 3028                               Mirapoint, Inc.
+Category: Standards Track                                 January 2001
+
+滤网：一种邮件过滤语言
+（RFC3028――Sieve: A Mail Filtering Language）
+本备忘录的状态
+本备忘录为Internet社区描述了一种Internet标准跟踪协议，需要讨论和建议以进一步
+改进，关于本协议的便转化进程和状态请参阅“Internet正式协议标准”（STD 1）。本备忘录
+的发布没有限制。
+版权信息
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+摘要
+本文档描述了一种语言，用于在最终递交时过滤电子邮件，可以同时用于客户端和服务
+器端。设计的目标是易于扩展、应用简便，并独立于访问协议、邮件架构和操作系统。这种
+语言适合于在那些不允许用户执行任何程序的邮件服务器上运行，比如暗箱Internet消息访
+问协议（IMAP）服务器，它不允许使用变量和循环结构，也不能调用外部程序。
+
+
+目录
+1. 简介	2
+1.1.  本文档使用的约定	3
+1.2.  邮件消息样例	3
+2.  设计	4
+2.1.  语言的形式	4
+2.2.  空白字符	4
+2.3.  注释	5
+2.4.  文字数据	5
+2.5.  测试	6
+2.6.  参数	6
+2.7.  字符串的比较	7
+2.8.   块	8
+2.9.   命令	9
+2.10.  求值	9
+3.  控制命令	10
+3.1.  控制结构if	10
+3.2.  控制结构Require	11
+3.3.  控制结构Stop	11
+4.   动作命令	11
+4.1.    拒收（reject）	11
+4.2.  转存（fileinto）	12
+4.3.  转发（redirect）	12
+4.4.  保存（keep）	12
+4.5.    丢弃（discard）	12
+5．测试命令	13
+5.1.   地址测试（address）	13
+5.2.   与测试（allof）	13
+5.3.   或测试（anyof）	14
+5.4.    信封测试（envelope）	14
+5.5.  存在测试（exists）	14
+5.6.   false测试	15
+5.7.   头测试（header）	15
+5.8.   非测试（not）	15
+5.9.   长度测试（size）	15
+5.10.  true测试	15
+6.  扩展特性	16
+6．1功能描述串	16
+6.2.  IANA方面的问题	16
+6.3.    功能迁移	17
+7.   传输	17
+8.      解析（Parsing）	18
+8.1.    词法记号	18
+8.2.  语法	19
+9.  扩展的例子	20
+10.   安全性问题	21
+11.  鸣谢	21
+12.  作者地址	22
+13.  参考	22
+14. 版权声明	23
+
+
+1. 简介
+本文提出了一种可用于实现电子邮件过滤的语言，不依赖于任何操作系统或者邮件框
+架。这种语言要求消息必须符合[IMAIL]标准，但是把这一规范推广到许多其他的系统。这
+种语言具有强大的功能，但是为了保证服务器过滤系统的安全而作了一些限制。这样做的目
+的是除了编写简单的邮件过滤器（可以很方便地建立过滤器的图形用户界面），避免用户做
+更复杂的（危险的）操作。这种语言还不完备，不能编写循环语句，也没有提供变量和函数。
+用滤网编写的描述程序在最终完成递送的时候――就是说邮件要移动到用户可以访问
+的邮箱时执行。在MTA完成最后递交工作的系统中，比如传统的UNIX邮件系统，MTA最
+终把邮件堆放到用户信箱中时还要作适当的排序处理。
+使用邮件过滤有多方面的原因。随着电子邮件的普及，主动邮件如广告的出现以及邮件
+列表的大量使用，许多用户遇到了邮件拥塞的问题。卡内基.梅隆的经历表明，只要存在可
+用的过滤系统，许多人都会使用它来滤掉来自特定用户或列表的消息。但是由于设置困难，
+许多人并没有使用安德鲁系统的FLAMES过滤语言。因此为了使用户方便地使用过滤，这
+种语言设计的尽量简单，但同时又具有足够的能力完成工作。对于多数用户而言，最好是提
+供一种图形用户界面的过滤编辑器。
+
+1.1.  本文档使用的约定
+这一节说明本文中涉及到的各种关键字和操作符的明确含义，约定如下。
+文中关键字“MUST”、“MUST NOT”、“SHOULD”、“SHOULD NOT”和“MAY”的
+含义按照[KEYWORDS]的解释。在描述命令（测试、动作或控制结构）时都有一行以“语
+法：”开始，说明命令的语法，包括命令名和参数。不能缺少的参数放在一对尖括号内，可
+选参数则放在一对方括号内。每个参数后面都跟着数据类型，比如“<key: string>”表示一
+个字符串类型的参数key。与[ABNF]类似，文字串用引号表示，转义字符使用斜杠标志，允
+许使用括号进行组合。
+在语法描述中，经常会遇到一些语法片段，如MATCH-TYPE、COMPARATOR和
+ADDRESS-PART，详细含义参见后述。第10节所描述的形式命令语法仅仅作为构造命令的
+权威参考，但是形式语法没有规定命令形式参数的顺序、语义、个数和类型，也没有规定哪
+些命令名是合法的，形式语法的意义在于以后对该语言进行扩展时可以保证语法的一致性。
+
+1.2.  邮件消息样例
+下面是本文所使用的邮件样例。
+   Message A
+   -----------------------------------------------------------
+   Date: Tue, 1 Apr 1997 09:06:31 -0800 (PST)
+   From: coyote@desert.example.org
+   To: roadrunner@acme.example.com
+   Subject: I have a present for you
+
+   Look, I'm sorry about the whole anvil thing, and I really
+   didn't mean to try and drop it on you from the top of the
+   cliff.  I want to try to make it up to you.  I've got some
+   great birdseed over here at my place--top of the line
+
+   stuff--and if you come by, I'll have it all wrapped up
+   for you.  I'm really sorry for all the problems I've caused
+   for you over the years, but I know we can work this out.
+   --
+   Wile E. Coyote   "Super Genius"   coyote@desert.example.org
+   -----------------------------------------------------------
+
+   Message B
+   -----------------------------------------------------------
+   From: youcouldberich!@reply-by-postal-mail.invalid
+   Sender: b1ff@de.res.example.com
+   To: rube@landru.example.edu
+   Date:  Mon, 31 Mar 1997 18:26:10 -0800
+   Subject: $$$ YOU, TOO, CAN BE A MILLIONAIRE! $$$
+
+   YOU MAY HAVE ALREADY WON TEN MILLION DOLLARS, BUT I DOUBT
+   IT!  SO JUST POST THIS TO SIX HUNDRED NEWSGROUPS!  IT WILL
+   GUARANTEE THAT YOU GET AT LEAST FIVE RESPONSES WITH MONEY!
+   MONEY! MONEY! COLD HARD CASH!  YOU WILL RECEIVE OVER
+   $20,000 IN LESS THAN TWO MONTHS!  AND IT'S LEGAL!!!!!!!!!
+   !!!!!!!!!!!!!!!!!!111111111!!!!!!!11111111111!!1  JUST
+   SEND $5 IN SMALL, UNMARKED BILLS TO THE ADDRESSES BELOW!
+   -----------------------------------------------------------
+
+2.  设计
+2.1.  语言的形式
+该语言由一系列命令组成，命令由多个空白字符分隔的记号组成。命令标识符是第一个
+记号，后面可以有多个参数记号（也可以没有），参数可以是文字数据、标签、命令块或者
+测试命令。该语言用UTF-8表示，ASCII记号区分大小写。
+2.2.  空白字符
+空白字符用于分隔记号，包括制表符、新行字符（CRLF，不能只使用CR或LF）和空
+格，不考虑空白字符的个数。
+2.3.  注释
+该语言提供了两种类型的注释，注释在语义上与空白字符是等效的，空白字符可以出现
+的地方都可以使用注释（只有一个例外，即多行字符串，参见后述）。第一种格式是使用一
+个井号字符“#”（必须在表示字符串的引号外），后面的字符串直到下一个回车换行符都被
+视作注释内容。例如： if size :over 100K { # this is a comment discard; }。第二种方法是使用
+记号“/*”和“*/”（不能在字符串引号内），这样的注释可以是多行的，但不能嵌套，如：
+ if size :over 100K { /* this is a comment
+           this is still a comment */ discard /* this is a comment
+           */ ;
+ }
+2.4.  文字数据
+文字是指作为命令参数的非执行数据，仅仅就其本身取值，仅限于数字和字符串。
+2.4.1. 数字
+数字是普通的十进制数， 不过那些很大的数值比如消息的长度后面可以加上表示2的
+幂的字符“K”、“M”或者“G”。它们的含义按照通常使用的国际单位制，K表示千或1024，
+M表示百万或1048576，G表示十亿或1073741824（2的30次幂）。具体的实现至少要提供
+31bit的量级，本规范只使用正整数。
+2.4.2. 字符串
+该描述语言在很多地方要使用字符串，比如模式匹配、地址以及文本体等等。一般来说，
+大多数情况下使用引号括起来的短字符串就足够了，但是还提供了一种适用于长字符串如消
+息体的字符串格式。引号字符串开始和结束都是双引号字符（ASCII 34）引号字符串中可以
+包含反斜杠字符，但它后面必须是反斜杠或者双引号，前者表示反斜杠字符本身，后者表示
+字符串中的引号。未经定义的转义序列作为不含反斜杠的序列处理（比如“\a”就认为是“a”）。
+引号字符串中不能包含制表符、回车换行符和控制字符之类的非打印字符。引号字符串允许
+跨行，但不能包含空字符NUL（ASCII 0）。
+为了便于处理大量的文本，该语言还提供了一种多行字符串。多行字符串一“text:”和
+一个回车换行符开始，最后以回车换行、句点和回车换行符结束。为了避免与只包含一个句
+点的信息行混淆，我们采用填充法，即对于那些第一个字符是“.”的行在前面再人为增加
+一个额外的“.”。服务器对这样的描述语句解释时再把多余的句点去掉。注意，对于以句点
+开头但后面跟着的字符不是“.”的行，不作为句点填充处理，就是说“.foo”仍然是“.foo”。
+由于这种情况有可能造成混乱，因此编辑器必须正确的处理句点填充避免出现这种情况。
+注意，在“text:”和CRLF之间可以加入斜杠开始的注释成分，但不能插入到字符串本
+身，也不允许使用“#”开始的注释。
+
+2.4.2.1. 字符串列表
+由于模式匹配经常对一组字符串进行匹配，因此许多测试命令允许使用字符串列表，只
+要测试对其中的一个字符串成立测试结果即为真。建议实现时对这种情况采用短循环求值的
+方法。比方说，对于测试命令“header :contains ["To", "Cc"] ["me@example.com", 
+"me00@landru.example.edu"]”，只要输入的消息包含邮件地址me@example.com或者
+me00@landru.example.edu中的一个，测试结果即为真。相反，只要允许使用字符串列表的
+地方，都可以使用单个的字符串，它被认为是只有一个成员的字符串列表。就是说，测试命
+令“exists "to"”和“exists ["to"]”是等价的。
+2.4.2.2. 信息头
+信息头是一个字符串子集，根据Internet消息规范[IMAIL，RFC1123]，每行信息头差不
+多任何地方都可以使用空白字符，在消息头的名称和后面的冒号之前也允许出现空白字符，
+但是消息头名称和后面冒号之间的空白字符在处理时被忽略掉。消息头名称不能包含冒号，
+比如“From”表示以“From:”或“From  :”开始的一行消息头，但是没有任何消息头与
+字符串“From:”匹配。对数据进行解释之前，跨行的消息头要合并成一行，各行位的CRLF
+以及下一行的前导空格转换成单个空格。
+2.4.2.3. 地址
+有几个处理邮件地址的命令，邮件地址也是一种特殊的字符串。如果地址字符串需要用
+于其它的应用环境，除了必须符合[IMAIL]的规定外，还有其他的限制。按照[IMAIL]第6.1
+节定义的符号，地址的语法格式为：
+   sieve-address = addr-spec                ; simple address
+                 / phrase "<" addr-spec ">" ; name & addr-spec
+就是说，地址中不能出现路由或者地址组语法，如果需要使用多个地址，必须是用字符
+串列表，而不能用命名的地址组。实现必须保证地址的语法是有效的，但不要求必须是邮件
+接收方。
+2.4.2.4. MIME部分
+在少数几个地方，[MIME]消息体部分也用字符串表示，其中包括MIME头部和消息体。
+这样就提供了一种在滤网描述语言程序中嵌入其它类型数据的方法，从而能够在输出的消息
+中使用UTF-8之外的字符集。
+2.5.  测试
+测试作为命令的参数用于控制命令的行为方式。在本文中，测试以if/elseif/else的方式
+给出，根据测试结果选择要执行的代码段。测试不能有副作用，就是说不能改变过滤器和消
+息的状态。本规范规定的测试都没有副作用，同样的限制也适用于扩展测试命令。这样做是
+因为带有副作用的测试难以阅读和维护，而且不方便通过图形用户界面生成描述语句。只有
+那些作用明确的动作才允许改变过滤器的状态。
+2.5.1.  测试列表
+有些测试可能需要多个测试参数（比如分别对应逻辑与和逻辑或的“allof”和“anyof”），
+测试列表元素提供了成组测试的方法。例如：
+if anyof (not exists ["From", "Date"],
+                   header :contains "from" "fool@example.edu") {
+                discard;
+             }
+
+2.6.  参数
+大多数命令都需要参数指明要执行的操作，参数分为三类：位置参数，标志参数和可选
+参数。
+2.6.1. 位置参数
+位置参数的含义依赖于给出的顺序，因此使用位置参数必须按照的规定的顺序给出。
+2.6.2. 标志参数
+本文档规定的标志参数以类似于Common LISP的风格给出，大多数命令行系统也采用
+相似的方式给命令传递标志。标志参数以冒号“:”开始，后面跟着参数的标识名，比如
+“:contains”。标志参数的意思是后面的各个记号（可能没有）根据前面的标识名可能有特
+殊的含义。标志参数后面的记号可以是数字或者字符串，但不能是块。标志参数与位置参数
+很相似，只不过其含义取决于标志而不是命令本身。标志参数必须出现在位置参数之前，但
+是不同的标志参数的顺序可以是任意的。为了简化规范，在命令的语法定义中并没有作此规
+定，但是只要保证出现在位置参数之前，标志参数的位置可以互相交换。标志参数和可选参
+数可以混合使用。为了简化，标志参数不能再使用标志参数作为参数。
+2.6.3. 可选参数
+可选参数与标志参数非常相似，只不过调用命令时可以不提供可选参数而采用某个缺省
+值。由于可选参数能够有效地简化描述程序，因此比标志参数用的更广泛。特别一提的是
+“:comparator”参数，这个参数用于指定字符串比较所使用的[ACAP]比较运算子，因为UTF-8
+定义的某些语言可能采用的不同的字符序。
+2.6.4. 参数类型
+简单地讲，参数可以是文字数据、测试或者命令块。从这意义上说，“if”控制结构只
+不过是以测试和命令块作为参数而且能够执行那个代码块的一个命令。但是这种笼统的提法
+从解析的观点来看可能会产生混乱，第9.2节对此给出了更明确的定义：参数是字符串列表、
+数字和标志，后面可以带有测试或测试列表，还可以带有命令块。但是测试或者测试列表以
+及命令块不能超过一个，以命令块结束的命令后面不能有分号。
+2.7.  字符串的比较
+字符串的匹配方式有多种，可以分为三种类型：完全匹配、子串匹配或通配符块方式的
+匹配，分别描述如下。为了实现不同字符集和大小写字符之间的匹配，滤网语言借用了ACAP
+的比较运算子注册。但是对于表示信息头名称的字符串之间的比较不能使用用户指定的运算
+子。信息头的比较总是使用“i;ascii-casemap”运算子，就是说这种比较是大小写敏感的，
+因为IMAIL消息规范是如此规定的。
+2.7.1. 匹配类型
+本规范使用了三种匹配类型：“:is”、“:contains”和“:matches”，可以作为标志参数传
+递给适当的命令。“:contains”类型描述的是子串匹配，只要后面的值参数中包含键参数，
+匹配的结果即为真。比如，字符串“frobnitzm”包含“frob”和“nit”，但是不含“fbm”，
+空键值（“”）是任何串值的子串。“:is”类型描述的是完全匹配，只有第一个字符串的内容
+与第二个字符串的内容完全一致时才算匹配成功，字符串“frobnitzm”仅仅与其自身匹配，
+空键值也仅仅是空键值。“:matches”则使用字符“*”和“?”规定通配符，“*”表示0或多
+个字符，“?”表示单个字符。要与这两个字符本身匹配时必须是用双斜杠进行转义，即分别
+使用“\\*”和“\\?”。前一个斜杠对第二个进行转义，两者合在一起对后面的“*”转义，
+虽然有点罗嗦，不过在一些使用团块和正则表达式的程序语言中也很常见。
+为了明确采用何种类型的匹配，可以使用标志参数“:match”、“:is”和“:contains”，如
+果没有指定匹配方式，则缺省采用“:is”。要注意，这些修饰成分与比较运算子相互作用，
+某些比较运算子无法与“:matches”和“:contains”一起工作，如果强制使用就会造成错误。
+每个命令只能使用一个匹配参数，否则就是错误的。为了方便说明，我们把匹配类型语法成
+分定义如下：
+   ":is" / ":contains" / ":matches"
+
+2.7.2.  跨字符集的比较
+滤网描述语言用UTF-8表示，但是消息中可能使用多个字符集，因此实现时应该完成
+跨字符集的比较运算。实现必须把消息头使用的字符集转换成UTF-8编码，只要两个字符
+串的UTF-8编码相等，就认为两个字符串时相同的。另外，无论是消息头还是消息体，只
+要采用[MIME]规定的形式，都应能够对其解码，包括ISO-8859-*字符集UTF-8的ASCII子
+集、US-ASCII、ISO-8859-1。如果实现上有困难，则至少要保证只要两个字符串有一个包含
+大于127的字节则两者不等。
+2.7.3.  比较运算子
+匹配类型还可以带有一个比较运算子，以实现语言无关、大小写无关的串匹配。比较运
+算子在[ACAP]中描述，ACAP定义注册项，本规范则引用那些注册项。ACAP定义了许多
+比较类型，单本规范仅仅是用相等比较。本语言的任何实现都必须支持“i;octet”运算子（简
+单的字节比较）和“i;ascii-casemap”运算子（把UTF-8的ASCII子集的大写字符和小写字
+符视作同一个字符）。如果没有明确规定，缺省使用“i;ascii-casemap”。某些比较运算子不
+适用于子串匹配，就是说只能用于“:is”匹配。如果试图对“:contains”和“:matches”使
+用不合适的运算子会造成错误。
+比较运算子用可选参数“:comparator”指定，语法如下：
+  ":comparator" <comparator-name: string>
+因此在下面的例子中，所有主题类似于“You can MAKEMONEY FAST”的消息都被丢
+弃，但是由于采用的比较运算子对大小写敏感，以“You can Make Money Fast”为主题的消
+息就会保留下来。
+ if header :contains :comparator "i;octet" "Subject"
+                "MAKE MONEY FAST" {
+                   discard;
+             }
+其他的比较运算子属于扩展类型，必须声明之后才能使用，未知的运算子会导致操作失
+败。“:matches”和“:contains”匹配类型都支持“i;octet”和“i;ascii-casemap”比较运算子。
+运算子参数在一条命令中只能给出一次。
+2.7.4.  地址之间的比较
+地址是最常使用的字符串。这种字符串是结构化的，经常需要与某个地址的本地部分和
+域地址部分进行比较，因此专门处理地址的某些测试允许带有一个额外的可选参数。这个可
+选参数可以是“:localprat”、“:domain”或“:all”，分别对地址的本地部分、域地址部分和整
+个地址进行测试。至于比较的方式，比如是否区分大小写由测试的运算子参数指定。省略的
+情况下默认使用“:all”。地址参数的语法如下：
+  ":localpart" / ":domain" / ":all"
+2.8.   块
+块是放在花括号之间的一组命令，引入块是为了使用控制结构。控制结构是一种命令，
+其参数包括测试和块两部分，根据测试的结果决定块中的代码执行多少次。本规范中提供的
+命令不包含循环结构，提供的控制结构（if、elseif和else）要么对块执行一次，要么一次也
+不执行。因此只涉及到两个参数：测试和块。
+2.9.   命令
+滤网描述程序由命令组成。命令可以使用上述任何符号作为参数，参数既可以是位置参
+数，也可以是标志参数，有些命令没有参数。命令分为三类：测试命令、动作命令和控制命
+令。最简单的是动作命令，动作命令是一个标识符，后面可以没有参数也可以有多个参数，
+动作命令以分号结束，不能以测试或者块作为参数。控制命令与此类似，但是测试命令的参
+数是一个测试，而且只能以块而不是分号结束。测试命令作为控制命令的一部分，用于确定
+是否要执行后面的块。
+2.10.  求值
+2.10.1. 动作之间的影响
+某些动作不能与其它的动作一起使用，否则结果很荒谬，本文后面还会提到。扩展的动
+作命令必须说明与本文规定的动作之间的相互作用。
+2.10.2.  隐含留存
+以前的经验表明过滤系统最好避免对大小写的区分，滤网语言采用“隐含留存”的方法
+防止误删邮件。隐含留存就是说只要某个动作没有禁止则自动把邮件保存下来。只要没有把
+邮件写入信箱、转存到其他地址或者明确地删除就执行隐含留存操作。某些动作可能需要保
+留隐含留存的操作，这些动作不会直接影响邮件的传递，但可能有这方面的副作用。本规范
+所定义的动作没有涉及这个问题，但是以后扩展中肯能要遇到。比方说，对于上面提到的短
+消息，下面的描述语句不会产生任何影响，就是说隐含留存在发挥作用。
+  if size :over 500K { discard; }
+2.10.3. 邮箱中的消息的唯一性
+实现不应把同一个消息重复投送到一个信箱，既是描述程序明确要求把一个消息两次写
+入同一个信箱。至于如何检查两个邮件是否相同取决于具体实现的定义。如果描述程序要求
+再次把某个邮件写入同一个信箱不能认为是错误。
+2.10.4. 动作数量的限制
+基于站点的管理策略，可能要对所执行操作的数量或者同时执行的操作进行限制。如果
+描述程序违反了站点对特定邮件的处理次数限制就要发生错误。实现必须避免再次发生同样
+的错误。实现至少要允许一次留存或者转存（fileinto）操作，如果不能转存，至少要能够留
+存。其它的动作要避免被拒绝。
+2.10.5. 扩展特性与可选特性
+考虑到不同邮件系统的不同性能，本规范定义了几种可选特性。在执行这类扩展操作之
+前，必须使用“require”声明。如果某种扩展不能够“require”，则必须被视作完全不支持
+该操作。如果描述程序无法识别“require”声明的某种扩展操作，则不执行该描述程序。
+注意：这样规定是因为像LISP和TCL之类语言的经验表明，提示一下某个描述程序使
+用了扩展成分是一种有效的方法。PostScript的实践经验则建议，最好不要采用这样的机制
+――让描述程序的工作依赖于不存在的扩展。
+定义新的动作命令的扩展必须说明与本文所定义的动作之间的交互作用。
+2.10.6. 错误
+任何程序语言都会发生变异错误和运行错误。编译错误是指进行语法检查时可以检查出
+的错误，运行错误是只有在程序运行时才能发现的错误，其中包括磁盘写满之类的临时错误，
+也包括非法的操作组合之类的问题。滤网描述语言在发生错误时体制所有的操作。在实现时
+可以采用完整解析的策略，先测试所有的描述语句然后再执行所有的操作，甚至可以采用原
+子执行 策略（要末全部执行要一个也不执行）。或者采用边解释边执行的策略，这样实现起
+来简单，但是存在部分操作出错的问题（某些动作出错，其他的则正常执行）。实现也可以
+在执行之前先排除不合法的操作集合（比如，reject + fileinto），但是这样可能会带来所谓的
+“当机问题”。上述各种方法都是允许的，当机问题不在本规范的讨论之列。如果发生了错
+误，实现必须通知用户在执行哪个操作时发生了错误，并执行隐含留存操作。
+2.10.7. 执行上的限制
+具体的实现可能要多某些结构进行限制，不过本规范对此没有过多的要求：至少要支持
+15级的块嵌套和15级的测试列表嵌套。
+3.  控制命令
+多重操作和条件操作必须是用控制命令。
+3.1.  控制结构if
+if控制结构包括三部分：“if”、“elsif”和“else”，从语法上讲每一部分都是单独的一个
+命令，但是“elseif”只能跟在“if”之后使用，“else”只能用在“if”或“elseif”后面，否
+则就是错误的。
+    语法：  if <test1: test> <block1: block>
+	语法：  elsif <test2: test> <block2: block>
+	语法：  else <block>
+这些控制命令的含义与在其它语言中的含义类似，解释器遇到“if”时首先计算相关的
+测试，如果结果为真则执行接下来的命令块。否则计算后面的第一个“elseif”相关的测试
+（如果有的话），如果结果为真，则执行其后的命令块。Elseif后面可能还有其它的elsif，
+如果这样的话就反复进行同样的测试。如果所有的“elsif”都不成立而且出现了“else”，则
+执行“else”后的命令块。这样在多个命令块组成的链中，只选择执行其中的一个。
+下面的例子中，邮件A和B都被下载到信箱中：
+   Example:  require "fileinto";
+             if header :contains "from" "coyote" {
+                discard;
+             } elsif header :contains ["subject"] ["$$$"] {
+                discard;
+             } else {
+                fileinto "INBOX";
+             }
+如果执行下面的程序，则邮件A被转存到acm@example.edu，而邮件B则转存到 
+postmaster@example.edu中，其他的邮件都被转存到field@example.edu。
+   Example:  if header :contains ["From"] ["coyote"] {
+                redirect "acm@example.edu";
+             } elsif header :contains "Subject" "$$$" {
+                redirect "postmaster@example.edu";
+             } else {
+                redirect "field@example.edu";
+             }
+注意这里与C语言不同，“else”和“if”之间没有空格，这样做是为了避免引起混淆。
+3.2.  控制结构Require
+   语法： require <capabilities: string-list>
+该动作说明描述程序要使用的特定扩展，如前所述在需要规范的扩展部分时必须使用
+require进行声明，如果需要多个扩展成分可以在一条require语句中声明。如果出现require
+命令，它必须放在所有其他命令之前，否则会出现错误。
+   例1：  require ["fileinto", "reject"];
+   例2：  require "fileinto";
+           require "vacation";
+
+3.3.  控制结构Stop
+   语法：   stop
+该动作结束所有的操作，如果没有任何操作执行，则执行保存。
+4.   动作命令
+本文定义了5个用于处理邮件的动作：keep、fileinto、redirect、reject和discard。本语
+言的具体实现必须支持“keep”、“discard”和“redirect”三个动作，应该提供“reject”和“fileinto”
+命令，还可以对特定操作的次数予以限制。
+4.1.    拒收（reject）
+   语法：   reject <reason: string>
+“拒收”操作是可选的命令，拒绝接收邮件并反馈给发送方一个[MDN]。这个命令把消
+息返回给发送方，并说明接收方拒绝收取。在下面的程序中，消息A被拒收并返回给接收
+方。
+   例1：  if header :contains "from" "coyote@desert.example.org" {
+                reject "I am not taking mail from you, and I don't want
+                your birdseed, either!";
+             }
+退回邮件按照[MDN]规范必须采用MDN错误的格式，其中的可读部分（MDN的第一
+个成分）说明错误的原因，同时应通知发送方该邮件被过滤程序拒绝了。比方说内容可以是：
+   ------------------------------------------------------------
+   接收方的邮件过滤程序拒收该邮件，原因如下：
+   我不接受你的邮件，也不上你的当！
+   ------------------------------------------------------------
+按照MDN规范MDN操作值字段必须是“deleted”，可以采用MDN自动发送和自动操
+作模式集。某些实现可能不支持这个可选命令，使用前必须使用require命令声明“reject”。
+4.2.  转存（fileinto）
+   语法：   fileinto <folder: string>
+“转存”操作把消息保存到指定的文件夹，实现应该支持该命令，但在某些环境中也许
+不能执行这样的操作。在使用之前应在require命令中声明“fileinto”。 例如下面的语句将
+把消息A保存到“INBOX.harassment”文件夹中：
+   Example:  require "fileinto";
+             if header :contains ["from"] "coyote" {
+                fileinto "INBOX.harassment";
+             }
+
+4.3.  转发（redirect）
+   语法：   redirect <address: string>
+“转发”命令用于把消息发给指定地址的另外一个用户，它不改变消息体和消息头，但
+可以增加一个新的消息头，这个命令修改了邮件的接收方。该命令执行MTA类型的“重发”
+操作（UNIX采用的风格），SMTP信封上的地址被转发命令中的新地址代替并在后台发出。
+（注意这里与MUA类型的重发不同，MUA要创建一个发送方和消息ID都不同的新邮件，
+在新邮件内装上原来的邮件。）只要一条简单的语句就可以转发所有的邮件，例如：
+   redirect "bart@example.edu";
+实现应该设法通过循环控制为消息加上消息头或者计数收到的消息头，如果实现检测到
+某个循环，就会导致错误。
+4.4.  保存（keep）
+   语法：   keep
+如果完全不进行过滤，则“保存”命令代替了所有其他的命令，一般而言就是简单地把
+消息转存到用户的主邮箱内。执行该命令不需要知道主邮箱的名称、用户的邮箱设置或者底
+层使用的邮件系统。比方说，对于在邮件递交时执行代表用户的描述程序的IMAP服务器，
+保存命令就相当于转存到“INBOX”。
+   例1：  if size :under 1M { keep; } else { discard; }
+注意上述语句等价于下面的命令：
+   例2：  if not size :under 1M { discard; }
+
+4.5.    丢弃（discard）
+   语法：  discard
+“丢弃”命令简单地把消息删除，就是取消了隐含留存操作。如果与其它的动作命令合
+用，其他的命令照常执行，即该命令与其他命令是兼容的，比如fileinto + discard就相当于
+fileinto。丢弃命令不得产生其它的作用，不得返回任何未递交通知或者其他的[DSN]、[MDN]
+消息。下面的语句丢掉任何来自“idiot@example.edu”的邮件：
+   例子：  if header :contains ["from"] ["idiot@example.edu"] {
+                discard;
+             }
+虽然该命令是本语言的重要组成部分，但可能给用户带来严重的问题，在公用机房内上
+机的学生如果没有退出登录可能会发现它的描述程序都被人改成了“丢弃”命令。为了保护
+此类情形下的用户信息，实现可以采用把销毁信息保存一段时间的方法，或者禁止丢弃全部
+邮件的描述语句。
+5．测试命令
+测试命令用于条件控制结构判定执行哪一个条件，实现必须支持以下测试命令： 
+"address"、"allof"、"anyof"、"exists"、"false"、"header"、"not"、"size"和"true"，应该支持“envelope”
+测试。
+5.1.   地址测试（address）
+   语法：   address [ADDRESS-PART] [COMPARATOR] [MATCH-TYPE]
+             <header-list: string-list> <key-list: string-list>
+地址测试试图与包含地址的结构头中的Internet地址进行匹配，只要按照指定的比较运
+算子和匹配关键字，头中地址的指定部分包含给定的某个关键字，则返回真。该测试与信封
+测试和头测试类似，只要头列表和关键字列表中的某两个匹配成功即返回真。
+Internet邮件地址标准[IMAL]的某些规定不合情理，@左侧的本地部分大小敏感，而右
+侧的域地址部分则不区分大小写。“地址”命令本身并不对此区分，而是通过ADDRESS-PART
+参数让用户来处理。地址原语永远不会处理邮件地址中的短语部分或者地址中的说明成分，
+也不会处理组名，尽管要处理组结构内的地址。
+实现必须把地质测试严格限制在包含地址的头字段内，至少要包括From、To、Cc、Bcc、
+Sender、Resent-From和Resent-To，还应该支持其他使用“地址列表”的头字段。
+   例子：  if address :is :all "from" "tim@example.com" {
+                discard;
+
+5.2.   与测试（allof）
+   语法：   allof <tests: test-list>
+allof测试对指定的测试项进行逻辑与运算，例如：
+             allof (false, false)  =>   false
+             allof (false, true)   =>   false
+             allof (true,  true)   =>   true
+与测试的参数是一个测试列表。
+5.3.   或测试（anyof）
+   语法：  anyof <tests: test-list>
+anyof对指定的测试进行逻辑或运算。
+   例子：    anyof (false, false)  =>   false
+             anyof (false, true)   =>   true
+             anyof (true,  true)   =>   true
+5.4.    信封测试（envelope）
+   语法：   envelope [COMPARATOR] [ADDRESS-PART] [MATCH-TYPE]
+             <envelope-part: string-list> <key-list: string-list>
+如果SMTP（或者等价的）信封的指定部分与给定的关键字匹配，则“信封”测试返回
+真。如果信封部分的字符串是（不考虑大小写）“from”，那么就与SMTP MAIL命令中使用
+的FROM地址进行匹配。如果信封部分的字符串是（不考虑大小写）“to”，则与SMTP RCPT
+命令中使用的TO地址匹配。要注意只能使用最近的而且与该用户相关的一个TO。信封部
+分是一个字符串列表，，可以包含多个参数，这样的话，关键字列表中的所有字符串都与信
+封部分列表中的各个成分进行匹配。与地址测试和头测试类似，只要信封中的某个成分匹配
+关键字列表中的一个，测试结果即为真。所有对信封的测试都必须去掉源路径。
+如果SMTP会话包括多个RCPT命令，只有把信息传递给该用户的那个RCPT命令数
+据才能用于信封的“to”部分。如果传输时使用了SMTP之外的协议，建议实现时相应地对
+该命令进行调整。
+信封命令时可选的，实现应该支持这个命令，但某些时候可以得不到可用的信息。
+   例子：  require "envelope";
+             if envelope :all :is "from" "tim@example.com" {
+                discard;
+             }
+
+5.5.  存在测试（exists）
+   语法：   exists <header-names: string-list>
+如果消息中包含头字段名参数中列出的头字段，则存在测试返回真――必须所有给定的
+头字段都存在。下面的例子丢弃了没有From和Date头字段的所有邮件：
+例子；  if not exists ["From","Date"] {
+                discard;
+             }
+
+5.6.   false测试
+   语法：   false
+“false”测试总是返回假。
+5.7.   头测试（header）
+   语法：   header [COMPARATOR] [MATCH-TYPE]
+             <header-names: string-list> <key-list: string-list>
+只要一个头字段名与给定关键字中的某一个匹配，“头”测试就返回真。匹配类型由可
+选的匹配参数指定，如前所述，如果没有给出这个参数则缺省使用“:is”。与地址测试和信
+封测试类似，只要字符串列表任一项与关键字列标参数中的某一个相匹配，测试的结果即为
+真。如果头字段名参数列出的头字段存在，则包含空键值（“”），否则不能包含空键值。因
+此如果消息包含这样的头字段X-Caffeine: C8H10N4O2，则测试结果如下：
+           header :is ["X-Caffeine"] [""]         => false
+           header :contains ["X-Caffeine"] [""]   => true
+
+5.8.   非测试（not）
+   语法：   not <test>
+“not”测试的参数是其他的测试，返回与参数相反的结果，“not false”相当于“true”，
+“not true”等价于“false”。
+5.9.   长度测试（size）
+   语法：   size <":over" / ":under"> <limit: number>
+“size”测试检查消息的长度，该命令的参数包括一个标志参数“:over”或者“:under”
+和表示消息大小的一个数字。如果使用“:over”参数，则只有消息的长度超过给定大小时
+才返回真；如果使用了“:under”参数，则仅当消息的长度不超过给定大小时才返回真。必
+须指定这两个标志参数中的一个。消息的长度定义为从消息头的第一个字节开始到消息体的
+最后一个字符结束的全部字节数。注意，如果某个消息恰好是4000个字节，则它既不超过
+（over）也不少于（under）4000个字节。
+5.10.  true测试
+   语法：   true
+“true”测试的结果永远是真。
+6.  扩展特性
+本语言允许增加新的结构、动作或者测试，网站必须把它所提供的扩展功能通知用户，
+本规范没有定义如何获取服务器所提供的扩展功能列表。本语言的任何扩展必须定义一个功
+能描述字符串唯一标识该扩展。如果扩展功能的新版本改变了功能或者原来的定义，则必须
+使用一个新的描述串。如果存在一个提交协议和清楚本语言细节的扩展说明机制，那么提交
+的描述程序可以通过检查邮件服务器禁止使用该服务器不支持的扩展。扩展必须明确自身与
+其它操作的关系，就是要说明它是否禁止隐含留存，能够与那些操作兼容，与那些操作不兼
+容。
+6．1功能描述串
+功能描述串通常是描述服务器所支持的功能的短字符串。以“vnd”开头的功能描述串
+表示供应商定义的扩展，此类扩展未经Internet标准或RFC定义，但是为了避免引起混乱经
+过了IANA的注册。以“vnd”开始的功能描述串后面应该跟上供应商或者产品的名称，比
+如“vnd.acme.rocket-sled”。
+本规范定义的功能描述串包括：
+   envelope    串“envelope”表示该实现支持“信封”命令。
+   fileinto      串“fileinto”表明该实现支持“转存”命令。
+   reject       串“reject”表明该实现支持“拒收”命令。
+   Comparator  如果实现支持“elbonia”比较运算子，则提供串“comparator-elbonia”，
+因此所有的实现至少要支持“comparator-i;octet”和“comparator-i;ascii-casemap”，但是使用
+这两个运算子不需要事先用require声明。
+6.2.  IANA方面的问题
+为了建立一个标准的扩展集，IANA提供了一项注册事务，按照先来先提供的原则对扩
+展功能进行注册，用于交互的扩展应该定义为标准跟踪或者IESG认可的实验性RFC。
+6.2.1.  功能注册模板
+可以使用如下的模板向IANA请求注册对滤网语言的新扩展。
+
+   To: iana@iana.org
+   Subject: Registration of new Sieve extension
+
+   功能名Capability name:
+   关键字Capability keyword:
+   功能参数Capability arguments:
+   标准号Standards Track/IESG-approved experimental RFC number:
+   联系地址Person and email address to contact for further information:
+
+6.2.2.   功能注册的最初内容
+以下是经过IANA注册的基本的滤网语言扩展内容：
+   功能名：      fileinto
+   关键字：      fileinto
+   参数：        fileinto <folder: string>
+   标准号：      RFC 3028 (Sieve base spec)
+   联系地址：    Tim Showalter    tjs@mirapoint.com
+
+   功能：        reject
+   关键字：      reject
+   参数：        reject <reason: string>
+   标准号：      RFC 3028 (Sieve base spec)
+   联系地址：    Tim Showalter     tjs@mirapoint.com
+
+   功能：       envelope
+   关键字：     envelope
+   参数：       envelope [COMPARATOR] [ADDRESS-PART] [MATCH-TYPE]
+                <envelope-part: string-list> <key-list: string-list>
+   标准号：     RFC 3028 (Sieve base spec)
+   联系地址：  Tim Showalter      tjs@mirapoint.com
+
+   功能：        comparator-*
+   关键字：      comparator-* (anything starting with "comparator-")
+   参数：        (none)
+   标准号：     RFC 3028, Sieve，参考RFC 2244
+   联系地址：   Tim Showalter     tjs@mirapoint.com
+6.3.    功能迁移
+由于本规范所应用的邮件系统是各种各样的，具体的实现又各有不同，因此无法说明某
+个实现所支持的功能，但是具体的实现应该具有这样一种机制，能够列出所支持的完整的扩
+展集。
+7.   传输
+滤网描述程序的MIME类型为“application/sieve”。RFC 2048要求对该类型的注册如下：
+    主题：注册MIME媒体类型application/sieve
+
+    MIME媒体类型名称： application
+    MIME 字类型名： sieve
+    必要的参数：无
+    可选参数：无
+    编码要求：大多数滤网描述成分应该是UTF-8格式的文本，如果没有使用7位字
+符，对于使用7位字符的传输系统应使用引号括起来的可打印字符。
+
+    安全性问题：在RFC2048的第10节讨论。
+    交互性问题：在RFC 3028的第2.10.5节讨论。
+    正式规范：  RFC 3028.
+    应用该媒体类型的程序：支持滤网语言的邮件服务器
+    附加信息：
+      幻数（Magic number）：
+      文件扩展名： .siv
+      Macintosh文件类型码：
+    联系地址
+       参见ietf-mta-filters@imc.org的讨论列表。
+    应用范围：
+       COMMON（通用）
+    作者/负责控制变动的人员：
+       参见RFC 3028的作者信息
+
+8.      解析（Parsing）
+像大多数语言一样，滤网语法也分为记号和单独的语法。
+8.1.    词法记号
+滤网描述语言采用UTF-8编码，在下面的说明中假设滤网描述语言所使用的合法UTF-8
+的特殊字符都是ASCII字符。
+滤网语言中的记号包括：标识符、标签、数字、引号字符串、多行字符串和其他分隔符。
+空白、水平制表符、回车换行符和注释（“空白字符”）仅仅作为分隔记号，相邻的记号
+之间和多行字符串的某些特定位置需要使用空白字符分隔。其他的分隔符都是单独的字符，
+并且在语法中有明确的定义。滤网的词法结构采用如下的BNF范式定义（参见[ABNF]）。
+   bracket-comment = "/*" *(CHAR-NOT-STAR / ("*" CHAR-NOT-SLASH)) "*/"
+           ;; No */ allowed inside a comment.
+           ;; (No * is allowed unless it is the last character,
+           ;; or unless it is followed by a character that isn't a
+           ;; slash.)
+
+   CHAR-NOT-DOT = (%x01-09 / %x0b-0c / %x0e-2d / %x2f-ff)
+           ;; no dots, no CRLFs
+
+   CHAR-NOT-CRLF = (%x01-09 / %x0b-0c / %x0e-ff)
+
+   CHAR-NOT-SLASH = (%x00-57 / %x58-ff)
+
+   CHAR-NOT-STAR = (%x00-51 / %x53-ff)
+
+   comment = bracket-comment / hash-comment
+
+   hash-comment = ( "#" *CHAR-NOT-CRLF CRLF )
+
+   identifier = (ALPHA / "_") *(ALPHA DIGIT "_")
+
+   tag = ":" identifier
+
+   number = 1*DIGIT [QUANTIFIER]
+
+   QUANTIFIER = "K" / "M" / "G"
+
+   quoted-string = DQUOTE *CHAR DQUOTE
+           ;; in general, \ CHAR inside a string maps to CHAR
+           ;; so \" maps to " and \\ maps to \
+           ;; note that newlines and other characters are all allowed
+           ;; strings
+
+   multi-line          = "text:" *(SP / HTAB) (hash-comment / CRLF)
+                         *(multi-line-literal / multi-line-dotstuff)
+                         "." CRLF
+   multi-line-literal  = [CHAR-NOT-DOT *CHAR-NOT-CRLF] CRLF
+   multi-line-dotstuff = "." 1*CHAR-NOT-CRLF CRLF
+           ;; A line containing only "." ends the multi-line.
+           ;; Remove a leading '.' if followed by another '.'.
+
+   white-space = 1*(SP / CRLF / HTAB) / comment
+
+8.2.  语法
+滤网描述语言进行词法分析后采用如下的语法结构，以下的陈述都不涉及空白字符或者
+注释成分，开始符号是“start”。
+   argument = string-list / number / tag
+
+   arguments = *argument [test / test-list]
+
+   block = "{" commands "}"
+
+   command = identifier arguments ( ";" / block )
+
+   commands = *command
+
+   start = commands
+
+   string = quoted-string / multi-line
+
+   string-list = "[" string *("," string) "]" / string         ;; if
+   there is only a single string, the brackets are optional
+
+   test = identifier arguments
+
+   test-list = "(" test *("," test) ")"
+
+9.  扩展的例子
+下面是对滤网语言进行扩展的例子，注意其中没有使用隐含留存。
+    #
+    # Example Sieve Filter
+    # Declare any optional features or extension used by the script
+    #
+    require ["fileinto", "reject"];
+
+    #
+    # Reject any large messages (note that the four leading dots get
+    # "stuffed" to three)
+    #
+    if size :over 1M
+            {
+            reject text:
+    Please do not send me large attachments.
+    Put your file on a server and send me the URL.
+    Thank you.
+    .... Fred
+    .
+    ;
+            stop;
+            }
+    #
+
+    # Handle messages from known mailing lists
+    # Move messages from IETF filter discussion list to filter folder
+    #
+    if header :is "Sender" "owner-ietf-mta-filters@imc.org"
+            {
+            fileinto "filter";  # move to "filter" folder
+            }
+    #
+    # Keep all messages to or from people in my company
+    #
+    elsif address :domain :is ["From", "To"] "example.com"
+            {
+            keep;               # keep in "In" folder
+            }
+
+    #
+    # Try and catch unsolicited email.  If a message is not to me,
+    # or it contains a subject known to be spam, file it away.
+    #
+    elsif anyof (not address :all :contains
+                   ["To", "Cc", "Bcc"] "me@example.com",
+                 header :matches "subject"
+                   ["*make*money*fast*", "*university*dipl*mas*"])
+            {
+            # If message header does not contain my address,
+            # it's from a list.
+            fileinto "spam";   # move to "spam" folder
+            }
+    else
+            {
+            # Move all other (non-company) mail to "personal"
+            # folder.
+            fileinto "personal";
+            }
+
+10.   安全性问题
+用户必须能够得到他们的邮件，实现无论采用何种方法保存都必须保证用户定义的过滤
+程序是安全的。同样重要的是实现必须详细检查用户的描述程序，不允许用户建立一个定时
+的邮件炸弹。比方说，如果允许反复拒收或转发一个邮件，就可能意味着准许用户建立一个
+靠来自特定用户的邮件激活的邮件炸弹。站点或者事先定义的动作限制对此类问题非常有
+效。有几个命令，如“discard”、“redirect”和“fileinto”可能会带来潜在的危险。实现应该
+设法禁止在语言中使用循环。
+
+11.  鸣谢
+非常感谢Chris Newman的支持和他的ABNF语法检查器；John Myers和Steve Hole，
+他们列出了最初草案的大纲；Larry Greenfield，他仔细地进行语法检查并予以修正；Greg 
+Sereda提供并反复修正文中的例子；Ned Freed则改正了其他的错误；Rob Earhart完成了最
+初的实现给了我很大帮助；Randall Gellens，无数次的校对。我非常感谢卡内基.梅隆大学，
+本文的大部分工作都是在那里完成的。最后我还要感谢ietf-mta-filters@imc.org邮件列表的
+所有读者。
+
+12.  作者地址
+   Tim Showalter
+   Mirapoint, Inc.
+   909 Hermosa Court
+   Sunnyvale, CA 94085
+
+   EMail: tjs@mirapoint.com
+
+13.  参考
+
+   [ABNF]      Crocker, D. and P. Overell, "Augmented BNF for Syntax
+               Specifications: ABNF", RFC 2234, November 1997.
+
+   [ACAP]      Newman, C. and J. G. Myers, "ACAP -- Application
+               Configuration Access Protocol", RFC 2244, November 1997.
+
+   [BINARY-SI] "Standard IEC 60027-2: Letter symbols to be used in
+               electrical technology - Part 2: Telecommunications and
+               electronics", January 1999.
+
+   [DSN]       Moore, K. and G. Vaudreuil, "An Extensible Message Format
+               for Delivery Status Notifications", RFC 1894, January
+               1996.
+
+   [FLAMES]    Borenstein, N, and C. Thyberg, "Power, Ease of Use, and
+               Cooperative Work in a Practical Multimedia Message
+               System", Int. J.  of Man-Machine Studies, April, 1991.
+               Reprinted in Computer-Supported Cooperative Work and
+               Groupware, Saul Greenberg, editor, Harcourt Brace
+               Jovanovich, 1991.  Reprinted in Readings in Groupware and
+               Computer-Supported Cooperative Work, Ronald Baecker,
+               editor, Morgan Kaufmann, 1993.
+
+   [KEYWORDS]  Bradner, S., "Key words for use in RFCs to Indicate
+               Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [IMAP]      Crispin, M., "Internet Message Access Protocol - version
+               4rev1", RFC 2060, December 1996.
+
+   [IMAIL]     Crocker, D., "Standard for the Format of ARPA Internet
+               Text Messages", STD 11, RFC 822, August 1982.
+
+   [MIME]      Freed, N. and N. Borenstein, "Multipurpose Internet Mail
+               Extensions (MIME) Part One: Format of Internet Message
+               Bodies", RFC 2045, November 1996.
+
+   [MDN]       Fajman, R., "An Extensible Message Format for Message
+               Disposition Notifications", RFC 2298, March 1998.
+
+   [RFC1123]   Braden, R., "Requirements for Internet Hosts --
+               Application and Support", STD 3, RFC 1123, November 1989.
+
+   [SMTP]      Postel, J., "Simple Mail Transfer Protocol", STD 10, RFC
+               821, August 1982.
+
+   [UTF-8]     Yergeau, F., "UTF-8, a transformation format of Unicode
+               and ISO 10646", RFC 2044, October 1996.
+
+14. 版权声明
+   Copyright (C) The Internet Society (2001).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, 
+INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE 
+INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES 
+OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+RFC3028――Sieve: A Mail Filtering Language                               滤网：一种邮件过滤语言
+
+
+2
+RFC文档中文翻译计划
+
+

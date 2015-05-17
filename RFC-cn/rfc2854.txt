@@ -1,0 +1,188 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：钱海波（bood  boodweb@263.net）
+译文发布时间：2002-01-30
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须保留本文档的翻译及版权信息。
+
+译注：本文中的某些词句可能翻译的不准确，我已将没有把握的英文原文附于其后。如果您发现本文的翻译有任何问题，欢迎来信指正。
+
+
+Network Working Group                                        D. Connolly
+Request for Comments: 2854               World Wide Web Consortium (W3C)
+Obsoletes: 2070, 1980, 1942, 1867, 1866                      L. Masinter
+Category: Informational                                             AT&T
+                                                               June 2000
+
+
+text/html 媒体类型
+（RFC2854 The 'text/html' Media Type）
+
+本备忘录的状态
+　　本文只是为Internet上的各种团体提供信息，而并没有指定任何一种Internet标准。您可以任意散发本文。
+
+版权声明
+Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+摘要：
+本文概括了HTML的发展历史，并参照相关的W3C建议定义了 "text/html" MIME 类型。本文将废弃以前IETF文档中HTML的定义，这些文档包括：RFC 1866，RFC 1867，RFC 1980，RFC 1942 以及 RFC 2070。同时，本文也从IETF的标准跟踪协议（IETF Standards Track）中去除了HTML的定义。 
+本文是应W3C中HTML工作组的要求而准备的。您如果对本文有什么看法，可以给 www-html@w3.org 写信，另外，在 http://lists.w3.org/Archives/Public/www-html/ 有一个公开的邮件列表。
+
+1. 背景介绍
+从1990年起，HTML就在WWW信息业中作为基础部件得到使用，您可以在各种不同的非正式文档中找到对它的描述。text/html 媒体类型最初的正式定义出现是在1995年IETF HTML工作组的[HTML20]中，而其扩展版本在下面几个文档中被提及：[HTML30]，[UPLOAD]，[TABLES]，[CLIMAPS] 以及 [I18N]。
+IETF HTML工作组在1996年9月停止了工作，于是定义HTML的任务就落在了World Wide Web Consortium（W3C）身上。其他提出的扩展版本大部分都被收录进了[HTML32]，而更多内容则被收录在[HTML40]中。[UPLOAD]中提出的multipart/form-data在[FORMDATA]中得到了说明。此外，改进版本HTML 4.0和XML 1.0[XHTML1]已经发展起来了。
+[HTML32]上指出："这份规范书给出了HTML 3.2的定义。HTML 3.2是针对1996年早些时候的建议而提出的，它将替代规范HTML 2.0（RFC 1866）。"[HTML32]中接下来的规范说明了各个HTML版本的区别。
+除了HTML标准的发展，许多额外的扩展、限制以及修改随着NCSA的Mosaic系统（译注：一种最早出现的浏览器）以及相互竞争的Netscape Navigator和Microsoft Internet Explorer一同普及开来。这些扩展在很多书以及在线帮助中都有相关的文档记录。
+
+2. MIME媒体类型 text/html 的注册信息
+MIME媒体类型名称：	text
+MIME子类型名称：	html
+必选参数：			无
+可选参数：
+
+字符集
+可选参数"字符集"指的是一种字符编码，这种编码用一系列的字节代表HTML文档。任何在IANA（译注：专门负责Internet注册工作的组织）注册过的字符集都可以使用，但推荐使用UTF-8。尽管这个参数是可选的，我们强烈建议显式的制定这个参数。字符集的默认规则将在下面的第6部分讨论。
+注意[HTML20]中对此的描述还有一个可选的"level（级别）"参数，实际上，这个参数从来没有使用过，在本文的描述中已被废弃不用。[HTML30]建议加入一个"version（版本）"参数，这个参数也从来没有使用过，因而也不会在本文中出现。
+
+编码考虑：见本文档第4部分。
+
+安全考虑：见本文档第7部分。
+
+互用性考虑：
+可以在尽可能广泛的不同性能的平台和设备上通用，这是HTML的设计目标。然而，在某些环境下（如只有有限显示能力平台），完整的HTML实现并不可行。当前正在进行的工作之一就是要开发出一个模块化的HTML，同时发展出一种可以识别设备是否受限制，并能在其上工作的功能。
+由于HTML长期的发展都是分布式的，当前的Internet实践就要包含很多不同种类的HTML。text/html的解释程序必须被设计成与现在流行的浏览器"bug兼容"的，这样才能在当前的Internet上正常工作。
+一个典型的例子：不同的版本可以用DOCTYPE的声明来区别，尽管有时DOCTYPE的声明本身会被忽略或误写。
+
+发布的规范：
+text/html媒体类型现在被W3C Recommendations组织所定义，最新发布的版本是[HTML401]。此外，[XHTML1]说明了与HTML 4.01相容的XHTML的使用概要，XHTML可能也会被标记为text/html。
+
+使用这种媒体类型的应用：
+第一个也是最普及的应用就是WWW（World Wide Web）。一般来说，HTML文档包含两部分内容，一是指向其他文档的URI引用（参考文献[URI]），二是要通过HTTP协议得到的媒体（参考文献[HTTP]）。许多网关程序提供基于HTML的接口，使得其他程序可以通过这些接口使用底层的复杂服务。许多其他应用也使用HTML，因为这样可以用方便的、与平台无关的形式表示多媒体文档。
+
+其他信息：
+
+魔数（Magic Number）：
+没有专门的字符串来标识HTML文件。尽管如此，第5部分还是给出了一些识别HTML文件的指导。
+
+文件扩展名：
+扩展名"html"和"htm"最为常用，但是其他表示预处理文件的扩展名也很常用（译注：如ASP、PHP等）。
+
+Macintosh机（译注：Apple公司于1984年推出的一种系列微机）上的文件类型码：TEXT
+
+要获得更深入的信息，可以联系：
+      Dan Connolly <connolly@w3.org>
+      Larry Masinter <lmm@acm.org>
+
+Intended usage：COMMON
+
+"作者/改写"控制（Author/Change controller）：
+HTML规范是World Wide Web Consortium's HTML工作组的成果。W3C在规范上拥有修改的支配权。
+
+更多信息：
+通过URI引用，HTML可以使HTML具有包含其他资源（图像、视频剪辑、JAVA的applet程序等）的能力。为了在单独的一个MIME对象中传输一个完整的HTML对象及其包含的资源，[MHTML]中提到的机制会被使用到。
+
+3. 片段标识符（Fragment Identifiers）
+URI规范中指出，片段标识符（URI的一部分，在一个"#"后）的语义学含义是指所获得数据的属性，规范中同时指出，片段标识符的格式和解释依赖于获得数据的媒体类型。
+对于由text/html所标识的文档，片段标识符会为其分配相应的命名元素。在命名过程中，任何元素都可能有"id（标识）"属性，而A、APPLET、FRAME、IFRAME、IMG和MAP元素可能会拥有"name（名称）"属性。关于这一点，在[HTML40]的第12部分有详细描述。
+
+4. 编码考虑
+由于在HTML中使用字符实体引用（character entity references）有其实用性，使用宽字符集的文档将仍然用US-ASCII字符集表示，在传输过程中不会对其进行编码。但当使用非US-ASCII字符集传输text/html文档时，可能需要使用base64或者quoted-printable对其7位通道进行编码（原文：However, transport of text/html using a charset other than US-ASCII may require base64 or quoted-printable encoding for 7-bit channels）。
+就像所有的MIME text子类型一样，规范的text/html文本中，必须用一系列CR字符（0x0D）以及一个LF字符（0x0A）来表示行中断。反过来也成立，即在text/html文本中一旦出现这样的CRLF列，则其必定代表一个行中断。在行中断以外的地方使用CR字符或者LF字符都是非法的。不管是否存在字符编码（字符集），这个规则都是适用的。
+注意，HTTP协议允许数据在传输中不使用规范格式，而是使用其他特殊的行终止符。详情请参考[HTTP]的3.7.1部分。这个例外在HTML中普遍存在。
+通过电子邮件传输的HTML文本仍然服从MIME的限制，这在[MHTML]的第10部分中有完整的讨论。
+
+5. HTML文件的识别
+几乎所有的HTML文件的前端都有"<html"或"<HTML"的字符串。
+符合HTML 2.0、HTML 3.2或是HTML 4.0的文档的前端都以一个DOCTYPE声明开头："<!DOCTYPE HTML"，注意这是在"<html"前。但实际上这不是识别HTML文件的一个有效方法。HTML文件在DOCTYPE声明前可以有别的东西，比如空格、注释（用"<!--"标识）或者预处理指令（用"<?"标识）。
+XHTML文档（可选）以一个XML声明开头（"<?xml"），并要求有一个DOCTYPE声明，像这样："<!DOCTYPE html"。
+
+6. 字符集的默认规则
+强烈建议使用显式的字符集参数。[MIME]中指出："在没有字符集参数的情况下，默认的字符集是US-ASCII"。[HTTP]的3.7.1部分指出："text类型的媒体子类型的默认字符集被定义为ISO-8859-1"。[HTTP]的19.3部分给出了这方面额外的指导。使用显式的字符集参数将有助于避免混乱。 　　使用显式的字符集参数也是基于下面的考虑：绝大多数浏览器的默认设置都不是字符集ISO-8859-1，实际的默认值不是全体字符编码，就是在某个国家或地区中广泛使用的字符编码。您可以在[HTML40]的5.2部分看到更深入的考虑。
+
+7. 安全考虑
+[HTML401]的B.10部分提供了关于HTML文档安全性的文章,其中有关于HTML的解译和窗体的讨论。（原文：[HTML401], section B.10, notes various security issues with interpreting anchors and forms in HTML documents）
+另外，HTML 4.0中的脚本语言和交互功能引出了一些安全隐患，与此相关的是由发送者写的自动执行程序，这种程序会在接收端运行。用户在运行这种脚本或程序时要特别小心，你必须确保不可信的软件在受保护的环境下运行。
+
+8. 作者地址
+   Daniel W. Connolly
+   World Wide Web Consortium (W3C)
+   MIT Laboratory for Computer Science
+   545 Technology Square
+   Cambridge, MA 02139, U.S.A.
+
+   EMail: connolly@w3.org
+   http://www.w3.org/People/Connolly/
+
+   Larry Masinter
+   AT&T
+   75 Willow Road
+   Menlo Park, CA 94025
+
+   EMail: LM@att.com
+   http://larry.masinter.net
+
+9. 参考文献
+   [CLIMAPS]  Seidman, J., "A Proposed Extension to HTML: Client-Side
+              Image Maps", RFC 1980, August 1996.
+
+   [FORMDATA] Masinter, L., "Returning Values from Forms:
+              multipart/form-data", RFC 2388, August 1998.
+
+   [HTML20]   Berners-Lee, T. and D. Connolly, "Hypertext Markup
+              Language - 2.0", RFC 1866, November 1995.
+
+   [HTML30]   Raggett, D., "HyperText Markup Language Specification
+              Version 3.0", September 1995.  (Available at
+              <http://www.w3.org/MarkUp/html3/CoverPage>).
+
+   [HTML32]   Raggett, D., "HTML 3.2 Reference Specification", W3C
+              Recomendation, January 1997.
+              Available at <http://www.w3.org/TR/REC-html32>.
+
+   [HTML40]   Raggett, D., et al., "HTML 4.0 Specification", W3C
+              Recommendation, December 1997.
+              Available at <http://www.w3.org/TR/1998/REC-html40-
+              19980424>
+
+   [HTML401]  Raggett, D., et al., "HTML 4.01 Specification", W3C
+              Recommendation, December 1999.
+              Available at <http://www.w3.org/TR/html401>.
+
+   [HTTP]     Gettys, J., Fielding, R., Mogul, J., Frystyk, H.,
+              Masinter, L., Leach, P. and T. Berners-Lee, "Hypertext
+              Transfer Protocol -- HTTP/1.1", RFC 2616, June 1999.
+
+   [I18N]     Yergeau, F., Nicol, G. and M. Duerst,
+              "Internationalization of the Hypertext Markup Language",
+              RFC 2070, January 1997.
+
+   [MHTML]    Palme, J., Hotmann, A. and N. Shelness, "MIME
+              Encapsulation of Aggregate Documents, such as HTML
+              (MHTML)", RFC 2557, March 1999.
+
+   [MIME]     Freed, N. and N. Borenstein, "Multipurpose Internet Mail
+              Extensions (MIME) Part Two: Media Types", RFC 2046,
+              November 1996.
+
+   [TABLES]   Raggett, D., "HTML Tables", RFC 1942, May 1996.
+
+   [UPLOAD]   Nebel, E. and L. Masinter, "Form-based File Upload in
+              HTML", RFC 1867, November 1995.
+
+   [URI]      Berners-Lee, T., Fielding, R. and L. Masinter, "Uniform
+              Resource Identifiers (URI): Generic Syntax", RFC 2396,
+              August 1998.
+
+   [XHTML1]   "XHTML 1.0: The Extensible HyperText Markup Language: A
+              Reformulation of HTML 4 in XML 1.0", W3C Recommendation,
+              January 2000. Available at <http://www.w3.org/TR/xhtml1>.
+
+10. 版权说明
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+   This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works. However, this document itself may not be modified in any way, such as by removing   the copyright notice or references to the Internet Society or other Internet organizations, except as needed for the purpose of developing Internet standards in which case the procedures for   copyrights defined in the Internet Standards process must be followed, or as required to translate it into languages other than English.
+   The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+   This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.

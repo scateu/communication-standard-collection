@@ -1,0 +1,319 @@
+
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：廖正军（jerry.liao   jerry.liao@163.net）
+译文发布时间：2001-7-5
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         M. Handley
+Request for Comments: 2861                                     J. Padhye
+Category: Experimental                                          S. Floyd
+                                                                   ACIRI
+                                                               June 2000
+TCP 拥塞窗口检验
+（TCP Congestion Window Validation）
+ 
+本备忘录的状态
+本文档讲述了一种Internet社区的实验协议，它并没有制定一种Internet标准，需要进
+一步进行讨论和建议以得到改进。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001).
+摘要
+TCP	拥塞窗口控制网络中一个TCP流的包的数目，然而，发送方长时间无响应或者由
+于应用程序的限制会导致拥塞窗口的无效，此时，拥塞窗口不在反映网络的当前状况，本文
+档描述了对TCP拥塞控制算法的一种简单修正，使得在发送后一段足够长的时间后，拥塞
+窗口。同时使用慢启动决值来保存拥塞窗口以前的值。
+当拥塞窗口在应用程序限制期间增加时，也会导致一个无效窗口，而原来拥塞窗口的值
+可能从来没有利用，我们建议在TCP发送方有应用程序限制时，不增加拥塞窗口的大小，
+我们从采用模拟和FREEBSD中实现的实验揭示了这些算法。
+
+目录
+1 转换和异义	2
+2 介绍	2
+3 描述	3
+3．1 减小拥塞窗口的基本算法	4
+3．2减小拥塞窗口的伪码	4
+4 模拟	5
+5 实验	5
+6 结论	6
+7 参考	6
+8 安全性考虑	7
+9. 作者地址	7
+10. 版权说明	8
+致谢	8
+
+1 转换和异义
+关键字MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, 
+RECOMMENDED, MAY, and OPTIONAL,出现在本文中时，参照[97]中的解释。
+
+2 介绍
+	TCP拥塞窗口控制网络中一个TCP流中包的数量，拥塞窗口采用慢增快减(AIMD)的机
+制来试探网络带宽，作动态调整了改善网络状态。AIMD机制在发送方有连续的数据发送时
+工作良好，这对使用缓冲数据的TCP来说是很典型的。对于使用TCP的TELNET应用程序
+来说，发送方只有很少的数据或没有数据发送，发送速率也是由用户产生数据的速率决定的，
+随着WEB的诞生，包括动态产生数据的TCP发送方和持续连接TCP的HTTP1.1的发展，
+应用程序限制和网络限制之间的交互变得越来越重要，更精确的说，我们把网络限制期间定
+义为发送者以满窗口大小发送数据，
+	当发送者由于应用程序限制而造成时间太长会导致拥塞窗口的无效，在由于网络限制期
+间，由于窗口数据总是没有丢失，拥塞窗口总是被检验有效，此时，总是有超时新数据的确
+认输入流给出网络中最近可用的带宽，与之相反，在由于应用程序限制期间，用拥塞窗口来
+估计可用带宽随着时间流逝而准确性降低，特别的，被用来网络限制的容量可能会被其他的
+流量占用，
+	当前的TCP实现在一段时间的IDLE后，有一些启动的措施，在IDLE的时间超过RTO
+估计值(正如RFC2581和附录[VJ88]所建议的)后，一些TCP实现采用慢启动机制，而其他
+的实现则并不降低它们的拥塞窗口，RFC 2581 中推荐：如果TCP在超过超时重发的间隔内
+没有数据发送，TCP应将窗口大小设置成不超过原来窗口大小，在[HTH98]中讨论了在IDLE
+后TCP慢启动的建议，除了在TCP和IP环境中，拥塞信息的检验也在其他的环境中提到，
+如在ATM网络中的“或使用它，或丢弃它”的机制中。
+在一段应用程序限制后，为了讨论拥塞窗口的有限性，我们对TCP的拥塞控制算法作
+了一点简单的修改，使得在发送后拥塞窗口的大小从一段足够长的应用程序限制退化到网络
+限制期间，特别的，在一段IDLE后，对于在每个数据流保持IDLE的RTT内，发送方都应
+将它的拥塞窗口减半。
+当拥塞窗口大小减小时，慢启动的阕值保留为最近拥塞窗口的大小，特别的，在一段应
+用程序限制之后，阕值从不降低，在窗口减小以前，阕值被设为它的当前最大值，这种阕值
+的使用容许TCP发送方在一段应用程序限制后增加它的发送速率来加快慢启动恢复拥塞窗
+口的以前的值，更精确的，在一段应用程序限制后，拥塞窗口减小，如果阕值小于窗口大小
+的3/4，那么阕值在拥塞窗口减小之前，阕值增加到窗口的3/4。
+在应用程序限制期间，当拥塞窗口增大时，也会导致无效的拥塞窗口，而拥塞窗口原来
+的值可能从来没有使用，我们都知道，当有确认帧到达时，如果接收方的广告窗口和满启动
+及拥塞避免算法容许，没有检查拥塞窗口原来的值有没有被使用，当前所有的TCP实现都
+增加拥塞窗口大小， 本文建议在应用程序限制期间，并不激活窗口增加算法[MSML 99]，
+特别的，当TCP发送方在应用程序限制时，发送方并不增加拥塞窗口，这种限制防止拥塞
+窗口的任意增加，以防止拥塞窗口不被网络支持，在[MSML 99 SETION 5.2]中：“这种限制
+保证只有在TCP实际上向网络成功发送数据后，窗口大小才增加。”
+在一段应用程序限制后保持一个大的拥塞窗口一个值得考虑的问题是在一段静止期间
+后，发送方突然有大量的数据要发送，可能立即发送一个满窗口的包的数据，这种发送突发
+大量包的问题可以被基于速率的方法(RBP, [VH97])有效的处理，或者最大发送数据控制
+[FF96]，即使使用限制包的发送机制，一个没有充分使用的拥塞窗口不能被作为当前可用带
+宽的表示，
+3 描述
+当一个TCP发送者有足够的数据来充分使用网络容量时，窗口大小和阕值将被设置为与网
+络状况相似的值，当TCP发送方停止发送数据时，流将停止采样网络状况，并将导致拥塞
+窗口的值不准确，我们相信，在这种环境下，对每个RTT内流不活动的状况，将拥塞窗口
+减半是一种正确的处理方法，减半的值是很保守的数值，这是建立在有丢包的情况下，倍减
+将多快减小窗口的基础上。
+另一种可能是发送者并不停止发送，是由于应用程序限制而不是网络限制，使得提供的数据
+少于拥塞窗口容许发送的数据。在这种情况下，TCP流仍然采样网络状况，但并不提供足
+够的流量来保证在网络中有足够的带宽来以满拥塞窗口来发送数据，在这些情况下，我们相
+信，对发送方而言，在每个RTT中跟踪拥塞窗口的最大值，并将拥塞窗口的值设为当前窗
+口和曾经的最大值的均值，是一种正确的处理。
+在拥塞窗口减小以前，阕值被设为当前值和窗口的3/4两者之中的最大值，如果发送方
+有比减小了的窗口大小有更多的数据发送，TCP将慢启动窗口值到原来窗口的值。
+窗口的3/4可以理解为拥塞窗口的最近一段时间内的保守估计值，且TCP	应能慢启动
+到这个值，每次拥塞窗口达到某个最大值，TCP 降低其拥塞窗口的大小，当处于这种稳定
+状况，拥塞窗口的平均值为最大值的3/4，当连接变为应用程序限制时，窗口大小将变为最
+大值的3/4，在这种情况下，窗口大小本身代表了拥塞窗口大小的平均值，然而，当窗口等
+于最大值时，如果连接变为应用程序限制，那么拥塞窗口的平均值为窗口的3/4。
+有一种可能性是将阕值设为当前阕值和窗口原来大小两者之间的最大值，容许TCP慢
+启动至窗口的原来大小，对于阕值的设置，可以做更进一步的实验来评估这两种选择。
+在对于一个确认帧的回应时，对于拥塞窗口的增加的各种情况，我们相信，当确认帧到
+达时，只要窗口是满的，增加拥塞窗口都是正确的处理方法。
+我们把这种改进称为TCP拥塞窗口校验(CWV)，因为这总是保证拥塞窗口总反映当前
+的网络状况，
+3．1 减小拥塞窗口的基本算法
+	在CWV算法中，一个关键的问题是在应用程序限制的流中，对每一个往返时间内，如
+何将这些原则应用于降低拥塞窗口中去，我们使用TCP 的重发超时器作为往返时间的合理
+上限，并在每一个重发超时内迅速降低拥塞窗口大小。
+	基本算法在TCP中可按如下进行实现：当TCP发送一个新包时，它检查自从前一包发
+送后，是否已过了一个重发超时，如果是，则阕值设为窗口的3/4和当前阕值两者之间的最
+大值，然后，自从前一包发送后过一个重发超时，则将拥塞窗口减半，另外，T_prev被设
+置为当前时间，而W_used被重置为0，T_prev被用来决定自从发送的上一次网络限制或在
+一段IDLE已经减小了窗口后的流逝的时间，当发送方是应用程序时，W_used保留自从发
+送方为上一次网络限制来的被使用的最大拥塞窗口值。
+在最近IDLE时间内决定RTO的数目的机制可以通过一个计时器来实现，计时器在最
+后一次的包发送后的每一个RTO内超时，而不是检查每一个包，在不同操作系统上的效率
+将表现那一个更容易实现。
+在TCP发送一个包以后，它会检查这个包是否填满了拥塞窗口，如果是，发送者是受
+网络限制的，并把T_prev的值设为当前TCP的时钟，W_used被置为0。
+当TCP发送一个没有填满拥塞窗口的包时，并且TCP发送队列为空时，发送者是受应
+用限制的，发送方检查未确认的帧是否比W_used大，如果是，W_used被置为未确认的帧
+数，另外，TCP检查自从T_prev以来流逝的时间是否大于RTO，如果是，TCP在一个RTO
+间隔内，但小于两个RTO内是应用程序限制，而不是网络限制的，在这种情况下，TCP将
+阕值设为窗口的3/4和当前阕值两者之间的最大值，并将其拥塞窗口减小到(cwnd+W_used)/2. 
+W_used被置为0，T_prev的值设为当前的时钟，这样直到另一个RTO流逝，才会进一步减
+小拥塞窗口，因此，在应用程序限制时，CWV算法每个RTO减低拥塞窗口的大小。
+3．2减小拥塞窗口的伪码
+
+   Initially:
+       T_last = tcpnow, T_prev = tcpnow, W_used = 0
+
+   After sending a data segment:
+       If tcpnow - T_last >= RTO
+           (The sender has been idle.)
+           ssthresh =  max(ssthresh, 3*cwnd/4)
+           For i=1  To (tcpnow - T_last)/RTO
+               win =  min(cwnd, receiver's declared max window)
+               cwnd =  max(win/2, MSS)
+           T_prev = tcpnow
+           W_used = 0
+
+       T_last = tcpnow
+
+       If window is full
+           T_prev = tcpnow
+           W_used = 0
+       Else
+           If no more data is available to send
+               W_used =  max(W_used, amount of unacknowledged data)
+               If tcpnow - T_prev >= RTO
+                   (The sender has been application-limited.)
+                   ssthresh =  max(ssthresh, 3*cwnd/4)
+
+                   win =  min(cwnd, receiver's declared max window)
+                   cwnd = (win + W_used)/2
+                   T_prev = tcpnow
+                   W_used = 0
+4 模拟
+	在网络模拟器[NS]中已将CWV作为一个选项加以实现，在对CWV的有效性检验时，可以
+在"tcl/test"下运行"./test-all-tcp"命令。模拟器显示了在TCP连接过了一段应用程序限
+制后用CWV来降低拥塞窗口的大小，并在传输是应用限制时，来限制拥塞窗口的增加。正如
+在模拟器显示的，保持连接历史的阕值的使用是拥塞窗口有效性检验的关键部分。在[HPF99]
+对这些模拟有详细的讨论。
+5 实验
+	在FREEBSD3.2的TCP实现中，我们实现了CWV机制，在[HPF99]对这些实验有详细
+的讨论。
+	第一个实验检测了在应用程序限制期间用拥塞窗口有效性检验的机制来限制窗口的增
+长的效果。实验采用使用Dummynet的modem连接，速率为30Kb/s，有5个包缓冲可用，
+现在大部分的modem的缓冲区都比5个缓冲区多，但较旧的modem太多的缓冲区可能有限
+制，在传输的开始部分，用户输入通过连接发送，之后，用户造成有大量数据的发送。
+对于没有修改的TCP，在开始时，每个返回的确认帧将导致窗口的增加。结果导致从应用
+程序的大量数据传到传输层，导致数据丢失而重发，
+对于用拥塞窗口有效性检验改进了的TCP，当窗口没有填满时，拥塞窗口并不增加，而
+在应用程序限制的时间与用户实际使用接近时，拥塞窗口会减小。大量突发数据被拥塞窗口
+限制，使得流的丢失达到最少，最终的结果是由于为了避免超时重发，传输速率比没有使用
+CWV的要快近30%。
+第二个实验是采用拨号的PPP连接，有更多的缓冲区，对于没有修改的TCP，最早大
+量数据的发送并没有造成丢失，当导致RTT增加到近5秒，连接变得为接收方的窗口限制。
+对于用拥塞窗口有效性检验改进了的TCP，流的处理进行的很好，没有产生大量的突发
+数据，在这种情况下，窗口的线形增加在缓冲区慢慢填满时也只造成RTT的缓慢增长。
+对于第二个实验，改进和没改进的TCP以几乎同等的时间发送完数据，这是由于modem
+的缓冲区比接收方的窗口大，连接在两种情况下都被充分利用，很明显，modem的缓冲区
+在RTT上的影响并没有期望，但对当前产生突发数据的TCP实现而言，是很有必要的。
+6 结论
+本文列举了在一段IDLE期间或者发送方是应用程序限制并在增加拥塞窗口之前采用的
+用拥塞窗口有效性检验的几种TCP算法。这些算法的目的是为了让TCP的拥塞窗口网络路径
+上TCP连接状况，而同时保留网络路径上的一些原来的状况。我们相信，这些改进通过防止
+由于TCP发送方没有更新关于目前网络状况而造成的包丢失，无论对网络还是TCP流本身都
+是有益的，将来的工作在于使用模拟器和实验来调查这些算法带来的益处。另外的工作是在
+发送方在对于TCP往还时间没有准确的估计时，描述对于TCP实现的一种更复杂的CWV算法。
+
+ 7 参考
+
+   [FF96]     Fall, K., and Floyd, S., Simulation-based Comparisons of
+              Tahoe, Reno, and SACK TCP, Computer Communication Review,
+              V. 26 N. 3, July 1996, pp. 5-21.  URL
+              "http://www.aciri.org/floyd/papers.html".
+
+   [HPF99]    Mark Handley, Jitendra Padhye, Sally Floyd, TCP Congestion
+              Window Validation, UMass CMPSCI Technical Report 99-77,
+              September 1999.  URL "ftp://www-
+              net.cs.umass.edu/pub/Handley99-tcpq-tr-99-77.ps.gz".
+
+   [HTH98]    Amy Hughes, Joe Touch, John Heidemann, "Issues in TCP
+              Slow-Start Restart After Idle", Work in Progress.
+
+   [J88]      Jacobson, V., Congestion Avoidance and Control, Originally
+              from Proceedings of SIGCOMM '88 (Palo Alto, CA, Aug.
+              1988), and revised in 1992.  URL "http://www-
+              nrg.ee.lbl.gov/nrg-papers.html".
+
+   [JKBFL96]  Raj Jain, Shiv Kalyanaraman, Rohit Goyal, Sonia Fahmy, and
+              Fang Lu, Comments on "Use-it or Lose-it", ATM Forum
+              Document Number:  ATM Forum/96-0178, URL
+              "http://www.netlab.ohio-
+              state.edu/~jain/atmf/af_rl5b2.htm".
+
+   [JKGFL95]  R. Jain, S. Kalyanaraman, R. Goyal, S. Fahmy, and F. Lu, A
+              Fix for Source End System Rule 5, AF-TM 95-1660, December
+              1995, URL "http://www.netlab.ohio-
+              state.edu/~jain/atmf/af_rl52.htm".
+
+   [MSML99]   Matt Mathis, Jeff Semke, Jamshid Mahdavi, and Kevin Lahey,
+              The Rate-Halving Algorithm for TCP Congestion Control,
+              June 1999.  URL
+              "http://www.psc.edu/networking/ftp/papers/draft-
+              ratehalving.txt".
+
+   [NS]       NS, the UCB/LBNL/VINT Network Simulator.  URL
+              "http://www-mash.cs.berkeley.edu/ns/".
+
+   [RFC2581]  Allman, M., Paxson, V. and W. Stevens, TCP Congestion
+              Control, RFC 2581, April 1999.
+
+   [VH97]     Vikram Visweswaraiah and John Heidemann. Improving Restart
+              of Idle TCP Connections, Technical Report 97-661,
+              University of Southern California, November, 1997.
+
+   [Dummynet] Luigi Rizzo, "Dummynet and Forward Error Correction",
+              Freenix 98, June 1998, New Orleans.  URL
+"http://info.iet.unipi.it/~luigi/ip_dummynet/".
+8 安全性考虑
+通常有关TCP拥塞控制的安全性考虑在RFC 2581中讨论。本文描述了那些拥塞控制过程的
+一个方面的一种算法。因此，在RFC 2581中讨论的安全性考虑也适合本算法，对于本算法
+还没有其他的安全性问题。
+9. 作者地址
+
+   Mark Handley
+   AT&T Center for Internet Research at ICSI (ACIRI)
+
+   Phone: +1 510 666 2946
+   EMail: mjh@aciri.org
+   URL: http://www.aciri.org/mjh/
+
+   Jitendra Padhye
+   AT&T Center for Internet Research at ICSI (ACIRI)
+
+   Phone: +1 510 666 2887
+   EMail: padhye@aciri.org
+   URL: http://www-net.cs.umass.edu/~jitu/
+
+   Sally Floyd
+   AT&T Center for Internet Research at ICSI (ACIRI)
+
+   Phone: +1 510 666 2989
+   EMail: floyd@aciri.org
+   URL:  http://www.aciri.org/floyd/
+
+10. 版权说明
+   Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, 
+INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+RFC2861――TCP Congestion Window Validation              TCP 拥塞窗口检验
+
+
+1
+RFC文档中文翻译计划

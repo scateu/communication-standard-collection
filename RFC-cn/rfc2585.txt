@@ -1,0 +1,193 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：黄建文（kenvin9   kenvin@21cn.com）
+译文发布时间：2001-3-26
+版权：本翻译文档可以用于非商业用途自由转载，但必须保留本文档的翻译及组织信息。
+
+
+
+
+Network Working Group                          R. Housley
+Request for Comments: 2585                     SPYRUS 
+Category: Standards Track                        P. Hoffman                                                          IMC                                                               May 1999
+
+         互联网X.509公用密钥机制操作协议:FTP和HTTP
+
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建议以得到改进。请参考最新版的“Internet正式协议标准” (STD1)来获得本协议的标准化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+摘要
+本文档中描述的协议约定满足Internet公用密钥机制(PKI)中的许多可操作的需求.本文档同时讲述了一些使用文件传输协议(FTP)和超文本传输协议(HTTP)来从PKI仓库中获取证书和证书撤消列表(CRL)的协定. 附加的描述访问PKI仓库的机制在另外的文档中有详细说明.
+
+目录
+1 介绍	1
+1.1 模型	2
+1.2 证书和CRL仓库	3
+2 FTP约定	3
+3 HTTP约定	3
+4 MIME登记	4
+4.1 申请/PKIX-CERT	4
+4.2 申请/PKIX-CRL	5
+参考资料	5
+安全方面的考虑	5
+作者的地址	6
+版权说明	6
+致谢	7
+
+
+1 介绍
+本说明是使用X.509证书和证书撤消列表(CRL)的Internet公用密钥机制(PKI)多个标准的一部分. 本文档同时讲述了一些使用文件传输协议(FTP)和超文本传输协议(HTTP)来从PKI仓库中获取证书和证书撤消列表(CRL)的协定. 附加的描述访问PKI仓库的机制在另外的文档中有详细说明.
+1.1 模型
+下面是由Internet PKI规范中假定的结构模型的简单视图.
+      +---+
+      | C |                       +------------+
+      | e | <-------------------->|  终端实体  |
+      | r |       操作事务和      +------------+
+      | t |       管理事务              ^
+      | / |                             |  管理事务
+      |   |                             |       PKI 用户
+      | C |                             v
+      | R |       -------------------+--+-----------+-----------------
+      | L |                          ^              ^
+      |   |                          |              |   PKI 管理实体
+      |   |                          v              |        
+      | R |                       +------+          |
+      | e | <---------------------| RA   | <---+    |
+      | p |  发布证书             +------+     |    |
+      | o |                                    |    |
+      | s |                                    |    |
+      | I |                                    v    v
+      | t |                                +------------+
+      | o | <------------------------------|     CA     |
+      | r |   发布证书                     +------------+
+      | y |   发布CRL                            ^
+      |   |                                       |
+      +---+                            管理事务   |                                           
+                                                  v
+                                              +------+
+                                              |  CA  |
+                                              +------+
+这个模型中由以下几部分组成:
+终端实体:PKI证书用户及/或者作为证书主题的最终用户系统.
+CA.授权机构
+RA:登记机构.例如,CA可以把某些管理功能委托给一个可选系统.
+仓库:一个保存证书和CRL的系统或分布系统的集合,它是一种分发证书和CRL到终端用户的方法.
+1.2 证书和CRL仓库
+许多CA要求使用在线的校验服务,而其他分布式的CRL允许证书用户自己去实施证书的校验。通常，CA通过把CRL发布到目录中，使得证书用户就可以使用了。目录也是一种正规的证书分配机制.然而。目前，Internet的许多方面还没有提供目录服务。 RFC959中定义的文件传输协议(FTP)和RFC2068中定义的超文本传输协议(HTTP)提供了分配证书和CRL的可选方法。
+
+终端实体和认证机构都可以使用FTP或HTTP协议从证书仓库中检索证书和CRL.终端实体可以使用FTP或HTTP来把他们自己的证书发布到仓库中,而登记机构与认证机构也可以使用FTP或HTTP把证书和CRL发布到仓库中.
+
+2 FTP约定
+在证书扩展和CRL扩展中,全名(GeneralName)的统一资源标识(URI)形式是用来指明证书发起者和可以得到CRL的位置。比如,一个指定证书标题的URI应该用subjectAltName证书扩展名来传输。一个IA5String描述了如何用匿名FTP方式去获取证书和CRL的有关信息.例如:
+ftp://ftp.netcom.com/sp/spyrus/housley.cer
+      ftp://ftp.your.org/pki/id48.cer
+      ftp://ftp.your.org/pki/id48.no42.crl
+
+Internet用户可以在他的商业名片上发布一个指向包含他的证书文件的URI引用。这种方法，在该用户没有目录服务人口时非常有效。FTP已被广泛使用，另外匿名FTP也已经被许多防火墙所接受。因此,FTP是通过目录存取协议来进行证书和CRL分配的一种极具吸引力的可选方法. 尽管这种服务能够满足检索已通过URI指定的证书的相关信息的要求,但是它却无法解决在知道一个用户的其他信息,如电子邮件地址或公司的联系地址等的情况下,查找该用户证书这样更为通用的问题.
+
+为了方便起见,包含证书的文件应该有一个后缀:.cer.每一个"cer"文件实际上包含了一个以DER格式编码的证书。同样,包含CRL的文件应该有一个后缀:.crl. 每一个"crl"文件实际上包含了一个以DER格式编码的CRL.
+
+3 HTTP约定
+在证书扩展和CRL扩展中,全名(GeneralName)的统一资源标识(URI)形式是用来指明证书发起者和可以得到CRL的位置。比如,一个指定证书标题的URI应该用subjectAltName证书扩展名来传输。一个IA5String描述了如何用匿名HTTP方式去获取证书和CRL的有关信息.例如:
+http://www.netcom.com/sp/spyrus/housley.cer
+      http://www.your.org/pki/id48.cer
+      http://www.your.org/pki/id48.no42.crl
+Internet用户可以在他的商业名片上发布一个指向包含他的证书文件的URI引用。这种方法，在该用户没有目录服务人口时非常有效。HTTP已被广泛使用，另外HTTP也已经被许多防火墙所接受。因此,FTP是通过目录存取协议来进行证书和CRL分配的一种极具吸引力的可选方法. 尽管这种服务能够满足检索已通过URI指定的证书的相关信息的要求,但是它却无法解决在知道一个用户的其他信息,如电子邮件地址或公司的联系地址等的情况下,查找该用户证书这样更为通用的问题.
+
+为了方便起见,包含证书的文件应该有一个后缀:.cer.每一个"cer"文件实际上包含了一个以DER格式编码的证书。同样,包含CRL的文件应该有一个后缀:.crl. 每一个"crl"文件实际上包含了一个以DER格式编码的CRL.
+
+4 MIME登记
+为支持证书和CRL的传输,定义了两种MIME（多用途的网际邮件扩充协议）类型: application/pkix-cert及application/pkix-crl
+
+4.1 申请/pkix-cert
+To: ietf-types@iana.org
+Subject: Registration of MIME media type application/pkix-cert   
+MIME媒介类型名称: 申请
+MIME 子类型名称: pkix-cert
+需要的参数: 无
+可选参数: 版本 (缺省为 "1")
+   邮件编码:不应该是8位传输,应该是7位传输或SMTP中的Base64码   
+   安全性方面的考虑:带有加密的证书
+   互用性方面的考虑:无
+   发布规范:draft-ietf-pkix-ipki-part1
+   申请将会使用的媒介类型:所有兼容MIME的传输
+   附加信息:
+   魔数:无
+   文件的扩展名: .CER
+   Macintosh中的文件类型码:无
+
+ 如果需要更多的信息，请与以下E-MAIL联系:
+   Russ Housley <housley@spyrus.com>
+   Intended usage: COMMON
+   作者/变动 控制:
+   Russ Housley <housley@spyrus.com>
+
+4.2 申请/pkix-crl
+   To: ietf-types@iana.org
+   Subject: Registration of MIME media type application/pkix-crl
+   MIME媒介类型名称: 应用
+   MIME 子类型名称: pkix-crl
+   需要的参数: 无
+   可选参数: 版本 (缺省为 "1")
+   邮件编码:不应该是8位传输,应该是7位传输或SMTP中的Base64   
+   安全性方面的考虑:带有加密的证书撤消列表
+   协同性方面的考虑:无
+   发布规范:draft-ietf-pkix-ipki-part1
+   申请将会使用的媒介类型:所有兼容MIME的传输
+   附加信息:
+    魔数:无
+    文件的扩展名: .CRL
+    Macintosh中的文件类型码:无
+
+   如果需要更多的信息，请与以下E-MAIL联系::
+   Russ Housley <housley@spyrus.com>
+   Intended usage: COMMON
+   作者/变动 控制:
+   Russ Housley <housley@spyrus.com>
+参考资料
+[RFC959] Postel, J. and J. Reynolds, "文件传输协议(FTP)"
+STD 5, RFC 959, October 1985
+    [RFC1738] Berners-Lee, T., Masinter, L. and M. McCahill,"通用资源定位(URL)" RFC 1738, December 1994.
+[RFC 2068]  Fielding, R., Gettys, J., Mogul, J., Frystyk, H. and
+               T. Berners-Lee; "超文本传输协议 -- HTTP/1.1",
+               RFC 2068, January 1997.
+安全方面的考虑
+因为证书和CRL是数字签名的,因此并不需要附加的完整性服务.证书和CRL都不需要秘密地保存,对证书和CRL的匿名访问通常也是可以被接受的.因此,并不需要秘密的服务.
+在Internet上,HTTP缓存代理是很普遍的,许多代理并不检查一个对象的最新版本的正确性.如果一个证书或CRL的HTTP请求通过了一个配置不当或忽然中断的代理,该代理可能会返回一个已超期的响应.
+FTP和WWW服务器的操作者应该对发布证书的终端实体及那些发布证书和CRL的CA与RA进行认证。然而，并不需要对检索证书和CRL进行鉴定认证。
+作者的地址
+Russell Housley
+  SPYRUS 381 Elden Street, Suite 1120  Herndon, VA 20170 USA
+EMail: housley@spyrus.com
+
+  Paul Hoffman
+  Internet Mail Consortium 127 Segre Place
+  Santa Cruz, CA 95060 USA
+EMail: phoffman@imc.org
+
+版权说明
+
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works.  However, this document itself may not be modified in any way, such as by removing the copyright notice or references to the Internet Society or other Internet organizations, except as needed for the purpose of developing Internet standards in which case the procedures for copyrights defined in the Internet Standards process must be followed, or as required to translate it into languages other than   English.
+
+   The limited permissions granted above are perpetual and will not be revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+致谢
+感谢Internet协会给予RFC编辑部门的资金。
+
+
+RFC2585   Internet RFC/STD/FYI/BCP Archives 
+互联网X.509公用密钥机制操作协议:FTP和HTTP
+
+
+
+
+1
+RFC文档中文翻译计划
+

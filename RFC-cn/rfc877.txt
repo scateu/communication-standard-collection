@@ -1,0 +1,71 @@
+组织：中国互动出版网（http://www.china-pub.com/） 
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm） 
+E-mail：ouyang@china-pub.com
+译者：15222775@61.(15222775@61.   hbzzx2001@yahoo.com.cn)        
+译文发布时间：2001-10-20 
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+
+
+
+Network Working Group                                         J. T. Korb
+Request for Comments: 877                              Purdue University
+September 1983
+
+
+
+公用数据网上的IP数据报传输标准
+
+          (RFC877――A Standard for the Transmission of IP Datagrams 
+Over  Public Data Networks）
+
+此RFC规定了CSNET（VAN网关）和其他组织所采用的在基于X.25的公用数据网上进行
+IP数据报传输的标准。 
+ 
+当数据报到达网络接口时，X.25虚电路按照要求打开以便进行传输。虚电路在经过几个待
+用周期（周期长度取决于与打开虚电路相关的开销）后被关闭；当接口耗尽虚电路时，一个
+虚电路也可能被关闭。需求高峰时期的虚电路管理算法在[1]中给出。 
+ 
+标准
+1.1	 
+呼叫用户数据域中的首字节（呼叫请求包中的第一个数据字节）用于协议多路分解器。 
+      
+十六进制数CC（二进制数11001100，十进制204）用于预定IP协议。 
+1.2  
+IP数据报作为X.25"完整包序列"发送。即，数据报从包界限开始，后M位"更多数据"
+用于长于一个包的数据报。在包中不存在额外的头部和其他数据。 
+1.3  
+除非较大的包尺寸已被协商，通过X.25传送的IP数据报的最大尺寸为576字节。如果
+双方协商了一个较大的包尺寸（如，1024字节），那么这种尺寸的IP包是被允许的。 
+1.4  
+任一方都可以关闭虚电路。如果数据报正在传输时虚电路被关闭或重新设置，将丢弃
+此数据报。 
+
+常规注释
+
+2.1 
+IP之上的协议，如IP等不影响此标准。详细点，没有建立通过打开虚电路来响应TCP连
+接的尝试。 
+2.2 
+本文档中没有讨论的X.25的特色还不可用。如中断包和D位（指出端到端的意义）不可用。 
+2.3  
+X.25允许协商。如，各方可以自由地协商较大包和窗口尺寸。 
+2.4 
+某些站点如CSNET等，可能试图打开到达同一站点的多条虚电路。各站点应尝试温和的处
+理这些输入呼叫:如果可能的话就在附加电路上传输并在其中接收输入数据报，但不能接受
+呼叫请求，而是立即关闭连接或丢弃在这些电路上传输的数据包。
+参考书目
+  [1] Comer, D.E. and Korb, J.T., "CSNET Protocol 
+Software: The 
+    IP-to-X.25 Interface", SIGCOMM Symposium on 
+Communications 
+    Architectures and Protocols, March 1983. 
+        
+
+RFC877――A Standard for the Transmission of IP Datagrams Over  Public Data Networks
+公用数据网上的IP数据报传输标准
+
+
+1
+RFC文档翻译计划

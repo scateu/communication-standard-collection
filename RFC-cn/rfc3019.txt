@@ -1,0 +1,523 @@
+组织：中国互动出版网（http://www.china-pub.com/）
+RFC文档中文翻译计划（http://www.china-pub.com/compters/emook/aboutemook.htm）
+E-mail：ouyang@china-pub.com
+译者：郭大刚（guodagang guodagang@tyut.edu.cn）
+译文发布时间：2001-10-11
+版权：本中文翻译文档版权归中国互动出版网所有。可以用于非商业用途自由转载，但必须
+保留本文档的翻译及版权信息。
+
+Network Working Group                                               B. Haberman
+Request for Comments: 3019										Nortel Networks
+Category: Standards Track										    R. Worzella
+																            IBM
+																	anuary 2001
+
+用于多播监听发现协议的Ipv6 MIB
+(RFC3019-- IP Version 6 Management Information Base for
+The Multicast Listener Discovery Protocol)
+本备忘录的状态
+本文档讲述了一种Internet社区的Internet标准跟踪协议，它需要进一步进行讨论和建
+议以得到改进。请参考最新版的“Internet架构委员会正式协议标准”来获得本协议的标准
+化程度和状态。本备忘录的发布不受任何限制。
+版权声明
+Copyright (C) The Internet Society (2001)。版权所有。
+摘要
+本文档定义了用在Ipv6互联网络中网络管理协议中管理信息库MIB的一部分。而且它
+是定义实现多播监听发现协议[RFC2710]的管理对象的MIB模块。
+术语
+本文档中的关键字按照[RFC2119]中描述的进行解释。
+目录
+1. SNMP管理框架	2
+2. 概述	2
+3. 定义	2
+需要考虑的安全问题	10
+致谢	11
+参考文献	11
+作者地址	12
+完整的版权声明	12
+致谢	13
+
+1. SNMP管理框架
+SNMP管理框架目前有五个主要部分组成：
+整体结构，RFC2571中描述。
+描述和命名用于管理的对象和事件的机制。此SMI的第一版称为SMIv1，在STD16，
+RFC1155，STD16，RFC1212和RFC1215中描述。第二版称为SMIv2，在STD58，RFC2578，
+STD58，RFC2579和STD58，RFC2580中描述。
+传输管理信息的消息协议。SNMP消息协议的第一版称为SNMPv1，在STD15，
+RFC1157中描述。SNMP消息协议的第二版，并不是一个INTERNET标准协议，称为
+SNMPv2c，在RFC1901和RFC1906中描述。消息协议的第三版称为SNMPv3，在RFC1906，
+RFC2572和RFC2574中描述。
+访问管理信息的协议操作。第一套可操作的与PDU格式有关的协议在STD15，RFC1157
+中描述。第二套在RFC1905中描述。
+一套基础应用，在RFC2573中描述，还有基于视图的访问控制机制，在RFC2575中
+描述。
+关于现有SNMP管理框架更详细的介绍在RFC2570中可以找到。
+管理对象通过虚拟信息仓库访问，术语叫做管理信息库或MIB。MIB中的对象使用在SMI
+中定义的机制来定义。
+本备注指定了一个服从SMIv2的MIB模块。遵从SMIv1的MIB可通过适当的翻译得出，
+结果在语义上必须等价，除非由于不可翻译而省略对象或事件(use of Counter64)。在翻译时，
+一些机器可读的SMIv2信息会转换成SMIv1的原文描述。然而，这些丢失的信息被认为不
+会改变MIB的语义。
+2. 概述
+本MIB模块包含两个表：
+1. MLD接口表，它的行包含MLD使能的每个接口。
+2. MLD缓冲表，它的行包含在特殊端口上有成员的Ipv6多播组。
+这两个表都可由主机或路由器实现。每个表中的一些对象是只能在路由器中应用的。
+3. 定义
+IPV6-MLD-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+ MODULE-IDENTITY，对象类型，Counter32，Gauge32,
+ Unsigned32，TimeTicks，mib-2  FROM SNMPv2-SMI
+ RowStatus，TruthValueFROM SNMPv2-TC
+ InetAddressIPv6 FROM INET-ADDRESS-MIB
+ InterfaceIndex，InterfaceIndexOrZero FROM IF-MIB
+ MODULE-COMPLIANCE,对象类
+FROM SNMPv2-CONF;
+mldMIB MODULE-IDENTITY
+ LAST-UPDATED "200101250000Z" -- 25 Jan 2001
+ ORGANIZATION "IETF IPNGWG Working Group."
+ CONTACT-INFO
+" Brian Haberman
+  Nortel Networks
+  4309 Emperor Blvd.
+  Durham，NC  27703
+  USA
+  Phone: +1 919 992 4439
+  e-mail: haberman@nortelnetworks.com"
+ 描述
+  “用于MLD管理的MIB模块”
+ REVISION "200101250000Z" -- 25 Jan 2001
+ 描述
+  “初始版本，RFC3019中发布”
+ ::= { mib-2 91 }
+
+mldMIB对象 对象标识符 ::= { mldMIB 1 }
+
+--  MLD接口表
+
+mldInterfaceTable 对象类型
+ 语法：MldInterfaceEntry的序列
+ 最大权限：不可访问
+ 状态：现行
+ 描述
+  “列出MLD使能的接口的（概念上的）表”
+ ::= { mldMIB对象1 }
+
+mldInterfaceEntry 对象类型
+ 语法：MldInterfaceEntry
+ 最大权限：不可访问
+ 状态：现行
+ 描述
+  “一个条目（概念上的行）表示一个MLD使能的接口”
+ INDEX{ mldInterfaceIfIndex }
+ ::= { mldInterfaceTable 1 }
+MldInterfaceEntry ::=序列 {
+ mldInterfaceIfIndexInterfaceIndex,
+ mldInterfaceQueryIntervalUnsigned32,
+ mldInterfaceStatus RowStatus,
+ mldInterfaceVersionUnsigned32,
+ mldInterfaceQuerierInetAddressIPv6,
+ mldInterfaceQueryMaxResponseDelay Unsigned32,
+ mldInterfaceJoins  Counter32,
+ mldInterfaceGroups Gauge32,
+ mldInterfaceRobustnessUnsigned32,
+ mldInterfaceLastListenQueryIntvl  Unsigned32,
+ mldInterfaceProxyIfIndex InterfaceIndexOrZero,
+ mldInterfaceQuerierUpTimeTimeTicks,
+ mldInterfaceQuerierExpiryTime  TimeTicks
+}
+
+mldInterfaceIfIndex 对象类型
+ 语法：InterfaceIndex
+ 最大权限：不可访问
+ 状态：现行
+ 描述
+  “MLD使能的接口的互联网络层接口值。”
+ ::= { mldInterfaceEntry 1 }
+
+mldInterfaceQueryInterval 对象类型
+ 语法：Unsigned32
+ 单位：“秒”
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “接口上传输的MLD主机询问包的频率”
+ DEFVAL  { 125 }
+ ::= { mldInterfaceEntry 2 }
+
+mldInterfaceStatus 对象类型
+ 语法：RowStatus
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “激活使能MLD的接口的行。破坏禁止MLD的接口的行”
+ ::= { mldInterfaceEntry 3 }
+mldInterfaceVersion 对象类型
+ 语法：Unsigned32
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “接口上运行的MLD的版本。这里是引入MLD新版本的地方。MLD版本1在
+RFC2710中定义”
+ DEFVAL  { 1 }
+ ::= { mldInterfaceEntry 4 }
+
+mldInterfaceQuerier 对象类型
+ 语法：InetAddressIPv6 (SIZE (16))
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “接口属于的Ipv6子网的MLD询问者的地址”
+ ::= { mldInterfaceEntry 5 }
+
+mldInterfaceQueryMaxResponseDelay 对象类型
+ 语法：Unsigned32
+ UNITS"seconds"
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “接口上发布MLD询问的最大询问响应时间”
+ DEFVAL  { 10 }
+ ::= { mldInterfaceEntry 6 }
+
+mldInterfaceJoins 对象类型
+ 语法：Counter32
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “接口上增加一组成员的时间；也就是说，此接口对应的条目增加到缓冲表中时间。
+这个对象给出MLD活动总量的时间指示。”
+ ::= { mldInterfaceEntry 7 }
+
+mldInterfaceGroups 对象类型
+ 语法：Gauge32
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “缓冲表中此接口条目的现有数量”
+ ::= { mldInterfaceEntry 8 }
+
+mldInterfaceRobustness 对象类型
+ 语法：Unsigned32
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “允许调整子网上预计丢失的包的鲁棒变量。如果认为子网是有损耗的，那么此变量
+就可能增加。MLD对于（鲁棒变量-1）个包丢失是具有鲁棒性的。此变量在RFC2710的
+Section7.1中讨论”
+ DEFVAL  { 2 }
+ ::= { mldInterfaceEntry 9 }
+
+mldInterfaceLastListenQueryIntvl 对象类型
+ 语法：Unsigned32
+ UNITS"seconds"
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “最后成员询问间隔是发送响应离开组消息时插入的特定组询问的最大响应延时，也
+是在特定组询问消息间的时间总数。可以调整这个值来修改网络的剩余延时。减小的值导致
+检测丢失最后组成员时间的减少”
+ DEFVAL  { 1 }
+ ::= { mldInterfaceEntry 10 }
+
+mldInterfaceProxyIfIndex 对象类型
+ 语法：InterfaceIndexOrZero
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “一些设备实现一个MLC代理表，表中的行表现接口上学到的成员关系，使得MLD
+多播监听报告在由此对象标识的互联网络层接口上发送。这样的设备只在路由器接口（这些
+接口的mldInterfaceProxyIfIndex非零）上实现mldRouterMIBGroup。典型的，对象0值表
+示没有使用代理。”
+ DEFVAL  { 0 }
+ ::= { mldInterfaceEntry 11 }
+
+mldInterfaceQuerierUpTime 对象类型
+ 语法：TimeTicks
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “mldInterfaceQuerier最后修改到现在的时间”
+ ::= { mldInterfaceEntry 12 }
+
+mldInterfaceQuerierExpiryTime 对象类型
+ 语法：TimeTicks
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “其它询问者呈现计数器终止前剩余的时间。如果询问者是本地系统，那么这个对象
+的值为0。”
+ ::= { mldInterfaceEntry 13 }
+
+--  MLD缓冲表
+
+mldCacheTable 对象类型
+ 语法：MldCacheEntry的序列
+ 最大权限：不可访问
+ 状态：现行
+ 描述
+  “表中列出有成员的特定接口的IPv6多播组”
+ ::= { mldMIB对象2 }
+
+mldCacheEntry 对象类型
+ 语法：MldCacheEntry
+ 最大权限：不可访问
+ 状态：现行
+ 描述
+  “mldCacheTable中的一个条目（概念上是一行） ”
+ 索引{ mldCacheAddress，mldCacheIfIndex }
+ ::= { mldCacheTable 1 }
+MldCacheEntry ::=序列 {
+ mldCacheAddressInetAddressIPv6,
+ mldCacheIfIndexInterfaceIndex,
+ mldCacheSelfTruthValue,
+ mldCacheLastReporterInetAddressIPv6,
+ mldCacheUpTime TimeTicks,
+ mldCacheExpiryTimeTimeTicks,
+ mldCacheStatus RowStatus
+}
+
+mldCacheAddress 对象类型
+ 语法：InetAddressIPv6 (SIZE (16))
+ 最大权限：不可访问
+ 状态：现行
+ 描述
+  “条目中包含信息的IPv6多播组地址” 
+ ::= { mldCacheEntry 1 }
+
+mldCacheIfIndex 对象类型
+ 语法：InterfaceIndex
+ 最大权限：不可访问
+ 状态：现行
+ 描述
+  “包含IPv6多播组地址信息的条目的互联网络层接口”
+ ::= { mldCacheEntry 2 }
+
+mldCacheSelf 对象类型
+ 语法：TruthValue
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “指示本地系统是否是接口组地址中成员”
+ DEFVAL  { true }
+ ::= { mldCacheEntry 3 }
+
+mldCacheLastReporter 对象类型
+ 语法：InetAddressIPv6 (SIZE (16))
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “Ipv6多播组地址接口上接收的最后成员关系报告源的Ipv6地址。如果没有接收到
+报告，那么此对象的值为0：：0”
+ ::= { mldCacheEntry 4 }
+
+mldCacheUpTime 对象类型
+ 语法：TimeTicks
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “条目已创建的时间”
+ ::= { mldCacheEntry 5 }
+
+mldCacheExpiryTime 对象类型
+ 语法：Time Ticks
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “条目超时前剩余的最短时间总量。0值表示此条目只是由于mldCacheSelf为真值
+才出现，如果路由器离开了此组，那么这个条目就回立即超时。注意一些实现用和来自其它
+主机一样的方式处理在本地系统成员关系报告，因此0值不是必须的。”
+ ::= { mldCacheEntry 6 }
+
+mldCacheStatus 对象类型
+ 语法：RowStatus
+ 最大权限：只读
+ 状态：现行
+ 描述
+  “行的状况，如创建新的条目，或从表中删除已存在的条目”
+ ::= { mldCacheEntry 7 }
+
+-- 一致性信息
+
+mldMIBConformance
+对象标识符 ::= { mldMIB 2 }
+mldMIBCompliances
+对象标识符 ::= { mldMIBConformance 1 }
+mldMIBGroups
+对象标识符 ::= { mldMIBConformance 2 }
+
+-- 一致性状态
+
+mldHostMIBCompliance MODULE-COMPLIANCE
+ 状态：现行
+ 描述
+  “运行MLD和实现MLD MIB的主机遵从的状态”
+ MODULE  -- this module
+ MANDATORY-GROUPS { mldBaseMIBGroup,mldHostMIBGroup}
+
+ 对象mldInterfaceStatus
+ 最小权限：只读
+ 描述
+  “写访问不是必须的”
+ ::= { mldMIBCompliances 1 }
+
+mldRouterMIBCompliance MODULE-COMPLIANCE
+ 状态：现行
+ 描述
+ “运行MLD和实现MLD MIB的路由器遵从的状态”
+ MODULE  -- this module
+ MANDATORY-GROUPS { mldBaseMIBGroup，mldRouterMIBGroup}
+
+ 对象mldInterfaceStatus
+ 最小权限：只读
+ 描述
+ “写访问不是必须的”
+ ::= { mldMIBCompliances 2 }
+
+--适应性单位
+
+mldBaseMIBGroup对象类
+ 对象{ mldCacheSelf，mldCacheStatus，mldInterfaceStatus}
+ 状态：现行
+ 描述
+  “提供MLD管理的对象基本集合。MldBaseMIBGroup允许管理者创建和删除MLD
+缓冲条目”
+ ::= { mldMIBGroups 1 }
+
+mldRouterMIBGroup对象类
+ 对象{ mldCacheUpTime，mldCacheExpiryTime,
+  mldInterfaceQueryInterval,
+  mldInterfaceJoins，mldInterfaceGroups,
+  mldCacheLastReporter,
+  mldInterfaceQuerierUpTime,
+  mldInterfaceQuerierExpiryTime,
+  mldInterfaceQuerier,
+  mldInterfaceVersion,
+  mldInterfaceQueryMaxResponseDelay,
+  mldInterfaceRobustness,
+  mldInterfaceLastListenQueryIntvl
+}
+ 状态：现行
+ 描述
+  “路由器中MLD管理的其它对象的集合”
+ ::= { mldMIBGroups 2 }
+
+mldHostMIBGroup对象类
+ 对象{ mldInterfaceQuerier}
+ 状态：现行
+ 描述
+  “主机中MLD管理的其它对象的集合”
+ ::= { mldMIBGroups 3 }
+
+mldProxyMIBGroup对象类
+ 对象{ mldInterfaceProxyIfIndex }
+ 状态：现行
+ 描述
+  “用于MLD代理设备管理的其它对象的集合”
+ ::= { mldMIBGroups 4 }
+
+END
+需要考虑的安全问题
+本MIB包含可读的对象，它们的值提供了和多播会话相关的信息。一些对象可能包含敏
+感信息。尤其是mldCacheSelf and mldCacheLastReporter可被用来标识监听特定组地址的
+机器。也有很多对象具有读写和/或读、创建的MAX-ACCESS子句，管理员用这些子句来在
+路由器上配置MLD。虽然未经授权的对可读对象的访问相对来说没有多大关系，但是未经授
+权对可写对象的访问就可能导致致命的服务。因此， 在没有适当保护的不安全环境下对SET
+操作的支持可能对网络操作有消极的影响。
+SNMPv1本身是这样一个不安全的环境。即使网络本身安全（例如使用IP Sec），然而
+对诸如安全网络中谁允许访问和SET（改变/创建/删除）MIB中的对象也是没有控制的。
+建议实施者考虑SNMPv3框架提供的安全属性。特别推荐使用RFC2574基于用户的安
+全模型和RFC2575基于视图的访问控制模型。使用这些安全特性，可以只对那些有合法权
+利GET或SET的用户提供对象的访问。
+致谢
+本MIB模块基于由Keith McCloghrie、Dino Farinacci和Dave Thaler创作的IGMP MIB。
+它是基于IPNGWG工作组、Bert Wijnen、Peder Norgaard和Juergen Schoenwaelder等提
+出的建议的更新。
+参考文献
+[RFC2710] Deering，S.，Fenner，W. and B. Haberman，"Multicast Listener Discovery 
+(MLD) for IPv6"，RFC 2710，October 1999.
+[RFC2119] Bradner，S.，"Key words for use in RFCs to Indicate Requirement Levels"，
+BCP 14，RFC 2119，March 1997.
+[RFC2571] Harrington，D.，Presuhn，R. and B. Wijnen，"An Architecture for Describing 
+SNMP Management Frameworks"，RFC 2571，April 1999.
+[RFC1155] Rose，M. and K. McCloghrie，"Structure and Identification of Management 
+Information for TCP/IP-based Internets"，STD 16，RFC 1155，May 1990.
+[RFC1212] Rose，M. and K. McCloghrie，"Concise MIB Definitions"，STD 16，RFC 
+1212，March 1991.
+[RFC1215] Rose，M.，"A Convention for Defining Traps for use with the SNMP"，RFC 
+1215，March 1991.
+[RFC2578] McCloghrie，K.，Perkins，D.，Schoenwaelder，J.，Case，J.，Rose，
+M. and S. Waldbusser，"Structure of Management Information Version 2 (SMIv2)"，STD 58，
+RFC 2578，April 1999.
+[RFC2579] McCloghrie，K.，Perkins，D.，Schoenwaelder，J.，Case，J.，Rose，
+M. and S. Waldbusser，"Textual Conventions for SMIv2"，STD 58，RFC 2579，April 1999.
+[RFC2580] McCloghrie，K.，Perkins，D.，Schoenwaelder，J.，Case，J.，Rose，
+M. and S. Waldbusser，"Conformance Statements for SMIv2"，STD 58，RFC 2580，April 
+1999.
+[RFC1157] Case，J.，Fedor，M.，Schoffstall，M. and J. Davin，"Simple Network 
+Management Protocol"，STD 15，RFC 1157，May 1990.
+[RFC1901] Case，J.，McCloghrie，K.，Rose，M. and S. Waldbusser，"Introduction to 
+Community-based SNMPv2"，RFC 1901，January 1996.
+[RFC1906] Case，J.，McCloghrie，K.，Rose，M. and S. Waldbusser，"Transport 
+Mappings for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 
+1906，January 1996.
+[RFC2572] Case，J.，Harrington D.，Presuhn R. and B. Wijnen，"Message Processing 
+and Dispatching for the Simple Network Management Protocol (SNMP)"，RFC 2572，April 
+1999.
+[RFC2574] Blumenthal，U. and B. Wijnen，"User-based Security Model (USM) for 
+version 3 of the Simple Network Management Protocol (SNMPv3)"，RFC 2574，April 1999.
+[RFC1905] Case，J.，McCloghrie，K.，Rose，M. and S. Waldbusser，"Protocol 
+Operations for Version 2 of the Simple Network Management Protocol (SNMPv2)"，RFC 
+1905，January 1996.
+[RFC2573] Levi，D.，Meyer，P. and B. Stewart，"SNMPv3 Applications"，RFC 2573，
+April 1999.
+[RFC2575] Wijnen，B.，Presuhn，R. and K. McCloghrie，"View-based Access Control 
+Model (VACM) for the Simple Network Management Protocol (SNMP)"，RFC 2575，April 
+1999.
+[RFC2570] Case，J.，Mundy，R.，Partain，D. and B. Stewart，"Introduction to Version 
+3 of the Internet-standard Network Management Framework"，RFC 2570，April 1999.
+作者地址
+Brian Haberman
+Nortel Networks
+4309 Emperor Blvd.
+Suite 200
+Durham，NC  27703
+USA
+Phone: +1-919-992-4439
+EMail: haberman@nortelnetworks.com
+
+Randy Worzella
+IBM Corporation
+800 Park Office Drive
+Research Triangle Park，NC  27709
+USA
+Phone: +1-919-254-2202
+EMail: worzella@us.ibm.com
+完整的版权声明
+Copyright (C) The Internet Society (2001)。版权所有。
+This document and translations of it may be copied and furnished to others，and 
+derivative works that comment on or otherwise explain it or assist in its implementation 
+may be prepared，copied，published and distributed，in whole or in part，without restriction 
+of any kind，provided that the above copyright notice and this paragraph are included on all 
+such copies and derivative works.  However，this document itself may not be modified in 
+any way，such as by removing the copyright notice or references to the Internet Society or 
+other Internet organizations，except as needed for the purpose of developing Internet 
+standards in which case the procedures for copyrights defined in the Internet Standards 
+process must be followed，or as required to translate it into languages other than English.
+The limited permissions granted above are perpetual and will not be revoked by the 
+Internet Society or its successors or assigns.
+This document and the information contained herein is provided on an "AS IS" basis 
+and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING TASK FORCE 
+DISCLAIMS ALL WARRANTIES，EXPRESS OR IMPLIED，INCLUDING BUT NOT 
+LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL 
+NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY 
+OR FITNESS FOR A PARTICULAR PURPOSE.
+致谢
+目前，RFC编者的活动基金由Internet社团提供。
+
+RFC3019――IP Version 6 Management Information Base for The Multicast Listener Discovery Protocol
+多播监听发现协议的Ipv6 MIB
+
+
+1
+RFC文档中文翻译计划
